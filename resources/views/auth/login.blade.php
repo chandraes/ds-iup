@@ -6,7 +6,7 @@
         <div class="col col-login mx-auto mt-7">
             <div class="text-center text-white">
                 <div class="">
-                    <img src="{{asset('images/cgm.png')}}" class="" alt="" width="200">
+                    <img src="{{asset('images/iup.png')}}" class="" alt="" width="200">
                 </div>
                 <br>
                 {{-- <h2>SAIND</h2> --}}

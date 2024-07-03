@@ -16,7 +16,7 @@
         <form action="{{route('billing.stok-bahan-jadi.checkout.store')}}" method="post" id="storeForm">
             @csrf
             <div class="card">
-                {{-- <img class="card-img-top" src="{{asset('images/cgm.png')}}" style="width: 200px" alt="Title" />
+                {{-- <img class="card-img-top" src="{{asset('images/iup.png')}}" style="width: 200px" alt="Title" />
                 --}}
                 <div class="card-body">
                     <h4 class="card-title">
