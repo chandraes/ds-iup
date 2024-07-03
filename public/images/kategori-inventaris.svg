@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 128.5 128.5" xml:space="preserve">
+<g id="_x31_3_2_">
+	<g>
+		<circle style="fill:#B1C95D;" cx="64.25" cy="64.25" r="64.25"/>
+	</g>
+	<g>
+		<path style="fill:#D88445;" d="M63.5,26.375c7.237,0,13.125,5.888,13.125,13.125S70.737,52.625,63.5,52.625
+			S50.375,46.737,50.375,39.5S56.263,26.375,63.5,26.375 M63.5,22C53.835,22,46,29.835,46,39.5S53.835,57,63.5,57S81,49.165,81,39.5
+			S73.165,22,63.5,22L63.5,22z"/>
+		<g>
+			<rect x="23" y="40" style="fill:#BF713C;" width="80" height="56"/>
+			<polyline style="fill:#CC7A42;" points="47,40 23,40 23,68.933 47,68.933 103,68.933 103,40 57,40 			"/>
+			<polyline style="fill:#D88445;" points="45,40 23,40 23,69 51,69 63,69 63,40 50,40 			"/>
+			<rect x="51" y="69" style="fill:#B7B7B7;" width="25" height="8"/>
+			<rect x="54" y="63" style="fill:#F4F4F4;" width="19" height="11"/>
+		</g>
+	</g>
+</g>
+</svg>
