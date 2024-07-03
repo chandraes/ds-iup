@@ -25,9 +25,18 @@
          <!-- Scripts -->
         @vite(['resources/js/app.js'])
 
+        <style>
+            .img-login {
+                background-color: white;
+                border-radius: 50%;
+                padding: 15px;
+                margin-bottom: 20px
+            }
+        </style>
+
 	</head>
 
-	<body class="bg-white bg-gradient">
+	<body class="bg-primary bg-gradient">
 
 		<div>
 

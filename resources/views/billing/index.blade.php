@@ -60,34 +60,6 @@
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.produksi')}}" class="text-decoration-none">
-                <img src="{{asset('images/produksi.svg')}}" alt="" width="70">
-                <h4 class="mt-2">PRODUKSI</h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.stok-bahan-jadi.rencana')}}" class="text-decoration-none">
-                <img src="{{asset('images/rencana.svg')}}" alt="" width="70">
-                <h4 class="mt-2">RENCANA STOCK<br>BAHAN JADI
-                    @if($rp != 0) <span class="text-danger">({{$rp}})</span> @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.stok-bahan-jadi')}}" class="text-decoration-none">
-                <img src="{{asset('images/product-jadi.svg')}}" alt="" width="70">
-                <h4 class="mt-2">STOCK BAHAN JADI</h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.invoice-jual')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice-jual.svg')}}" alt="" width="70">
-                <h4 class="mt-2">TAGIHAN KE KONSUMEN
-                    @if($ij != 0) <span class="text-danger">({{$ij}})</span> @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.form-inventaris')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-inventaris.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM INVENTARIS

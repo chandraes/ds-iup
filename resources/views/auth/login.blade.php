@@ -6,10 +6,8 @@
         <div class="col col-login mx-auto mt-7">
             <div class="text-center text-white">
                 <div class="">
-                    <img src="{{asset('images/iup.png')}}" class="" alt="" width="200">
+                    <img src="{{asset('images/iup.png')}}"  alt="" width="200" class="img-login">
                 </div>
-                <br>
-                {{-- <h2>SAIND</h2> --}}
                 <p>Login in. To see it in action.</p>
             </div>
         </div>

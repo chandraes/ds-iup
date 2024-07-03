@@ -39,6 +39,14 @@
             width: 100%;
             table-layout: fixed;
         }
+
+        .img-header {
+            background-color: white;
+            border-radius: 50%;
+            padding: 5px;
+            margin-right: 15px;
+        }
+
     </style>
 
     <!-- Scripts -->
@@ -52,10 +60,10 @@
         </div>
     </div>
     <div id="app">
-        <nav class="navbar navbar-expand-md navbar-dark bg-primary bg-gradient shadow-sm">
+        <nav class="navbar navbar-expand-md navbar-dark bg-primary bg-gradient shadow-xl">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    <img src="{{asset('images/iup.png')}}" alt="DS CGM" class="img-responsive" width=40">
+                    <img src="{{asset('images/iup.png')}}" alt="DS CGM" class="img-responsive img-header" width=40">
                      <strong>PT INDOSUPPLY UNIVERSAL PERKASA</strong>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
