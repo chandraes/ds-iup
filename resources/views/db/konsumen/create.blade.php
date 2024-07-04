@@ -26,7 +26,7 @@
                                 placeholder="" required>
                         </div>
                         <div class="col-md-4 col-sm-6 mb-3">
-                            <label for="no_kantor" class="form-label">No Kantor</label>
+                            <label for="no_kantor" class="form-label">No Tlp Kantor</label>
                             <input type="text" class="form-control" name="no_kantor" id="no_kantor" aria-describedby="helpId" value="{{old('no_kantor')}}"
                                 placeholder="">
                         </div>
