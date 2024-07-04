@@ -11,14 +11,9 @@ class FormDepositController extends Controller
 {
     public function masuk()
     {
-
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
-        $kode = str_pad((KasBesar::max('nomor_deposit') + 1), 2, '0', STR_PAD_LEFT);
         $investor = InvestorModal::all();
 
         return view('billing.form-deposit.masuk', [
-            'rekening' => $rekening,
-            'kode' => $kode,
             'investor' => $investor,
         ]);
     }
@@ -28,6 +23,7 @@ class FormDepositController extends Controller
         $data = $request->validate([
             'nominal' => 'required',
             'investor_modal_id' => 'required|exists:investor_modals,id',
+            'ppn_kas' => 'required'
         ]);
 
         $db = new KasBesar();
@@ -48,19 +44,20 @@ class FormDepositController extends Controller
 
     public function getModalInvestorProject(Request $request)
     {
-        
+
     }
 
     public function keluar_store(Request $request)
     {
         $data = $request->validate([
             'nominal' => 'required',
+            'ppn_kas' => 'required', // Add this line
             'investor_modal_id' => 'required|exists:investor_modals,id',
         ]);
 
         $db = new KasBesar();
-        $modal = $db->modalInvestorTerakhir() * -1;
-        $saldo = $db->saldoTerakhir();
+        $modal = $db->modalInvestorTerakhir($data['ppn_kas']) * -1;
+        $saldo = $db->saldoTerakhir($data['ppn_kas']);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
@@ -87,10 +84,11 @@ class FormDepositController extends Controller
     {
         $data = $request->validate([
             'nominal' => 'required',
+            'ppn_kas' => 'required', // Add this line
         ]);
 
         $db = new KasBesar();
-        $saldo = $db->saldoTerakhir();
+        $saldo = $db->saldoTerakhir($data['ppn_kas']);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
@@ -101,5 +99,24 @@ class FormDepositController extends Controller
         $store = $db->withdrawAll($data);
 
         return redirect()->route('billing')->with($store['status'], $store['message']);
+    }
+
+    public function getRekening(Request $request)
+    {
+        $kas = $request->ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+        $rekening = Rekening::where('untuk', $kas)->first();
+
+        if(!$rekening){
+            return response()->json([
+                'status' => 0,
+                'message' => 'Rekening Tidak Ditemukan !!'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 1,
+            'data' => $rekening]);
+
     }
 }

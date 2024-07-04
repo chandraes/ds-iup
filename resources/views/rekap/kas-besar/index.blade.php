@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>REKAP KAS BESAR</u></h1>
+            <h1><u>REKAP KAS BESAR<br>{{$ppn_kas == 1 ? 'PPN' : 'NON PPN'}}</u></h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>
@@ -17,13 +17,13 @@
                     <td><a href="{{route('rekap')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
                     <td>
-                        <a href="{{route('rekap.kas-besar.print', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank"><img src="{{asset('images/print.svg')}}" alt="dokumen"
+                        <a href="{{route('rekap.kas-besar.print', ['bulan' => $bulan, 'tahun' => $tahun, 'ppn_kas' => $ppn_kas])}}" target="_blank"><img src="{{asset('images/print.svg')}}" alt="dokumen"
                             width="30"> PRINT PDF</a>
                     </td>
                 </tr>
             </table>
         </div>
-        <form action="{{route('rekap.kas-besar')}}" method="get" class="col-md-6">
+        <form action="{{route('rekap.kas-besar', ['ppn_kas' => $ppn_kas])}}" method="get" class="col-md-6">
             <div class="row mt-2">
                 <div class="col-md-4 mb-3">
                     <select class="form-select" name="bulan" id="bulan">

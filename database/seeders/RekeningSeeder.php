@@ -15,7 +15,13 @@ class RekeningSeeder extends Seeder
     {
         $data = [
             [
-                'untuk' => 'kas-besar',
+                'untuk' => 'kas-besar-ppn',
+                'bank' => 'BCA',
+                'no_rek' => '1234567890',
+                'nama_rek' => 'PT. ABC'
+            ],
+            [
+                'untuk' => 'kas-besar-non-ppn',
                 'bank' => 'BCA',
                 'no_rek' => '1234567890',
                 'nama_rek' => 'PT. ABC'

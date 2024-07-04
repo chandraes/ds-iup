@@ -17,14 +17,14 @@ class KasBesar extends Model
 
     protected $appends = ['nf_nominal', 'tanggal', 'kode_deposit', 'kode_kas_kecil', 'nf_saldo', 'nf_modal_investor'];
 
-    public function invoice_belanja()
-    {
-        return $this->belongsTo(InvoiceBelanja::class, 'invoice_belanja_id');
-    }
-
     public function investorModal()
     {
         return $this->belongsTo(InvestorModal::class);
+    }
+
+    public function generateNomorDeposit($ppn)
+    {
+        return $this->where('ppn_kas', $ppn)->max('nomor_deposit') + 1;
     }
 
     public function dataTahun()
@@ -62,30 +62,31 @@ class KasBesar extends Model
         return date('d-m-Y', strtotime($this->created_at));
     }
 
-    public function saldoTerakhir()
+    public function saldoTerakhir($ppn)
     {
-        return $this->orderBy('id', 'desc')->first()->saldo ?? 0;
+        return $this->where('ppn_kas', $ppn)->orderBy('id', 'desc')->first()->saldo ?? 0;
     }
 
-    public function modalInvestorTerakhir()
+    public function modalInvestorTerakhir($ppn)
     {
-        return $this->orderBy('id', 'desc')->first()->modal_investor_terakhir ?? 0;
+        return $this->where('ppn_kas', $ppn)->orderBy('id', 'desc')->first()->modal_investor_terakhir ?? 0;
     }
 
-    public function kasBesar($month, $year)
+    public function kasBesar($month, $year, $ppn)
     {
-        return $this->with(['invoice_belanja'])->whereMonth('created_at', $month)->whereYear('created_at', $year)->get();
+        return $this->where('ppn_kas', $ppn)->whereMonth('created_at', $month)->whereYear('created_at', $year)->get();
     }
 
-    public function kasBesarByMonth($month, $year)
+    public function kasBesarByMonth($month, $year, $ppn)
     {
-        $data = $this->whereMonth('created_at', $month)
+        $data = $this->where('ppn_kas', $ppn)
+            ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->orderBy('id', 'desc')
             ->first();
 
         if (!$data) {
-        $data = $this->where('created_at', '<', Carbon::create($year, $month, 1))
+        $data = $this->where('ppn_kas', $ppn)->where('created_at', '<', Carbon::create($year, $month, 1))
                 ->orderBy('id', 'desc')
                 ->first();
         }
@@ -95,13 +96,15 @@ class KasBesar extends Model
 
     public function deposit($data)
     {
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+        $kas = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+        $rekening = Rekening::where('untuk', $kas)->first();
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
-        $data['nomor_deposit'] = $this->max('nomor_deposit') + 1;
-        $data['saldo'] = $this->saldoTerakhir() + $data['nominal'];
+        $data['nomor_deposit'] = $this->generateNomorDeposit($data['ppn_kas']);
+        $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) + $data['nominal'];
         $data['modal_investor'] = -$data['nominal'];
-        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir() - $data['nominal'];
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']) - $data['nominal'];
         $data['jenis'] = 1;
         $data['no_rek'] = $rekening->no_rek;
         $data['bank'] = $rekening->bank;
@@ -112,6 +115,19 @@ class KasBesar extends Model
         try {
 
             $store = $this->create($data);
+
+            $kasPpn = [
+                'saldo' => $this->saldoTerakhir(1),
+                'modal_investor' => $this->modalInvestorTerakhir(1),
+            ];
+
+            $kasNonPpn = [
+                'saldo' => $this->saldoTerakhir(0),
+                'modal_investor' => $this->modalInvestorTerakhir(0),
+            ];
+
+            // sum modal investor
+            $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
 
             $this->tambahModal($store->nominal, $store->investor_modal_id);
 
@@ -126,10 +142,12 @@ class KasBesar extends Model
                         "Nama    : ".$store->nama_rek."\n".
                         "No. Rek : ".$store->no_rek."\n\n".
                         "==========================\n".
-                        "Sisa Saldo Kas Besar : \n".
-                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar PPN: \n".
+                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                        "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             DB::commit();
@@ -166,9 +184,9 @@ class KasBesar extends Model
 
         $data['uraian'] = "Withdraw";
         $data['nominal'] = str_replace('.', '', $data['nominal']);
-        $data['saldo'] = $this->saldoTerakhir() - $data['nominal'];
+        $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
         $data['modal_investor'] = $data['nominal'];
-        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir() + $data['nominal'];
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']) + $data['nominal'];
         $data['jenis'] = 0;
         $data['no_rek'] = $rekening->no_rek;
         $data['bank'] = $rekening->bank;
@@ -229,8 +247,8 @@ class KasBesar extends Model
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
         $data['nominal'] = 1000000;
         $data['nomor_kode_kas_kecil'] = $this->max('nomor_kode_kas_kecil') + 1;
-        $data['saldo'] = $this->saldoTerakhir() - $data['nominal'];
-        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir();
+        $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']);
         $data['jenis'] = 0;
         $data['no_rek'] = $rekening->no_rek;
         $data['bank'] = $rekening->bank;
@@ -245,13 +263,13 @@ class KasBesar extends Model
     {
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
-        $data['saldo'] = $this->saldoTerakhir() + $data['nominal'];
+        $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) + $data['nominal'];
         $data['jenis'] = 1;
         $data['no_rek'] = $rekening->no_rek;
         $data['bank'] = $rekening->bank;
         $data['nama_rek'] = $rekening->nama_rek;
         $data['lain_lain'] = 1;
-        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir();
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']);
 
         try {
             DB::beginTransaction();
@@ -300,8 +318,8 @@ class KasBesar extends Model
     public function lainKeluar($data)
     {
 
-        $data['saldo'] = $this->saldoTerakhir() - $data['nominal'];
-        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir();
+        $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']);
         $data['jenis'] = 0;
         $data['lain_lain'] = 1;
 
@@ -410,9 +428,9 @@ class KasBesar extends Model
                     'no_rek' => $data['no_rek'],
                     'bank' => $data['bank'],
                     'nama_rek' => $data['nama_rek'],
-                    'saldo' => $db->saldoTerakhir() - $data['nominal'],
+                    'saldo' => $db->saldoTerakhir($data['ppn_kas']) - $data['nominal'],
                     'modal_investor' => $data['nominal'],
-                    'modal_investor_terakhir' => $db->modalInvestorTerakhir() + $data['nominal'],
+                    'modal_investor_terakhir' => $db->modalInvestorTerakhir($data['ppn_kas']) + $data['nominal'],
                 ]);
 
                 $db->kurangModal($store->nominal, $store->investor_modal_id);
@@ -466,146 +484,146 @@ class KasBesar extends Model
 
     }
 
-    public function ppn_masuk_susulan($nominal)
-    {
+    // public function ppn_masuk_susulan($nominal)
+    // {
 
-        $nominal = str_replace('.', '', $nominal);
-
-
-        $persenInvestor = Investor::where('nama', 'investor')->first()->persentase;
-        $persenPengelola = Investor::where('nama', 'pengelola')->first()->persentase;
-        $rekeningPengelola = Rekening::where('untuk', 'pengelola')->first();
-        $investor = InvestorModal::where('persentase', '>', 0)->get();
-
-        $saldoTerakhir = $this->saldoTerakhir();
-        $nominalPengelola = $nominal * ($persenPengelola / 100);
-        $nominalInvestor = $nominal * ($persenInvestor / 100);
-
-        $pesan = [];
-        $pembagian = [];
-
-        if ($saldoTerakhir < $nominal) {
-            return [
-                'status' => 'error',
-                'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($saldoTerakhir, 0, ',', '.'),
-            ];
-        }
-
-        DB::beginTransaction();
-
-        try {
-
-            $store = $this->create([
-                        'uraian' => 'PPN Masukan Susulan Pengelola',
-                        'nominal' => $nominalPengelola,
-                        'saldo' => $this->saldoTerakhir() - $nominalPengelola,
-                        'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
-                        'jenis' => 0,
-                        'no_rek' => $rekeningPengelola->no_rek,
-                        'bank' => $rekeningPengelola->bank,
-                        'nama_rek' => $rekeningPengelola->nama_rek,
-                    ]);
-
-            $p1 =   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*PPN Masukan Susulan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Uraian : ".$store['uraian']."\n\n".
-                    "Nilai :  *Rp. ".number_format($store['nominal'], 0, ',', '.')."*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    "Bank      : ".$rekeningPengelola->bank."\n".
-                    "Nama    : ".$rekeningPengelola->nama_rek."\n".
-                    "No. Rek : ".$rekeningPengelola->no_rek."\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Besar : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Total Modal Investor : \n".
-                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
-
-            array_push($pesan, $p1);
-
-            foreach($investor as $i)
-            {
-                $pembagian[] = [
-                    'uraian' => 'PPn Masukan Susulan '. $i->nama,
-                    'nominal' => $nominalInvestor * $i->persentase / 100,
-                    'jenis' => 0,
-                    'investor_modal_id' => $i->id,
-                    'no_rek' => $i->no_rek,
-                    'bank' => $i->bank,
-                    'nama_rek' => $i->nama_rek,
-                ];
-            }
-
-            $total = array_sum(array_column($pembagian, 'nominal'));
-            if ($total > $nominalInvestor) {
-                $pembagian[0]['nominal'] -= $total - $nominalInvestor;
-            } elseif ($total < $nominalInvestor) {
-                $pembagian[0]['nominal'] += $nominalInvestor - $total;
-            }
-
-            foreach($pembagian as $p)
-            {
-                $store = $this->create([
-                    'uraian' => $p['uraian'],
-                    'nominal' => $p['nominal'],
-                    'jenis' => $p['jenis'],
-                    'investor_modal_id' => $p['investor_modal_id'],
-                    'no_rek' => $p['no_rek'],
-                    'bank' => $p['bank'],
-                    'nama_rek' => $p['nama_rek'],
-                    'saldo' => $this->saldoTerakhir() - $p['nominal'],
-                    'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
-                ]);
-
-                $p2 =   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                        "*PPN Masukan Susulan*\n".
-                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        "Uraian : ".$store->uraian."\n".
-                        "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
-                        "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
-                        "==========================\n".
-                        "Sisa Saldo Kas Besar : \n".
-                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                        "Total Modal Investor : \n".
-                        "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                        "Terima kasih 🙏🙏🙏\n";
-
-                array_push($pesan, $p2);
-
-            }
-
-            DB::commit();
+    //     $nominal = str_replace('.', '', $nominal);
 
 
+    //     $persenInvestor = Investor::where('nama', 'investor')->first()->persentase;
+    //     $persenPengelola = Investor::where('nama', 'pengelola')->first()->persentase;
+    //     $rekeningPengelola = Rekening::where('untuk', 'pengelola')->first();
+    //     $investor = InvestorModal::where('persentase', '>', 0)->get();
 
-        } catch (\Throwable $th) {
+    //     $saldoTerakhir = $this->saldoTerakhir();
+    //     $nominalPengelola = $nominal * ($persenPengelola / 100);
+    //     $nominalInvestor = $nominal * ($persenInvestor / 100);
 
-            DB::rollback();
+    //     $pesan = [];
+    //     $pembagian = [];
 
-            return [
-                'status' => 'error',
-                'message' => $th->getMessage(),
-            ];
-        }
+    //     if ($saldoTerakhir < $nominal) {
+    //         return [
+    //             'status' => 'error',
+    //             'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($saldoTerakhir, 0, ',', '.'),
+    //         ];
+    //     }
 
-        $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+    //     DB::beginTransaction();
 
-        foreach($pesan as $p)
-        {
-            $this->sendWa($tujuan, $p);
-        }
+    //     try {
 
-        return [
-            'status' => 'success',
-            'message' => 'Berhasil menambahkan data',
-        ];
+    //         $store = $this->create([
+    //                     'uraian' => 'PPN Masukan Susulan Pengelola',
+    //                     'nominal' => $nominalPengelola,
+    //                     'saldo' => $this->saldoTerakhir() - $nominalPengelola,
+    //                     'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
+    //                     'jenis' => 0,
+    //                     'no_rek' => $rekeningPengelola->no_rek,
+    //                     'bank' => $rekeningPengelola->bank,
+    //                     'nama_rek' => $rekeningPengelola->nama_rek,
+    //                 ]);
+
+    //         $p1 =   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+    //                 "*PPN Masukan Susulan*\n".
+    //                 "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+    //                 "Uraian : ".$store['uraian']."\n\n".
+    //                 "Nilai :  *Rp. ".number_format($store['nominal'], 0, ',', '.')."*\n\n".
+    //                 "Ditransfer ke rek:\n\n".
+    //                 "Bank      : ".$rekeningPengelola->bank."\n".
+    //                 "Nama    : ".$rekeningPengelola->nama_rek."\n".
+    //                 "No. Rek : ".$rekeningPengelola->no_rek."\n\n".
+    //                 "==========================\n".
+    //                 "Sisa Saldo Kas Besar : \n".
+    //                 "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+    //                 "Total Modal Investor : \n".
+    //                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+    //                 "Terima kasih 🙏🙏🙏\n";
+
+    //         array_push($pesan, $p1);
+
+    //         foreach($investor as $i)
+    //         {
+    //             $pembagian[] = [
+    //                 'uraian' => 'PPn Masukan Susulan '. $i->nama,
+    //                 'nominal' => $nominalInvestor * $i->persentase / 100,
+    //                 'jenis' => 0,
+    //                 'investor_modal_id' => $i->id,
+    //                 'no_rek' => $i->no_rek,
+    //                 'bank' => $i->bank,
+    //                 'nama_rek' => $i->nama_rek,
+    //             ];
+    //         }
+
+    //         $total = array_sum(array_column($pembagian, 'nominal'));
+    //         if ($total > $nominalInvestor) {
+    //             $pembagian[0]['nominal'] -= $total - $nominalInvestor;
+    //         } elseif ($total < $nominalInvestor) {
+    //             $pembagian[0]['nominal'] += $nominalInvestor - $total;
+    //         }
+
+    //         foreach($pembagian as $p)
+    //         {
+    //             $store = $this->create([
+    //                 'uraian' => $p['uraian'],
+    //                 'nominal' => $p['nominal'],
+    //                 'jenis' => $p['jenis'],
+    //                 'investor_modal_id' => $p['investor_modal_id'],
+    //                 'no_rek' => $p['no_rek'],
+    //                 'bank' => $p['bank'],
+    //                 'nama_rek' => $p['nama_rek'],
+    //                 'saldo' => $this->saldoTerakhir() - $p['nominal'],
+    //                 'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
+    //             ]);
+
+    //             $p2 =   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+    //                     "*PPN Masukan Susulan*\n".
+    //                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+    //                     "Uraian : ".$store->uraian."\n".
+    //                     "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+    //                     "Ditransfer ke rek:\n\n".
+    //                     "Bank      : ".$store->bank."\n".
+    //                     "Nama    : ".$store->nama_rek."\n".
+    //                     "No. Rek : ".$store->no_rek."\n\n".
+    //                     "==========================\n".
+    //                     "Sisa Saldo Kas Besar : \n".
+    //                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+    //                     "Total Modal Investor : \n".
+    //                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+    //                     "Terima kasih 🙏🙏🙏\n";
+
+    //             array_push($pesan, $p2);
+
+    //         }
+
+    //         DB::commit();
 
 
-    }
+
+    //     } catch (\Throwable $th) {
+
+    //         DB::rollback();
+
+    //         return [
+    //             'status' => 'error',
+    //             'message' => $th->getMessage(),
+    //         ];
+    //     }
+
+    //     $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
+    //     foreach($pesan as $p)
+    //     {
+    //         $this->sendWa($tujuan, $p);
+    //     }
+
+    //     return [
+    //         'status' => 'success',
+    //         'message' => 'Berhasil menambahkan data',
+    //     ];
+
+
+    // }
 
     public function cost_operational($data)
     {
@@ -617,16 +635,16 @@ class KasBesar extends Model
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $data['jenis'] = 0;
-        $data['saldo'] = $this->saldoTerakhir() - $data['nominal'];
+        $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
 
         if ($data['saldo'] < $data['nominal']) {
             return [
                 'status' => 'error',
-                'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($this->saldoTerakhir(), 0, ',', '.'),
+                'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($this->saldoTerakhir($data['ppn_kas']), 0, ',', '.'),
             ];
         }
 
-        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir();
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']);
 
         try {
             DB::beginTransaction();

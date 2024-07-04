@@ -10,13 +10,6 @@
         @csrf
         <div class="row">
             <div class="col-md-4 mb-3">
-                <label for="nominal" class="form-label">Kode</label>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1">D</span>
-                    <input type="text" class="form-control" value="{{$kode}}">
-                  </div>
-            </div>
-            <div class="col-md-4 mb-3">
                 <label for="uraian" class="form-label">Tanggal</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
@@ -27,6 +20,18 @@
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
                 @endif" name="uraian" id="uraian" required value="Deposit" disabled>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-4 mb-3">
+                <div class="mb-3">
+                    <label for="ppn_kas" class="form-label">Kas</label>
+                    <select class="form-select" name="ppn_kas" id="ppn_kas" required onchange="getRek()">
+                        <option value="" disabled selected>-- Pilih Kas Besar --</option>
+                        <option value="1" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar PPN</option>
+                        <option value="0" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar NON PPN</option>
+                    </select>
+                </div>
             </div>
             <div class="col-md-4 mb-3">
                 <div class="mb-3">
@@ -60,13 +65,13 @@
         <div class="row">
 
             <div class="col-md-4 mb-3">
-                <label for="transfer_ke" class="form-label">Nama</label>
-                <input type="text" class="form-control @if ($errors->has('transfer_ke'))
+                <label for="nama_rek" class="form-label">Nama</label>
+                <input type="text" class="form-control @if ($errors->has('nama_rek'))
                     is-invalid
-                @endif" name="transfer_ke" id="transfer_ke" disabled value="{{$rekening->nama_rek}}">
-                @if ($errors->has('transfer_ke'))
+                @endif" name="nama_rek" id="nama_rek" disabled>
+                @if ($errors->has('nama_rek'))
                 <div class="invalid-feedback">
-                    {{$errors->first('transfer_ke')}}
+                    {{$errors->first('nama_rek')}}
                 </div>
                 @endif
             </div>
@@ -74,7 +79,7 @@
                 <label for="bank" class="form-label">Bank</label>
                 <input type="text" class="form-control @if ($errors->has('bank'))
                     is-invalid
-                @endif" name="bank" id="bank" disabled value="{{$rekening->bank}}">
+                @endif" name="bank" id="bank" disabled>
                 @if ($errors->has('bank'))
                 <div class="invalid-feedback">
                     {{$errors->first('bank')}}
@@ -82,17 +87,16 @@
                 @endif
             </div>
             <div class="col-md-4 mb-3">
-                <label for="no_rekening" class="form-label">Nomor Rekening</label>
-                <input type="text" class="form-control @if ($errors->has('no_rekening'))
+                <label for="no_rek" class="form-label">Nomor Rekening</label>
+                <input type="text" class="form-control @if ($errors->has('no_rek'))
                     is-invalid
-                @endif" name="no_rekening" id="no_rekening" disabled value="{{$rekening->no_rek}}">
-                @if ($errors->has('no_rekening'))
+                @endif" name="no_rek" id="no_rek" disabled>
+                @if ($errors->has('no_rek'))
                 <div class="invalid-feedback">
-                    {{$errors->first('no_rekening')}}
+                    {{$errors->first('no_rek')}}
                 </div>
                 @endif
             </div>
-            <input type="hidden" name="no_rekening" value="12351293851203">
         </div>
 
         <div class="d-grid gap-3 mt-3">
@@ -110,6 +114,35 @@
     <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
     <script src="{{asset('assets/js/cleave.min.js')}}"></script>
     <script>
+
+        function getRek()
+        {
+            var ppn_kas = $('#ppn_kas').val();
+
+            $.ajax({
+                url: "{{route('form-deposit.get-rekening')}}",
+                type: 'GET',
+                data: {ppn_kas: ppn_kas},
+                success: function(data){
+                    if(data.status == 0)
+                    {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: data.message,
+                        });
+                        $('#nama_rek').val('');
+                        $('#bank').val('');
+                        $('#no_rek').val('');
+                        return;
+                    } else {
+                        $('#nama_rek').val(data.data.nama_rek);
+                        $('#bank').val(data.data.bank);
+                        $('#no_rek').val(data.data.no_rek);
+                    }
+                }
+            });
+        }
 
         $('#investor_modal_id').select2({
             theme: 'bootstrap-5',

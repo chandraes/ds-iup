@@ -29,7 +29,7 @@ class RekapController extends Controller
         ]);
     }
 
-    public function kas_besar(Request $request)
+    public function kas_besar(Request $request, int $ppn_kas)
     {
         $kas = new KasBesar();
 
@@ -38,7 +38,7 @@ class RekapController extends Controller
 
         $dataTahun = $kas->dataTahun();
 
-        $data = $kas->kasBesar($bulan, $tahun);
+        $data = $kas->kasBesar($bulan, $tahun, $ppn_kas);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -46,7 +46,7 @@ class RekapController extends Controller
         $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
-        $dataSebelumnya = $kas->kasBesarByMonth($bulanSebelumnya, $tahunSebelumnya);
+        $dataSebelumnya = $kas->kasBesarByMonth($bulanSebelumnya, $tahunSebelumnya, $ppn_kas);
 
         return view('rekap.kas-besar.index', [
             'data' => $data,
@@ -57,17 +57,18 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+            'ppn_kas' => $ppn_kas,
         ]);
     }
 
-    public function kas_besar_print(Request $request)
+    public function kas_besar_print(Request $request, int $ppn_kas)
     {
         $kas = new KasBesar();
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
 
-        $data = $kas->kasBesar($bulan, $tahun);
+        $data = $kas->kasBesar($bulan, $tahun, $ppn_kas);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -75,7 +76,7 @@ class RekapController extends Controller
         $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
-        $dataSebelumnya = $kas->kasBesarByMonth($bulanSebelumnya, $tahunSebelumnya);
+        $dataSebelumnya = $kas->kasBesarByMonth($bulanSebelumnya, $tahunSebelumnya, $ppn_kas);
 
         $pdf = PDF::loadview('rekap.kas-besar.pdf', [
             'data' => $data,
@@ -308,13 +309,6 @@ class RekapController extends Controller
         return abort(404);
     }
 
-    public function detail_belanja(InvoiceBelanja $invoice)
-    {
-        return view('rekap.kas-besar.detail-belanja', [
-            'data' => $invoice->load(['rekap', 'rekap.bahan_baku', 'rekap.satuan', 'rekap.bahan_baku.kategori', 'rekap.kemasan.satuan', 'rekap.packaging.satuan']),
-        ]);
-    }
-
     public function konsumen(Request $request)
     {
         $data = $request->validate([
@@ -352,51 +346,6 @@ class RekapController extends Controller
             'stringBulanNow' => $stringBulanNow,
         ]);
 
-    }
-
-    public function invoice_penjualan(Request $request)
-    {
-        $kas = new InvoiceJual();
-
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
-
-        $dataTahun = $kas->dataTahun();
-        $data = $kas->rekapInvoice($bulan, $tahun);
-
-        $bulanSebelumnya = $bulan - 1;
-        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-
-        $dataSebelumnya = $kas->rekapInvoiceByMonth($bulanSebelumnya, $tahunSebelumnya);
-
-        return view('rekap.invoice-jual.index', [
-            'data' => $data,
-            'dataTahun' => $dataTahun,
-            'dataSebelumnya' => $dataSebelumnya,
-            'stringBulan' => $stringBulan,
-            'tahun' => $tahun,
-            'tahunSebelumnya' => $tahunSebelumnya,
-            'bulan' => $bulan,
-            'stringBulanNow' => $stringBulanNow,
-        ]);
-    }
-
-    public function invoice_penjualan_detail(InvoiceJual $invoice)
-    {
-        $data = $invoice->detail;
-
-        $groupedData = $data->groupBy(function($item, $key) {
-            return $item->product_jadi->product->kategori->id;
-        });
-
-        return view('rekap.invoice-jual.detail', [
-            'groupedData' => $groupedData,
-            'invoice' => $invoice->load('konsumen'),
-
-        ]);
     }
 
     public function pph_masa(Request $request)

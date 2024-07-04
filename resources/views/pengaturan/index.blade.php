@@ -5,25 +5,25 @@
 </div>
 <div class="container mt-5">
     <div class="row justify-content-left">
-        <div class="col-lg-3 col-md-4 text-center mt-3">
+        <div class="col-lg-3 col-md-4 text-center mt-3 mb-5">
             <a href="{{route('pengaturan.aplikasi')}}" class="text-decoration-none">
                 <img src="{{asset('images/aplikasi.svg')}}" alt="" width="70">
                 <h4 class="mt-2">APLIKASI</h4>
             </a>
         </div>
-        <div class="col-lg-3 col-md-4 text-center mt-3">
+        <div class="col-lg-3 col-md-4 text-center mt-3 mb-5">
             <a href="{{route('pengaturan.akun')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengguna.svg')}}" alt="" width="70">
                 <h4 class="mt-2">AKUN</h4>
             </a>
         </div>
-        <div class="col-lg-3 col-md-4 text-center mt-3">
+        <div class="col-lg-3 col-md-4 text-center mt-3 mb-5">
             <a href="{{route('pengaturan.wa')}}" class="text-decoration-none">
                 <img src="{{asset('images/wa.svg')}}" alt="" width="70">
                 <h4 class="mt-2">GROUP WHATSAPP</h4>
             </a>
         </div>
-        <div class="col-lg-3 col-md-4 text-center mt-3">
+        <div class="col-lg-3 col-md-4 text-center mt-3 mb-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#passwordKonfirmasi">
                 <img src="{{asset('images/password.svg')}}" alt="" width="70">
                 <h4 class="mt-2">Password Konfirmasi</h4>
@@ -72,7 +72,7 @@
             <h4 class="mt-2">HISTORI PESAN WA</h4>
         </a>
     </div>
-    <div class="col-lg-3 col-md-4 text-center mt-3">
+    <div class="col-lg-3 col-md-4 text-center mt-3 mb-5">
         <a href="{{route('home')}}" class="text-decoration-none">
             <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
             <h4 class="mt-2">Dashboard</h4>
