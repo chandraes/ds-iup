@@ -32,7 +32,7 @@ class FormKasKecilController extends Controller
         $store = $db->masukKasKecil();
 
         $kb = new KasBesar();
-        $saldo = $kb->saldoTerakhir();
+        $saldo = $kb->saldoTerakhir(1);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".

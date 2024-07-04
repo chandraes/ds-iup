@@ -264,6 +264,7 @@ class KasBesar extends Model
         $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
         $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']);
         $data['jenis'] = 0;
+        $data['ppn_kas'] = 1;
         $data['no_rek'] = $rekening->no_rek;
         $data['bank'] = $rekening->bank;
         $data['nama_rek'] = $rekening->nama_rek;
@@ -275,7 +276,9 @@ class KasBesar extends Model
 
     public function lainMasuk($data)
     {
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+        $kas = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+        $rekening = Rekening::where('untuk', $kas)->first();
 
         $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) + $data['nominal'];
         $data['jenis'] = 1;
@@ -289,6 +292,19 @@ class KasBesar extends Model
             DB::beginTransaction();
 
             $store = $this->create($data);
+
+            $kasPpn = [
+                'saldo' => $this->saldoTerakhir(1),
+                'modal_investor' => $this->modalInvestorTerakhir(1),
+            ];
+
+            $kasNonPpn = [
+                'saldo' => $this->saldoTerakhir(0),
+                'modal_investor' => $this->modalInvestorTerakhir(0),
+            ];
+
+            // sum modal investor
+            $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
 
             DB::commit();
 
@@ -304,10 +320,12 @@ class KasBesar extends Model
                     "Nama    : ".$store->nama_rek."\n".
                     "No. Rek : ".$store->no_rek."\n\n".
                     "==========================\n".
-                    "Sisa Saldo Kas Besar : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Sisa Saldo Kas Besar PPN: \n".
+                    "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                    "Sisa Saldo Kas Besar  NON PPN: \n".
+                    "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
-                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
             $this->sendWa($group->nama_group, $pesan);

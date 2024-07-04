@@ -29,6 +29,7 @@ class FormLainController extends Controller
         $data = $request->validate([
             'uraian' => 'required',
             'nominal' => 'required',
+            'ppn_kas' => 'required',
         ]);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
@@ -68,10 +69,11 @@ class FormLainController extends Controller
             'nama_rek' => 'required',
             'no_rek' => 'required',
             'bank' => 'required',
+            'ppn_kas' => 'required',
         ]);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
-        
+
         $role = ['admin', 'su'];
 
         if (!in_array(auth()->user()->role, $role)){
@@ -82,7 +84,7 @@ class FormLainController extends Controller
             }
         }
         $db = new KasBesar;
-        $saldo = $db->saldoTerakhir();
+        $saldo = $db->saldoTerakhir($data['ppn_kas']);
 
         if ($saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Tidak Mencukupi');
@@ -91,6 +93,19 @@ class FormLainController extends Controller
         DB::beginTransaction();
 
         $store = $db->lainKeluar($data);
+
+        $kasPpn = [
+            'saldo' => $db->saldoTerakhir(1),
+            'modal_investor' => $db->modalInvestorTerakhir(1),
+        ];
+
+        $kasNonPpn = [
+            'saldo' => $db->saldoTerakhir(0),
+            'modal_investor' => $db->modalInvestorTerakhir(0),
+        ];
+
+        // sum modal investor
+        $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
@@ -104,10 +119,12 @@ class FormLainController extends Controller
                 "Nama    : ".$store->nama_rek."\n".
                 "No. Rek : ".$store->no_rek."\n\n".
                 "==========================\n".
-                "Sisa Saldo Kas Besar : \n".
-                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                "Sisa Saldo Kas Besar PPN: \n".
+                "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                "Sisa Saldo Kas Besar  NON PPN: \n".
+                "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
-                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
