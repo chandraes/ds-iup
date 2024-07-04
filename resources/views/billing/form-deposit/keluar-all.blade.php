@@ -25,6 +25,14 @@
                 @endif" name="uraian" id="uraian" required value="{{date('d M Y')}}" disabled>
             </div>
             <div class="col-md-6 mb-3">
+                <label for="ppn_kas" class="form-label">Kas</label>
+                <select class="form-select" name="ppn_kas" id="ppn_kas" required>
+                    <option value="" disabled selected>-- Pilih Kas Besar --</option>
+                    <option value="1" {{old('ppn_kas')==1 ? 'selected' : '' }}>Kas Besar PPN</option>
+                    <option value="0" {{old('ppn_kas')==1 ? 'selected' : '' }}>Kas Besar NON PPN</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
                 <label for="nominal" class="form-label">Nominal</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
@@ -42,27 +50,28 @@
         <hr>
         <div class="row">
             @foreach ($investor as $i)
-                @if ($i->persentase > 0)
-                    <div class="col-md-6 mb-3">
-                        <label for="nama" class="form-label">Nama</label>
-                        <input type="text" class="form-control" name="nama" id="nama" value="{{$i->nama}}" disabled/>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="nominal" class="form-label">Nominal ({{$i->persentase}}%)</label>
-                        <div class="input-group mb-3">
-                            <span class="input-group-text" id="basic-addon1">Rp</span>
-                            <input type="text" class="form-control @if ($errors->has('nominal'))
+            @if ($i->persentase > 0)
+            <div class="col-md-6 mb-3">
+                <label for="nama" class="form-label">Nama</label>
+                <input type="text" class="form-control" name="nama" id="nama" value="{{$i->nama}}" disabled />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="nominal" class="form-label">Nominal ({{$i->persentase}}%)</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Rp</span>
+                    <input type="text" class="form-control @if ($errors->has('nominal'))
                             is-invalid
-                        @endif" name="nilai" required data-thousands="." value="{{old('nominal')}}" disabled id="nilai-{{$i->id}}" >
-                        </div>
-                        @if ($errors->has('nominal'))
-                        <div class="invalid-feedback">
-                            {{$errors->first('nominal')}}
-                        </div>
-                        @endif
-                        <small id="infoText-{{$i->id}}" class="form-text text-danger"></small>
-                    </div>
+                        @endif" name="nilai" required data-thousands="." value="{{old('nominal')}}" disabled
+                        id="nilai-{{$i->id}}">
+                </div>
+                @if ($errors->has('nominal'))
+                <div class="invalid-feedback">
+                    {{$errors->first('nominal')}}
+                </div>
                 @endif
+                <small id="infoText-{{$i->id}}" class="form-text text-danger"></small>
+            </div>
+            @endif
             @endforeach
         </div>
         <div class="d-grid gap-3 mt-3">

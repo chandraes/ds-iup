@@ -32,6 +32,16 @@
             </div>
             <div class="col-md-6 mb-3">
                 <div class="mb-3">
+                    <label for="ppn_kas" class="form-label">Kas</label>
+                    <select class="form-select" name="ppn_kas" id="ppn_kas" required>
+                        <option value="" disabled selected>-- Pilih Kas Besar --</option>
+                        <option value="1" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar PPN</option>
+                        <option value="0" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar NON PPN</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="mb-3">
                     <label for="investor_modal_id" class="form-label">Investor Modal</label>
                     <select class="form-select" name="investor_modal_id" id="investor_modal_id" required>
                         <option value="">-- Pilih Investor --</option>

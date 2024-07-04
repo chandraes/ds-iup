@@ -42,11 +42,6 @@ class FormDepositController extends Controller
         ]);
     }
 
-    public function getModalInvestorProject(Request $request)
-    {
-
-    }
-
     public function keluar_store(Request $request)
     {
         $data = $request->validate([
