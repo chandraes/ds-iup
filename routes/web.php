@@ -165,6 +165,17 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::patch('/update/{cost}', [App\Http\Controllers\DatabaseController::class, 'cost_operational_update'])->name('db.cost-operational.update');
                 Route::delete('/delete/{cost}', [App\Http\Controllers\DatabaseController::class, 'cost_operational_delete'])->name('db.cost-operational.delete');
             });
+
+            Route::prefix('barang-unit')->group(function(){
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'unit'])->name('db.unit');
+                Route::post('/store', [App\Http\Controllers\BarangController::class, 'unit_store'])->name('db.unit.store');
+                Route::patch('/update/{unit}', [App\Http\Controllers\BarangController::class, 'unit_update'])->name('db.unit.update');
+                Route::delete('/delete/{unit}', [App\Http\Controllers\BarangController::class, 'unit_delete'])->name('db.unit.delete');
+
+                Route::post('/type/store', [App\Http\Controllers\BarangController::class, 'type_store'])->name('db.unit.type.store');
+                Route::patch('/type/update/{type}', [App\Http\Controllers\BarangController::class, 'type_update'])->name('db.unit.type.update');
+                Route::delete('/type/delete/{type}', [App\Http\Controllers\BarangController::class, 'type_delete'])->name('db.unit.type.delete');
+            });
         });
     });
 

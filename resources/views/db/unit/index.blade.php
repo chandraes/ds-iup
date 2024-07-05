@@ -4,11 +4,13 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>DIREKSI & STAFF</u></h1>
+            <h1><u>KATEGORI MERK UNIT</u></h1>
         </div>
     </div>
     @include('swal')
-    @include('db.karyawan.create-jabatan')
+    @include('db.unit.create-unit')
+    @include('db.unit.create')
+    @include('db.unit.edit')
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
@@ -20,11 +22,12 @@
                             Database</a></td>
                     <td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img
-                                src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Jabatan</a>
+                                src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Unit</a>
                     </td>
                     <td>
-                        <a href="{{route('db.staff.create')}}" class="btn btn-outline-primary">
-                            <img src=" {{asset('images/karyawan.svg')}}" alt="dokumen" width="30"> Tambah Staff</a>
+                        <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal"
+                            data-bs-target="#createModal">
+                            <img src=" {{asset('images/unit.svg')}}" alt="dokumen" width="30"> Tambah Type</a>
                     </td>
                 </tr>
             </table>
@@ -36,46 +39,51 @@
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle" style="width: 15px">No</th>
-                <th class="text-center align-middle">Nama</th>
-                <th class="text-center align-middle">Panggilan</th>
-                <th class="text-center align-middle">Jabatan</th>
-                <th class="text-center align-middle">Informasi Bank</th>
-                <th class="text-center align-middle">Status</th>
+                <th class="text-center align-middle">Unit</th>
+                <th class="text-center align-middle">Tipe</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
         <tbody>
+            @php $counter = 1; @endphp
             @foreach ($data as $d)
-                <tr>
-                    <td class="text-center align-middle">{{$loop->iteration}}</td>
-                    <td class="text-start align-middle">{{$d->nama}}</td>
-                    <td class="text-start align-middle">{{$d->nickname}}</td>
-                    <td class="text-center align-middle">{{$d->jabatan->nama}}</td>
-                    <td class="text-start align-middle">
-                        <ul>
-                            <li>Nama Rekening : {{$d->nama_rek}}</li>
-                            <li>Nomor Rekening : {{$d->no_rek}}</li>
-                            <li>Bank : {{$d->bank}}</li>
-                        </ul>
-                    </td>
-                    <td class="text-center align-middle">
-                        @if ($d->status == 1)
-                        <h4><span class="badge bg-success text-white">Aktif</span></h4>
-                        @elseif($d->status == 0)
-                        <h4><span class="badge bg-danger text-white">Tidak Aktif</span></h4>
-                        @endif
-                    </td>
-                    <td class="text-center align-middle">
-                        <a href="{{route('db.staff.edit', $d->id)}}" class="btn btn-warning"><i
-                                class="fa fa-edit"></i></a>
-                        <form action="{{route('db.staff.delete', $d->id)}}" method="post" class="d-inline delete-form" id="deleteForm{{$d->id}}" data-id="{{$d->id}}">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="btn btn-danger" ><i
-                                    class="fa fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
+            @if ($d->types)
+            @php
+            $rowspan = $d->types->count();
+            @endphp
+            @foreach ($d->types as $t)
+            <tr>
+                @if ($loop->first)
+                <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$counter}}</td>
+                <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$d->nama}}</td>
+                <td class="text-start align-middle">{{$t->nama}}</td>
+                <td class="text-center align-middle">
+                    <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
+                        onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
+                    <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                        id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
+                        @csrf
+                        @method('delete')
+                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+                @php $counter++; @endphp
+                @else
+                <td class="text-start align-middle">{{$t->nama}}</td>
+                <td class="text-center align-middle">
+                    <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
+                        onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
+                    <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                        id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
+                        @csrf
+                        @method('delete')
+                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                    </form>
+                </td>
+                @endif
+            </tr>
+            @endforeach
+            @endif
             @endforeach
         </tbody>
         <tfoot>
@@ -92,7 +100,13 @@
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-
+    function editFun(data)
+    {
+        document.getElementById('edit_nama').value = data.nama;
+        document.getElementById('edit_barang_unit_id').value = data.barang_unit_id;
+        document.getElementById('editForm').action = `{{route('db.unit.type.update', ':id')}}`.replace(':id', data.id);
+    }
+    confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
 
     function toggleNamaJabatan(id) {
 
@@ -109,16 +123,6 @@
             $('#buttonJabatan-'+id).attr('hidden', true);
         }
     }
-
-    $(document).ready(function() {
-        $('#dataTable').DataTable({
-            "paging": false,
-            "scrollCollapse": true,
-            "scrollY": "550px",
-        });
-
-    } );
-
 
     $('.delete-form').submit(function(e){
         e.preventDefault();
