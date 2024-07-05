@@ -378,8 +378,8 @@ class DatabaseController extends Controller
             'kota' => 'required',
             'alamat' => 'required',
             'pembayaran' => 'required',
-            'plafon' => 'required',
-            'tempo_hari' => 'required'
+            'plafon' => 'required_if:pembayaran,1',
+            'tempo_hari' => 'required_if:pembayaran,1',
         ]);
 
         $db = new Konsumen();
@@ -419,44 +419,6 @@ class DatabaseController extends Controller
         $konsumen->delete();
 
         return redirect()->route('db.konsumen')->with('success', 'Data berhasil dihapus');
-    }
-
-    public function satuan()
-    {
-        $data = Satuan::all();
-
-        return view('db.satuan.index', [
-            'data' => $data
-        ]);
-    }
-
-    public function satuan_store(Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required'
-        ]);
-
-        Satuan::create($data);
-
-        return redirect()->route('db.satuan')->with('success', 'Data berhasil ditambahkan');
-    }
-
-    public function satuan_update(Satuan $satuan, Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required'
-        ]);
-
-        $satuan->update($data);
-
-        return redirect()->route('db.satuan')->with('success', 'Data berhasil diupdate');
-    }
-
-    public function satuan_delete(Satuan $satuan)
-    {
-        $satuan->delete();
-
-        return redirect()->route('db.satuan')->with('success', 'Data berhasil dihapus');
     }
 
     public function supplier()
@@ -513,142 +475,6 @@ class DatabaseController extends Controller
         $supplier->delete();
 
         return redirect()->route('db.supplier')->with('success', 'Data berhasil dihapus');
-    }
-
-    public function kemasan()
-    {
-        $data = Product::has('kemasan')->with(['kemasan.kategori', 'kategori', 'kemasan.satuan', 'kemasan.packaging'])->get();
-        $satuan = Satuan::where('nama', 'like', '%buah%')->get();
-        $product = Product::with(['kategori'])->get();
-        $packaging = Packaging::all();
-        $kategori = KemasanKategori::all();
-
-        return view('db.kemasan.index', [
-            'data' => $data,
-            'satuan' => $satuan,
-            'packaging' => $packaging,
-            'product' => $product,
-            'kategori' => $kategori
-        ]);
-    }
-
-    public function kemasan_store(Request $request)
-    {
-        $data= $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'satuan_id' => 'required',
-            'konversi_liter' => 'required',
-            'packaging_id' => 'required',
-            'kemasan_kategori_id' => [
-                'required',
-                'exists:kemasan_kategoris,id',
-                Rule::unique('kemasans') // ganti 'your_table_name' dengan nama tabel yang sesuai
-                    ->where(function ($query) use ($request) {
-                        return $query->where('product_id', $request->product_id)
-                                     ->where('kemasan_kategori_id', $request->kemasan_kategori_id);
-                    })
-            ],
-
-        ]);
-
-        $data['nama'] = KemasanKategori::find($data['kemasan_kategori_id'])->nama;
-
-        if ($data['packaging_id'] == 0) {
-            $data['packaging_id'] = null;
-        }
-
-        Kemasan::create($data);
-
-        return redirect()->route('db.kemasan')->with('success', 'Data berhasil ditambahkan');
-    }
-
-    public function kemasan_update(Kemasan $kemasan, Request $request)
-    {
-        $data = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'satuan_id' => 'required',
-            'konversi_liter' => 'required',
-            'packaging_id' => 'required',
-            'kemasan_kategori_id' => [
-                'required',
-                'exists:kemasan_kategoris,id',
-                Rule::unique('kemasans')
-                    ->where(function ($query) use ($request) {
-                        return $query->where('product_id', $request->product_id)
-                                    ->where('kemasan_kategori_id', $request->kemasan_kategori_id);
-                    })
-                    ->ignore($kemasan->id)
-            ],
-        ]);
-
-        $data['nama'] = KemasanKategori::find($data['kemasan_kategori_id'])->nama;
-
-        if ($data['packaging_id'] == 0) {
-            $data['packaging_id'] = null;
-        }
-
-        $kemasan->update($data);
-
-        return redirect()->route('db.kemasan')->with('success', 'Data berhasil diupdate');
-    }
-
-    public function kemasan_delete(Kemasan $kemasan)
-    {
-        if ($kemasan->stok > 0) {
-            return redirect()->route('db.kemasan')->with('error', 'Data tidak bisa dihapus karena masih ada stok');
-        }
-
-        $kemasan->delete();
-
-        return redirect()->route('db.kemasan')->with('success', 'Data berhasil dihapus');
-    }
-
-    public function packaging()
-    {
-        $data = Packaging::all();
-        $satuan = Satuan::all();
-
-        return view('db.packaging.index', [
-            'data' => $data,
-            'satuan' => $satuan,
-        ]);
-    }
-
-    public function packaging_store(Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required',
-            'satuan_id' => 'required',
-            'konversi_kemasan' => 'required',
-        ]);
-
-        Packaging::create($data);
-
-        return redirect()->route('db.packaging')->with('success', 'Data berhasil ditambahkan');
-    }
-
-    public function packaging_update(Packaging $packaging, Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required',
-            'satuan_id' => 'required',
-            'konversi_kemasan' => 'required',
-        ]);
-
-        $packaging->update($data);
-
-        return redirect()->route('db.packaging')->with('success', 'Data berhasil diupdate');
-    }
-
-    public function packaging_delete(Packaging $packaging)
-    {
-        if ($packaging->stok > 0) {
-            return redirect()->route('db.packaging')->with('error', 'Data tidak bisa dihapus karena masih ada stok');
-        }
-
-        $packaging->delete();
-
-        return redirect()->route('db.packaging')->with('success', 'Data berhasil dihapus');
     }
 
     public function kategori_inventaris()
@@ -722,77 +548,5 @@ class DatabaseController extends Controller
         return redirect()->route('db.kategori-inventaris')->with('success', 'Data berhasil dihapus');
     }
 
-    public function kemasan_kategori()
-    {
-        $data = KemasanKategori::all();
 
-        return view('db.kemasan-kategori.index', [
-            'data' => $data
-        ]);
-    }
-
-    public function kemasan_kategori_store(Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required',
-        ]);
-
-        KemasanKategori::create($data);
-
-        return redirect()->route('db.kemasan-kategori')->with('success', 'Data berhasil ditambahkan');
-    }
-
-    public function kemasan_kategori_update(KemasanKategori $kategori, Request $request)
-    {
-        $data = $request->validate([
-            'nama' => 'required',
-        ]);
-
-        $kategori->update($data);
-
-        return redirect()->route('db.kemasan-kategori')->with('success', 'Data berhasil diupdate');
-    }
-
-    public function kemasan_kategori_delete(KemasanKategori $kategori)
-    {
-        $kategori->delete();
-
-        return redirect()->route('db.kemasan-kategori')->with('success', 'Data berhasil dihapus');
-    }
-
-    public function harga_jual()
-    {
-        $data = Product::has('kemasan')->with(['kemasan.kategori', 'kategori', 'kemasan.satuan', 'kemasan.packaging'])->get();
-        $satuan = Satuan::all();
-        $product = Product::with(['kategori'])->get();
-        $packaging = Packaging::all();
-        $kategori = KemasanKategori::all();
-
-        return view('db.kemasan-harga-jual.index', [
-            'data' => $data,
-            'satuan' => $satuan,
-            'packaging' => $packaging,
-            'product' => $product,
-            'kategori' => $kategori
-        ]);
-    }
-
-    public function harga_jual_update(Kemasan $kemasan, Request $request)
-    {
-        $data = $request->validate([
-            'harga_satuan' => 'required',
-        ]);
-
-        $data['harga_satuan'] = str_replace('.', '', $data['harga_satuan']);
-
-        if ($kemasan->packaging_id) {
-            $data['harga'] = $data['harga_satuan'] * $kemasan->packaging->konversi_kemasan;
-        } else {
-            $data['harga'] = $data['harga_satuan'];
-        }
-
-        $kemasan->update($data);
-
-        return redirect()->route('db.harga-jual')->with('success', 'Data berhasil diupdate');
-    }
 }

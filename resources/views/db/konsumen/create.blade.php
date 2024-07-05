@@ -36,27 +36,28 @@
                                 placeholder="" required>
                         </div>
                         <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="npwp" class="form-label">Sistem Pembayaran</label>
+                            <select name="pembayaran" id="pembayaran" required class="form-select" onchange="pembayaranFun()">
+                                <option value="" disabled selected>-- Pilih Sistem Pembayaran --</option>
+                                <option value="1">Cash</option>
+                                <option value="2">Tempo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3" id="divPlafon">
                             <label for="plafon" class="form-label">Limit Plafon</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control" name="plafon" id="plafon" required data-thousands="." value="{{old('plafon')}}">
                               </div>
                         </div>
-                        <div class="col-md-4 col-sm-6 mb-3">
+                        <div class="col-md-4 col-sm-6 mb-3" id="divTempo">
                             <label for="tempo_hari" class="form-label">Tempo</label>
                             <div class="input-group mb-3">
                                 <input type="number" class="form-control" name="tempo_hari" id="tempo_hari" required value="{{old('tempo_hari')}}">
                                 <span class="input-group-text" id="basic-addon1">Hari</span>
                               </div>
                         </div>
-                        <div class="col-md-4 col-sm-6 mb-3">
-                            <label for="npwp" class="form-label">Sistem Pembayaran</label>
-                            <select name="pembayaran" id="pembayaran" required class="form-select">
-                                <option value="" disabled>-- Pilih Sistem Pembayaran --</option>
-                                <option value="1" selected>Cash</option>
-                                <option value="2" disabled>Tempo</option>
-                            </select>
-                        </div>
+
                         <div class="col-md-4 col-sm-6 mb-3">
                             <label for="kota" class="form-label">Kota</label>
                             <input type="text" class="form-control" name="kota" id="kota" aria-describedby="helpId" value="{{old('kota')}}"
@@ -76,3 +77,19 @@
         </div>
     </div>
 </div>
+@push('js')
+<script>
+    function pembayaranFun() {
+        var pembayaran = document.getElementById('pembayaran').value;
+        if (pembayaran == 1) {
+            document.getElementById('divPlafon').style.display = 'none';
+            document.getElementById('divTempo').style.display = 'none';
+            documnet.getElementById('plafon').value = '';
+            documnet.getElementById('tempo_hari').value = '';
+        } else {
+            document.getElementById('divPlafon').style.display = 'block';
+            document.getElementById('divTempo').style.display = 'block';
+        }
+    }
+</script>
+@endpush
