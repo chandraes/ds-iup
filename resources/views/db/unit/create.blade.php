@@ -8,7 +8,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{route('db.unit.type.store')}}" method="post">
+            <form action="{{route('db.unit.type.store')}}" method="post" id="createForm">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
@@ -20,7 +20,6 @@
                                 <option value="{{$k->id}}">{{$k->nama}}</option>
                                 @endforeach
                             </select>
-
                         </div>
                         <div class="col-lg-6 col-md-6 mb-3">
                             <label for="nama" class="form-label">TYPE</label>

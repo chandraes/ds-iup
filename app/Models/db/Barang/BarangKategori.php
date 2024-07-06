@@ -10,4 +10,14 @@ class BarangKategori extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
+
+    public function types()
+    {
+        return $this->hasMany(BarangType::class);
+    }
+
+    public function barangs()
+    {
+        return $this->hasMany(Barang::class);
+    }
 }

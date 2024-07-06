@@ -167,6 +167,9 @@ Route::group(['middleware' => ['auth']], function() {
             });
 
             Route::prefix('barang-unit')->group(function(){
+
+                Route::get('/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
+                
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'unit'])->name('db.unit');
                 Route::post('/store', [App\Http\Controllers\BarangController::class, 'unit_store'])->name('db.unit.store');
                 Route::patch('/update/{unit}', [App\Http\Controllers\BarangController::class, 'unit_update'])->name('db.unit.update');
@@ -175,6 +178,17 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/type/store', [App\Http\Controllers\BarangController::class, 'type_store'])->name('db.unit.type.store');
                 Route::patch('/type/update/{type}', [App\Http\Controllers\BarangController::class, 'type_update'])->name('db.unit.type.update');
                 Route::delete('/type/delete/{type}', [App\Http\Controllers\BarangController::class, 'type_delete'])->name('db.unit.type.delete');
+            });
+
+            Route::prefix('barang')->group(function(){
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'barang'])->name('db.barang');
+                Route::post('/store', [App\Http\Controllers\BarangController::class, 'barang_store'])->name('db.barang.store');
+                Route::patch('/update/{barang}', [App\Http\Controllers\BarangController::class, 'barang_update'])->name('db.barang.update');
+                Route::delete('/delete/{barang}', [App\Http\Controllers\BarangController::class, 'barang_delete'])->name('db.barang.delete');
+
+                Route::post('/kategori/store', [App\Http\Controllers\BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
+                Route::patch('/kategori/update/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
+                Route::delete('/kategori/delete/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_delete'])->name('db.barang.kategori.delete');
             });
         });
     });

@@ -14,10 +14,9 @@ return new class extends Migration
         Schema::create('barang_stok_hargas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('barang_id')->constrained()->onDelete('cascade');
-            $table->integer('stok_ppn')->default(0);
-            $table->integer('stok_non_ppn')->default(0);
-            $table->integer('harga_ppn')->default(0);
-            $table->integer('harga_non_ppn')->default(0);
+            $table->enum('tipe', ['ppn', 'non-ppn']);
+            $table->integer('stok')->default(0);
+            $table->integer('harga')->default(0);
             $table->timestamps();
         });
     }

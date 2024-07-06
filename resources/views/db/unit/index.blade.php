@@ -34,62 +34,77 @@
         </div>
     </div>
 </div>
+<style>
+    .table-container {
+        height: 500px;
+        overflow-y: auto;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+    }
+</style>
 <div class="container mt-5 table-responsive ">
-    <table class="table table-bordered" id="dataTable">
-        <thead class="table-success">
-            <tr>
-                <th class="text-center align-middle" style="width: 15px">No</th>
-                <th class="text-center align-middle">Unit</th>
-                <th class="text-center align-middle">Tipe</th>
-                <th class="text-center align-middle">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php $counter = 1; @endphp
-            @foreach ($data as $d)
-            @if ($d->types)
-            @php
-            $rowspan = $d->types->count();
-            @endphp
-            @foreach ($d->types as $t)
-            <tr>
-                @if ($loop->first)
-                <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$counter}}</td>
-                <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$d->nama}}</td>
-                <td class="text-start align-middle">{{$t->nama}}</td>
-                <td class="text-center align-middle">
-                    <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                        onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                    <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
-                        id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
-                        @csrf
-                        @method('delete')
-                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                    </form>
-                </td>
-                @php $counter++; @endphp
-                @else
-                <td class="text-start align-middle">{{$t->nama}}</td>
-                <td class="text-center align-middle">
-                    <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                        onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                    <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
-                        id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
-                        @csrf
-                        @method('delete')
-                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                    </form>
-                </td>
+    <div class="table-container">
+        <table class="table table-bordered" id="dataTable">
+            <thead class="table-success">
+                <tr>
+                    <th class="text-center align-middle" style="width: 15px">No</th>
+                    <th class="text-center align-middle">Unit</th>
+                    <th class="text-center align-middle">Tipe</th>
+                    <th class="text-center align-middle">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php $counter = 1; @endphp
+                @foreach ($data as $d)
+                @if ($d->types)
+                @php
+                $rowspan = $d->types->count();
+                @endphp
+                @foreach ($d->types as $t)
+                <tr>
+                    @if ($loop->first)
+                    <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$counter}}</td>
+                    <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$d->nama}}</td>
+                    <td class="text-start align-middle">{{$t->nama}}</td>
+                    <td class="text-center align-middle">
+                        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
+                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
+                        <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                            id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
+                            @csrf
+                            @method('delete')
+                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                    @php $counter++; @endphp
+                    @else
+                    <td class="text-start align-middle">{{$t->nama}}</td>
+                    <td class="text-center align-middle">
+                        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
+                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
+                        <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                            id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
+                            @csrf
+                            @method('delete')
+                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                    @endif
+                </tr>
+                @endforeach
                 @endif
-            </tr>
-            @endforeach
-            @endif
-            @endforeach
-        </tbody>
-        <tfoot>
+                @endforeach
+            </tbody>
+            <tfoot>
 
-        </tfoot>
-    </table>
+            </tfoot>
+        </table>
+    </div>
+
 </div>
 
 @endsection
@@ -106,7 +121,9 @@
         document.getElementById('edit_barang_unit_id').value = data.barang_unit_id;
         document.getElementById('editForm').action = `{{route('db.unit.type.update', ':id')}}`.replace(':id', data.id);
     }
+
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
+    confirmAndSubmit("#createForm", "Apakah anda yakin untuk menambah data ini?");
 
     function toggleNamaJabatan(id) {
 
