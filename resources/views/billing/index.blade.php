@@ -57,25 +57,25 @@
     </div>
     <div class="row justify-content-left">
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-transaksi')}}" class="text-decoration-none">
-                <img src="{{asset('images/transaksi.svg')}}" alt="" width="70">
+            <a href="{{route('billing.form-beli')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-beli.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM BELI</h4>
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-transaksi')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/transaksi.svg')}}" alt="" width="70">
                 <h4 class="mt-2">INVOICE SUPPLIER</h4>
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-transaksi')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/transaksi.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM JUAL</h4>
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-transaksi')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/transaksi.svg')}}" alt="" width="70">
                 <h4 class="mt-2">INVOICE KONSUMEN</h4>
             </a>

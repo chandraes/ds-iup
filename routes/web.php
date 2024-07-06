@@ -199,7 +199,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::prefix('stok-non-ppn')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_non_ppn'])->name('db.stok-non-ppn');
                 Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_non_ppn_store'])->name('db.stok-non-ppn.store');
-            
+
             });
         });
     });
@@ -337,11 +337,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/keluar/store', [App\Http\Controllers\FormLainController::class, 'keluar_store'])->name('form-lain.keluar.store');
             });
 
-
-            Route::prefix('transaksi')->group(function(){
-                Route::get('/', [App\Http\Controllers\FormTransaksiController::class, 'index'])->name('billing.form-transaksi');
-
+            Route::prefix('form-beli')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormBeliController::class, 'index'])->name('billing.form-beli');
             });
+
 
             Route::prefix('nota-tagihan')->group(function(){
                 Route::get('/', [App\Http\Controllers\NotaTagihanController::class, 'index'])->name('nota-tagihan.index');

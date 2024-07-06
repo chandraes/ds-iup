@@ -30,4 +30,9 @@ class Barang extends Model
     {
         return $this->hasOne(BarangStokHarga::class, 'barang_id')->where('tipe', 'non-ppn');
     }
+
+    public function histories()
+    {
+        return $this->hasMany(BarangHistory::class, 'barang_id');
+    }
 }
