@@ -223,4 +223,168 @@ class BarangController extends Controller
             'data' => $data
         ]);
     }
+
+    public function stok_ppn(Request $request)
+    {
+        $kategori = BarangKategori::all();
+        $data = BarangType::with(['unit', 'barangs'])->get();
+
+        $unitFilter = $request->input('unit');
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+
+        $unitsQuery = BarangUnit::with([
+            'types' => function ($query) use ($typeFilter, $kategoriFilter) {
+                if ($typeFilter) {
+                    $query->where('id', $typeFilter);
+                }
+                $query->with(['barangs' => function ($query) use ($kategoriFilter) {
+                    if ($kategoriFilter) {
+                        $query->where('barang_kategori_id', $kategoriFilter);
+                    }
+                    $query->with('kategori'); // Eager load kategori for each barang
+                }])
+                ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
+            }, 'types.barangs.stok_ppn'
+        ]);
+
+        if ($unitFilter) {
+            $unitsQuery->where('id', $unitFilter);
+        }
+
+        $units = $unitsQuery->get();
+
+        $units->loadMissing('types.barangs.kategori');
+
+        foreach ($units as $unit) {
+            $unit->unitRowspan = 0; // Variabel untuk menyimpan rowspan unit
+
+            foreach ($unit->types as $type) {
+                $groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                $type->groupedBarangs = $groupedBarangs;
+                $type->typeRowspan = 0; // Variabel untuk menyimpan rowspan tipe
+
+                foreach ($groupedBarangs as $kategoriNama => $barangs) {
+                    $barangs->kategoriRowspan = $barangs->count(); // Variabel untuk menyimpan rowspan kategori
+
+                    // Menambah total rowspan untuk type dengan jumlah barang dalam kategori
+                    $type->typeRowspan += $barangs->count();
+                }
+
+                // Menambah total rowspan untuk unit dengan jumlah barang dalam tipe
+                $unit->unitRowspan += $type->typeRowspan;
+            }
+        }
+
+        // dd($units->toArray());
+        return view('db.stok-ppn.index', [
+            'data' => $data,
+            'kategori' => $kategori,
+            'units' => $units,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+        ]);
+    }
+
+    public function stok_ppn_store(Request $request, Barang $barang)
+    {
+        $data = $request->validate([
+            'harga' => 'required',
+        ]);
+
+        $conditions = [
+            'barang_id' => $barang->id,
+            'tipe' => 'ppn',
+        ];
+
+        $data['harga'] = str_replace('.', '', $data['harga']);
+
+        $barang->stok_ppn()->updateOrCreate($conditions, $data);
+
+        return redirect()->back()->with('success', 'Berhasil menambahkan data stok ppn!');
+    }
+
+    public function stok_non_ppn(Request $request)
+    {
+        $kategori = BarangKategori::all();
+        $data = BarangType::with(['unit', 'barangs'])->get();
+
+        $unitFilter = $request->input('unit');
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+
+        $unitsQuery = BarangUnit::with([
+            'types' => function ($query) use ($typeFilter, $kategoriFilter) {
+                if ($typeFilter) {
+                    $query->where('id', $typeFilter);
+                }
+                $query->with(['barangs' => function ($query) use ($kategoriFilter) {
+                    if ($kategoriFilter) {
+                        $query->where('barang_kategori_id', $kategoriFilter);
+                    }
+                    $query->with('kategori'); // Eager load kategori for each barang
+                }])
+                ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
+            }, 'types.barangs.stok_non_ppn'
+        ]);
+
+        if ($unitFilter) {
+            $unitsQuery->where('id', $unitFilter);
+        }
+
+        $units = $unitsQuery->get();
+
+        $units->loadMissing('types.barangs.kategori');
+
+        foreach ($units as $unit) {
+            $unit->unitRowspan = 0; // Variabel untuk menyimpan rowspan unit
+
+            foreach ($unit->types as $type) {
+                $groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                $type->groupedBarangs = $groupedBarangs;
+                $type->typeRowspan = 0; // Variabel untuk menyimpan rowspan tipe
+
+                foreach ($groupedBarangs as $kategoriNama => $barangs) {
+                    $barangs->kategoriRowspan = $barangs->count(); // Variabel untuk menyimpan rowspan kategori
+
+                    // Menambah total rowspan untuk type dengan jumlah barang dalam kategori
+                    $type->typeRowspan += $barangs->count();
+                }
+
+                // Menambah total rowspan untuk unit dengan jumlah barang dalam tipe
+                $unit->unitRowspan += $type->typeRowspan;
+            }
+        }
+
+        // dd($units->toArray());
+        return view('db.stok-non-ppn.index', [
+            'data' => $data,
+            'kategori' => $kategori,
+            'units' => $units,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+        ]);
+    }
+
+    public function stok_non_ppn_store(Request $request, Barang $barang)
+    {
+        $data = $request->validate([
+            'harga' => 'required',
+        ]);
+
+        $conditions = [
+            'barang_id' => $barang->id,
+            'tipe' => 'non-ppn',
+        ];
+
+        $data['harga'] = str_replace('.', '', $data['harga']);
+
+        $barang->stok_ppn()->updateOrCreate($conditions, $data);
+
+        return redirect()->back()->with('success', 'Berhasil menambahkan data stok ppn!');
+    }
+
+
 }

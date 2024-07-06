@@ -169,7 +169,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::prefix('barang-unit')->group(function(){
 
                 Route::get('/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
-                
+
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'unit'])->name('db.unit');
                 Route::post('/store', [App\Http\Controllers\BarangController::class, 'unit_store'])->name('db.unit.store');
                 Route::patch('/update/{unit}', [App\Http\Controllers\BarangController::class, 'unit_update'])->name('db.unit.update');
@@ -189,6 +189,17 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/kategori/store', [App\Http\Controllers\BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
                 Route::patch('/kategori/update/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
                 Route::delete('/kategori/delete/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_delete'])->name('db.barang.kategori.delete');
+            });
+
+            Route::prefix('stok-ppn')->group(function(){
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
+                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_ppn_store'])->name('db.stok-ppn.store');
+            });
+
+            Route::prefix('stok-non-ppn')->group(function(){
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_non_ppn'])->name('db.stok-non-ppn');
+                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_non_ppn_store'])->name('db.stok-non-ppn.store');
+            
             });
         });
     });
