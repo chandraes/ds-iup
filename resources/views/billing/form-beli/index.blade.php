@@ -3,8 +3,8 @@
 <div class="container-fluid">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Form Beli</u></h1>
-            <h1><u>CASH</u></h1>
+            <h1><u>Form Beli {{$jenis == 1 ? 'PPN' : 'NON PPN'}}</u></h1>
+            <h1><u>{{$req['tempo'] == 0 ? 'CASH' : 'TEMPO'}}</u></h1>
         </div>
     </div>
     <div class="row justify-content-left mt-3 mb-3">
@@ -15,11 +15,13 @@
                         <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja" >
                             <i class="fa fa-shopping-cart"> Keranjang </i> ({{$keranjang->count()}})
                         </a>
-                        @include('billing.form-transaksi.bahan-baku.keranjang')
+                        @include('billing.form-beli.keranjang')
                     </td>
                     <td>
-                        <form action="{{route('billing.form-transaksi.bahan-baku.keranjang.empty')}}" method="post" id="kosongKeranjang">
+                        <form action="{{route('billing.form-beli.keranjang.empty')}}" method="post" id="kosongKeranjang">
                             @csrf
+                            <input type="hidden" name="jenis" value="{{$jenis}}">
+                            <input type="hidden" name="tempo" value="{{$req['tempo']}}">
                             <button class="btn btn-danger" type="submit">
                                 <i class="fa fa-trash"> Kosongkan Keranjang </i>
                             </button>
@@ -30,56 +32,49 @@
         </div>
     </div>
     @include('swal')
-    <form action="{{route('billing.form-transaksi.bahan-baku.keranjang.store')}}" method="post" id="masukForm">
+    <form action="{{route('billing.form-beli.keranjang.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-
             <div class="col-md-3">
                 <div class="mb-3">
-                    <label for="apa_konversi" class="form-label">Bahan</label>
-                    <select class="form-select" name="apa_konversi" id="apa_konversi" required>
-                        <option value=""> -- Pilih salah satu -- </option>
-                        <option value="1">Konversi</option>
-                        <option value="0">Non Konversi</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3">
-                    <label for="kategori_bahan_id" class="form-label">Kategori Barang</label>
-                    <select class="form-select" name="kategori_bahan_id" id="kategori_bahan_id" onchange="funGetBarang()" required>
-                        <option value=""> -- Pilih kategori barang -- </option>
-                        @foreach ($kategori as $k)
+                    <label for="barang_unit_id" class="form-label">Unit</label>
+                    <select class="form-select" name="barang_unit_id" id="barang_unit_id" onchange="funGetBarang()" required>
+                        <option value=""> -- Pilih Unit -- </option>
+                        @foreach ($data as $k)
                             <option value="{{$k->id}}">{{$k->nama}}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <div class="mb-3">
-                    <label for="bahan_baku_id" class="form-label">Nama Barang</label>
-                    <select class="form-select" name="bahan_baku_id" id="bahan_baku_id" required>
-                        <option value=""> -- Pilih Bahan Baku -- </option>
+                    <label for="barang_type_id" class="form-label">Type</label>
+                    <select class="form-select" name="barang_type_id" id="barang_type_id" required onchange="getKategori()">
+                        <option value=""> -- Pilih Type -- </option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="barang_kategori_id" class="form-label">Kategori</label>
+                    <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required onchange="getBarang()">
+                        <option value=""> -- Pilih Kategori -- </option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="barang_id" class="form-label">Nama Barang</label>
+                    <select class="form-select" name="barang_id" id="barang_id" required>
+                        <option value=""> -- Pilih Barang -- </option>
                     </select>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="mb-3">
                   <label for="jumlah" class="form-label">Jumlah</label>
-                  <input type="number"
+                  <input type="text"
                     class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId" placeholder="" required>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3">
-                  <label for="satuan_id" class="form-label">Satuan</label>
-                  {{-- select satuan_id --}}
-                    <select class="form-select" name="satuan_id" id="satuan_id" required>
-                        <option value=""> -- Pilih Satuan -- </option>
-                        @foreach ($satuan as $s)
-                            <option value="{{$s->id}}">{{$s->nama}}</option>
-                        @endforeach
-                    </select>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
@@ -91,13 +86,14 @@
                 @endif" name="harga" id="harga" data-thousands="." required>
                   </div>
             </div>
-
+            <input type="hidden" name="tempo" value="{{$req['tempo']}}">
+            <input type="hidden" name="jenis" value="{{$jenis}}">
         </div>
         <hr>
 
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Masukan Keranjang</button>
-            <a href="{{route('billing.form-transaksi')}}" class="btn btn-secondary" type="button">Batal</a>
+            <a href="{{route('billing')}}" class="btn btn-secondary" type="button">Batal</a>
           </div>
     </form>
 </div>
@@ -105,7 +101,7 @@
 @push('js')
     <script>
 
-function submitBeli(){
+        function submitBeli(){
             Swal.fire({
                 title: "Apakah Anda Yakin?" ,
                 icon: 'warning',
@@ -144,14 +140,18 @@ function submitBeli(){
 
             // Call add_ppn at the end to recalculate PPN based on the new total after discount
             add_ppn();
+            check_sisa();
         }
 
         function add_ppn() {
-            var apa_ppn = document.getElementById('ppn').value;
-            var ppnRate = {!! $ppn !!} / 100;
+            var apa_ppn = {{$req['kas_ppn'] == 1 ? 1 : 0}};
+            var ppnRate = {!! $ppnRate !!} / 100;
+
             // Retrieve add_fee value and convert it to a number after removing any formatting
             var addFee = Number(document.getElementById('add_fee').value.replace(/\./g, ''));
-            if (apa_ppn === "1") {
+
+            if (apa_ppn === 1) {
+
                 var gt = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
                 var vPpn = gt * ppnRate;
                 // Include add_fee in the total calculation
@@ -167,10 +167,90 @@ function submitBeli(){
                 var totalFormatted = totalWithoutPpn.toLocaleString('id-ID');
                 document.getElementById('grand_total').textContent = totalFormatted;
             }
+
+            check_sisa();
+        }
+
+        function add_dp(){
+            // get value from dp
+            var dpT = document.getElementById('dp').value;
+            var dp = dpT.replace(/\./g, '');
+
+            // get element value tdTotal
+            document.getElementById('dpTd').textContent = dpT;
+            add_dp_ppn();
+            check_sisa();
+            // set value to dpTd
+            // var dpTable = Number(dp).toLocaleString('id-ID');
+
+        }
+
+        function add_dp_ppn(){
+            var apa_dp_ppn = document.getElementById('dp_ppn').value;
+            if(apa_dp_ppn === '1')
+            {
+                var dp_ppn = document.getElementById('dp').value;
+                var dp_ppn = dp_ppn.replace(/\./g, '');
+                var ppn = {!! $ppnRate !!} / 100;
+
+                var ppn_dp_num = dp_ppn * ppn;
+
+                ppn_dp = ppn_dp_num.toLocaleString('id-ID');
+
+                document.getElementById('dpPPNtd').textContent = ppn_dp;
+
+                var ppn_total = document.getElementById('tdPpn').textContent;
+                ppn_total = ppn_total.replace(/\./g, '');
+
+                var sisa_ppn = ppn_total - ppn_dp_num;
+
+                var sisa_ppnF = sisa_ppn.toLocaleString('id-ID');
+
+                document.getElementById('sisaPPN').textContent = sisa_ppnF;
+
+
+            } else {
+                document.getElementById('dpPPNtd').textContent = 0;
+                document.getElementById('sisaPPN').textContent = 0;
+
+            }
+
+            check_sisa();
+        }
+
+        function check_sisa(){
+            var grand_total = document.getElementById('grand_total').textContent;
+            grand_total = parseInt(grand_total.replace(/\./g, ''), 10);
+            var dp = document.getElementById('dpTd').textContent;
+            dp = parseInt(dp.replace(/\./g, ''), 10);
+            var dpPPNtd = document.getElementById('dpPPNtd').textContent;
+            dpPPNtd = parseInt(dpPPNtd.replace(/\./g, ''), 10);
+
+            var sisa = grand_total - dp - dpPPNtd;
+            var sisaF = sisa.toLocaleString('id-ID');
+
+            var tdPPN = document.getElementById('tdPpn').textContent;
+            tdPPN = parseInt(tdPPN.replace(/\./g, ''), 10);
+
+            var sisaPPN = tdPPN - dpPPNtd;
+
+            document.getElementById('sisa').textContent = sisaF;
+            document.getElementById('sisaPPN').textContent = sisaPPN.toLocaleString('id-ID');
+
+            var totalDp = dp + dpPPNtd;
+            document.getElementById('totalDpTd').textContent = totalDp.toLocaleString('id-ID');
+
         }
 
         $(function() {
             var nominal = new Cleave('#harga', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
+
+            var jumlah = new Cleave('#jumlah', {
                 numeral: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',
@@ -214,38 +294,99 @@ function submitBeli(){
 
         // funGetBarang
         function funGetBarang() {
-            var kategori_bahan_id = $('#kategori_bahan_id').val();
-            var apa_konversi = $('#apa_konversi').val();
+            var barang_unit_id = $('#barang_unit_id').val();
 
             $.ajax({
-                url: "{{route('billing.form-transaksi.bahan-baku.get-barang')}}",
+                url: "{{route('db.barang.get-type')}}",
                 type: "GET",
                 data: {
-                    kategori_bahan_id: kategori_bahan_id,
-                    apa_konversi: apa_konversi
+                    unit_id: barang_unit_id,
                 },
                 success: function(data){
-                    $('#bahan_baku_id').empty();
-                    $('#bahan_baku_id').append('<option value=""> -- Pilih Bahan Baku -- </option>');
-                    $.each(data, function(index, value){
-                        $('#bahan_baku_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
-                    });
+                    if (data.status == 1) {
+                        $('#barang_type_id').empty();
+                        $('#barang_kategori_id').empty();
+                        $('#barang_id').empty();
+                        $('#barang_type_id').append('<option value=""> -- Pilih Type -- </option>');
+                        $.each(data.data, function(index, value){
+                            $('#barang_type_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
+                        });
+                    } else {
+                        $('#barang_type_id').empty();
+                        $('#barang_type_id').append('<option value=""> -- Pilih Type -- </option>');
 
-
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Unit belum memiliki Type!',
+                        });
+                    }
                 }
             });
+        }
 
-            console.log(apa_konversi)
-            if (apa_konversi == 1) {
-                // set selected value satuan_id to 2 and make it readonly
-                $('#satuan_id').val(2);
-                $('#satuan_id').attr('disabled', true);
-            } else {
-                // set selected value satuan_id to null and remove readonly
-                $('#satuan_id').val('');
-                $('#satuan_id').removeAttr('disabled');
-            }
+        function getKategori() {
+            var barang_type_id = $('#barang_type_id').val();
 
+            $.ajax({
+                url: "{{route('billing.form-beli.get-kategori')}}",
+                type: "GET",
+                data: {
+                    barang_type_id: barang_type_id,
+                },
+                success: function(data){
+                    if (data.status == 1) {
+                        $('#barang_kategori_id').empty();
+                        $('#barang_id').empty();
+                        $('#barang_kategori_id').append('<option value=""> -- Pilih Kategori -- </option>');
+                        $.each(data.data, function(index, value){
+                            $('#barang_kategori_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
+                        });
+                    } else {
+                        $('#barang_kategori_id').empty();
+                        $('#barang_id').empty();
+                        $('#barang_kategori_id').append('<option value=""> -- Pilih Kategori -- </option>');
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Type belum memiliki Kategori Barang!',
+                        });
+                    }
+                }
+            });
+        }
+
+        function getBarang() {
+            var barang_type_id = $('#barang_type_id').val();
+            var barang_kategori_id = $('#barang_kategori_id').val();
+
+            $.ajax({
+                url: "{{route('billing.form-beli.get-barang')}}",
+                type: "GET",
+                data: {
+                    barang_type_id: barang_type_id,
+                    barang_kategori_id: barang_kategori_id,
+                },
+                success: function(data){
+                    if (data.status == 1) {
+                        $('#barang_id').empty();
+                        $('#barang_id').append('<option value=""> -- Pilih Barang -- </option>');
+                        $.each(data.data, function(index, value){
+                            $('#barang_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
+                        });
+                    } else {
+                        $('#barang_id').empty();
+                        $('#barang_id').append('<option value=""> -- Pilih Barang -- </option>');
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Type belum memiliki Barang Barang!',
+                        });
+                    }
+                }
+            });
         }
 
     </script>

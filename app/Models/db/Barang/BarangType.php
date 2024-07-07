@@ -21,7 +21,7 @@ class BarangType extends Model
 
     public function unit()
     {
-        return $this->belongsTo(BarangUnit::class);
+        return $this->belongsTo(BarangUnit::class, 'barang_unit_id');
     }
 
     public function barangs()

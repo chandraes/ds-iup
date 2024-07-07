@@ -4,9 +4,14 @@ namespace App\Models\transaksi;
 
 use App\Models\db\Barang\BarangHistory;
 use App\Models\db\Supplier;
+use App\Models\GroupWa;
+use App\Models\KasBesar;
+use App\Models\PpnMasukan;
+use App\Models\Rekening;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceBelanja extends Model
 {
@@ -24,7 +29,22 @@ class InvoiceBelanja extends Model
         'nf_sisa',
         'nf_sisa_ppn',
         'id_jatuh_tempo',
+        'kode',
+        'tanggal',
+        'dpp'
     ];
+
+    public function getDppAttribute()
+    {
+        $dpp = $this->total + $this->diskon - $this->ppn;
+
+        return number_format($dpp, 0, ',', '.');
+    }
+
+    public function generateNomor()
+    {
+        return $this->max('nomor') + 1;
+    }
 
     public function supplier()
     {
@@ -46,6 +66,11 @@ class InvoiceBelanja extends Model
             'id',
             'barang_history_id'
         );
+    }
+
+    public function getKodeAttribute()
+    {
+        return 'BB' . str_pad($this->nomor, 2, '0', STR_PAD_LEFT);
     }
 
     public function getNfDiskonAttribute()
@@ -88,9 +113,140 @@ class InvoiceBelanja extends Model
         return number_format($this->sisa_ppn, 0, ',', '.');
     }
 
+    public function getTanggalAttribute()
+    {
+        return Carbon::parse($this->created_at)->format('d-m-Y');
+    }
+
     public function getIdJatuhTempoAttribute()
     {
         // use Carbon\Carbon;
-        return $this->jatuh_tempo ? Carbon::parse($this->jatuh_tempo)->format('d F Y') : '';
+        return $this->jatuh_tempo ? Carbon::parse($this->jatuh_tempo)->format('d-m-Y') : '';
     }
+
+    public function dataTahun()
+    {
+        return $this->selectRaw('YEAR(tanggal) as tahun')
+            ->groupBy('tahun')
+            ->orderBy('tahun', 'desc')
+            ->get();
+    }
+
+    public function invoiceByMonth($bulan, $tahun)
+    {
+        return $this->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->orderBy('tanggal', 'desc')
+            ->get();
+    }
+
+    public function void($id)
+    {
+        $inv = $this->find($id);
+
+        try {
+            DB::beginTransaction();
+
+            $inv->update([
+                'void' => 1
+            ]);
+            // dd($inv);
+            if ($inv->dp_ppn > 0) {
+                $this->store_ppn($inv);
+            }
+
+            // delete detail
+            $inv->detail()->delete();
+
+            $kas = new KasBesar();
+
+            if ($inv->dp > 0) {
+                $kasMana = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+                $rekening = Rekening::where('untuk', $kasMana)->first();
+                $total = $inv->dp + $inv->dp_ppn;
+                $store = $kas->create([
+                    'invoice_belanja_id' => $inv->id,
+                    'ppn_kas' => $inv->kas_ppn,
+                    'uraian' => 'Void ' . $inv->uraian,
+                    'jenis' => '1',
+                    'nominal' => $total,
+                    'saldo' => $kas->saldoTerakhir($inv->kas_ppn) + $total,
+                    'nama_rek' => $rekening->nama_rek,
+                    'no_rek' => $rekening->no_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir($inv->kas_ppn),
+                ]);
+            }
+
+            DB::commit();
+
+            if ($inv->dp_ppn > 0) {
+
+                $dbPPn = new PpnMasukan();
+                $ppnMasukan = $dbPPn->saldoTerakhir();
+
+                $getKas = $kas->getKas();
+
+                $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                            "*VOID BELI BARANG*\n".
+                            "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                            "Uraian :  *".$store->uraian."*\n\n".
+                            "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            "Bank      : ".$store->bank."\n".
+                            "Nama    : ".$store->nama_rek."\n".
+                            "No. Rek : ".$store->no_rek."\n\n".
+                            "==========================\n".
+                            "Sisa Saldo Kas Besar PPN: \n".
+                            "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            "Sisa Saldo Kas Besar  NON PPN: \n".
+                            "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                            "Total Modal Investor : \n".
+                            "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                            "Total PPn Masukan : \n".
+                            "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                            "Terima kasih 🙏🙏🙏\n";
+
+                $group = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
+                $kas->sendWa($group, $pesan);
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil membatalkan invoice'
+            ];
+
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => 'Gagal membatalkan invoice. '.$th->getMessage()
+            ];
+        }
+    }
+
+    private function store_ppn($store)
+    {
+        $ppn = new PpnMasukan();
+
+        $nominal = $store->dp_ppn;
+        $uraian = "Void ". $store->uraian;
+        // Only proceed if nominal is greater than 0 to avoid unnecessary database entries.
+        if ($nominal > 0) {
+            $ppn->create([
+                'invoice_belanja_id' => $store->id,
+                'nominal' => -$nominal,
+                'saldo' => $ppn->saldoTerakhir() - $nominal,
+                'uraian' => $uraian,
+            ]);
+        }
+
+        return true;
+    }
+
+
 }

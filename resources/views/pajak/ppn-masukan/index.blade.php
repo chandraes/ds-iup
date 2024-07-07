@@ -56,41 +56,36 @@
             <thead class=" table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
-                    <th class="text-center align-middle">Supplier</th>
+                    <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">PPn</th>
+                    <th class="text-center align-middle">Nominal</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$d->formatted_tgl}}</td>
-                    <td class="text-center align-middle">{{$d->supplier->nama}}</td>
+                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-start align-middle">
+                        {{$d->uraian}}
+                    </td>
                     <td class="text-center align-middle">
+                        @if ($d->invoiceBelanja)
                         <a href="{{route('rekap.invoice-belanja.detail', ['invoice' => $d])}}">
-                            {{$d->kode}}
+                            {{$d->invoiceBelanja->kode}}
                         </a>
+                        @endif
+
                     </td>
                     <td class="text-end align-middle">
-                        {{number_format($d->nilai_ppn, 0, ',','.')}}
+                        {{$d->nf_nominal}}
                     </td>
                 </tr>
-                @endforeach
-                @foreach ($dataInven as $i)
-                <td class="text-center align-middle">{{$i->tanggal}}</td>
-                <td class="text-center align-middle">{{$i->nama_rek}}</td>
-                <td class="text-center align-middle">
-                   -
-                </td>
-                <td class="text-end align-middle">
-                    {{number_format($i->ppn, 0, ',','.')}}
-                </td>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="3">Grand Total : </th>
-                    <th class="text-end align-middle">{{number_format($data->sum('nilai_ppn')+$dataInven->sum('ppn'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle" colspan="3">Saldo PPn Masukan</th>
+                    <th class="text-end align-middle">{{number_format($saldo, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>

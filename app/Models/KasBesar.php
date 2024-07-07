@@ -17,6 +17,11 @@ class KasBesar extends Model
 
     protected $appends = ['nf_nominal', 'tanggal', 'kode_deposit', 'kode_kas_kecil', 'nf_saldo', 'nf_modal_investor'];
 
+    public function invoice_belanja()
+    {
+        return $this->belongsTo(InvoiceBelanja::class);
+    }
+
     public function investorModal()
     {
         return $this->belongsTo(InvestorModal::class);
@@ -531,6 +536,17 @@ class KasBesar extends Model
 
         return $result;
 
+    }
+
+    public function getKas()
+    {
+        $kasPpn = [
+            'saldo_ppn' => $this->saldoTerakhir(1),
+            'saldo_non_ppn' => $this->saldoTerakhir(0),
+            'modal_investor_terakhir' => $this->modalInvestorTerakhir(1) + $this->modalInvestorTerakhir(0),
+        ];
+
+        return $kasPpn;
     }
 
     // public function ppn_masuk_susulan($nominal)

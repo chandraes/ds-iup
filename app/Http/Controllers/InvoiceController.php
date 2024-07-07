@@ -2,38 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-    public function index(Request $request)
+    public function invoice_supplier(Request $request)
     {
-        $invoices = new InvoiceBelanja();
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
+        $data = InvoiceBelanja::with(['supplier'])->where('tempo', 1)->where('void', 0)->get();
+        // get unique supplier_id from $data
+        $supplierIds = $data->pluck('supplier_id')->unique();
 
-        $dataTahun = $invoices->dataTahun();
+        $supplier = Supplier::where('status', 1)->whereIn('id', $supplierIds)->get();
 
-        $data = $invoices->invoiceByMonth($bulan, $tahun);
-
-        $bulanSebelumnya = $bulan - 1;
-        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-
-        return view('rekap.invoice-belanja.index', [
+        return view('billing.invoice-supplier.index', [
             'data' => $data,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'dataTahun' => $dataTahun,
-            'bulanSebelumnya' => $bulanSebelumnya,
-            'tahunSebelumnya' => $tahunSebelumnya,
-            'stringBulan' => $stringBulan,
-            'stringBulanNow' => $stringBulanNow,
+            'supplier' => $supplier
         ]);
+    }
+
+    public function invoice_supplier_void(InvoiceBelanja $invoice)
+    {
+        $db = new InvoiceBelanja();
+
+        $res = $db->void($invoice->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
     }
 
     public function detail(InvoiceBelanja $invoice)

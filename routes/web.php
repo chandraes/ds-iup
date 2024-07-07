@@ -339,15 +339,31 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('form-beli')->group(function(){
                 Route::get('/', [App\Http\Controllers\FormBeliController::class, 'index'])->name('billing.form-beli');
+                Route::get('/get-kategori', [App\Http\Controllers\FormBeliController::class, 'getKategori'])->name('billing.form-beli.get-kategori');
+                Route::get('/get-barang', [App\Http\Controllers\FormBeliController::class, 'getBarang'])->name('billing.form-beli.get-barang');
+                Route::get('/get-supplier', [App\Http\Controllers\FormBeliController::class, 'getSupplier'])->name('billing.form-beli.get-supplier');
+
+                Route::prefix('keranjang')->group(function(){
+                    Route::get('/', [App\Http\Controllers\FormBeliController::class, 'keranjang'])->name('billing.form-beli.keranjang');
+                    Route::post('/checkout', [App\Http\Controllers\FormBeliController::class, 'keranjang_checkout'])->name('billing.form-beli.keranjang.checkout');
+                    Route::post('/empty', [App\Http\Controllers\FormBeliController::class, 'keranjang_empty'])->name('billing.form-beli.keranjang.empty');
+                    Route::post('/store', [App\Http\Controllers\FormBeliController::class, 'keranjang_store'])->name('billing.form-beli.keranjang.store');
+                    Route::delete('/delete/{keranjang}', [App\Http\Controllers\FormBeliController::class, 'keranjang_delete'])->name('billing.form-beli.keranjang.delete');
+                });
+            });
+
+            Route::prefix('invoice-supplier')->group(function(){
+                Route::get('/', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier'])->name('billing.invoice-supplier');
+                Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });
 
 
-            Route::prefix('nota-tagihan')->group(function(){
-                Route::get('/', [App\Http\Controllers\NotaTagihanController::class, 'index'])->name('nota-tagihan.index');
-                Route::post('/cicilan/{invoice}', [App\Http\Controllers\NotaTagihanController::class, 'cicilan'])->name('nota-tagihan.cicilan');
-                Route::post('/cutoff/{invoice}', [App\Http\Controllers\NotaTagihanController::class, 'cutoff'])->name('nota-tagihan.cutoff');
-                Route::post('/pelunasan/{invoice}', [App\Http\Controllers\NotaTagihanController::class, 'pelunasan'])->name('nota-tagihan.pelunasan');
-            });
+            // Route::prefix('nota-tagihan')->group(function(){
+            //     Route::get('/', [App\Http\Controllers\NotaTagihanController::class, 'index'])->name('nota-tagihan.index');
+            //     Route::post('/cicilan/{invoice}', [App\Http\Controllers\NotaTagihanController::class, 'cicilan'])->name('nota-tagihan.cicilan');
+            //     Route::post('/cutoff/{invoice}', [App\Http\Controllers\NotaTagihanController::class, 'cutoff'])->name('nota-tagihan.cutoff');
+            //     Route::post('/pelunasan/{invoice}', [App\Http\Controllers\NotaTagihanController::class, 'pelunasan'])->name('nota-tagihan.pelunasan');
+            // });
 
 
             Route::prefix('nota-ppn-masukan')->group(function(){

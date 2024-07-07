@@ -176,6 +176,23 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Berhasil mengubah data barang!');
     }
 
+    public function barang_delete(Barang $barang)
+    {
+        $errorMessage = null;
+        if ($barang->stok_ppn && $barang->stok_ppn->stok > 0) {
+            $errorMessage = 'Data tidak bisa dihapus karena masih memiliki stok ppn';
+        } elseif ($barang->stok_non_ppn && $barang->stok_non_ppn->stok > 0) {
+            $errorMessage = 'Data tidak bisa dihapus karena masih memiliki stok non ppn';
+        }
+
+        if ($errorMessage) {
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
+        $barang->delete();
+        return redirect()->back()->with('success', 'Berhasil menghapus data barang!');
+    }
+
     public function kategori_barang_store(Request $request)
     {
         $data = $request->validate([
