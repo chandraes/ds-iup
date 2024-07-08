@@ -12,7 +12,6 @@ use App\Models\KasKecil;
 use App\Models\KasKonsumen;
 use App\Models\PesanWa;
 use App\Models\RekapGaji;
-use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Services\StarSender;
 use Illuminate\Http\Request;

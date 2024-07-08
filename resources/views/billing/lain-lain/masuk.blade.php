@@ -7,8 +7,8 @@
         </div>
     </div>
     @php
-    $role = ['admin', 'su'];
-@endphp
+        $role = ['admin', 'su'];
+    @endphp
     <form action="{{route('form-lain.masuk.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
@@ -18,11 +18,21 @@
                     is-invalid
                 @endif" name="tanggal" id="tanggal" value="{{date('d M Y')}}" required disabled>
             </div>
-            <div class="col-9 mb-3">
+            <div class="col-5 mb-3">
                 <label for="uraian" class="form-label">Uraian</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
                 @endif" name="uraian" id="uraian" required maxlength="20">
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="mb-3">
+                    <label for="ppn_kas" class="form-label">Kas</label>
+                    <select class="form-select" name="ppn_kas" id="ppn_kas" required onchange="getRek()">
+                        <option value="" disabled selected>-- Pilih Kas Besar --</option>
+                        <option value="1" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar PPN</option>
+                        <option value="0" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar NON PPN</option>
+                    </select>
+                </div>
             </div>
             <div class="col-md-12 mb-3">
                 <label for="nominal" class="form-label">Nominal</label>
@@ -48,7 +58,7 @@
                 <label for="nama_rek" class="form-label">Nama</label>
                 <input type="text" class="form-control @if ($errors->has('nama_rek'))
                     is-invalid
-                @endif" name="nama_rek" id="nama_rek" disabled value="{{$rekening->nama_rek}}">
+                @endif" name="nama_rek" id="nama_rek" disabled >
                 @if ($errors->has('nama_rek'))
                 <div class="invalid-feedback">
                     {{$errors->first('nama_rek')}}
@@ -59,7 +69,7 @@
                 <label for="bank" class="form-label">Bank</label>
                 <input type="text" class="form-control @if ($errors->has('bank'))
                     is-invalid
-                @endif" name="bank" id="bank" disabled value="{{$rekening->bank}}">
+                @endif" name="bank" id="bank" disabled >
                 @if ($errors->has('bank'))
                 <div class="invalid-feedback">
                     {{$errors->first('bank')}}
@@ -70,7 +80,7 @@
                 <label for="no_rek" class="form-label">Nomor Rekening</label>
                 <input type="text" class="form-control @if ($errors->has('no_rek'))
                     is-invalid
-                @endif" name="no_rek" id="no_rek" value="{{$rekening->no_rek}}" disabled>
+                @endif" name="no_rek" id="no_rek" disabled>
                 @if ($errors->has('no_rek'))
                 <div class="invalid-feedback">
                     {{$errors->first('no_rek')}}
@@ -88,6 +98,36 @@
 @endsection
 @push('js')
     <script>
+
+
+    function getRek()
+        {
+            var ppn_kas = $('#ppn_kas').val();
+
+            $.ajax({
+                url: "{{route('form-deposit.get-rekening')}}",
+                type: 'GET',
+                data: {ppn_kas: ppn_kas},
+                success: function(data){
+                    if(data.status == 0)
+                    {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: data.message,
+                        });
+                        $('#nama_rek').val('');
+                        $('#bank').val('');
+                        $('#no_rek').val('');
+                        return;
+                    } else {
+                        $('#nama_rek').val(data.data.nama_rek);
+                        $('#bank').val(data.data.bank);
+                        $('#no_rek').val(data.data.no_rek);
+                    }
+                }
+            });
+        }
 
         function checkNominal() {
             var nominal = document.getElementById('nominal').value;

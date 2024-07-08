@@ -11,6 +11,7 @@ use App\Models\KasBesar;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\transaksi\InventarisInvoice;
+use App\Models\transaksi\InvoiceBelanja;
 use App\Services\StarSender;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,9 +22,9 @@ class BillingController extends Controller
     public function index()
     {
 
-
+        $is = InvoiceBelanja::where('tempo', 1)->where('void', 0)->count();
         return view('billing.index', [
-
+            'is' => $is,
         ]);
     }
 
@@ -125,7 +126,7 @@ class BillingController extends Controller
         $data = Karyawan::where('status', 1)->get();
 
         $db = new KasBesar();
-        $saldo = $db->saldoTerakhir();
+        $saldo = $db->saldoTerakhir(1);
 
         if ($saldo < $ds['total']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Cukup');
@@ -180,7 +181,7 @@ class BillingController extends Controller
             $arrayKasBesar['nominal'] = $ds['total'];
             $arrayKasBesar['jenis'] = 0;
             $arrayKasBesar['saldo'] = $saldo - $ds['total'];
-            $arrayKasBesar['modal_investor_terakhir'] = $db->modalInvestorTerakhir();
+            $arrayKasBesar['modal_investor_terakhir'] = $db->modalInvestorTerakhir(1);
             $arrayKasBesar['nama_rek'] = "Msng2 Karyawan";
             $arrayKasBesar['bank'] = 'BCA';
             $arrayKasBesar['no_rek'] = '-';

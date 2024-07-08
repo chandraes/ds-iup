@@ -32,10 +32,19 @@ class InvoiceController extends Controller
         return redirect()->back()->with($res['status'], $res['message']);
     }
 
-    public function detail(InvoiceBelanja $invoice)
+    public function invoice_supplier_bayar(InvoiceBelanja $invoice)
     {
-        return view('rekap.invoice-belanja.detail', [
-            'data' => $invoice->load(['rekap', 'rekap.bahan_baku', 'rekap.satuan', 'rekap.bahan_baku.kategori']),
+        $db = new InvoiceBelanja();
+        // dd($invoice);
+        $res = $db->bayar($invoice->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function invoice_supplier_detail(InvoiceBelanja $invoice)
+    {
+        return view('billing.invoice-supplier.detail', [
+            'data' => $invoice->load(['items.barang.type.unit', 'items.barang.kategori']),
         ]);
     }
 }

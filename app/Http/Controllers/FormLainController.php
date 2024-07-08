@@ -15,11 +15,9 @@ class FormLainController extends Controller
 {
     public function masuk()
     {
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
         $batasan = Pengaturan::where('untuk', 'form-lain-lain')->first()->nilai;
 
         return view('billing.lain-lain.masuk', [
-            'rekening' => $rekening,
             'batasan' => $batasan,
         ]);
     }

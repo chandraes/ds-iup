@@ -19,11 +19,21 @@
                     is-invalid
                 @endif" name="tanggal" id="tanggal" value="{{date('d M Y')}}" disabled>
             </div>
-            <div class="col-md-9 mb-3">
+            <div class="col-5 mb-3">
                 <label for="uraian" class="form-label">Uraian</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
                 @endif" name="uraian" id="uraian" required maxlength="20">
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="mb-3">
+                    <label for="ppn_kas" class="form-label">Kas</label>
+                    <select class="form-select" name="ppn_kas" id="ppn_kas" required>
+                        <option value="" disabled selected>-- Pilih Kas Besar --</option>
+                        <option value="1" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar PPN</option>
+                        <option value="0" {{old('ppn_kas') == 1 ? 'selected' : ''}}>Kas Besar NON PPN</option>
+                    </select>
+                </div>
             </div>
             <div class="col-md-12 mb-3">
                 <label for="nominal" class="form-label">Nominal</label>

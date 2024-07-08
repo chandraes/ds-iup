@@ -61,7 +61,11 @@
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.invoice-supplier')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-supplier.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE SUPPLIER</h4>
+                <h4 class="mt-2">INVOICE SUPPLIER
+                    @if ($is > 0)
+                    <span class="text-danger">({{$is}})</span>
+                    @endif
+                </h4>
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">

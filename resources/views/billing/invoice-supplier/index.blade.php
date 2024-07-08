@@ -50,6 +50,7 @@
                     <th class="text-center align-middle">Nilai<br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
+                    <th class="text-center align-middle">Add Fee</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
                     <th class="text-center align-middle">DP<br>PPN</th>
@@ -65,7 +66,7 @@
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->supplier->nama}}</td>
                     <td class="text-center align-middle">
-                        <a href="{{route('rekap.invoice-belanja.detail', ['invoice' => $d])}}">
+                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
                             {{$d->kode}}
                         </a>
                     </td>
@@ -78,6 +79,9 @@
                     </td>
                     <td class="text-end align-middle">
                         {{$d->nf_ppn}}
+                    </td>
+                    <td class="text-end align-middle">
+                        {{$d->nf_add_fee}}
                     </td>
                     <td class="text-end align-middle">
                         {{$d->nf_total}}
@@ -98,11 +102,11 @@
                         {{$d->id_jatuh_tempo}}
                     </td>
                     <td class="text-center align-middle">
-                        {{-- <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
+                        <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
                             class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa}}">
                             @csrf
                                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
-                        </form> --}}
+                        </form>
                         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
                         <form action="{{route('billing.invoice-supplier.void', ['invoice' => $d])}}" method="post" id="voidForm{{ $d->id }}"
                             class="void-form m-3" data-id="{{ $d->id }}">
@@ -116,17 +120,18 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td class="text-end align-middle" colspan="4">Grand Toal</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('total')-$data->sum('ppn')+$data->sum('diskon'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('sisa_ppn'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle">{{number_format($data->sum('sisa'), 0, ',', '.')}}</td>
-                    <td class="text-end align-middle"></td>
-                    <td class="text-end align-middle"></td>
+                    <th class="text-end align-middle" colspan="4">Grand Toal</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('total')-$data->sum('ppn')+$data->sum('diskon'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('sisa_ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('sisa'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>
 

@@ -107,7 +107,7 @@
                     <td class="text-center align-middle">{{$d->kode_kas_kecil}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoice_belanja_id)
-                        <a href="{{route('rekap.invoice-belanja.detail', ['invoice' => $d->invoice_belanja_id])}}">
+                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d->invoice_belanja_id])}}">
                             {{$d->invoice_belanja->kode}}
                         </a>
                         {{-- <a href="{{route('rekap.kas-besar.detail-belanja', ['invoice' => $d->invoice_belanja_id])}}">{{$d->invoice_belanja->kode}}</a> --}}

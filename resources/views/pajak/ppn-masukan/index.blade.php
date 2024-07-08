@@ -70,7 +70,7 @@
                     </td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceBelanja)
-                        <a href="{{route('rekap.invoice-belanja.detail', ['invoice' => $d])}}">
+                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
                             {{$d->invoiceBelanja->kode}}
                         </a>
                         @endif

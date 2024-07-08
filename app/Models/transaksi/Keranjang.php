@@ -10,6 +10,7 @@ use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\PpnMasukan;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,11 @@ class Keranjang extends Model
 
         $data['sisa'] = $data['tempo'] == 1 ? $data['total'] - $data['dp'] - $data['dp_ppn'] : 0;
 
-        $data['jatuh_tempo'] = $data['tempo'] == 1 ? date('Y-m-d', $data['jatuh_tempo']) : null;
+        if ($data['tempo'] == 1 && $data['jatuh_tempo']) {
+            $data['jatuh_tempo'] = Carbon::createFromFormat('d-m-Y', $data['jatuh_tempo'])->format('Y-m-d');
+        } else {
+            $data['jatuh_tempo'] = null;
+        }
 
         // dd($data);
         $kas = new KasBesar();
@@ -227,6 +232,7 @@ class Keranjang extends Model
             'no_rek' => $supplier->no_rek,
             'bank' => $supplier->bank,
             'supplier_id' => $data['supplier_id'],
+            'jatuh_tempo' => $data['jatuh_tempo'],
         ];
 
         $store = $db->create($invoice);
@@ -278,9 +284,20 @@ class Keranjang extends Model
 
         foreach ($updates as $barang_id => $update) {
         // Assuming BarangStokHarga has a method to increment stok in bulk or efficiently
-            BarangStokHarga::where('barang_id', $barang_id)
-                        ->where('tipe', $update['tipe'])
-                        ->increment('stok', $update['totalJumlah']);
+                BarangStokHarga::firstOrCreate(
+                    [
+                        'barang_id' => $barang_id,
+                        'tipe' => $update['tipe'],
+                    ],
+                    [
+                        'stok' => 0, // Default stok value if creating a new record
+                    ]
+                );
+
+                // Now increment the stok
+                BarangStokHarga::where('barang_id', $barang_id)
+                            ->where('tipe', $update['tipe'])
+                            ->increment('stok', $update['totalJumlah']);
         }
 
         return true;

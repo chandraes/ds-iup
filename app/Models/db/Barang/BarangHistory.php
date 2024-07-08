@@ -11,7 +11,7 @@ class BarangHistory extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['nf_jumlah', 'nf_harga'];
+    protected $appends = ['nf_jumlah', 'nf_harga', 'total', 'nf_total'];
 
     public function barang()
     {
@@ -26,5 +26,15 @@ class BarangHistory extends Model
     public function getNfHargaAttribute()
     {
         return number_format($this->harga, 0, ',', '.');
+    }
+
+    public function getTotalAttribute()
+    {
+        return $this->jumlah * $this->harga;
+    }
+
+    public function getNfTotalAttribute()
+    {
+        return number_format($this->total, 0, ',', '.');
     }
 }
