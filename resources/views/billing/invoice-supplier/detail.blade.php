@@ -79,10 +79,12 @@
                     <th class="text-end align-middle" colspan="7">Total DPP Setelah Diskon</th>
                     <th class="text-end align-middle">{{$data->dpp_setelah_diskon}}</th>
                 </tr>
+                @if ($data->kas_ppn == 1)
                 <tr>
                     <th class="text-end align-middle" colspan="7">PPN</th>
                     <th class="text-end align-middle">{{$data->nf_ppn}}</th>
                 </tr>
+                @endif
                 <tr>
                     <th class="text-end align-middle" colspan="7">Additional Fee</th>
                     <th class="text-end align-middle">{{$data->nf_add_fee}}</th>
@@ -96,6 +98,7 @@
                     <th class="text-end align-middle" colspan="7">DP</th>
                     <th class="text-end align-middle">{{$data->nf_dp}}</th>
                 </tr>
+                @if ($data->kas_ppn == 1)
                 <tr>
                     <th class="text-end align-middle" colspan="7">DP PPN</th>
                     <th class="text-end align-middle">{{$data->nf_dp_ppn}}</th>
@@ -104,8 +107,9 @@
                     <th class="text-end align-middle" colspan="7">Sisa PPN</th>
                     <th class="text-end align-middle">{{$data->nf_sisa_ppn}}</th>
                 </tr>
+                @endif
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Sisa Tagian</th>
+                    <th class="text-end align-middle" colspan="7">Sisa Tagihan</th>
                     <th class="text-end align-middle">{{$data->nf_sisa}}</th>
                 </tr>
                 @endif

@@ -213,6 +213,7 @@
                             </td>
                             <td></td>
                         </tr>
+                        @if ($req['kas_ppn'] == 1)
                         <tr>
                             <td class="text-end align-middle" colspan="7">PPN</td>
                             <td class="text-end align-middle" id="tdPpn">
@@ -220,6 +221,7 @@
                             </td>
                             <td></td>
                         </tr>
+                        @endif
                         <tr>
                             <td class="text-end align-middle" colspan="7">Additional Fee</td>
                             <td class="text-end align-middle" id="tdAddFee">
