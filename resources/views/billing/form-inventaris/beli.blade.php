@@ -231,7 +231,7 @@
         });
 
         function checkPembayaran(){
-            console.log('checkPembayaran');
+
             var pembayaran = document.getElementById('pembayaran').value;
             if(pembayaran == 1)
             {

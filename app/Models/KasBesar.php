@@ -716,6 +716,19 @@ class KasBesar extends Model
 
             $store = $this->create($data);
 
+            $kasPpn = [
+                'saldo' => $this->saldoTerakhir(1),
+                'modal_investor' => $this->modalInvestorTerakhir(1),
+            ];
+
+            $kasNonPpn = [
+                'saldo' => $this->saldoTerakhir(0),
+                'modal_investor' => $this->modalInvestorTerakhir(0),
+            ];
+
+            // sum modal investor
+            $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
+
             $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*Form Cost Operational*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -726,10 +739,12 @@ class KasBesar extends Model
                         "Nama    : ".$store->nama_rek."\n".
                         "No. Rek : ".$store->no_rek."\n\n".
                         "==========================\n".
-                        "Sisa Saldo Kas Besar : \n".
-                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar PPN: \n".
+                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                        "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             DB::commit();
@@ -758,5 +773,150 @@ class KasBesar extends Model
     public function pphBadan($tahun)
     {
         return [];
+    }
+
+    public function dividen($data)
+    {
+        $persen = Investor::all();
+        $pengelola = Pengelola::where('persentase', '>', 0)->get();
+        $investor = InvestorModal::where('persentase', '>', 0)->get();
+
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $arrayPengelola = [];
+        $arrayInvestor = [];
+
+        foreach ($persen as $p) {
+            $nominal = $data['nominal'] * $p->persentase / 100;
+
+            if ($p->nama == 'pengelola') {
+                foreach ($pengelola as $peng) {
+                    $arrayPengelola[] = [
+                        'ppn_kas' => $data['ppn_kas'],
+                        'uraian' => 'Dividen Pengelola '. $peng->nama,
+                        'nominal' => $nominal * $peng->persentase / 100,
+                        'jenis' => 0,
+                        'investor_modal_id' => null,
+                        'no_rek' => $peng->no_rek,
+                        'bank' => $peng->bank,
+                        'nama_rek' => $peng->nama_rek,
+                        'modal_investor_terakhir' => $this->modalInvestorTerakhir($data['ppn_kas']),
+                    ];
+                }
+
+                // check total nominal
+                $total = array_sum(array_column($arrayPengelola, 'nominal'));
+
+                if ($total > $nominal) {
+                    $arrayPengelola[0]['nominal'] -= $total - $nominal;
+                } elseif ($total < $nominal) {
+                    $arrayPengelola[0]['nominal'] += $nominal - $total;
+                }
+            }
+
+            if($p->nama == 'investor') {
+                foreach ($investor as $inv) {
+                    $arrayInvestor[] = [
+                        'ppn_kas' => $data['ppn_kas'],
+                        'uraian' => 'Dividen Investor '. $inv->nama,
+                        'nominal' => $nominal * $inv->persentase / 100,
+                        'jenis' => 0,
+                        'investor_modal_id' => $inv->id,
+                        'no_rek' => $inv->no_rek,
+                        'bank' => $inv->bank,
+                        'nama_rek' => $inv->nama_rek,
+                        'modal_investor_terakhir' => $this->modalInvestorTerakhir($data['ppn_kas']),
+                    ];
+                }
+
+                // check total nominal
+                $total = array_sum(array_column($arrayInvestor, 'nominal'));
+
+                if ($total > $nominal) {
+                    $arrayInvestor[0]['nominal'] -= $total - $nominal;
+                } elseif ($total < $nominal) {
+                    $arrayInvestor[0]['nominal'] += $nominal - $total;
+                }
+            }
+        }
+
+        // join array
+        $dataAll = array_merge($arrayPengelola, $arrayInvestor);
+
+        $arrayPesan = [];
+        try {
+            DB::beginTransaction();
+
+            foreach ($dataAll as $da) {
+
+                $store = $this->create([
+                    'uraian' => $da['uraian'],
+                    'nominal' => $da['nominal'],
+                    'ppn_kas' => $da['ppn_kas'],
+                    'jenis' => $da['jenis'],
+                    'investor_modal_id' => $da['investor_modal_id'],
+                    'no_rek' => $da['no_rek'],
+                    'bank' => $da['bank'],
+                    'nama_rek' => $da['nama_rek'],
+                    'saldo' => $this->saldoTerakhir($da['ppn_kas']) - $da['nominal'],
+                    'modal_investor_terakhir' => $da['modal_investor_terakhir'],
+                ]);
+
+                $kasPpn = [
+                    'saldo' => $this->saldoTerakhir(1),
+                    'modal_investor' => $this->modalInvestorTerakhir(1),
+                ];
+
+                $kasNonPpn = [
+                    'saldo' => $this->saldoTerakhir(0),
+                    'modal_investor' => $this->modalInvestorTerakhir(0),
+                ];
+
+                // sum modal investor
+                $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
+
+                $arrayPesan[] =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                                        "*Form Dividen*\n".
+                                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                                        "Uraian : ".$store->uraian."\n".
+                                        "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                                        "Ditransfer ke rek:\n\n".
+                                        "Bank      : ".$store->bank."\n".
+                                        "Nama    : ".$store->nama_rek."\n".
+                                        "No. Rek : ".$store->no_rek."\n\n".
+                                        "==========================\n".
+                                        "Sisa Saldo Kas Besar PPN: \n".
+                                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                                        "Total Modal Investor : \n".
+                                        "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
+                                        "Terima kasih 🙏🙏🙏\n";
+            }
+
+            DB::commit();
+
+            $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
+            foreach ($arrayPesan as $key => $value) {
+                // dd($value);
+                $this->sendWa($tujuan, $value);
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil menyimpan data!!' ,
+            ];
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+
+
     }
 }

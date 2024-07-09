@@ -21,7 +21,7 @@
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/packaging.svg')}}" alt="" width="70">
+                <img src="{{asset('images/kredit.svg')}}" alt="" width="70">
                 <h4 class="mt-2">KREDIT INVENTARIS</h4>
             </a>
         </div>

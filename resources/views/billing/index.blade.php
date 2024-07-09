@@ -47,6 +47,12 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+            <a href="{{route('billing.form-dividen')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-deviden.svg')}}" alt="" width="70">
+                <h4 class="mt-2">FORM DIVIDEN</h4>
+            </a>
+        </div>
     </div>
 
 
@@ -70,13 +76,13 @@
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/transaksi.svg')}}" alt="" width="70">
+                <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM JUAL</h4>
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/transaksi.svg')}}" alt="" width="70">
+                <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
                 <h4 class="mt-2">INVOICE KONSUMEN</h4>
             </a>
         </div>

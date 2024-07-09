@@ -8,6 +8,7 @@ use App\Models\GroupWa;
 use App\Models\Investor;
 use App\Models\InvestorModal;
 use App\Models\KasBesar;
+use App\Models\Pengelola;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\transaksi\InventarisInvoice;
@@ -226,5 +227,36 @@ class BillingController extends Controller
         return view('billing.form-inventaris.index', [
             'hi' => $hi,
         ]);
+    }
+
+    public function form_dividen()
+    {
+        $persen = Investor::all();
+        $pengelola = Pengelola::where('persentase', '>', 0)->get();
+        $investor = InvestorModal::where('persentase', '>', 0)->get();
+
+        if ($pengelola->count() == 0 || $investor->count() == 0){
+            return redirect()->back()->with('error', 'Data Pengelola atau Investor Belum Diisi!!');
+        }
+
+        return view('billing.form-dividen.index', [
+            'persen' => $persen,
+            'pengelola' => $pengelola,
+            'investor' => $investor,
+        ]);
+    }
+
+    public function form_dividen_store(Request $request)
+    {
+        $data = $request->validate([
+            'nominal' => 'required',
+            'ppn_kas' => 'required',
+        ]);
+
+        $db = new KasBesar();
+
+        $res = $db->dividen($data);
+
+        return redirect()->route('billing')->with($res['status'], $res['message']);
     }
 }
