@@ -785,6 +785,15 @@ class KasBesar extends Model
         $arrayPengelola = [];
         $arrayInvestor = [];
 
+        $saldo = $this->saldoTerakhir($data['ppn_kas']);
+
+        if ($saldo < $data['nominal']) {
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($saldo, 0, ',', '.'),
+            ];
+        }
+
         foreach ($persen as $p) {
             $nominal = $data['nominal'] * $p->persentase / 100;
 
