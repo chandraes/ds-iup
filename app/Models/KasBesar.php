@@ -925,7 +925,5 @@ class KasBesar extends Model
                 'message' => $th->getMessage(),
             ];
         }
-
-
     }
 }

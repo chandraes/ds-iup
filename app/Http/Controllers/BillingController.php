@@ -236,7 +236,7 @@ class BillingController extends Controller
         $investor = InvestorModal::where('persentase', '>', 0)->get();
 
         if ($pengelola->count() == 0 || $investor->count() == 0){
-            return redirect()->back()->with('error', 'Data Pengelola atau Investor Belum Diisi!!');
+            return redirect()->back()->with('error', 'Data Pengelola/Investor Belum Di isi!!');
         }
 
         return view('billing.form-dividen.index', [
