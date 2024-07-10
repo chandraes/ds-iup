@@ -42,8 +42,10 @@
         <thead>
             <tr>
                 <th>No</th>
-                <th>Kategori Barang</th>
-                <th>Nama Barang</th>
+                <th>Uraian</th>
+                <th>Type</th>
+                <th>Kode</th>
+                <th>Merek</th>
                 <th>Qty</th>
                 <th>Sat</th>
                 <th>HARGA</th>
@@ -54,8 +56,10 @@
             @foreach ($data->items as $item)
             <tr>
                 <td style="text-align: center">{{$loop->iteration}}</td>
-                <td>{{$item->kategori}}</td>
-                <td>{{$item->nama_barang}}</td>
+                <td>{{$item->barang->nama}}</td>
+                <td style="text-align: center">{{$item->barang->type->nama}}</td>
+                <td style="text-align: center">{{$item->barang->kode}}</td>
+                <td style="text-align: center">{{$item->barang->merk}}</td>
                 <td style="text-align: center">{{number_format($item->jumlah, 0, ',', '.')}}</td>
                 <td style="text-align: center">bh</td>
                 <td style="text-align: right;">{{number_format($item->harga_satuan, 0, ',', '.')}}</td>
@@ -65,21 +69,21 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="6" class="total">GRAND TOTAL</td>
+                <td colspan="8" class="total">GRAND TOTAL</td>
                 <td style="text-align: right">{{number_format($data->items->sum('total'), 0, ',', '.')}}</td>
             </tr>
             @if ($data->apa_ppn == 1)
             <tr>
-                <td colspan="6" class="total">PPN (11%)</td>
+                <td colspan="8" class="total">PPN (11%)</td>
                 <td style="text-align: right">{{number_format($data->items->sum('total') * ($ppn/100), 0, ',', '.')}}</td>
             </tr>
             <tr>
-                <td colspan="6" class="total">GRAND TOTAL + PPN</td>
+                <td colspan="8" class="total">GRAND TOTAL + PPN</td>
                 <td style="text-align: right">{{number_format($data->items->sum('total') + $data->items->sum('total') * ($ppn/100), 0, ',', '.')}}</td>
             </tr>
             @endif
             <tr>
-                <td colspan="7" style="text-align: center">Terbilang: <strong>#{{ucfirst($terbilang)}} rupiah#</strong></td>
+                <td colspan="9" style="text-align: center">Terbilang: <strong>#{{ucfirst($terbilang)}} rupiah#</strong></td>
             </tr>
         </tfoot>
     </table>

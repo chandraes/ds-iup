@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Barang\Barang;
+use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
@@ -24,11 +27,13 @@ class PoController extends Controller
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         $supplier = Supplier::where('status', 1)->get();
         $unit = BarangUnit::all();
+        $type = BarangType::all();
 
         return view('po.form-po',[
             'ppn' => $ppn,
             'supplier' => $supplier,
             'unit' => $unit,
+            'type' => $type,
         ]);
     }
 
@@ -41,10 +46,10 @@ class PoController extends Controller
             'apa_ppn' => 'required',
             'barang_id' => 'required|array', // 'barang_id' => 'required|array
             'barang_id.*' => 'required',
-            'kategori' => 'required|array',
-            'kategori.*' => 'required',
-            'nama_barang' => 'required|array',
-            'nama_barang.*' => 'required',
+            // 'kategori' => 'required|array',
+            // 'kategori.*' => 'required',
+            // 'nama_barang' => 'required|array',
+            // 'nama_barang.*' => 'required',
             'jumlah' => 'required|array',
             'jumlah.*' => 'required',
             'harga_satuan' => 'required|array',
@@ -62,6 +67,7 @@ class PoController extends Controller
             $data['full_nomor'] = $db->generateFullNomor();
 
             $purchaseOrder = PurchaseOrder::create([
+                'supplier_id' => $data['supplier_id'],
                 'kepada' => $data['kepada'],
                 'alamat' => $data['alamat'],
                 'telepon' => $data['telepon'],
@@ -71,14 +77,13 @@ class PoController extends Controller
                 'user_id' => $data['user_id'],
             ]);
 
-            foreach ($data['kategori'] as $index => $kategori) {
+            foreach ($data['barang_id'] as $index => $kategori) {
 
                 $data['jumlah'][$index] = str_replace('.', '', $data['jumlah'][$index]);
                 $data['harga_satuan'][$index] = str_replace('.', '', $data['harga_satuan'][$index]);
 
                 $purchaseOrder->items()->create([
-                    'kategori' => $kategori,
-                    'nama_barang' => $data['nama_barang'][$index],
+                    'barang_id' => $kategori,
                     'jumlah' => $data['jumlah'][$index],
                     'harga_satuan' => $data['harga_satuan'][$index],
                     'total' => $data['jumlah'][$index] * $data['harga_satuan'][$index],
@@ -136,7 +141,7 @@ class PoController extends Controller
         // dd($terbilang, $po->items->sum('total'));
 
         $pdf = PDF::loadview('po.po-pdf', [
-            'data' => $po->load('notes', 'items'),
+            'data' => $po->load('notes', 'items.barang.type.unit', 'items.barang.kategori'),
             'pt' => $pt,
             'ppn' => $ppn,
             'terbilang' => $terbilang,
@@ -162,4 +167,28 @@ class PoController extends Controller
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menghapus data. '.$e->getMessage()]);
         }
     }
+
+    public function getTypes($unitId)
+    {
+        $types = BarangType::where('barang_unit_id', $unitId)->get();
+        return response()->json($types);
+    }
+
+    public function getKategori($typeId)
+    {
+        $barang = Barang::where('barang_type_id', $typeId)->get();
+        // get barang_kategori_id from barang
+        $barangKategoriId = $barang->pluck('barang_kategori_id')->unique();
+        // get kategori from barang_kategori_id
+        $kategori = BarangKategori::whereIn('id', $barangKategoriId)->get();
+
+        return response()->json($kategori);
+    }
+
+    public function getBarang($typeId, $kategoriId)
+    {
+        $barang = Barang::where('barang_type_id', $typeId)->where('barang_kategori_id', $kategoriId)->get();
+        return response()->json($barang);
+    }
+
 }

@@ -279,6 +279,10 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/rekap', [App\Http\Controllers\PoController::class, 'rekap'])->name('po.rekap');
             Route::get('/rekap/{po}', [App\Http\Controllers\PoController::class, 'pdf'])->name('po.rekap.pdf');
             Route::delete('/rekap/{po}', [App\Http\Controllers\PoController::class, 'delete'])->name('po.rekap.delete');
+
+            Route::get('/get-types/{unitId}', [App\Http\Controllers\PoController::class, 'getTypes']);
+            Route::get('/get-kategori/{typeId}', [App\Http\Controllers\PoController::class, 'getKategori']);
+            Route::get('/get-barang/{typeId}/{kategoriId}', [App\Http\Controllers\PoController::class, 'getBarang']);
         });
 
         Route::prefix('billing')->group(function() {

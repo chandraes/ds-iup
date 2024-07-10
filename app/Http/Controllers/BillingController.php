@@ -29,15 +29,6 @@ class BillingController extends Controller
         ]);
     }
 
-    public function nota_ppn_masukan()
-    {
-
-        return view('billing.ppn-masukan.index', [
-
-        ]);
-    }
-
-
     public function ppn_masuk_susulan()
     {
         $data = Investor::all();
@@ -227,7 +218,7 @@ class BillingController extends Controller
 
     public function form_inventaris()
     {
-        $hi = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->count();
+        $hi = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->where('void', 0)->count();
 
         return view('billing.form-inventaris.index', [
             'hi' => $hi,
