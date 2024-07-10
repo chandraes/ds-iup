@@ -100,7 +100,20 @@
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-
+    
+    function toggleEditPassword(itemId) {
+        var passwordInput = document.getElementById('password-' + itemId);
+        var toggleIcon = document.getElementById('toggleIcon-' + itemId);
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = "password";
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
 
     $('#data').DataTable({
         paging: false,

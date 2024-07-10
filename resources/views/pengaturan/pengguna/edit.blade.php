@@ -45,9 +45,12 @@
                     <div class="row mb-4">
                         <label class="col-md-3 form-label">Password</label>
                         <div class="col-md-9">
-                            <input type="password" class="form-control @if ($errors->has('password'))
-                            is-invalid
-                        @endif" name="password" placeholder="*************">
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password-{{ $d->id }}" placeholder="Password">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleEditPassword({{ $d->id }})">
+                                    <i class="fa fa-eye" id="toggleIcon-{{ $d->id }}"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <span class="invalid-feedback text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -95,3 +98,4 @@
            })
        });
 </script>
+

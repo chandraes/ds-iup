@@ -45,9 +45,12 @@
                     <div class="row mb-4">
                         <label class="col-md-3 form-label">Password</label>
                         <div class="col-md-9">
-                            <input type="password" class="form-control @if ($errors->has('password'))
-                            is-invalid
-                        @endif" name="password" placeholder="*************">
+                            <div class="input-group">
+                                <input type="password" class="form-control @error('password') is-invalid @enderror" name="password" id="password" placeholder="*************">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <span class="fa fa-eye" id="eyeIcon"></span>
+                                </button>
+                            </div>
                             @error('password')
                                 <span class="invalid-feedback text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -76,3 +79,17 @@
         </div>
     </div>
 </div>
+@push('js')
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function (e) {
+        // Toggle the type attribute
+        const password = document.getElementById('password');
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        // Toggle the eye icon
+        const eyeIcon = document.getElementById('eyeIcon');
+        eyeIcon.classList.toggle('fa-eye');
+        eyeIcon.classList.toggle('fa-eye-slash');
+    });
+</script>
+@endpush
