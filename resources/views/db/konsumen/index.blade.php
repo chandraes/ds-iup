@@ -115,6 +115,7 @@
         document.getElementById('edit_no_hp').value = data.no_hp;
         document.getElementById('edit_no_kantor').value = data.no_kantor;
         document.getElementById('edit_cp').value = data.cp;
+        document.getElementById('edit_kota').value = data.kota;
         document.getElementById('edit_npwp').value = data.npwp;
         document.getElementById('edit_pembayaran').value = data.pembayaran;
         document.getElementById('edit_plafon').value = data.nf_plafon;

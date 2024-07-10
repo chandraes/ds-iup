@@ -14,8 +14,12 @@
         @csrf
         <div class="row">
             <div class="col-md-12 mb-3">
-                <label for="kepada" class="form-label">Kepada:</label>
-                <input type="text" name="kepada" class="form-control" id="kepada" value="{{ old('kepada') }}" required>
+                <label for="supplier_id" class="form-label">Kepada:</label>
+                <select name="supplier_id" id="supplier_id" class="form-select" required>
+
+                    <option value="1">Dengan PPN</option>
+
+                </select>
             </div>
             <div class="col-md-12 mb-3">
                 <label for="alamat" class="form-label">Alamat:</label>

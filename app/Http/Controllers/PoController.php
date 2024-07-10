@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
+use App\Models\db\Supplier;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -20,19 +22,25 @@ class PoController extends Controller
     public function form()
     {
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $supplier = Supplier::where('status', 1)->get();
+        $unit = BarangUnit::all();
 
         return view('po.form-po',[
             'ppn' => $ppn,
+            'supplier' => $supplier,
+            'unit' => $unit,
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'kepada' => 'required',
+            'supplier_id' => 'required',
             'alamat' => 'required',
             'telepon' => 'required',
             'apa_ppn' => 'required',
+            'barang_id' => 'required|array', // 'barang_id' => 'required|array
+            'barang_id.*' => 'required',
             'kategori' => 'required|array',
             'kategori.*' => 'required',
             'nama_barang' => 'required|array',
@@ -48,7 +56,7 @@ class PoController extends Controller
             DB::beginTransaction();
 
             $db = new PurchaseOrder();
-
+            $data['kepada'] = Supplier::find($data['supplier_id'])->nama;
             $data['nomor'] = $db->generateNomor();
             $data['user_id'] = auth()->user()->id;
             $data['full_nomor'] = $db->generateFullNomor();

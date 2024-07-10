@@ -44,6 +44,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Kas Besar</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nominal</th>
                 </tr>
@@ -53,7 +54,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="2">Grand Total:</th> <!-- Label for the total -->
+                    <th colspan="3">Grand Total:</th> <!-- Label for the total -->
                     <th id="total-nominal"></th> <!-- Cell where the total will be displayed -->
 
                 </tr>
@@ -78,6 +79,13 @@
             ajax: '{{ route('rekap.kas-investor.detail', $investor->id) }}',
             columns: [
                 { data: 'tanggal', name: 'tanggal', class: 'text-center'},
+                {
+                    data: 'ppn_kas',
+                    name: 'ppn_kas',
+                    render: function(data, type, row) {
+                        return data == 1 ? 'PPN' : 'Non PPN';
+                    }
+                },
                 { data: 'uraian', name: 'uraian' },
                 {
                     data: 'nominal',
@@ -92,7 +100,7 @@
             ],
             footerCallback: function(row, data, start, end, display) {
                 var api = this.api();
-                var total = api.column(2).data().reduce(function (a, b) {
+                var total = api.column(3).data().reduce(function (a, b) {
                     return parseInt(a) + parseInt(b);
                 }, 0);
                 $('#total-nominal').html(new Intl.NumberFormat('id-ID').format(total));

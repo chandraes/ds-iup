@@ -214,7 +214,7 @@ class RekapController extends Controller
             $length = $request->get('length'); // Get the requested number of records
 
             // Define the columns for sorting
-            $columns = ['created_at', 'uraian', 'nominal'];
+            $columns = ['created_at', 'ppn_kas','uraian', 'nominal'];
 
             $query = $investor->load('kasBesar')->kasBesar()->whereNotNull('modal_investor')->orderBy('created_at', 'desc');
 
