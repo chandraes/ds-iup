@@ -70,7 +70,7 @@ class FormInventaris extends Controller
 
     public function hutang()
     {
-        $data = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->get();
+        $data = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->where('void', 0)->get();
 
         return view('billing.form-inventaris.hutang', [
             'data' => $data
@@ -82,6 +82,15 @@ class FormInventaris extends Controller
         $db = new InventarisInvoice();
 
         $res = $db->pelunasan($invoice->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function void(InventarisInvoice $invoice)
+    {
+        $db = new InventarisInvoice();
+
+        $res = $db->void($invoice->id);
 
         return redirect()->back()->with($res['status'], $res['message']);
     }

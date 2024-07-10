@@ -44,7 +44,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
-                    <th class="text-center align-middle">Project</th>
+                    <th class="text-center align-middle">Kas Besar</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nominal</th>
                 </tr>
@@ -79,7 +79,13 @@
             ajax: '{{ route('rekap.kas-investor.detail-deviden', $investor->id) }}',
             columns: [
                 { data: 'tanggal', name: 'tanggal', class: 'text-center'},
-                { data: 'project_nama', name: 'project_nama' },
+                {
+                    data: 'ppn_kas',
+                    name: 'ppn_kas',
+                    render: function(data, type, row) {
+                        return data == 1 ? 'PPN' : 'Non PPN';
+                    }
+                },
                 { data: 'uraian', name: 'uraian' },
                 {
                     data: 'nominal',

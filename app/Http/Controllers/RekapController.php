@@ -269,7 +269,7 @@ class RekapController extends Controller
             // Define the columns for sorting
             $columns = ['created_at', 'uraian', 'nominal'];
 
-            $query = $investor->load('kasBesar')->kasBesar()->whereNull('modal_investor')->with('project')->orderBy('created_at', 'desc');
+            $query = $investor->load('kasBesar')->kasBesar()->whereNull('modal_investor')->orderBy('created_at', 'desc');
 
             // Handle the sorting
             if ($request->has('order')) {

@@ -7,6 +7,8 @@ use App\Models\db\InventarisRekap;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\PesanWa;
+use App\Models\PpnMasukan;
+use App\Models\Rekening;
 use App\Services\StarSender;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +18,7 @@ class InventarisInvoice extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'nf_jumlah', 'nf_harga_satuan', 'nf_ppn', 'nf_total', 'nf_dp', 'id_tanggal_jatuh_tempo', 'nf_sisa_bayar', 'nf_diskon', 'nf_add_fee'];
+    protected $appends = ['tanggal', 'nf_jumlah', 'nf_harga_satuan', 'nf_ppn', 'nf_total', 'nf_dp', 'id_tanggal_jatuh_tempo', 'nf_sisa_bayar', 'nf_diskon', 'nf_add_fee', 'dpp', 'nf_dpp'];
 
 
     public function dataTahun()
@@ -27,6 +29,16 @@ class InventarisInvoice extends Model
     public function getTanggalAttribute()
     {
         return date('d-m-Y', strtotime($this->created_at));
+    }
+
+    public function getDppAttribute()
+    {
+        return $this->jumlah * $this->harga_satuan;
+    }
+
+    public function getNfDppAttribute()
+    {
+        return number_format($this->dpp, 0, ',', '.');
     }
 
     public function getNfJumlahAttribute()
@@ -86,7 +98,7 @@ class InventarisInvoice extends Model
 
     public function rekapInvoice($month, $year)
     {
-        return $this->where('lunas', 1)->whereMonth('created_at', $month)->whereYear('created_at', $year)->get();
+        return $this->where('lunas', 1)->where('void', 0)->whereMonth('created_at', $month)->whereYear('created_at', $year)->get();
     }
 
     public function beliInventaris($data)
@@ -95,7 +107,7 @@ class InventarisInvoice extends Model
             DB::beginTransaction();
 
             $kas = new KasBesar();
-            $saldo = $kas->saldoTerakhir();
+            $saldo = $kas->saldoTerakhir(1);
 
             $total = ($data['jumlah'] * $data['harga_satuan']) + $data['ppn'] + $data['add_fee'] - $data['diskon'];
 
@@ -152,14 +164,21 @@ class InventarisInvoice extends Model
             $store = $kas->create([
                 'uraian' => $data['uraian'],
                 'jenis' => 0,
+                'ppn_kas' => 1,
                 'nominal' => $nominal,
                 'saldo' => $saldo - $nominal,
                 'no_rek' => $data['no_rek'],
                 'nama_rek' => $data['nama_rek'],
                 'bank' => $data['bank'],
-                'modal_investor_terakhir' => $kas->modalInvestorTerakhir(),
+                'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1),
                 'invoice_inventaris_id' => $invoice->id,
             ]);
+
+            if ($data['pembayaran'] == 1 && $data['ppn'] > 0) {
+                $this->storePpn($invoice);
+            }
+
+            DB::commit();
 
             $inv = InventarisJenis::find($data['inventaris_jenis_id']);
             $inv_tot = InventarisRekap::sum('total');
@@ -196,8 +215,6 @@ class InventarisInvoice extends Model
             // Send the message
             $this->sendWa($group, $pesan);
 
-            DB::commit();
-
             $res = [
                 'status' => 'success',
                 'message' => 'Data berhasil disimpan',
@@ -224,7 +241,7 @@ class InventarisInvoice extends Model
 
         $kas = new KasBesar();
 
-        $saldo = $kas->saldoTerakhir();
+        $saldo = $kas->saldoTerakhir(1);
 
         if($saldo < $invoice->sisa_bayar){
             return [
@@ -239,18 +256,25 @@ class InventarisInvoice extends Model
             $store = $kas->create([
                 'uraian' => 'Pelunasan '.$invoice->uraian,
                 'jenis' => 0,
+                'ppn_kas'=> 1,
                 'nominal' => $invoice->sisa_bayar,
                 'saldo' => $saldo - $invoice->sisa_bayar,
                 'no_rek' => $invoice->no_rek,
                 'nama_rek' => $invoice->nama_rek,
                 'bank' => $invoice->bank,
-                'modal_investor_terakhir' => $kas->modalInvestorTerakhir(),
+                'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1),
                 'invoice_inventaris_id' => $invoice->id,
             ]);
 
             $invoice->update([
                 'lunas' => 1,
             ]);
+
+            if ($invoice->ppn > 0) {
+                $this->storePpn($invoice);
+            }
+
+            DB::commit();
 
             $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                      "*FORM INVENTARIS*\n".
@@ -274,8 +298,6 @@ class InventarisInvoice extends Model
             // Send the message
             $this->sendWa($group, $pesan);
 
-            DB::commit();
-
             return [
                 'status' => 'success',
                 'message' => 'Pelunasan berhasil',
@@ -293,6 +315,20 @@ class InventarisInvoice extends Model
 
     }
 
+    private function storePpn($data)
+    {
+        $db = new PpnMasukan();
+
+        $db->create([
+            'inventaris_invoice_id' => $data->id,
+            'uraian' => $data->uraian,
+            'nominal' => $data->ppn,
+            'saldo' => $db->saldoTerakhir() + $data->ppn,
+        ]);
+
+        return true;
+    }
+
     private function sendWa($tujuan, $pesan)
     {
         $send = new StarSender($tujuan, $pesan);
@@ -305,5 +341,94 @@ class InventarisInvoice extends Model
             'tujuan' => $tujuan,
             'status' => $status,
         ]);
+    }
+
+    public function void($id)
+    {
+        $invoice = $this->find($id);
+
+        try {
+            DB::beginTransaction();
+
+            $invoice->update([
+                'void' => 1,
+            ]);
+
+            InventarisRekap::find($invoice->inventaris_id)->delete();
+
+            $kas = new KasBesar();
+
+            if ($invoice->dp > 0) {
+                $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
+                $store = $kas->create([
+                    'uraian' => 'Void '.$invoice->uraian,
+                    'jenis' => 1,
+                    'ppn_kas' => 1,
+                    'nominal' => $invoice->dp,
+                    'saldo' => $kas->saldoTerakhir(1) + $invoice->dp,
+                    'no_rek' => $rekening->no_rek,
+                    'nama_rek' => $rekening->nama_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1),
+                    'invoice_inventaris_id' => $invoice->id,
+                ]);
+
+                $kasPpn = [
+                    'saldo' => $kas->saldoTerakhir(1),
+                    'modal_investor' => $kas->modalInvestorTerakhir(1),
+                ];
+
+                $kasNonPpn = [
+                    'saldo' => $kas->saldoTerakhir(0),
+                    'modal_investor' => $kas->modalInvestorTerakhir(0),
+                ];
+
+                // sum modal investor
+                $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
+
+                $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                        "*VOID INVENTARIS*\n".
+                        "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                        "Uraian :  *".$store->uraian."*\n\n".
+                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank      : ".$store->bank."\n".
+                        "Nama    : ".$store->nama_rek."\n".
+                        "No. Rek : ".$store->no_rek."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar PPN: \n".
+                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+            }
+
+            DB::commit();
+
+            // check if there is $pesan
+            if (isset($pesan)) {
+                // Retrieve the group name once, as it's the same for both conditions
+                $group = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
+                // Send the message
+                $kas->sendWa($group, $pesan);
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'Data berhasil di void',
+            ];
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => 'Gagal melakukan void, '.$th->getMessage(),
+            ];
+        }
     }
 }

@@ -109,6 +109,10 @@ class BillingController extends Controller
         $month = Carbon::now()->locale('id')->monthName;
         $data = Karyawan::with(['jabatan'])->where('status', 1)->get();
 
+        if ($data->count() == 0) {
+            return redirect()->back()->with('error', 'Data Staff/Direksi Kosong, Silahkan Tambahkan Data Terlebih Dahulu');
+        }
+
         return view('billing.form-cost-operational.form-gaji.index', [
             'data' => $data,
             'month' => $month,
@@ -125,6 +129,7 @@ class BillingController extends Controller
         ]);
 
         $data = Karyawan::where('status', 1)->get();
+
 
         $db = new KasBesar();
         $saldo = $db->saldoTerakhir(1);

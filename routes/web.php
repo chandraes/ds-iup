@@ -293,6 +293,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::prefix('hutang')->group(function(){
                     Route::get('/', [App\Http\Controllers\FormInventaris::class, 'hutang'])->name('billing.form-inventaris.hutang');
                     Route::post('/pelunasan/{invoice}', [App\Http\Controllers\FormInventaris::class, 'pelunasan'])->name('billing.form-inventaris.hutang.pelunasan');
+                    Route::post('/void/{invoice}', [App\Http\Controllers\FormInventaris::class, 'void'])->name('billing.form-inventaris.hutang.void');
                 });
             });
             Route::prefix('form-cost-operational')->group(function(){

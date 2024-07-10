@@ -808,6 +808,7 @@ class KasBesar extends Model
                         'no_rek' => $peng->no_rek,
                         'bank' => $peng->bank,
                         'nama_rek' => $peng->nama_rek,
+                        'pengelola_id' => $peng->id,
                         'modal_investor_terakhir' => $this->modalInvestorTerakhir($data['ppn_kas']),
                     ];
                 }

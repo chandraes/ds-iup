@@ -59,6 +59,8 @@
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Pembayaran</th>
                     <th class="text-center align-middle">Qty</th>
+                    <th class="text-center align-middle">Harga<br>Satuan</th>
+                    <th class="text-center align-middle">DPP</th>
                     <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
                     <th class="text-center align-middle">Add Fee</th>
@@ -83,6 +85,12 @@
                     <td class="text-center align-middle">
                         {{$d->nf_jumlah}}
                     </td>
+                    <td class="text-center align-middle">
+                        {{$d->nf_harga_satuan}}
+                    </td>
+                    <td class="text-center align-middle">
+                        {{$d->nf_dpp}}
+                    </td>
                     <td class="text-end align-middle">
                         {{$d->nf_diskon}}
                     </td>
@@ -100,7 +108,8 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="4">Grand Total</th>
+                    <th class="text-end align-middle" colspan="5">Grand Total :</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('dpp'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',','.')}}</th>
