@@ -14,9 +14,19 @@ class PpnMasukan extends Model
 
     protected $appends = ['tanggal', 'nf_nominal', 'nf_saldo'];
 
+    public function dataTahun()
+    {
+        return $this->whereYear('created_at', date('Y'))->get();
+    }
+
     public function invoiceBelanja()
     {
         return $this->belongsTo(InvoiceBelanja::class);
+    }
+
+    public function inventarisInvoice()
+    {
+        return $this->belongsTo(InvoiceBelanja::class, 'inventaris_invoice_id');
     }
 
     public function getTanggalAttribute()
