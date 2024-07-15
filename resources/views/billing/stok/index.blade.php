@@ -90,16 +90,13 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Harga Beli<br>Barang</th>
-                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
+                    <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
-                    <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
-                    <th class="text-center align-middle">Total Harga<br>Jual Barang</th>
-
                 </tr>
             </thead>
             <tbody>
-                @php $number = 1; @endphp
+                @php $number = 1; $hargaSetelahPPn = 0; @endphp
                 @foreach ($units as $unit)
                     @php $unitDisplayed = false; @endphp
                     @foreach ($unit->types as $typeIndex => $type)
@@ -124,7 +121,6 @@
                                     <td class="text-start align-middle">{{ $barang->nama }}</td>
                                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                                     <td class="text-center align-middle">{{ $barang->merk }}</td>
-                                    <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">
                                         @if ($barang->stok_ppn)
                                         <div class="row mx-3">
@@ -132,8 +128,17 @@
                                         </div>
                                         @else
                                         <div class="row mx-3">
-                                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Jual</button>
+                                            <span>
+                                                0
+                                            </span>
                                         </div>
+                                        @endif
+                                    </td>
+                                    <td class="text-end align-middle">
+                                        @if ($barang->stok_ppn)
+                                        {{number_format($barang->stok_ppn->harga+($barang->stok_ppn->harga * $ppnRate/100), 0, ',', '.')}}
+                                        @else
+                                        0
                                         @endif
                                     </td>
                                     <td class="text-center align-middle">
@@ -143,27 +148,21 @@
                                         0
                                         @endif
                                     </td>
-                                    <td class="text-end align-middle">0</td>
-                                    <td class="text-end align-middle">0</td>
                                 </tr>
                             @endforeach
                         @endforeach
                     @endforeach
+                    <tr>
+                        <td colspan="10" style="border: none; background-color:transparent; border-bottom-color:transparent"></td>
+                    </tr>
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="10" class="text-end align-middle">Grand Total</th>
-                    <th class="text-end align-middle">0</th>
-                    <th class="text-end align-middle">0</th>
-                </tr>
-                <tr>
-                    <th colspan="10" class="text-end align-middle">Estimasi Profit</th>
-                    <th class="text-end align-middle" colspan="2">0</th>
-                </tr>
-            </tfoot>
+
         </table>
     </div>
+    <br>
+    <hr>
+    <br>
     <div class="table-container mt-4">
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
@@ -175,7 +174,6 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Harga Beli<br>Barang</th>
                     <th class="text-center align-middle">Harga Jual<br>Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
@@ -208,7 +206,6 @@
                                     <td class="text-start align-middle">{{ $barang->nama }}</td>
                                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                                     <td class="text-center align-middle">{{ $barang->merk }}</td>
-                                    <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">
                                         @if ($barang->stok_non_ppn)
                                         <div class="row mx-3">
@@ -216,7 +213,9 @@
                                         </div>
                                         @else
                                         <div class="row mx-3">
-                                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Jual</button>
+                                            <span>
+                                                0
+                                            </span>
                                         </div>
                                         @endif
                                     </td>
@@ -238,17 +237,6 @@
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="10" class="text-end align-middle">Grand Total</th>
-                    <th class="text-end align-middle">0</th>
-                    <th class="text-end align-middle">0</th>
-                </tr>
-                <tr>
-                    <th colspan="10" class="text-end align-middle">Estimasi Profit</th>
-                    <th class="text-end align-middle" colspan="2">0</th>
-                </tr>
-            </tfoot>
         </table>
     </div>
 

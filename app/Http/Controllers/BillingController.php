@@ -7,6 +7,7 @@ use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\Karyawan;
+use App\Models\db\Pajak;
 use App\Models\GroupWa;
 use App\Models\Investor;
 use App\Models\InvestorModal;
@@ -28,6 +29,7 @@ class BillingController extends Controller
     {
         $kategori = BarangKategori::all();
         $data = BarangType::with(['unit', 'barangs'])->get();
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
@@ -84,6 +86,7 @@ class BillingController extends Controller
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
+            'ppnRate' => $ppnRate,
         ]);
     }
     public function index()
