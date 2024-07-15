@@ -105,7 +105,7 @@
                 </tr>
             </thead>
             <tbody>
-                @php $number = 1; @endphp
+                @php $number = 1; $hargaSetelahPPn = 0; @endphp
                 @foreach ($units as $unit)
                     @php $unitDisplayed = false; @endphp
                     @foreach ($unit->types as $typeIndex => $type)
@@ -144,8 +144,20 @@
                                         </div>
                                         @endif
                                     </td>
-                                    <td class="text-end align-middle">0</td>
-                                    <td class="text-end align-middle">0</td>
+                                    <td class="text-end align-middle">
+                                        @if ($barang->stok_ppn)
+                                        {{number_format($barang->stok_ppn->harga * $ppnRate/100, 0, ',', '.')}}
+                                        @else
+                                        0
+                                        @endif
+                                    </td>
+                                    <td class="text-end align-middle">
+                                        @if ($barang->stok_ppn)
+                                        {{number_format($barang->stok_ppn->harga+($barang->stok_ppn->harga * $ppnRate/100), 0, ',', '.')}}
+                                        @else
+                                        0
+                                        @endif
+                                    </td>
                                     <td class="text-center align-middle">
                                         @if ($barang->stok_ppn)
                                         {{$barang->stok_ppn->nf_stok}}

@@ -6,6 +6,7 @@ use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
+use App\Models\db\Pajak;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -254,6 +255,7 @@ class BarangController extends Controller
     {
         $kategori = BarangKategori::all();
         $data = BarangType::with(['unit', 'barangs'])->get();
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
@@ -310,6 +312,7 @@ class BarangController extends Controller
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
+            'ppnRate' => $ppnRate,
         ]);
     }
 
