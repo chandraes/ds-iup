@@ -76,7 +76,7 @@
             <div class="col-md-12">
                 <button type="submit" class="btn btn-primary">Filter</button>
                 {{-- reset filter button --}}
-                <a href="{{ route('db.barang') }}" class="btn btn-danger">Reset Filter</a>
+                <a href="{{route('db.stok-non-ppn')}}" class="btn btn-danger">Reset Filter</a>
             </div>
         </div>
     </form>
