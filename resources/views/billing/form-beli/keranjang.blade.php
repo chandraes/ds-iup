@@ -65,7 +65,7 @@
                                 </div>
                             </div>
                         </div>
-
+                        
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="uraian" class="form-label">Apakah DP menggunakan PPn? <span

@@ -36,6 +36,7 @@
                 <th class="text-center align-middle">NO HP</th>
                 <th class="text-center align-middle">INFO REKENING</th>
                 <th class="text-center align-middle">KOTA</th>
+                <th class="text-center align-middle">SISTEM<br>BAYAR</th>
                 <th class="text-center align-middle">STATUS</th>
                 <th class="text-center align-middle">ACT</th>
             </tr>
@@ -58,6 +59,7 @@
                     </div>
                 </td>
                 <td class="text-center align-middle">{{$d->kota}}</td>
+                <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">
                     @if ($d->status == 1)
                     <span class="badge bg-success">Aktif</span>
