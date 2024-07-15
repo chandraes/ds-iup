@@ -99,8 +99,8 @@
                     <th class="text-center align-middle">PPN Keluaran<br>Jual Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
-                    <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
-                    <th class="text-center align-middle">Total Harga<br>Jual Barang</th>
+                    <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
+                    <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
 
                 </tr>
             </thead>
