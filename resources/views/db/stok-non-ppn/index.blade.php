@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>STOK & HARGA BARANG NON PPN</u></h1>
+            <h1><u>STOK & HARGA JUAL BARANG NON PPN</u></h1>
         </div>
     </div>
     @include('swal')

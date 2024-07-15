@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>STOK & HARGA BARANG PPN</u></h1>
+            <h1><u>STOK & HARGA JUAL BARANG PPN</u></h1>
         </div>
     </div>
     @include('swal')
@@ -91,7 +91,7 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Harga<br>Barang</th>
+                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                 </tr>
             </thead>
@@ -128,7 +128,7 @@
                                         </div>
                                         @else
                                         <div class="row mx-3">
-                                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Barang</button>
+                                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Jual</button>
                                         </div>
                                         @endif
                                     </td>
