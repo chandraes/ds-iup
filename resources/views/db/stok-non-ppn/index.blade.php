@@ -91,7 +91,7 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Harga<br>Barang</th>
+                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                 </tr>
             </thead>
@@ -143,6 +143,9 @@
                             @endforeach
                         @endforeach
                     @endforeach
+                    <tr>
+                        <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent"></td>
+                    </tr>
                 @endforeach
             </tbody>
             <tfoot>
