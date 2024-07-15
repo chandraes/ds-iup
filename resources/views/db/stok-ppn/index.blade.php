@@ -94,7 +94,7 @@
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
-                    <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
@@ -156,7 +156,13 @@
                                         @endif
                                     </td>
                                     <td class="text-end align-middle">0</td>
-                                    <td class="text-end align-middle">0</td>
+                                    <td class="text-end align-middle">
+                                        @if ($barang->stok_ppn)
+                                        {{number_format(($barang->stok_ppn->harga+($barang->stok_ppn->harga * $ppnRate/100))*$barang->stok_ppn->stok, 0, ',', '.')}}
+                                        @else
+                                        0
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         @endforeach
