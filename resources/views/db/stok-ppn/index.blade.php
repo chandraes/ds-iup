@@ -93,6 +93,7 @@
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
                     <th class="text-center align-middle">PPN<br>Masukan</th>
+                    <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga Jual<br>Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
@@ -126,6 +127,7 @@
                                     <td class="text-start align-middle">{{ $barang->nama }}</td>
                                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                                     <td class="text-center align-middle">{{ $barang->merk }}</td>
+                                    <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">
