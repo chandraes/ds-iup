@@ -124,7 +124,7 @@
             var total = document.getElementById('tdTotal').textContent;
             total = total.replace(/\./g, '');
             var apa_ppn = {{$req['kas_ppn']}};
-            
+
             if (apa_ppn == 1) {
                 var ppn = document.getElementById('tdPpn').textContent;
                 ppn = ppn.replace(/\./g, '');

@@ -102,6 +102,7 @@ class KasBesar extends Model
     public function deposit($data)
     {
         $kas = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+        $kodeKas = $data['ppn_kas'] == 1 ? 'Kas Besar PPN' : 'Kas Besar Non PPN';
 
         $rekening = Rekening::where('untuk', $kas)->first();
 
@@ -139,7 +140,8 @@ class KasBesar extends Model
             $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                         "*Form Permintaan Deposit*\n".
                         "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                        "*".$store->kode_deposit."*\n\n".
+                        "*".$store->kode_deposit."*\n".
+                        "*".$kodeKas."*\n\n".
                         "Investor : ".$store->investorModal->nama."\n".
                         "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
