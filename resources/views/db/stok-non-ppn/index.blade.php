@@ -36,7 +36,7 @@
     }
 </style>
 <div class="container-fluid mt-3 table-responsive ">
-    <form method="GET" action="{{ route('db.barang') }}">
+    <form method="GET" action="{{route('db.stok-non-ppn')}}">
         <div class="row">
             <div class="col-md-4">
                 <label for="unit">Unit</label>
