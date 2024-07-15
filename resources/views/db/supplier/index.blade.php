@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>BIODATA SUPPLIER</u></h1>
@@ -25,7 +25,7 @@
 </div>
 @include('db.supplier.create')
 @include('db.supplier.edit')
-<div class="container mt-5 table-responsive">
+<div class="container-fluid mt-5 table-responsive">
     <table class="table table-bordered table-hover" id="data">
         <thead class="table-warning bg-gradient">
             <tr>
