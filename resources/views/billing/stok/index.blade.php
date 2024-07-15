@@ -80,6 +80,7 @@
         </div>
     </form>
     <div class="table-container mt-4">
+        <center><h2>Barang PPN</h2></center>
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
                 <tr>
@@ -176,6 +177,8 @@
     <hr>
     <br>
     <div class="table-container mt-4">
+        <center><h2>Barang NON PPN</h2></center>
+
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
                 <tr>
