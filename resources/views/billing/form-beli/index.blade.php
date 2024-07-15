@@ -378,7 +378,7 @@
                         $('#barang_id').empty();
                         $('#barang_id').append('<option value=""> -- Pilih Barang -- </option>');
                         $.each(data.data, function(index, value){
-                            $('#barang_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
+                            $('#barang_id').append('<option value="'+value.id+'">'+value.nama+' ('+value.merk+')</option>');
                         });
                     } else {
                         $('#barang_id').empty();
