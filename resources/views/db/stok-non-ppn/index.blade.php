@@ -61,9 +61,9 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <label for="kategori">Kategori</label>
+                <label for="kategori">Kelompok Barang</label>
                 <select name="kategori" id="kategori" class="form-control">
-                    <option value="">Semua Kategori</option>
+                    <option value="">Semua Kelompok</option>
                     @foreach($kategori as $kat)
                         <option value="{{ $kat->id }}" {{ request('kategori') == $kat->id ? 'selected' : '' }}>
                             {{ $kat->nama }}
