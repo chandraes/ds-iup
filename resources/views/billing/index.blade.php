@@ -75,12 +75,10 @@
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
-            data-bs-target="#modalJual">
+            <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM JUAL</h4>
             </a>
-            @include('billing.modal-form-jual')
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="#" class="text-decoration-none">
@@ -103,12 +101,7 @@
                 </h4>
             </a>
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
-                <img src="{{asset('images/form-deviden.svg')}}" alt="" width="70">
-                <h4 class="mt-2">SEARCHING</h4>
-            </a>
-        </div>
+
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
