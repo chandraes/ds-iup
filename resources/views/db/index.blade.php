@@ -83,13 +83,13 @@
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('db.stok-ppn')}}" class="text-decoration-none">
                 <img src="{{asset('images/stok-ppn.svg')}}" alt="" width="70">
-                <h5 class="mt-2">STOK & HARGA<br>BARANG PPN</h5>
+                <h5 class="mt-2">STOK &<br>HARGA JUAL<br>BARANG PPN</h5>
             </a>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('db.stok-non-ppn')}}" class="text-decoration-none">
                 <img src="{{asset('images/stok-non-ppn.svg')}}" alt="" width="70">
-                <h5 class="mt-2">STOK & HARGA<br>BARANG NON PPN</h5>
+                <h5 class="mt-2">STOK &<br>HARGA JUAL<br>BARANG NON PPN</h5>
             </a>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
