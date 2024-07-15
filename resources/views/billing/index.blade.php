@@ -75,10 +75,12 @@
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
+            data-bs-target="#modalJual">
                 <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM JUAL</h4>
             </a>
+            @include('billing.modal-form-jual')
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="#" class="text-decoration-none">

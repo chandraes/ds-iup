@@ -8,8 +8,9 @@
             </div>
             @php
             $diskon = 0;
-            $ppn = $req['kas_ppn'] == 1 ? $keranjang->sum('total') * ($ppnRate/100) : 0;
+            $ppn = $barang_ppn == 1 ? $keranjang->sum('total') * ($ppnRate/100) : 0;
             $total = $keranjang ? $keranjang->sum('total') : 0;
+            $pph = 
             $add_fee = 0;
             $dp = 0;
             $dpPPN = 0;
@@ -21,9 +22,7 @@
                 <form action="{{route('billing.form-beli.keranjang.checkout')}}" method="post"
                     id="beliBarang">
                     @csrf
-                    <input type="hidden" name="jenis" value="{{$jenis}}">
-                    <input type="hidden" name="kas_ppn" value="{{$req['kas_ppn']}}">
-                    <input type="hidden" name="tempo" value="{{$req['tempo']}}">
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
@@ -54,7 +53,7 @@
                             @endif" name="add_fee" id="add_fee" data-thousands="." required value="0" onkeyup="add_diskon()">
                             </div>
                         </div>
-                        @if ($req['tempo'] == 1)
+                        {{-- @if ($req['tempo'] == 1)
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="dp" class="form-label">DP</label>
@@ -102,15 +101,15 @@
                         </script>
                         @endpush
 
-                        @endif
+                        @endif --}}
                     </div>
                     <hr>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="supplier_id" class="form-label">Supplier</label>
+                            <label for="supplier_id" class="form-label">Konsumen</label>
                             <select class="form-select" name="supplier_id" id="supplier_id" onchange="funSupplier()">
-                                <option value="">-- Pilih Supplier --</option>
-                                @foreach ($supplier as $s)
+                                <option value="">-- Pilih Konsumen --</option>
+                                @foreach ($konsumen as $s)
                                 <option value="{{$s->id}}">{{$s->nama}}</option>
                                 @endforeach
                             </select>
@@ -213,7 +212,7 @@
                             </td>
                             <td></td>
                         </tr>
-                        @if ($req['kas_ppn'] == 1)
+                        @if ($barang_ppn == 1)
                         <tr>
                             <td class="text-end align-middle" colspan="7">PPN</td>
                             <td class="text-end align-middle" id="tdPpn">
@@ -236,7 +235,7 @@
                             </td>
                             <td></td>
                         </tr>
-                        @if ($req['tempo'] == 1)
+                        {{-- @if ($req['tempo'] == 1)
                         <tr>
                             <td class="text-end align-middle" colspan="7">DP</td>
                             <td class="text-end align-middle" id="dpTd">
@@ -272,7 +271,7 @@
                             </td>
                             <td class="text-center align-middle"></td>
                         </tr>
-                        @endif
+                        @endif --}}
                     </tfoot>
                 </table>
             </div>

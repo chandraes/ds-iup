@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('keranjang_juals', function (Blueprint $table) {
             $table->id();
+            $table->boolean('barang_ppn')->default(1);
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('barang_id')->constrained('barangs');
             $table->integer('jumlah');

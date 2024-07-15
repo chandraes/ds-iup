@@ -357,6 +357,17 @@ Route::group(['middleware' => ['auth']], function() {
                 });
             });
 
+            Route::prefix('form-jual')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormJualController::class, 'index'])->name('billing.form-jual');
+                Route::get('/get-stok/{id}/{barangPpn}', [App\Http\Controllers\FormJualController::class, 'get_stok'])->name('billing.form-jual.get-stok-ppn');
+
+                Route::prefix('keranjang')->group(function(){
+                    Route::post('/store', [App\Http\Controllers\FormJualController::class, 'keranjang_store'])->name('billing.form-jual.keranjang.store');
+                    Route::delete('/delete/{keranjangJual}', [App\Http\Controllers\FormJualController::class, 'keranjang_destroy'])->name('billing.form-jual.keranjang.delete');
+                    Route::post('/empty', [App\Http\Controllers\FormJualController::class, 'keranjang_empty'])->name('billing.form-jual.keranjang.empty');
+                });
+            });
+
             Route::prefix('invoice-supplier')->group(function(){
                 Route::get('/', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier'])->name('billing.invoice-supplier');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail'])->name('billing.invoice-supplier.detail');
