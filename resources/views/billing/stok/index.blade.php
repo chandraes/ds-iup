@@ -79,8 +79,9 @@
             </div>
         </div>
     </form>
+    <center><h2>Barang PPN</h2></center>
     <div class="table-container mt-4">
-        <center><h2>Barang PPN</h2></center>
+
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
                 <tr>
@@ -176,9 +177,8 @@
     <br>
     <hr>
     <br>
+    <center><h2>Barang NON PPN</h2></center>
     <div class="table-container mt-4">
-        <center><h2>Barang NON PPN</h2></center>
-
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
                 <tr>
