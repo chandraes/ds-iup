@@ -145,6 +145,9 @@
                             @endforeach
                         @endforeach
                     @endforeach
+                    <tr>
+                        <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent"></td>
+                    </tr>
                 @endforeach
             </tbody>
             <tfoot>
