@@ -153,7 +153,11 @@
                 @endforeach
             </tbody>
             <tfoot>
-
+                <tr>
+                    <th colspan="10" class="text-end align-middle">Grand Total</th>
+                    <th class="text-end align-middle">0</th>
+                    <th class="text-end align-middle">0</th>
+                </tr>
             </tfoot>
         </table>
     </div>
