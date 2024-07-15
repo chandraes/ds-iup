@@ -7,6 +7,7 @@ use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BarangController extends Controller
 {
@@ -57,7 +58,15 @@ class BarangController extends Controller
             'nama' => 'required',
         ]);
 
-        BarangType::create($data);
+        try {
+            DB::beginTransaction();
+            BarangType::create($data);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menambahkan data. '.$th->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Data berhasil ditambahkan');
     }
