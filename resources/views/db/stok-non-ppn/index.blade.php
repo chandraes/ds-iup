@@ -128,7 +128,7 @@
                                         </div>
                                         @else
                                         <div class="row mx-3">
-                                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Barang</button>
+                                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Jual</button>
                                         </div>
                                         @endif
                                     </td>
