@@ -58,7 +58,7 @@
                 <div class="mb-3">
                     <label for="barang_kategori_id" class="form-label">Kelompok Barang</label>
                     <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required onchange="getBarang()">
-                        <option value=""> -- Pilih Kategori -- </option>
+                        <option value=""> -- Pilih Kelompok Barang -- </option>
                     </select>
                 </div>
             </div>
@@ -343,14 +343,14 @@
                     if (data.status == 1) {
                         $('#barang_kategori_id').empty();
                         $('#barang_id').empty();
-                        $('#barang_kategori_id').append('<option value=""> -- Pilih Kategori -- </option>');
+                        $('#barang_kategori_id').append('<option value=""> -- Pilih Kelompok Barang -- </option>');
                         $.each(data.data, function(index, value){
                             $('#barang_kategori_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
                         });
                     } else {
                         $('#barang_kategori_id').empty();
                         $('#barang_id').empty();
-                        $('#barang_kategori_id').append('<option value=""> -- Pilih Kategori -- </option>');
+                        $('#barang_kategori_id').append('<option value=""> -- Pilih Kelompok Barang -- </option>');
 
                         Swal.fire({
                             icon: 'error',
