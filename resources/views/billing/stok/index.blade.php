@@ -24,7 +24,7 @@
 </div>
 <style>
     .table-container {
-        height: 500px;
+        max-height: 500px;
         overflow-y: auto;
     }
     thead th {
@@ -158,7 +158,7 @@
                                         @endif
                                     </td>
                                     <td class="text-end align-middle">
-                                      
+
                                     </td>
                                 </tr>
                             @endforeach
