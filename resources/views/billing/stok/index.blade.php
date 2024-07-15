@@ -91,8 +91,10 @@
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle">PPN<br>Keluaran</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
+                    <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -136,6 +138,13 @@
                                     </td>
                                     <td class="text-end align-middle">
                                         @if ($barang->stok_ppn)
+                                        {{number_format(($barang->stok_ppn->harga * $ppnRate/100), 0, ',', '.')}}
+                                        @else
+                                        0
+                                        @endif
+                                    </td>
+                                    <td class="text-end align-middle">
+                                        @if ($barang->stok_ppn)
                                         {{number_format($barang->stok_ppn->harga+($barang->stok_ppn->harga * $ppnRate/100), 0, ',', '.')}}
                                         @else
                                         0
@@ -147,6 +156,9 @@
                                         @else
                                         0
                                         @endif
+                                    </td>
+                                    <td class="text-end align-middle">
+                                      
                                     </td>
                                 </tr>
                             @endforeach
@@ -174,8 +186,11 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
+                    <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle">PPN<br>Keluaran</th>
+                    <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
+                    <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -217,12 +232,31 @@
                                         </div>
                                         @endif
                                     </td>
+                                    <td class="text-end align-middle">
+                                        0
+                                    </td>
+                                    <td class="text-end align-middle">
+                                        @if ($barang->stok_non_ppn)
+                                        <div class="row mx-3">
+                                            <a href="#" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">{{$barang->stok_non_ppn->nf_harga}}</a>
+                                        </div>
+                                        @else
+                                        <div class="row mx-3">
+                                            <span>
+                                                0
+                                            </span>
+                                        </div>
+                                        @endif
+                                    </td>
                                     <td class="text-center align-middle">
                                         @if ($barang->stok_non_ppn)
                                         {{$barang->stok_non_ppn->nf_stok}}
                                         @else
                                         0
                                         @endif
+                                    </td>
+                                    <td class="text-end align-middle">
+
                                     </td>
                                 </tr>
                             @endforeach
