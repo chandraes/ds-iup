@@ -97,7 +97,7 @@
                 </tr>
                 @endforeach
                 <tr>
-                    <td colspan="4"></td>
+                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent"></td>
                 </tr>
                 @endif
 
