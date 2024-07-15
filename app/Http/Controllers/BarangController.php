@@ -12,6 +12,16 @@ use Illuminate\Support\Facades\DB;
 
 class BarangController extends Controller
 {
+
+    public function barang_kategori()
+    {
+        $data = BarangKategori::with(['barang_nama'])->get();
+
+        return view('db.kategori-barang.index', [
+            'data' => $data
+        ]);
+    }
+
     public function unit()
     {
         $data = BarangUnit::with(['types'])->get();

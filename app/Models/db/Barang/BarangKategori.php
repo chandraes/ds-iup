@@ -20,4 +20,9 @@ class BarangKategori extends Model
     {
         return $this->hasMany(Barang::class);
     }
+
+    public function barang_nama()
+    {
+        return $this->hasMany(BarangNama::class);
+    }
 }

@@ -180,6 +180,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::delete('/type/delete/{type}', [App\Http\Controllers\BarangController::class, 'type_delete'])->name('db.unit.type.delete');
             });
 
+            Route::prefix('barang-kategori')->group(function(){
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'barang_kategori'])->name('db.barang-kategori');
+            });
+
             Route::prefix('barang')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'barang'])->name('db.barang');
                 Route::post('/store', [App\Http\Controllers\BarangController::class, 'barang_store'])->name('db.barang.store');

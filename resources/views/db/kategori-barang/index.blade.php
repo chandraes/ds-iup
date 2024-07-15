@@ -4,11 +4,11 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>KATEGORI MERK UNIT</u></h1>
+            <h1><u>KATEGORI KELOMPOK BARANG</u></h1>
         </div>
     </div>
     @include('swal')
-    @include('db.unit.create-unit')
+    @include('db.kategori-barang.create-kategori')
     @include('db.unit.create')
     @include('db.unit.edit')
 
@@ -21,9 +21,9 @@
                     <td><a href="{{route('db')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
                     <td>
-                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img
-                                src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Unit</a>
-                    </td>
+                        <td class="text-center align-middle"><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img
+                            src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Kelompok</a>
+                </td>
                     <td>
                         <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#createModal">
@@ -52,19 +52,19 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
-                    <th class="text-center align-middle">Unit</th>
-                    <th class="text-center align-middle">Tipe</th>
+                    <th class="text-center align-middle">Kelompok Barang</th>
+                    <th class="text-center align-middle">Nama Barang</th>
                     <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
             <tbody>
                 @php $counter = 1; @endphp
                 @foreach ($data as $d)
-                @if ($d->types)
+                @if ($d->barang_nama)
                 @php
-                $rowspan = $d->types->count();
+                $rowspan = $d->barang_nama->count();
                 @endphp
-                @foreach ($d->types as $t)
+                @foreach ($d->barang_nama as $t)
                 <tr>
                     @if ($loop->first)
                     <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$counter}}</td>
