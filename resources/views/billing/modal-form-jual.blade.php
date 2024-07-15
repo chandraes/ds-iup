@@ -12,8 +12,8 @@
                 <div class="modal-body">
                     <div class="col-md-12 mb-3">
                         <select class="form-select" name="barang_ppn" id="barang_ppn" required>
-                            <option value="1">Dengan PPN</option>
-                            <option value="0">Tanpa PPN</option>
+                            <option value="1">Barang PPN</option>
+                            <option value="0">Barang NON PPN</option>
                         </select>
                     </div>
                 </div>
