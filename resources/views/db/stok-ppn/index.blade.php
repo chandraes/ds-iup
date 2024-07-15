@@ -158,6 +158,10 @@
                     <th class="text-end align-middle">0</th>
                     <th class="text-end align-middle">0</th>
                 </tr>
+                <tr>
+                    <th colspan="10" class="text-end align-middle">Estimasi Profit</th>
+                    <th class="text-end align-middle" colspan="2">0</th>
+                </tr>
             </tfoot>
         </table>
     </div>
