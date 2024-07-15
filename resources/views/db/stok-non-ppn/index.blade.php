@@ -96,6 +96,7 @@
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Jual Barang</th>
+                    <th class="text-center align-middle">Margin<br>Profit</th>
                 </tr>
             </thead>
             <tbody>
@@ -143,6 +144,7 @@
                                         0
                                         @endif
                                     </td>
+                                    <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">0</td>
                                 </tr>
