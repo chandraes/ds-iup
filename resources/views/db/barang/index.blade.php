@@ -98,8 +98,8 @@
                     <th class="text-center align-middle" style="width: 15px">No</th>
                     <th class="text-center align-middle">Unit</th>
                     <th class="text-center align-middle">Tipe</th>
-                    <th class="text-center align-middle">Kategori</th>
-                    <th class="text-center align-middle">Nama<br>Barang</th>
+                    <th class="text-center align-middle">Kategori<br>Barang</th>
+                    <th class="text-center align-middle">Jenis<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Action</th>
