@@ -51,7 +51,7 @@ class Keranjang extends Model
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $total = $keranjang->sum('total');
-
+        $kodeKas = $data['kas_ppn'] == 1 ? 'Kas Besar PPN' : 'Kas Besar Non PPN';
         $data['add_fee'] = str_replace('.', '', $data['add_fee']);
         $data['diskon'] = str_replace('.', '', $data['diskon']);
 
@@ -149,6 +149,7 @@ class Keranjang extends Model
                 $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                             "*FORM BELI BARANG*\n".
                             "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                             "*".$kodeKas."*\n".
                             "Uraian :  *".$store->uraian."*\n\n".
                             "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
                             "Ditransfer ke rek:\n\n".

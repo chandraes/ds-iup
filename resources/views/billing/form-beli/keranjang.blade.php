@@ -65,7 +65,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+                        @if ($req['kas_ppn'] == 1)
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="uraian" class="form-label">Apakah DP menggunakan PPn? <span
@@ -77,6 +77,7 @@
                                 </select>
                             </div>
                         </div>
+                        @endif
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="jatuh_tempo" class="form-label">Tgl Jatuh Tempo</label>
