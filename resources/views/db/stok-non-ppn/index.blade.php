@@ -122,7 +122,7 @@
                                     <td class="text-start align-middle">{{ $barang->nama }}</td>
                                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                                     <td class="text-center align-middle">{{ $barang->merk }}</td>
-                                    <td class="text-center align-middle"></td>
+                                    <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">
                                         @if ($barang->stok_non_ppn)
                                         <div class="row mx-3">
