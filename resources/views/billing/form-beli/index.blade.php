@@ -56,7 +56,7 @@
             </div>
             <div class="col-md-3">
                 <div class="mb-3">
-                    <label for="barang_kategori_id" class="form-label">Kategori</label>
+                    <label for="barang_kategori_id" class="form-label">Kelompok Barang</label>
                     <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required onchange="getBarang()">
                         <option value=""> -- Pilih Kategori -- </option>
                     </select>
