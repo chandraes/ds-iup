@@ -96,7 +96,7 @@
                     <th class="text-center align-middle">PPN<br>Masukan</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
-                    <th class="text-center align-middle">PPN Keluaran<br>Jual Barang</th>
+                    <th class="text-center align-middle">PPN<br>Keluaran</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
