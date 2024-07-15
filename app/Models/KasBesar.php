@@ -188,7 +188,7 @@ class KasBesar extends Model
     public function withdraw($data)
     {
         $rekening = InvestorModal::find($data['investor_modal_id']);
-
+        $kodeKas = $data['ppn_kas'] == 1 ? 'Kas Besar PPN' : 'Kas Besar Non PPN';
         $data['uraian'] = "Withdraw";
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
@@ -225,6 +225,7 @@ class KasBesar extends Model
             $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*Form Pengembalian Deposit*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                         "*".$kodeKas."*\n\n".
                         "Investor : ".$store->investorModal->nama."\n".
                         "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
