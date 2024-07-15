@@ -94,7 +94,8 @@
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
                     <th class="text-center align-middle">PPN<br>Masukan</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
-                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
+                    <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle">PPN Keluaran<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Jual Barang</th>
@@ -141,6 +142,7 @@
                                         </div>
                                         @endif
                                     </td>
+                                    <td class="text-end align-middle">0</td>
                                     <td class="text-center align-middle">
                                         @if ($barang->stok_ppn)
                                         {{$barang->stok_ppn->nf_stok}}
@@ -158,12 +160,12 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="10" class="text-end align-middle">Grand Total</th>
+                    <th colspan="13 class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">0</th>
                     <th class="text-end align-middle">0</th>
                 </tr>
                 <tr>
-                    <th colspan="10" class="text-end align-middle">Estimasi Profit</th>
+                    <th colspan="13" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">0</th>
                 </tr>
             </tfoot>
