@@ -69,13 +69,13 @@
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('db.barang')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang.svg')}}" alt="" width="70">
-                <h5 class="mt-2">KATEGORI<br>NAMA BARANG</h5>
+                <h5 class="mt-2">KATEGORI<br>KELOMPOK BARANG</h5>
             </a>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('db.barang')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang.svg')}}" alt="" width="70">
-                <h5 class="mt-2">KATEGORI<br>KELOMPOK BARANG</h5>
+                <h5 class="mt-2">KATEGORI<br>NAMA BARANG</h5>
             </a>
         </div>
     </div>
