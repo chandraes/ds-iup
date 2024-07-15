@@ -287,6 +287,8 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('billing')->group(function() {
 
+            Route::get('/lihat-stok', [App\Http\Controllers\BillingController::class, 'lihat_stok'])->name('billing.lihat-stok');
+
             Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');
             Route::prefix('form-inventaris')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'form_inventaris'])->name('billing.form-inventaris');

@@ -104,7 +104,7 @@
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-deviden.svg')}}" alt="" width="70">
                 <h4 class="mt-2">SEARCHING</h4>
             </a>

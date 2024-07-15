@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangType;
+use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\Karyawan;
 use App\Models\GroupWa;
@@ -20,6 +23,69 @@ use Illuminate\Support\Facades\DB;
 
 class BillingController extends Controller
 {
+
+    public function lihat_stok(Request $request)
+    {
+        $kategori = BarangKategori::all();
+        $data = BarangType::with(['unit', 'barangs'])->get();
+
+        $unitFilter = $request->input('unit');
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+
+        $unitsQuery = BarangUnit::with([
+            'types' => function ($query) use ($typeFilter, $kategoriFilter) {
+                if ($typeFilter) {
+                    $query->where('id', $typeFilter);
+                }
+                $query->with(['barangs' => function ($query) use ($kategoriFilter) {
+                    if ($kategoriFilter) {
+                        $query->where('barang_kategori_id', $kategoriFilter);
+                    }
+                    $query->with('kategori'); // Eager load kategori for each barang
+                }])
+                ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
+            }, 'types.barangs.stok_ppn', 'types.barangs.stok_non_ppn'
+        ]);
+
+        if ($unitFilter) {
+            $unitsQuery->where('id', $unitFilter);
+        }
+
+        $units = $unitsQuery->get();
+
+        $units->loadMissing('types.barangs.kategori');
+
+        foreach ($units as $unit) {
+            $unit->unitRowspan = 0; // Variabel untuk menyimpan rowspan unit
+
+            foreach ($unit->types as $type) {
+                $groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                $type->groupedBarangs = $groupedBarangs;
+                $type->typeRowspan = 0; // Variabel untuk menyimpan rowspan tipe
+
+                foreach ($groupedBarangs as $kategoriNama => $barangs) {
+                    $barangs->kategoriRowspan = $barangs->count(); // Variabel untuk menyimpan rowspan kategori
+
+                    // Menambah total rowspan untuk type dengan jumlah barang dalam kategori
+                    $type->typeRowspan += $barangs->count();
+                }
+
+                // Menambah total rowspan untuk unit dengan jumlah barang dalam tipe
+                $unit->unitRowspan += $type->typeRowspan;
+            }
+        }
+
+        // dd($units->toArray());
+        return view('billing.stok.index', [
+            'data' => $data,
+            'kategori' => $kategori,
+            'units' => $units,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+        ]);
+    }
     public function index()
     {
 
