@@ -76,6 +76,18 @@
     </div>
     <div class="row justify-content-left">
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.stok-ppn')}}" class="text-decoration-none">
+                <img src="{{asset('images/stok-ppn.svg')}}" alt="" width="70">
+                <h5 class="mt-2">STOK & HARGA<br>BARANG PPN</h5>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.stok-non-ppn')}}" class="text-decoration-none">
+                <img src="{{asset('images/stok-non-ppn.svg')}}" alt="" width="70">
+                <h5 class="mt-2">STOK & HARGA<br>BARANG NON PPN</h5>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('db.staff')}}" class="text-decoration-none">
                 <img src="{{asset('images/karyawan.svg')}}" alt="" width="70">
                 <h5 class="mt-2">BIODATA<br>DIREKSI & STAFF</h5>
@@ -93,18 +105,7 @@
                 <h5 class="mt-2">BIODATA<br>KONSUMEN</h5>
             </a>
         </div>
-        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('db.stok-ppn')}}" class="text-decoration-none">
-                <img src="{{asset('images/stok-ppn.svg')}}" alt="" width="70">
-                <h5 class="mt-2">STOK & HARGA<br>BARANG PPN</h5>
-            </a>
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('db.stok-non-ppn')}}" class="text-decoration-none">
-                <img src="{{asset('images/stok-non-ppn.svg')}}" alt="" width="70">
-                <h5 class="mt-2">STOK & HARGA<br>BARANG NON PPN</h5>
-            </a>
-        </div>
+
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
