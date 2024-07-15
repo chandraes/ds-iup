@@ -93,10 +93,8 @@
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
-                    <th class="text-center align-middle">PPN<br>Masukan</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
-                    <th class="text-center align-middle">PPN<br>Keluaran</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
@@ -132,7 +130,6 @@
                                     <td class="text-center align-middle">{{ $barang->merk }}</td>
                                     <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">0</td>
-                                    <td class="text-end align-middle">0</td>
                                     <td class="text-end align-middle">
                                         @if ($barang->stok_ppn)
                                         <div class="row mx-3">
@@ -142,13 +139,6 @@
                                         <div class="row mx-3">
                                             <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$barang}})">Tambah Harga Jual</button>
                                         </div>
-                                        @endif
-                                    </td>
-                                    <td class="text-end align-middle">
-                                        @if ($barang->stok_ppn)
-                                        {{number_format($barang->stok_ppn->harga * $ppnRate/100, 0, ',', '.')}}
-                                        @else
-                                        0
                                         @endif
                                     </td>
                                     <td class="text-end align-middle">
@@ -175,12 +165,12 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="14" class="text-end align-middle">Grand Total</th>
+                    <th colspan="12" class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">0</th>
                     <th class="text-end align-middle">0</th>
                 </tr>
                 <tr>
-                    <th colspan="14" class="text-end align-middle">Estimasi Profit</th>
+                    <th colspan="12" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">0</th>
                 </tr>
             </tfoot>
