@@ -96,12 +96,14 @@
                     @endif
                 </tr>
                 @endforeach
+                <tr>
+                    <td colspan="4"></td>
+                </tr>
                 @endif
+
                 @endforeach
             </tbody>
-            <tfoot>
 
-            </tfoot>
         </table>
     </div>
 
