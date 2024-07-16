@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
@@ -13,13 +14,53 @@ use Illuminate\Support\Facades\DB;
 class BarangController extends Controller
 {
 
+    private function storeDb($model, $data)
+    {
+        try {
+            DB::beginTransaction();
+            $model::create($data);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi masalah saat menambahkan data. '.$th->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+    }
+
     public function barang_kategori()
     {
-        $data = BarangKategori::with(['barang_nama'])->get();
+        $data = BarangKategori::with(['barang_nama'])->withCount('barang_nama')->get();
 
         return view('db.kategori-barang.index', [
             'data' => $data
         ]);
+    }
+
+    public function barang_nama_store(Request $request)
+    {
+        $data = $request->validate([
+            'barang_kategori_id' => 'required|exists:barang_kategoris,id',
+            'nama' => 'required',
+        ]);
+
+        $this->storeDb(BarangNama::class, $data);
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+
+    }
+
+    public function barang_nama_update(Request $request, BarangNama $nama)
+    {
+        $data = $request->validate([
+            'barang_kategori_id' => 'required|exists:barang_kategoris,id',
+            'nama' => 'required',
+        ]);
+
+        $nama->update($data);
+
+        return redirect()->back()->with('success', 'Data berhasil diubah');
     }
 
     public function unit()
@@ -37,7 +78,7 @@ class BarangController extends Controller
             'nama' => 'required',
         ]);
 
-        BarangUnit::create($data);
+        $this->storeDb(BarangUnit::class, $data);
 
         return redirect()->back()->with('success', 'Data berhasil ditambahkan');
     }

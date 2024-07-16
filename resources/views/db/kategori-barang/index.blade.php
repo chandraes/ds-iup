@@ -9,8 +9,8 @@
     </div>
     @include('swal')
     @include('db.kategori-barang.create-kategori')
-    @include('db.unit.create')
-    @include('db.unit.edit')
+    @include('db.kategori-barang.create')
+    @include('db.kategori-barang.edit')
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
@@ -27,7 +27,7 @@
                     <td>
                         <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#createModal">
-                            <img src=" {{asset('images/unit.svg')}}" alt="dokumen" width="30"> Tambah Type</a>
+                            <img src=" {{asset('images/kelompok-barang.svg')}}" alt="dokumen" width="30"> Tambah Nama Barang</a>
                     </td>
                 </tr>
             </table>
@@ -61,14 +61,11 @@
                 @php $counter = 1; @endphp
                 @foreach ($data as $d)
                 @if ($d->barang_nama)
-                @php
-                $rowspan = $d->barang_nama->count();
-                @endphp
                 @foreach ($d->barang_nama as $t)
                 <tr>
                     @if ($loop->first)
-                    <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$counter}}</td>
-                    <td class="text-center align-middle" rowspan="{{$rowspan}}">{{$d->nama}}</td>
+                    <td class="text-center align-middle" rowspan="{{$d->barang_nama_count}}">{{$counter}}</td>
+                    <td class="text-center align-middle" rowspan="{{$d->barang_nama_count}}">{{$d->nama}}</td>
                     <td class="text-start align-middle">{{$t->nama}}</td>
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
@@ -94,13 +91,15 @@
                         </form>
                     </td>
                     @endif
+
                 </tr>
                 @endforeach
+                @if (!$loop->last)
                 <tr>
                     <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent"></td>
                 </tr>
                 @endif
-
+                @endif
                 @endforeach
             </tbody>
 
@@ -120,8 +119,8 @@
     function editFun(data)
     {
         document.getElementById('edit_nama').value = data.nama;
-        document.getElementById('edit_barang_unit_id').value = data.barang_unit_id;
-        document.getElementById('editForm').action = `{{route('db.unit.type.update', ':id')}}`.replace(':id', data.id);
+        document.getElementById('edit_barang_kategori_id').value = data.barang_kategori_id;
+        document.getElementById('editForm').action = `{{route('db.barang-kategori.nama-update', ':id')}}`.replace(':id', data.id);
     }
 
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");

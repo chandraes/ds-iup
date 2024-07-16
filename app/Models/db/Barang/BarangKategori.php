@@ -25,4 +25,10 @@ class BarangKategori extends Model
     {
         return $this->hasMany(BarangNama::class);
     }
+
+    // scopeRowspan untuk menghitung jumlah rowspan ke barang_nama
+    public function scopeRowspan($query)
+    {
+        return $query->withCount('barang_nama');
+    }
 }

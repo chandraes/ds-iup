@@ -35,4 +35,11 @@ class Barang extends Model
     {
         return $this->hasMany(BarangHistory::class, 'barang_id');
     }
+
+    public function scopeFilterByKategori($query, $kategori)
+    {
+        if (!empty($kategori)) {
+            $query->where('barang_kategori_id', $kategori); // Adjust 'kategori_id' to the actual column name you want to filter by
+        }
+    }
 }

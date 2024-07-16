@@ -182,6 +182,8 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('barang-kategori')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'barang_kategori'])->name('db.barang-kategori');
+                Route::post('/nama-store', [App\Http\Controllers\BarangController::class, 'barang_nama_store'])->name('db.barang-kategori.nama-store');
+                Route::patch('/nama-update/{nama}', [App\Http\Controllers\BarangController::class, 'barang_nama_update'])->name('db.barang-kategori.nama-update');
             });
 
             Route::prefix('barang')->group(function(){
@@ -193,6 +195,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/kategori/store', [App\Http\Controllers\BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
                 Route::patch('/kategori/update/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
                 Route::delete('/kategori/delete/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_delete'])->name('db.barang.kategori.delete');
+
             });
 
             Route::prefix('stok-ppn')->group(function(){

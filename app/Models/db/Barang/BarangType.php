@@ -28,4 +28,16 @@ class BarangType extends Model
     {
         return $this->hasMany(Barang::class);
     }
+
+    public function scopeFilterByType($query, $type)
+    {
+        if (!empty($type)) {
+            $query->where('id', $type); // Replace 'type_column' with the actual column name you want to filter by
+        }
+    }
+
+    public static function calculateTypeRowspan($typeId)
+    {
+        return self::where('id', $typeId)->count();
+    }
 }

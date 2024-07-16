@@ -99,6 +99,7 @@
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
+                    <th class="text-center align-middle">Margin<br>Profit</th>
 
                 </tr>
             </thead>
