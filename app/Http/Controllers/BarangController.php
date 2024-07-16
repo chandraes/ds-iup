@@ -144,23 +144,27 @@ class BarangController extends Controller
 
     public function barang(Request $request)
     {
-        $kategori = BarangKategori::all();
+        $kategori = BarangKategori::with(['barang_nama'])->get();
         $data = BarangType::with(['unit', 'barangs'])->get();
 
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
+        $jenisFilter = $request->input('jenis');
 
         $unitsQuery = BarangUnit::with([
-            'types' => function ($query) use ($typeFilter, $kategoriFilter) {
+            'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
                 if ($typeFilter) {
                     $query->where('id', $typeFilter);
                 }
-                $query->with(['barangs' => function ($query) use ($kategoriFilter) {
+                $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenisFilter) {
                     if ($kategoriFilter) {
                         $query->where('barang_kategori_id', $kategoriFilter);
                     }
-                    $query->with('kategori'); // Eager load kategori for each barang
+                    if ($jenisFilter) {
+                        $query->where('jenis', $jenisFilter);
+                    }
+                    $query->with(['kategori', 'barang_nama']); // Eager load kategori and nama for each barang
                 }])
                 ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
             },
@@ -172,29 +176,36 @@ class BarangController extends Controller
 
         $units = $unitsQuery->get();
 
-        $units->loadMissing('types.barangs.kategori');
+        $units->loadMissing('types.barangs.kategori', 'types.barangs.barang_nama');
 
         foreach ($units as $unit) {
-            $unit->unitRowspan = 0; // Variabel untuk menyimpan rowspan unit
+            $unit->unitRowspan = 0; // Variable to store rowspan for the unit
 
             foreach ($unit->types as $type) {
                 $groupedBarangs = $type->barangs->groupBy('kategori.nama');
                 $type->groupedBarangs = $groupedBarangs;
-                $type->typeRowspan = 0; // Variabel untuk menyimpan rowspan tipe
+                $type->typeRowspan = 0; // Variable to store rowspan for the type
 
                 foreach ($groupedBarangs as $kategoriNama => $barangs) {
-                    $barangs->kategoriRowspan = $barangs->count(); // Variabel untuk menyimpan rowspan kategori
+                    $groupedByNama = $barangs->groupBy('barang_nama.nama');
 
-                    // Menambah total rowspan untuk type dengan jumlah barang dalam kategori
-                    $type->typeRowspan += $barangs->count();
+                    foreach ($groupedByNama as $nama => $namaBarangs) {
+                        // Adding kategoriRowspan to each group
+                        foreach ($namaBarangs as $barang) {
+                            $barang->kategoriRowspan = $barangs->count();
+                            $barang->namaRowspan = $namaBarangs->count();
+                        }
+
+                        // Adding total rowspan for type with the number of items in the category
+                        $type->typeRowspan += $namaBarangs->count();
+
+                        // Adding total rowspan for unit with the number of items in the type
+                        $unit->unitRowspan += $namaBarangs->count();
+                    }
                 }
-
-                // Menambah total rowspan untuk unit dengan jumlah barang dalam tipe
-                $unit->unitRowspan += $type->typeRowspan;
             }
         }
 
-        // dd($units->toArray());
         return view('db.barang.index', [
             'data' => $data,
             'kategori' => $kategori,
@@ -202,6 +213,7 @@ class BarangController extends Controller
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
+            'jenisFilter' => $jenisFilter,
         ]);
     }
 
@@ -210,12 +222,13 @@ class BarangController extends Controller
         $data = $request->validate([
             'barang_type_id' => 'required|exists:barang_types,id',
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
-            'nama' => 'required',
+            'barang_nama_id' => 'required|exists:barang_namas,id',
+            'jenis' => 'required|in:1,2,3',
             'kode' => 'nullable',
             'merk' => 'required',
         ]);
 
-        Barang::create($data);
+        $this->storeDb(Barang::class, $data);
 
         return redirect()->back()->with('success', 'Berhasil menambahkan data barang!');
 
@@ -227,7 +240,8 @@ class BarangController extends Controller
         $data = $request->validate([
             'barang_type_id' => 'required|exists:barang_types,id',
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
-            'nama' => 'required',
+            'barang_nama_id' => 'required|exists:barang_namas,id',
+            'jenis' => 'required|in:1,2,3',
             'kode' => 'nullable',
             'merk' => 'required',
         ]);
@@ -302,29 +316,52 @@ class BarangController extends Controller
         ]);
     }
 
+    public function get_barang_nama(Request $request)
+    {
+        $data = BarangNama::where('barang_kategori_id', $request->kategori_id)->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Kategori belum memiliki nama barang!!'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 1,
+            'data' => $data
+        ]);
+    }
+
     public function stok_ppn(Request $request)
     {
-        $kategori = BarangKategori::all();
+        $kategori = BarangKategori::with(['barang_nama'])->get();
         $data = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
+        $jenisFilter = $request->input('jenis');
 
         $unitsQuery = BarangUnit::with([
-            'types' => function ($query) use ($typeFilter, $kategoriFilter) {
+            'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
                 if ($typeFilter) {
                     $query->where('id', $typeFilter);
                 }
-                $query->with(['barangs' => function ($query) use ($kategoriFilter) {
+                $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenisFilter) {
+                    $query->whereIn('jenis', [1, 3]); // Filter only PPN and PPN & Non-PPN
+
                     if ($kategoriFilter) {
                         $query->where('barang_kategori_id', $kategoriFilter);
                     }
-                    $query->with('kategori'); // Eager load kategori for each barang
+                    if ($jenisFilter) {
+                        $query->where('jenis', $jenisFilter);
+                    }
+                    $query->with(['kategori', 'barang_nama']); // Eager load kategori and nama for each barang
                 }])
                 ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
-            }, 'types.barangs.stok_ppn'
+            },
         ]);
 
         if ($unitFilter) {
@@ -333,25 +370,33 @@ class BarangController extends Controller
 
         $units = $unitsQuery->get();
 
-        $units->loadMissing('types.barangs.kategori');
+        $units->loadMissing('types.barangs.kategori', 'types.barangs.barang_nama');
 
         foreach ($units as $unit) {
-            $unit->unitRowspan = 0; // Variabel untuk menyimpan rowspan unit
+            $unit->unitRowspan = 0; // Variable to store rowspan for the unit
 
             foreach ($unit->types as $type) {
                 $groupedBarangs = $type->barangs->groupBy('kategori.nama');
                 $type->groupedBarangs = $groupedBarangs;
-                $type->typeRowspan = 0; // Variabel untuk menyimpan rowspan tipe
+                $type->typeRowspan = 0; // Variable to store rowspan for the type
 
                 foreach ($groupedBarangs as $kategoriNama => $barangs) {
-                    $barangs->kategoriRowspan = $barangs->count(); // Variabel untuk menyimpan rowspan kategori
+                    $groupedByNama = $barangs->groupBy('barang_nama.nama');
 
-                    // Menambah total rowspan untuk type dengan jumlah barang dalam kategori
-                    $type->typeRowspan += $barangs->count();
+                    foreach ($groupedByNama as $nama => $namaBarangs) {
+                        // Adding kategoriRowspan to each group
+                        foreach ($namaBarangs as $barang) {
+                            $barang->kategoriRowspan = $barangs->count();
+                            $barang->namaRowspan = $namaBarangs->count();
+                        }
+
+                        // Adding total rowspan for type with the number of items in the category
+                        $type->typeRowspan += $namaBarangs->count();
+
+                        // Adding total rowspan for unit with the number of items in the type
+                        $unit->unitRowspan += $namaBarangs->count();
+                    }
                 }
-
-                // Menambah total rowspan untuk unit dengan jumlah barang dalam tipe
-                $unit->unitRowspan += $type->typeRowspan;
             }
         }
 
