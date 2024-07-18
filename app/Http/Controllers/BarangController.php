@@ -415,6 +415,10 @@ class BarangController extends Controller
         ]);
 
         $data['harga'] = str_replace('.', '', $data['harga']);
+        
+        if ($data['harga'] < $barang->harga_beli) {
+            return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
+        }
 
         $barang->update($data);
 
@@ -491,24 +495,6 @@ class BarangController extends Controller
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
         ]);
-    }
-
-    public function stok_non_ppn_store(Request $request, Barang $barang)
-    {
-        $data = $request->validate([
-            'harga' => 'required',
-        ]);
-
-        $conditions = [
-            'barang_id' => $barang->id,
-            'tipe' => 'non-ppn',
-        ];
-
-        $data['harga'] = str_replace('.', '', $data['harga']);
-
-        $barang->stok_ppn()->updateOrCreate($conditions, $data);
-
-        return redirect()->back()->with('success', 'Berhasil menambahkan data stok ppn!');
     }
 
 
