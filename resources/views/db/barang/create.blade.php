@@ -27,7 +27,7 @@
                                 <option selected>-- Pilih Salah Satu --</option>
                             </select>
                         </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="barang_kategori_id" class="form-label">KELOMPOK BARANG</label>
                             <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required onchange="getNamaBarang()">
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
@@ -36,23 +36,23 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="nama" class="form-label">NAMA BARANG</label>
                             <select class="form-select" name="barang_nama_id" id="barang_nama_id" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                             </select>
                         </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="kode" class="form-label">KODE BARANG</label>
                             <input type="text" class="form-control" name="kode" id="kode" aria-describedby="helpId"
                                 placeholder="">
                         </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="merk" class="form-label">MERK BARANG</label>
                             <input type="text" class="form-control" name="merk" id="merk" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>

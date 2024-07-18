@@ -54,7 +54,7 @@
                             <input type="text" class="form-control" name="merk" id="edit_merk" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="edit_jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
