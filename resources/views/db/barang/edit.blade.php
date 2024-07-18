@@ -44,7 +44,7 @@
                             </select>
                         </div>
                         <div class="col-lg-6 col-md-6 mb-3 mt-3">
-                            <label for="nama" class="form-label">JENIS BARANG</label>
+                            <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="edit_jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 <option value="1">Barang PPN</option>

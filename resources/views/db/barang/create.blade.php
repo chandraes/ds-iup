@@ -43,7 +43,7 @@
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-4 mb-3 mt-3">
-                            <label for="nama" class="form-label">JENIS BARANG</label>
+                            <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 <option value="1">Barang PPN</option>
