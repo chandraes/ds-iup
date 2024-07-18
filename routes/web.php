@@ -356,6 +356,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/', [App\Http\Controllers\FormBeliController::class, 'index'])->name('billing.form-beli');
                 Route::get('/get-kategori', [App\Http\Controllers\FormBeliController::class, 'getKategori'])->name('billing.form-beli.get-kategori');
                 Route::get('/get-barang', [App\Http\Controllers\FormBeliController::class, 'getBarang'])->name('billing.form-beli.get-barang');
+                Route::get('/get-merk', [App\Http\Controllers\FormBeliController::class, 'getMerk'])->name('billing.form-beli.get-merk');
                 Route::get('/get-supplier', [App\Http\Controllers\FormBeliController::class, 'getSupplier'])->name('billing.form-beli.get-supplier');
 
                 Route::prefix('keranjang')->group(function(){

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
@@ -77,8 +78,12 @@ class FormBeliController extends Controller
 
     public function getBarang(Request $request)
     {
-        $data = Barang::where('barang_kategori_id', $request->barang_kategori_id)
-                ->where('barang_type_id', $request->barang_type_id)
+        $jenis = [$request->jenis, 3];
+        $data = BarangNama::with('barang')->where('barang_kategori_id', $request->barang_kategori_id)
+                ->whereHas('barang', function($q) use ($request, $jenis) {
+                    $q->where('barang_type_id', $request->barang_type_id)
+                    ->whereIn('jenis', $jenis);
+                })
                 ->get();
 
         if($data->count() == 0) {

@@ -64,10 +64,24 @@
             </div>
             <div class="col-md-3">
                 <div class="mb-3">
-                    <label for="barang_id" class="form-label">Nama Barang</label>
-                    <select class="form-select" name="barang_id" id="barang_id" required>
+                    <label for="barang_nama_id" class="form-label">Nama Barang</label>
+                    <select class="form-select" name="barang_nama_id" id="barang_nama_id" required>
                         <option value=""> -- Pilih Barang -- </option>
                     </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="barang_id" class="form-label">Merk</label>
+                    <select class="form-select" name="barang_id" id="barang_id" required>
+                        <option value=""> -- Pilih Merk -- </option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="kode" class="form-label">Kode</label>
+                    <input type="text" class="form-control" name="kode" id="kode" disabled>
                 </div>
             </div>
             <div class="col-md-3">
@@ -311,7 +325,7 @@
                     if (data.status == 1) {
                         $('#barang_type_id').empty();
                         $('#barang_kategori_id').empty();
-                        $('#barang_id').empty();
+                        $('#barang_nama_id').empty();
                         $('#barang_type_id').append('<option value=""> -- Pilih Type -- </option>');
                         $.each(data.data, function(index, value){
                             $('#barang_type_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
@@ -372,17 +386,55 @@
                 data: {
                     barang_type_id: barang_type_id,
                     barang_kategori_id: barang_kategori_id,
+                    jenis: {{$jenis}}
+                },
+                success: function(data){
+                    if (data.status == 1) {
+                        console.log(data);
+                        $('#barang_nama_id').empty();
+                        $('#barang_nama_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
+                        $.each(data.data, function(index, value){
+                            $('#barang_nama_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
+                        });
+                    } else {
+                        $('#barang_nama_id').empty();
+                        $('#barang_nama_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Type belum memiliki Barang Barang!',
+                        });
+                    }
+                }
+            });
+        }
+
+        function getMerk() {
+            var jenis = {{$jenis}};
+            var barang_nama_id = $('#barang_nama_id').val();
+            var barang_type_id = $('#barang_type_id').val();
+            var barang_kategori_id = $('#barang_kategori_id').val();
+
+            $.ajax({
+                url: "{{route('billing.form-beli.get-merk')}}",
+                type: "GET",
+                data: {
+                    barang_nama_id: barang_nama_id,
+                    barang_type_id: barang_type_id,
+                    barang_kategori_id: barang_kategori_id,
+                    jenis: {{$jenis}}
                 },
                 success: function(data){
                     if (data.status == 1) {
                         $('#barang_id').empty();
-                        $('#barang_id').append('<option value=""> -- Pilih Barang -- </option>');
+                        $('#barang_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
                         $.each(data.data, function(index, value){
-                            $('#barang_id').append('<option value="'+value.id+'">'+value.nama+' ('+value.merk+')</option>');
+                            $('#barang_id').append('<option value="'+value.id+'">'+value.barang_nama.nama+'</option>');
                         });
                     } else {
                         $('#barang_id').empty();
-                        $('#barang_id').append('<option value=""> -- Pilih Barang -- </option>');
+                        $('#barang_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
 
                         Swal.fire({
                             icon: 'error',
