@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>KATEGORI NAMA BARANG</u></h1>
+            <h1><u>KATEGORI KODE & MERK BARANG</u></h1>
         </div>
     </div>
     @include('swal')
