@@ -81,7 +81,7 @@
         </div>
     </form>
     <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable">
+        <table class="table table-bordered">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -187,11 +187,7 @@
 </div>
 
 @endsection
-@push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-@endpush
 @push('js')
-<script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
     function editFun(data)
