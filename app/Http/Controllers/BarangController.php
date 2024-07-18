@@ -256,10 +256,8 @@ class BarangController extends Controller
     public function barang_delete(Barang $barang)
     {
         $errorMessage = null;
-        if ($barang->stok_ppn && $barang->stok_ppn->stok > 0) {
-            $errorMessage = 'Data tidak bisa dihapus karena masih memiliki stok ppn';
-        } elseif ($barang->stok_non_ppn && $barang->stok_non_ppn->stok > 0) {
-            $errorMessage = 'Data tidak bisa dihapus karena masih memiliki stok non ppn';
+        if ($barang->stok_harga && $barang->stok_harga->sum('stok') > 0) {
+            $errorMessage = 'Data tidak bisa dihapus karena masih memiliki stok!';
         }
 
         if ($errorMessage) {
@@ -354,7 +352,9 @@ class BarangController extends Controller
                     if ($kategoriFilter) {
                         $query->where('barang_kategori_id', $kategoriFilter);
                     }
-                    $query->with(['kategori', 'barang_nama', 'stok_harga'])->whereIn('jenis', [1,3]); // Eager load kategori and nama for each barang
+                    $query->with(['kategori', 'barang_nama', 'stok_harga' => function($q) {
+                        $q->where('stok', '>', 0);
+                    }])->whereIn('jenis', [1,3]); // Eager load kategori and nama for each barang
                 }])
                 ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
             },
@@ -415,7 +415,7 @@ class BarangController extends Controller
         ]);
 
         $data['harga'] = str_replace('.', '', $data['harga']);
-        
+
         if ($data['harga'] < $barang->harga_beli) {
             return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
         }
@@ -444,7 +444,9 @@ class BarangController extends Controller
                     if ($kategoriFilter) {
                         $query->where('barang_kategori_id', $kategoriFilter);
                     }
-                    $query->with(['kategori', 'barang_nama', 'stok_harga'])->whereIn('jenis', [2,3]); // Eager load kategori and nama for each barang
+                    $query->with(['kategori', 'barang_nama', 'stok_harga' => function($q) {
+                        $q->where('stok', '>', 0);
+                    }])->whereIn('jenis', [2,3]); // Eager load kategori and nama for each barang
                 }])
                 ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
             },

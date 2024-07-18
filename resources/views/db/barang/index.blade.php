@@ -87,7 +87,6 @@
                     <option value="">-- Semua Jenis --</option>
                     <option value="1" {{ request('jenis')==1 ? 'selected' : '' }}>Barang PPN</option>
                     <option value="2" {{ request('jenis')==2 ? 'selected' : '' }}>Barang Non PPN</option>
-                    <option value="3" {{ request('jenis')==3 ? 'selected' : '' }}>Barang PPN & Non PPN</option>
                 </select>
             </div>
         </div>

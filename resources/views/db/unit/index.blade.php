@@ -36,7 +36,7 @@
 </div>
 <style>
     .table-container {
-        height: 500px;
+        max-height: 500px;
         overflow-y: auto;
     }
     thead th {

@@ -48,7 +48,6 @@
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 <option value="1">Barang PPN</option>
                                 <option value="2">Barang Non PPN</option>
-                                <option value="3">Barang PPN & Non PPN</option>
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-4 mb-3 mt-3">
