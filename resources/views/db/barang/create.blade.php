@@ -43,22 +43,22 @@
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                            <label for="kode" class="form-label">KODE BARANG</label>
+                            <input type="text" class="form-control" name="kode" id="kode" aria-describedby="helpId"
+                                placeholder="">
+                        </div>
+                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
+                            <label for="merk" class="form-label">MERK BARANG</label>
+                            <input type="text" class="form-control" name="merk" id="merk" aria-describedby="helpId"
+                                placeholder="" required>
+                        </div>
+                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 <option value="1">Barang PPN</option>
                                 <option value="2">Barang Non PPN</option>
                             </select>
-                        </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
-                            <label for="kode" class="form-label">KODE</label>
-                            <input type="text" class="form-control" name="kode" id="kode" aria-describedby="helpId"
-                                placeholder="">
-                        </div>
-                        <div class="col-lg-4 col-md-4 mb-3 mt-3">
-                            <label for="merk" class="form-label">MERK</label>
-                            <input type="text" class="form-control" name="merk" id="merk" aria-describedby="helpId"
-                                placeholder="" required>
                         </div>
                     </div>
                 </div>

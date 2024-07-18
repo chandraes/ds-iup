@@ -43,6 +43,17 @@
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                             </select>
                         </div>
+
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                            <label for="kode" class="form-label">KODE BARANG</label>
+                            <input type="text" class="form-control" name="kode" id="edit_kode" aria-describedby="helpId"
+                                placeholder="">
+                        </div>
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                            <label for="merk" class="form-label">MERK BARANG</label>
+                            <input type="text" class="form-control" name="merk" id="edit_merk" aria-describedby="helpId"
+                                placeholder="" required>
+                        </div>
                         <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="edit_jenis" required>
@@ -50,16 +61,6 @@
                                 <option value="1">Barang PPN</option>
                                 <option value="2">Barang Non PPN</option>
                             </select>
-                        </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
-                            <label for="kode" class="form-label">KODE</label>
-                            <input type="text" class="form-control" name="kode" id="edit_kode" aria-describedby="helpId"
-                                placeholder="">
-                        </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
-                            <label for="merk" class="form-label">MERK</label>
-                            <input type="text" class="form-control" name="merk" id="edit_merk" aria-describedby="helpId"
-                                placeholder="" required>
                         </div>
                     </div>
                 </div>
