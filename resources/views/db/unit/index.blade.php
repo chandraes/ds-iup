@@ -72,26 +72,26 @@
                     <td class="text-start align-middle">{{$t->nama}}</td>
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                        <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i> Edit</a>
+                        {{-- <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
                             id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
                             @csrf
                             @method('delete')
                             <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                        </form>
+                        </form> --}}
                     </td>
                     @php $counter++; @endphp
                     @else
                     <td class="text-start align-middle">{{$t->nama}}</td>
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                        <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i> Edit</a>
+                        {{-- <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
                             id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
                             @csrf
                             @method('delete')
                             <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                        </form>
+                        </form> --}}
                     </td>
                     @endif
                 </tr>
