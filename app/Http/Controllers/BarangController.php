@@ -162,6 +162,8 @@ class BarangController extends Controller
         $kategoriFilter = $request->input('kategori');
         $jenisFilter = $request->input('jenis');
 
+        $selectType = BarangType::all();
+
         $unitsQuery = BarangUnit::with([
             'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
                 if ($typeFilter) {

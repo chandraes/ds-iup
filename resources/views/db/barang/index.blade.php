@@ -107,9 +107,10 @@
                     <th class="text-center align-middle">Tipe</th>
                     <th class="text-center align-middle">Kelompok<br>Barang</th>
                     <th class="text-center align-middle">Nama<br>Barang</th>
-                    <th class="text-center align-middle">Jenis<br>Barang</th>
+
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
+                    <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
@@ -143,11 +144,12 @@
                     <td class="text-center align-middle" rowspan="{{ $barang->namaRowspan }}">{{ $namaBarang }}</td>
                     @php $namaDisplayed = true; @endphp
                     @endif
+
+                    <td class="text-center align-middle">{{ $barang->kode }}</td>
+                    <td class="text-center align-middle">{{ $barang->merk }}</td>
                     <td class="text-center align-middle">
                         {{ $barang->text_jenis }}
                     </td>
-                    <td class="text-center align-middle">{{ $barang->kode }}</td>
-                    <td class="text-center align-middle">{{ $barang->merk }}</td>
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{ $barang }}, {{ $type->id }}, {{ $unit->id }})"><i
