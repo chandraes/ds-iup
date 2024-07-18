@@ -99,6 +99,45 @@ class FormBeliController extends Controller
         ]);
     }
 
+    public function getMerk(Request $request)
+    {
+        $jenis = [$request->jenis, 3];
+        $data = Barang::where('barang_nama_id', $request->barang_nama_id)
+                ->where('barang_kategori_id', $request->barang_kategori_id)
+                ->where('barang_type_id', $request->barang_type_id)
+                ->whereIn('jenis', $jenis)
+                ->get();
+
+        if($data->count() == 0) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Data tidak ditemukan',
+            ]);
+        }
+
+        return response()->json([
+            'status' => 1,
+            'data' => $data,
+        ]);
+    }
+
+    public function getKode(Request $request)
+    {
+        $data = Barang::find($request->barang_id);
+
+        if(!$data) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Data tidak ditemukan',
+            ]);
+        }
+
+        return response()->json([
+            'status' => 1,
+            'data' => $data,
+        ]);
+    }
+
     public function keranjang_store(Request $request)
     {
         $data = $request->validate([

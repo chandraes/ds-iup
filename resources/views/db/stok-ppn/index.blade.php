@@ -188,7 +188,7 @@
                 </tr>
                 <tr>
                     <th colspan="12" class="text-end align-middle">Estimasi Profit</th>
-                    <th class="text-end align-middle" colspan="2">0</th>
+                    <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>

@@ -65,7 +65,7 @@
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="barang_nama_id" class="form-label">Nama Barang</label>
-                    <select class="form-select" name="barang_nama_id" id="barang_nama_id" required>
+                    <select class="form-select" name="barang_nama_id" id="barang_nama_id" required onchange="getMerk()">
                         <option value=""> -- Pilih Barang -- </option>
                     </select>
                 </div>
@@ -73,7 +73,7 @@
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="barang_id" class="form-label">Merk</label>
-                    <select class="form-select" name="barang_id" id="barang_id" required>
+                    <select class="form-select" name="barang_id" id="barang_id" required onchange="getKode()">
                         <option value=""> -- Pilih Merk -- </option>
                     </select>
                 </div>
@@ -426,21 +426,41 @@
                     jenis: {{$jenis}}
                 },
                 success: function(data){
+                    console.log(data);
                     if (data.status == 1) {
                         $('#barang_id').empty();
-                        $('#barang_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
+                        $('#barang_id').append('<option value=""> -- Pilih Merk -- </option>');
                         $.each(data.data, function(index, value){
-                            $('#barang_id').append('<option value="'+value.id+'">'+value.barang_nama.nama+'</option>');
+                            $('#barang_id').append('<option value="'+value.id+'">'+value.merk+'</option>');
                         });
                     } else {
                         $('#barang_id').empty();
-                        $('#barang_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
+                        $('#barang_id').append('<option value=""> -- Pilih Merk -- </option>');
 
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops...',
                             text: 'Type belum memiliki Barang Barang!',
                         });
+                    }
+                }
+            });
+        }
+
+        function getKode()
+        {
+            var barang_id = $('#barang_id').val();
+            $.ajax({
+                url: "{{route('billing.form-beli.get-kode')}}",
+                type: "GET",
+                data: {
+                    barang_id: barang_id,
+                },
+                success: function(data){
+                    if (data.status == 1) {
+                        $('#kode').val(data.data.kode);
+                    } else {
+                        $('#kode').val('');
                     }
                 }
             });

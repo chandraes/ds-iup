@@ -270,36 +270,52 @@ class Keranjang extends Model
         $keranjangItems = $this->where('user_id', auth()->user()->id)
             ->where('jenis', $data['jenis'])
             ->where('tempo', $data['tempo'])
-            ->get(['barang_id', 'jumlah']);
+            ->get();
+
+        // dd($keranjangItems);
+        foreach($keranjangItems as $item){
+            BarangStokHarga::create([
+                'barang_id' => $item->barang_id,
+                'stok' => $item->jumlah,
+                'harga_beli' => $item->harga,
+            ]);
+        }
 
         // Group by barang_id to reduce the number of queries
-        $updates = $keranjangItems->groupBy('barang_id')->map(function ($items) use ($data) {
-            $totalJumlah = $items->sum('jumlah');
-            $tipe = $data['kas_ppn'] == 1 ? 'ppn' : 'non-ppn';
+        // $updates = $keranjangItems->groupBy('barang_id')->map(function ($items) use ($data) {
+        //     $totalJumlah = $items->sum('jumlah');
+        //     $tipe = $data['kas_ppn'] == 1 ? 'ppn' : 'non-ppn';
+        //     dd($items);
+        //     return [
+        //         'tipe' => $tipe,
+        //         'totalJumlah' => $totalJumlah,
+        //     ];
+        // });
 
-            return [
-                'tipe' => $tipe,
-                'totalJumlah' => $totalJumlah,
-            ];
-        });
+        // dd($updates);
 
-        foreach ($updates as $barang_id => $update) {
-        // Assuming BarangStokHarga has a method to increment stok in bulk or efficiently
-                BarangStokHarga::firstOrCreate(
-                    [
-                        'barang_id' => $barang_id,
-                        'tipe' => $update['tipe'],
-                    ],
-                    [
-                        'stok' => 0, // Default stok value if creating a new record
-                    ]
-                );
+        // foreach ($updates as $barang_id => $update) {
+        // // Assuming BarangStokHarga has a method to increment stok in bulk or efficiently
+        //     BarangStokHarga::create([
+        //         'barang_id' => $barang_id,
+        //         'stok' => $update['totalJumlah'],
+        //         'harga_beli'
+        //     ]);
+        //         // BarangStokHarga::firstOrCreate(
+        //         //     [
+        //         //         'barang_id' => $barang_id,
+        //         //         'tipe' => $update['tipe'],
+        //         //     ],
+        //         //     [
+        //         //         'stok' => 0, // Default stok value if creating a new record
+        //         //     ]
+        //         // );
 
-                // Now increment the stok
-                BarangStokHarga::where('barang_id', $barang_id)
-                            ->where('tipe', $update['tipe'])
-                            ->increment('stok', $update['totalJumlah']);
-        }
+        //         // // Now increment the stok
+        //         // BarangStokHarga::where('barang_id', $barang_id)
+        //         //             ->where('tipe', $update['tipe'])
+        //         //             ->increment('stok', $update['totalJumlah']);
+        // }
 
         return true;
     }
