@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>KATEGORI KODE & MERK BARANG</u></h1>
@@ -45,7 +45,7 @@
         z-index: 1;
     }
 </style>
-<div class="container mt-3 table-responsive ">
+<div class="container-fluid mt-3 table-responsive ">
     <form method="GET" action="{{ route('db.barang') }}">
         <div class="row">
             <div class="col-md-3">
@@ -111,6 +111,7 @@
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">PPN</th>
+                    <th class="text-center align-middle">NON PPN</th>
                     <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
@@ -148,7 +149,16 @@
                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                     <td class="text-center align-middle">{{ $barang->merk }}</td>
                     <td class="text-center align-middle">
-                        {{ $barang->text_jenis }}
+                        @if ($barang->jenis == 1)
+                        <i class="fa fa-check"></i>
+                        @endif
+
+                    </td>
+                    <td class="text-center align-middle">
+                        @if ($barang->jenis == 2)
+                        <i class="fa fa-check"></i>
+                        @endif
+
                     </td>
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
