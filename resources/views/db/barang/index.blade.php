@@ -63,7 +63,7 @@
                 <label for="type">Type</label>
                 <select name="type" id="type" class="form-control">
                     <option value="">Semua Type</option>
-                    @foreach($data as $type)
+                    @foreach($selectType as $type)
                     <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
                         {{ $type->nama }}
                     </option>

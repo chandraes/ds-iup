@@ -162,7 +162,11 @@ class BarangController extends Controller
         $kategoriFilter = $request->input('kategori');
         $jenisFilter = $request->input('jenis');
 
-        $selectType = BarangType::all();
+        if (!empty($unitFilter) && $unitFilter != '') {
+            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
+        } else {
+            $selectType = BarangType::all();
+        }
 
         $unitsQuery = BarangUnit::with([
             'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
@@ -227,6 +231,7 @@ class BarangController extends Controller
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
             'jenisFilter' => $jenisFilter,
+            'selectType' => $selectType,
         ]);
     }
 
