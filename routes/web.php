@@ -185,6 +185,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'barang_kategori'])->name('db.barang-kategori');
                 Route::post('/nama-store', [App\Http\Controllers\BarangController::class, 'barang_nama_store'])->name('db.barang-kategori.nama-store');
                 Route::patch('/nama-update/{nama}', [App\Http\Controllers\BarangController::class, 'barang_nama_update'])->name('db.barang-kategori.nama-update');
+                Route::delete('/nama-delete/{nama}', [App\Http\Controllers\BarangController::class, 'barang_nama_delete'])->name('db.barang-kategori.delete');
             });
 
             Route::prefix('barang')->group(function(){

@@ -70,7 +70,7 @@
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                        <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                        <form action="{{route('db.barang-kategori.delete', $t->id)}}" method="post" class="d-inline delete-form"
                             id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
                             @csrf
                             @method('delete')
@@ -83,7 +83,7 @@
                     <td class="text-center align-middle">
                         <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                        <form action="{{route('db.unit.type.delete', $t->id)}}" method="post" class="d-inline delete-form"
+                        <form action="{{route('db.barang-kategori.delete', $t->id)}}" method="post" class="d-inline delete-form"
                             id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
                             @csrf
                             @method('delete')

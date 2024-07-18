@@ -64,6 +64,15 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Data berhasil diubah');
     }
 
+    public function barang_nama_delete(BarangNama $nama)
+    {
+        if($nama->barangs->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+
+        $nama->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
+    }
+
     public function unit()
     {
         $data = BarangUnit::with(['types'])->get();
