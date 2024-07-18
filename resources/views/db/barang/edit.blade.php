@@ -26,9 +26,6 @@
                             <label for="barang_type_id" class="form-label">TYPE</label>
                             <select class="form-select" name="barang_type_id" id="edit_barang_type_id" required>
                                 <option value="">-- Pilih Salah Satu --</option>
-                                @foreach ($data as $type)
-                                <option value="{{$type->id}}">{{$type->nama}}</option>
-                                @endforeach
                             </select>
                         </div>
                         <div class="col-lg-6 col-md-6 mb-3 mt-3">
