@@ -66,7 +66,7 @@ class BarangController extends Controller
 
     public function barang_nama_delete(BarangNama $nama)
     {
-        if($nama->barangs->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        if($nama->barang->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
 
         $nama->delete();
 
