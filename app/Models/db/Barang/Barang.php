@@ -28,14 +28,9 @@ class Barang extends Model
         return $this->belongsTo(BarangNama::class, 'barang_nama_id');
     }
 
-    public function stok_ppn()
+    public function stok_harga()
     {
-        return $this->hasMany(BarangStokHarga::class, 'barang_id')->where('tipe', 'ppn');
-    }
-
-    public function stok_non_ppn()
-    {
-        return $this->hasMany(BarangStokHarga::class, 'barang_id')->where('tipe', 'non-ppn');
+        return $this->hasMany(BarangStokHarga::class, 'barang_id');
     }
 
     public function histories()

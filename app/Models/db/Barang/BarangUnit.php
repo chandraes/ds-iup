@@ -12,7 +12,8 @@ class BarangUnit extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    public $unitRowspan = 0;
+
+    public $unitRowspan = 0; // Variable to store rowspan for the unit
 
     public function types()
     {

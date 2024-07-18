@@ -201,12 +201,12 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('stok-ppn')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
-                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_ppn_store'])->name('db.stok-ppn.store');
+                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
             });
 
             Route::prefix('stok-non-ppn')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_non_ppn'])->name('db.stok-non-ppn');
-                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_non_ppn_store'])->name('db.stok-non-ppn.store');
+                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-non-ppn.store');
 
             });
         });
