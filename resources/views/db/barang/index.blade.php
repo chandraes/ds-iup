@@ -193,6 +193,7 @@
 
         document.getElementById('edit_barang_unit_id').value = unit;
         document.getElementById('edit_barang_type_id').value = type;
+
         document.getElementById('edit_jenis').value = data.jenis;
         document.getElementById('edit_barang_kategori_id').value = data.barang_kategori_id;
         document.getElementById('edit_kode').value = data.kode;
@@ -206,6 +207,15 @@
             }, 500);
         };
 
+        let unitSelect = document.getElementById('edit_barang_unit_id');
+        unitSelect.onchange = () => {
+            getTypeEdit();
+            setTimeout(() => {
+                document.getElementById('edit_barang_type_id').value = data.barang_type_id;
+            }, 500);
+
+        };
+        unitSelect.dispatchEvent(new Event('change'));
         kategoriSelect.dispatchEvent(new Event('change'));
 
         document.getElementById('editForm').action = `{{route('db.barang.update', ':id')}}`.replace(':id', data.id);

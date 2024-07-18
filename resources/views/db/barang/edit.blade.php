@@ -29,7 +29,7 @@
                             </select>
                         </div>
                         <div class="col-lg-6 col-md-6 mb-3 mt-3">
-                            <label for="barang_kategori_id" class="form-label">KATEGORI BARANG</label>
+                            <label for="barang_kategori_id" class="form-label">KELOMPOK BARANG</label>
                             <select class="form-select" name="barang_kategori_id" id="edit_barang_kategori_id" required onchange="getNamaBarangEdit()">
                                 <option value="" disabled>-- Pilih Salah Satu --</option>
                                 @foreach ($kategori as $i)
