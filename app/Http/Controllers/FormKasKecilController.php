@@ -27,12 +27,18 @@ class FormKasKecilController extends Controller
     public function masuk_store()
     {
 
+        $kb = new KasBesar();
+        $saldo = $kb->saldoTerakhir(1);
+
+        if($saldo < 1000000){
+            return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi.');
+        }
+
         $db = new KasKecil();
 
         $store = $db->masukKasKecil();
 
-        $kb = new KasBesar();
-        $saldo = $kb->saldoTerakhir(1);
+
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
