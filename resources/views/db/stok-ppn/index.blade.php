@@ -117,13 +117,13 @@
                                 @foreach ($namaBarangs as $barang)
                                     @php $stokDisplayed = false; @endphp
                                     @foreach ($barang->stok_harga as $stokHarga)
-                                        @php
-                                            // $totalHargaBeli = $stokHarga ? ($stokHarga->harga_beli+($stokHarga->harga_beli*$ppnRate/100))*$stokHarga->stok : 0;
-                                            // $totalHargaJual = $stokHarga ? ($stokHarga->harga+($stokHarga->harga*$ppnRate/100))*$stokHarga->stok : 0;
-                                            // $sumTotalHargaJual += $totalHargaJual;
-                                            // $sumTotalHargaBeli += $totalHargaBeli;
-                                            // $margin = $stokHarga ? ($stokHarga->harga - $stokHarga->harga_beli)/$stokHarga->harga_beli*100 : 0;
-                                        @endphp
+                                    @php
+                                        $totalHargaBeli = $stokHarga ? ($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) * $stokHarga->stok : 0;
+                                        $totalHargaJual = $stokHarga ? ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok : 0;
+                                        $sumTotalHargaJual += $totalHargaJual;
+                                        $sumTotalHargaBeli += $totalHargaBeli;
+                                        $margin = $stokHarga && $stokHarga->harga_beli != 0 ? ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100 : 0;
+                                    @endphp
                                         <tr>
                                             @if (!$unitDisplayed)
                                                 <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $number++ }}</td>
