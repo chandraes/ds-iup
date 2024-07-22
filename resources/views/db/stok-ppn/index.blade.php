@@ -55,7 +55,7 @@
                 <label for="type">Type</label>
                 <select name="type" id="type" class="form-control">
                     <option value="">Semua Type</option>
-                    @foreach($data as $type)
+                    @foreach($selectType as $type)
                     <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
                         {{ $type->nama }}
                     </option>
@@ -66,9 +66,9 @@
                 <label for="kategori">Kelompok Barang</label>
                 <select name="kategori" id="kategori" class="form-control">
                     <option value="">Semua Kelompok</option>
-                    @foreach($kategori as $kat)
-                    <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
-                        {{ $kat->nama }}
+                    @foreach($selectKategori as $selKat)
+                    <option value="{{ $selKat->id }}" {{ request('kategori')==$selKat->id ? 'selected' : '' }}>
+                        {{ $selKat->nama }}
                     </option>
                     @endforeach
                 </select>
@@ -167,7 +167,7 @@
                                                 {{ number_format($totalHargaJual, 0, ',','.') }}
                                             </td>
                                             <td class="text-end align-middle @if ($margin < 10)
-                                                'table-danger'
+                                                table-danger
                                             @endif">
                                                 {{ number_format($margin, 2) }}%
                                             </td>

@@ -18,7 +18,7 @@ class BarangKategori extends Model
 
     public function barangs()
     {
-        return $this->hasMany(Barang::class);
+        return $this->hasMany(Barang::class, 'barang_kategori_id');
     }
 
     public function barang_nama()
@@ -30,5 +30,13 @@ class BarangKategori extends Model
     public function scopeRowspan($query)
     {
         return $query->withCount('barang_nama');
+    }
+
+    // scopeFilterByKategori untuk filter data berdasarkan kategori
+    public function scopeFilterByKategori($query, $kategoriFilter)
+    {
+        if ($kategoriFilter) {
+            $query->where('id', $kategoriFilter);
+        }
     }
 }

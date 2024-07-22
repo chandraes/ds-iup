@@ -15,6 +15,8 @@ class BarangUnit extends Model
 
     public $unitRowspan = 0; // Variable to store rowspan for the unit
 
+    protected $appends = ['unitRowspan'];
+
     public function types()
     {
         return $this->hasMany(BarangType::class);
@@ -35,5 +37,113 @@ class BarangUnit extends Model
             $type->calculateTypeRowspan($type->id); // Assuming this method exists and modifies $type
             $this->unitRowspan += $type->typeRowspan; // Ensure typeRowspan is being set in calculateTypeRowspan
         }
+    }
+
+    public function barangAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $jenisFilter = null)
+    {
+          // Initial query optimized with necessary eager loading
+        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama', 'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
+            if ($typeFilter) {
+                $query->where('barang_type_id', $typeFilter);
+            }
+            if ($kategoriFilter) {
+                $query->where('barang_kategori_id', $kategoriFilter);
+            }
+            if ($jenisFilter) {
+                $query->where('jenis', $jenisFilter);
+            }
+        }]);
+
+        if ($unitFilter) {
+            $query->where('id', $unitFilter);
+        }
+
+        $units = $query->get();
+
+        // Simplify the calculation of rowspan values using collection methods
+        $units->each(function ($unit) {
+            $unit->unitRowspan = 0; // Initialize unitRowspan
+            $unit->types->each(function ($type) use ($unit) {
+                if (isset($type->barangs)) { // Ensure barangs exists
+                    $type->groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                    $type->typeRowspan = 0; // Initialize typeRowspan
+
+                    $type->groupedBarangs->each(function ($barangs, $kategoriNama) use ($type, $unit) {
+                        $groupedByNama = $barangs->groupBy('barang_nama.nama');
+
+                        $groupedByNama->each(function ($namaBarangs) use ($type, $unit, $barangs) { // Pass $barangs explicitly
+                            $namaBarangs->each(function ($barang) use ($namaBarangs, $barangs) {
+                                $barang->kategoriRowspan = $barangs->count();
+                                $barang->namaRowspan = $namaBarangs->count();
+                            });
+
+                            $type->typeRowspan += $namaBarangs->count();
+                            $unit->unitRowspan += $namaBarangs->count();
+                        });
+                    });
+                }
+            });
+        });
+
+        return $units;
+    }
+
+    public function barangStok($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null)
+    {
+        $unitsQuery = $this->with([
+            'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenis) {
+                if ($typeFilter) {
+                    $query->where('id', $typeFilter);
+                }
+                $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenis) {
+                    if ($kategoriFilter) {
+                        $query->where('barang_kategori_id', $kategoriFilter);
+                    }
+                    $query->with(['kategori', 'barang_nama', 'stok_harga' => function($q) {
+                        $q->where('stok', '>', 0);
+                    }])->where('jenis', $jenis); // Eager load kategori and nama for each barang
+                }])
+                ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
+            },
+        ]);
+
+        if ($unitFilter) {
+            $unitsQuery->where('id', $unitFilter);
+        }
+
+        $units = $unitsQuery->get();
+
+        $units->loadMissing('types.barangs.kategori', 'types.barangs.barang_nama', 'types.barangs.stok_harga');
+
+
+        foreach ($units as $unit) {
+            $unit->unitRowspan = 0;
+
+            foreach ($unit->types as $type) {
+                $groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                $type->groupedBarangs = $groupedBarangs;
+                $type->typeRowspan = 0;
+
+                foreach ($groupedBarangs as $kategoriNama => $barangs) {
+                    $groupedByNama = $barangs->groupBy('barang_nama.nama');
+
+                    foreach ($groupedByNama as $nama => $namaBarangs) {
+                        foreach ($namaBarangs as $barang) {
+                            $barang->kategoriRowspan = 0;
+                            $barang->namaRowspan = 0;
+                            $barang->stokPpnRowspan = $barang->stok_harga->count();
+
+                            $barang->kategoriRowspan += $barang->stokPpnRowspan;
+                            $barang->namaRowspan += $barang->stokPpnRowspan;
+                        }
+
+                        $type->typeRowspan += $barang->namaRowspan;
+                        $unit->unitRowspan += $barang->namaRowspan;
+                    }
+                }
+            }
+        }
+
+        return $units;
     }
 }

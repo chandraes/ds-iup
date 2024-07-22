@@ -361,22 +361,15 @@ class InvoiceBelanja extends Model
 
         $items = $inv->items;
         $tipe = $inv->kas_ppn == 1 ? 'ppn' : 'non-ppn';
-
+        // dd($items);
         foreach ($items as $item) {
-            $barangStokHarga = BarangStokHarga::firstOrCreate(
-                [
-                    'barang_id' => $item->barang_id,
-                    'tipe' => $tipe,
-                ],
-                [
-                    'stok' => 0, // Assuming default stok is 0 if not exists
-                ]
-            );
 
-            // Now increment the stok
-            BarangStokHarga::where('barang_id', $item->barang_id)
-                ->where('tipe', $tipe)
-                ->increment('stok', $item->jumlah);
+            // dd($item);
+            BarangStokHarga::create([
+                'barang_id' => $item->barang_id,
+                'stok' => $item->jumlah,
+                'harga_beli' => $item->harga,
+            ]);
         }
 
         return true;

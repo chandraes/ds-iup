@@ -74,7 +74,7 @@
                 <label for="kategori">Kelompok Barang</label>
                 <select name="kategori" id="kategori" class="form-control">
                     <option value="">Semua Kelompok</option>
-                    @foreach($kategori as $kat)
+                    @foreach($selectKategori as $kat)
                     <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
                         {{ $kat->nama }}
                     </option>
