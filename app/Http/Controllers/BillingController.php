@@ -27,7 +27,7 @@ class BillingController extends Controller
 
     public function lihat_stok(Request $request)
     {
-        $kategori = BarangKategori::all();
+        $kategori = BarangKategori::with(['barang_nama'])->get();
         $data = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
@@ -35,58 +35,39 @@ class BillingController extends Controller
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
 
-        $unitsQuery = BarangUnit::with([
-            'types' => function ($query) use ($typeFilter, $kategoriFilter) {
-                if ($typeFilter) {
-                    $query->where('id', $typeFilter);
-                }
-                $query->with(['barangs' => function ($query) use ($kategoriFilter) {
-                    if ($kategoriFilter) {
-                        $query->where('barang_kategori_id', $kategoriFilter);
-                    }
-                    $query->with('kategori'); // Eager load kategori for each barang
-                }])
-                ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
-            }, 'types.barangs.stok_ppn', 'types.barangs.stok_non_ppn'
-        ]);
+        if (!empty($unitFilter) && $unitFilter != '') {
+            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
-        if ($unitFilter) {
-            $unitsQuery->where('id', $unitFilter);
+            $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+        } else {
+            $selectType = BarangType::all();
+            $selectKategori = BarangKategori::all();
         }
 
-        $units = $unitsQuery->get();
+        $db = new BarangUnit();
 
-        $units->loadMissing('types.barangs.kategori');
+        $jenis = 1;
 
-        foreach ($units as $unit) {
-            $unit->unitRowspan = 0; // Variabel untuk menyimpan rowspan unit
-
-            foreach ($unit->types as $type) {
-                $groupedBarangs = $type->barangs->groupBy('kategori.nama');
-                $type->groupedBarangs = $groupedBarangs;
-                $type->typeRowspan = 0; // Variabel untuk menyimpan rowspan tipe
-
-                foreach ($groupedBarangs as $kategoriNama => $barangs) {
-                    $barangs->kategoriRowspan = $barangs->count(); // Variabel untuk menyimpan rowspan kategori
-
-                    // Menambah total rowspan untuk type dengan jumlah barang dalam kategori
-                    $type->typeRowspan += $barangs->count();
-                }
-
-                // Menambah total rowspan untuk unit dengan jumlah barang dalam tipe
-                $unit->unitRowspan += $type->typeRowspan;
-            }
-        }
+        $units = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter);
 
         // dd($units->toArray());
         return view('billing.stok.index', [
             'data' => $data,
+            'nonPpn' =>$nonPpn,
             'kategori' => $kategori,
             'units' => $units,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
             'ppnRate' => $ppnRate,
+            'selectType' => $selectType,
+            'selectKategori' => $selectKategori,
         ]);
     }
 
