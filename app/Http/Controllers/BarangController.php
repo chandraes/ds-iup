@@ -11,6 +11,7 @@ use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BarangController extends Controller
 {
@@ -43,8 +44,14 @@ class BarangController extends Controller
     {
         $data = $request->validate([
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
-            'nama' => 'required',
-        ]);
+            'nama' => [
+                    'required',
+                    Rule::unique('barang_namas')->where(function ($query) use ($request) {
+                        return $query->where('barang_kategori_id', $request->barang_kategori_id)
+                                    ->where('nama', $request->nama);
+                    }),
+                ],
+            ]);
 
         $this->storeDb(BarangNama::class, $data);
 
@@ -56,7 +63,12 @@ class BarangController extends Controller
     {
         $data = $request->validate([
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
-            'nama' => 'required',
+           'nama' => [
+                'required',
+                Rule::unique('barang_namas')->where(function ($query) use ($request) {
+                    return $query->where('barang_kategori_id', $request->barang_kategori_id);
+                })->ignore($nama->id, 'id'),
+            ],
         ]);
 
         $nama->update($data);
@@ -85,7 +97,7 @@ class BarangController extends Controller
     public function unit_store(Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required',
+            'nama' => 'required|unique:barang_units,nama',
         ]);
 
         $this->storeDb(BarangUnit::class, $data);
@@ -96,7 +108,7 @@ class BarangController extends Controller
     public function unit_update(Request $request, BarangUnit $unit)
     {
         $data = $request->validate([
-            'nama' => 'required',
+           'nama' => 'required|unique:barang_units,nama,' . $unit->id . ',id',
         ]);
 
         $unit->update($data);
@@ -116,8 +128,14 @@ class BarangController extends Controller
     public function type_store(Request $request)
     {
         $data = $request->validate([
-            'barang_unit_id' => 'required',
-            'nama' => 'required',
+            'barang_unit_id' => 'required|exists:barang_units,id',
+            'nama' => [
+                'required',
+                Rule::unique('barang_types')->where(function ($query) use ($request) {
+                    return $query->where('barang_unit_id', $request->barang_unit_id)
+                                ->where('nama', $request->nama);
+                }),
+            ],
         ]);
 
         try {
@@ -136,8 +154,13 @@ class BarangController extends Controller
     public function type_update(Request $request, BarangType $type)
     {
         $data = $request->validate([
-            'barang_unit_id' => 'required',
-            'nama' => 'required',
+            'barang_unit_id' => 'required|exists:barang_units,id',
+            'nama' => [
+                'required',
+                Rule::unique('barang_types')->where(function ($query) use ($request) {
+                    return $query->where('barang_unit_id', $request->barang_unit_id);
+                })->ignore($type->id, 'id'),
+            ],
         ]);
 
         $type->update($data);
@@ -147,6 +170,8 @@ class BarangController extends Controller
 
     public function type_delete(BarangType $type)
     {
+        if($type->barangs->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+
         $type->delete();
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
@@ -200,9 +225,19 @@ class BarangController extends Controller
             'barang_type_id' => 'required|exists:barang_types,id',
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'barang_nama_id' => 'required|exists:barang_namas,id',
-            'jenis' => 'required|in:1,2,3',
+            'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
-            'merk' => 'required',
+            'merk' => [
+                'required',
+                Rule::unique('barangs')->where(function ($query) use ($request) {
+                    return $query->where('barang_type_id', $request->barang_type_id)
+                                ->where('barang_kategori_id', $request->barang_kategori_id)
+                                ->where('barang_nama_id', $request->barang_nama_id)
+                                ->where('jenis', $request->jenis)
+                                ->where('merk', $request->merk)
+                                ->where('kode', $request->kode);
+                }),
+            ],
         ]);
 
         $this->storeDb(Barang::class, $data);
@@ -218,10 +253,20 @@ class BarangController extends Controller
             'barang_type_id' => 'required|exists:barang_types,id',
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'barang_nama_id' => 'required|exists:barang_namas,id',
-            'jenis' => 'required|in:1,2,3',
+            'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
-            'merk' => 'required',
-        ]);
+            'merk' => [
+                    'required',
+                    Rule::unique('barangs')->where(function ($query) use ($request) {
+                        return $query->where('barang_type_id', $request->barang_type_id)
+                                    ->where('barang_kategori_id', $request->barang_kategori_id)
+                                    ->where('barang_nama_id', $request->barang_nama_id)
+                                    ->where('jenis', $request->jenis)
+                                    ->where('merk', $request->merk)
+                                    ->where('kode', $request->kode);
+                    })->ignore($barang->id, 'id'),
+                ],
+            ]);
 
         $barang->update($data);
 
