@@ -12,7 +12,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-4 col-sm-6 mb-3">
-                            <label for="nama" class="form-label">Nama Perusahaan</label>
+                            <label for="nama" class="form-label">Nama Perusahaan / Perorangan</label>
                             <input type="text" class="form-control" name="nama" id="edit_nama" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
