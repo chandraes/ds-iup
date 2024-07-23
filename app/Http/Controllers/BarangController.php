@@ -33,7 +33,7 @@ class BarangController extends Controller
 
     public function barang_kategori()
     {
-        $data = BarangKategori::with(['barang_nama'])->withCount('barang_nama')->get();
+        $data = BarangKategori::with(['barang_nama'])->withCount('barang_nama')->orderBy('urut')->get();
 
         return view('db.kategori-barang.index', [
             'data' => $data
