@@ -47,6 +47,7 @@
     }
 </style>
 <div class="container mt-5 table-responsive ">
+    {{-- <input type="text" id="searchInput" placeholder="Search for names.." title="Type in a name"> --}}
     <div class="table-container">
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
@@ -60,46 +61,28 @@
             <tbody>
                 @php $counter = 1; @endphp
                 @foreach ($data as $d)
-                @if ($d->barang_nama)
-                @foreach ($d->barang_nama as $t)
-                <tr>
-                    @if ($loop->first)
-                    <td class="text-center align-middle" rowspan="{{$d->barang_nama_count}}">{{$counter}}</td>
-                    <td class="text-center align-middle" rowspan="{{$d->barang_nama_count}}">{{$d->nama}}</td>
-                    <td class="text-start align-middle">{{$t->nama}}</td>
-                    <td class="text-center align-middle">
-                        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                        <form action="{{route('db.barang-kategori.delete', $t->id)}}" method="post" class="d-inline delete-form"
-                            id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                        </form>
-                    </td>
-                    @php $counter++; @endphp
-                    @else
-                    <td class="text-start align-middle">{{$t->nama}}</td>
-                    <td class="text-center align-middle">
-                        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{$t}})"><i class="fa fa-edit"></i></a>
-                        <form action="{{route('db.barang-kategori.delete', $t->id)}}" method="post" class="d-inline delete-form"
-                            id="deleteForm{{$t->id}}" data-id="{{$t->id}}">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                        </form>
-                    </td>
+                    @if ($d->barang_nama)
+                        @php $isFirst = true; @endphp
+                        @foreach ($d->barang_nama as $t)
+                            <tr>
+                                @if ($isFirst)
+                                    <td class="text-center align-middle" rowspan="{{ $d->barang_nama_count }}">{{ $counter }}</td>
+                                    <td class="text-center align-middle" rowspan="{{ $d->barang_nama_count }}">{{ $d->nama }}</td>
+                                    @php $isFirst = false; @endphp
+                                @endif
+                                <td class="text-start align-middle">{{ $t->nama }}</td>
+                                <td class="text-center align-middle">
+                                    <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{ $t }})"><i class="fa fa-edit"></i></a>
+                                    <form action="{{ route('db.barang-kategori.delete', $t->id) }}" method="post" class="d-inline delete-form" id="deleteForm{{ $t->id }}" data-id="{{ $t->id }}">
+                                        @csrf
+                                        @method('delete')
+                                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                        @php $counter++; @endphp
                     @endif
-
-                </tr>
-                @endforeach
-                @if (!$loop->last)
-                <tr>
-                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent"></td>
-                </tr>
-                @endif
-                @endif
                 @endforeach
             </tbody>
 
@@ -156,6 +139,32 @@
             if (result.isConfirmed) {
                 $(`#deleteForm${formId}`).unbind('submit').submit();
                 $('#spinner').show();
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+
+        searchInput.addEventListener('keyup', function() {
+            const filter = searchInput.value.toUpperCase();
+            const table = document.getElementById("dataTable");
+            const tr = table.getElementsByTagName("tr");
+
+            // Loop through all table rows, and hide those who don't match the search query
+            for (let i = 0; i < tr.length; i++) {
+                // Target the 'Nama Barang' and 'Kelompok Barang' columns
+                let tdNamaBarang = tr[i].getElementsByTagName("td")[2];
+                let tdKelompokBarang = tr[i].getElementsByTagName("td")[1];
+                if (tdNamaBarang || tdKelompokBarang) {
+                    let txtValueNamaBarang = tdNamaBarang.textContent || tdNamaBarang.innerText;
+                    let txtValueKelompokBarang = tdKelompokBarang.textContent || tdKelompokBarang.innerText;
+                    if (txtValueNamaBarang.toUpperCase().indexOf(filter) > -1 || txtValueKelompokBarang.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
             }
         });
     });
