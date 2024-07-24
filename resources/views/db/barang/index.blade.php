@@ -48,10 +48,10 @@
 <div class="container-fluid mt-3 table-responsive ">
     <form method="GET" action="{{ route('db.barang') }}">
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="unit">Unit</label>
-                <select name="unit" id="unit" class="form-control">
-                    <option value="">Semua Unit</option>
+                <select name="unit" id="unit" class="form-select">
+                    <option value=""> ---------- </option>
                     @foreach($units as $unit)
                     <option value="{{ $unit->id }}" {{ request('unit')==$unit->id ? 'selected' : '' }}>
                         {{ $unit->nama }}
@@ -59,10 +59,10 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="type">Type</label>
-                <select name="type" id="type" class="form-control">
-                    <option value="">Semua Type</option>
+                <select name="type" id="type" class="form-select">
+                    <option value=""> ---------- </option>
                     @foreach($selectType as $type)
                     <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
                         {{ $type->nama }}
@@ -70,10 +70,10 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="kategori">Kelompok Barang</label>
-                <select name="kategori" id="kategori" class="form-control">
-                    <option value="">Semua Kelompok</option>
+                <select name="kategori" id="kategori" class="form-select">
+                    <option value=""> ---------- </option>
                     @foreach($selectKategori as $kat)
                     <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
                         {{ $kat->nama }}
@@ -81,21 +81,38 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
-                <label for="nama">Jenis Barang</label>
+            <div class="col-md-2">
+                <label for="nama">Nama Barang</label>
+                <select class="form-select" name="barang_nama" id="filter_barang_nama">
+                    <option value=""> ---------- </option>
+                    @foreach ($selectBarangNama as $bn)
+                    <option value="{{ $bn->nama }}" {{ request('barang_nama')==$bn->nama ? 'selected' : '' }}>
+                        {{ $bn->nama }}
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="nama">PPN/Non PPN</label>
                 <select class="form-select" name="jenis" id="filter_jenis">
-                    <option value="">-- Semua Jenis --</option>
+                    <option value=""> ---------- </option>
                     <option value="1" {{ request('jenis')==1 ? 'selected' : '' }}>Barang PPN</option>
                     <option value="2" {{ request('jenis')==2 ? 'selected' : '' }}>Barang Non PPN</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <label for="nama">
+                    ---------------
+                </label>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    {{-- reset filter button --}}
+                    <a href="{{ route('db.barang') }}" class="btn btn-danger">Reset Filter</a>
+                </div>
+
+            </div>
         </div>
         <div class="row mt-3">
-            <div class="col-md-12">
-                <button type="submit" class="btn btn-primary">Filter</button>
-                {{-- reset filter button --}}
-                <a href="{{ route('db.barang') }}" class="btn btn-danger">Reset Filter</a>
-            </div>
+
         </div>
     </form>
     <div class="table-container mt-4">
@@ -216,6 +233,11 @@
         theme: 'classic',
         width: '100%',
         dropdownParent: $('#createModal')
+    });
+
+    $('#filter_barang_nama').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
     });
 
     $('#edit_detail_type').select2({

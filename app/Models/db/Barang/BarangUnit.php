@@ -39,10 +39,13 @@ class BarangUnit extends Model
         }
     }
 
-    public function barangAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $jenisFilter = null)
+    public function barangAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $jenisFilter = null, $barangNamaFilter = null)
     {
           // Initial query optimized with necessary eager loading
-        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama','types.barangs.detail_types.type', 'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
+        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama',
+        'types.barangs.detail_types.type',
+
+        'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $jenisFilter, $barangNamaFilter) {
             if ($typeFilter) {
                 $query->where('barang_type_id', $typeFilter);
             }
@@ -51,6 +54,12 @@ class BarangUnit extends Model
             }
             if ($jenisFilter) {
                 $query->where('jenis', $jenisFilter);
+            }
+            // inside types.barangs.barang_nama relation i want to filter it by nama
+            if ($barangNamaFilter) {
+                $query->whereHas('barang_nama', function($query) use ($barangNamaFilter) {
+                    $query->where('nama', $barangNamaFilter);
+                });
             }
         }]);
 

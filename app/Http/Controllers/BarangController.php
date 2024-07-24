@@ -186,6 +186,7 @@ class BarangController extends Controller
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $jenisFilter = $request->input('jenis');
+        $barangNamaFilter = $request->input('barang_nama');
 
         if (!empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
@@ -196,14 +197,21 @@ class BarangController extends Controller
                 });
             })->get();
 
+            $selectBarangNama = BarangNama::whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
         } else {
             $selectType = BarangType::all();
             $selectKategori = $kategoriDb->get();
+            $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
         }
 
         $db = new BarangUnit();
 
-        $units = $db->barangAll($unitFilter, $typeFilter, $kategoriFilter, $jenisFilter);
+        $units = $db->barangAll($unitFilter, $typeFilter, $kategoriFilter, $jenisFilter, $barangNamaFilter);
         $kategori = $kategoriDb->with('barang_nama')->get();
 
         return view('db.barang.index', [
@@ -214,8 +222,19 @@ class BarangController extends Controller
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
             'jenisFilter' => $jenisFilter,
+            'barangNamaFilter' => $barangNamaFilter,
             'selectType' => $selectType,
             'selectKategori' => $selectKategori,
+            'selectBarangNama' => $selectBarangNama,
+        ]);
+    }
+
+    public function barang_v2(Request $request)
+    {
+        $data = BarangUnit::with(['types', 'types.barangs', 'types.barangs.detail_types', 'types.barangs.detail_types.type'])->get();
+
+        return view('db.barang.index', [
+            'data' => $data
         ]);
     }
 

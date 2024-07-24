@@ -8,6 +8,7 @@
         </div>
     </div>
     @include('swal')
+    @include('billing.stok.keranjang')
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
@@ -240,7 +241,18 @@
                                             </td>
                                             <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                                             <td>
-                                                
+                                                @if ($keranjang->where('product_jadi_id', $d->id)->first())
+                                                <div class="input-group">
+                                                    <button class="btn btn-danger"
+                                                        onclick="updateCart({{$d->id}}, -1, {{$d->stock_packaging}})">-</button>
+                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('product_jadi_id', $d->id)->first()->jumlah}}" min="1" max="{{$d->stock_packaging}}" onchange="changeQuantity({{$d->id}}, this.value, {{$d->stock_packaging}})">
+                                                    <button class="btn btn-success"
+                                                        onclick="updateCart({{$d->id}}, 1, {{$d->stock_packaging}})">+</button>
+                                                </div>
+                                                @else
+                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
+                                                    onclick="setModalJumlah({{$d}}, {{$d->id}})">JUMLAH</button>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

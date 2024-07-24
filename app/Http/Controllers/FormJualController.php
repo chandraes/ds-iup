@@ -11,70 +11,107 @@ use Illuminate\Http\Request;
 
 class FormJualController extends Controller
 {
-    public function index(Request $request)
-    {
-        $data = $request->validate([
-            'barang_ppn' => 'required',
-        ]);
-
-        $units = BarangUnit::all();
-        $keranjang = KeranjangJual::with(['barang.type.unit', 'barang.kategori'])->where('user_id', auth()->user()->id)->get();
-        $dbPajak = new Pajak();
-        $ppnRate = $dbPajak->where('untuk', 'ppn')->first()->persen;
-        $pphRate = $dbPajak->where('untuk', 'pph')->first()->persen;
-        $konsumen = Konsumen::where('active', 1)->get();
-
-
-        return view('billing.form-jual.index', [
-            'units' => $units,
-            'keranjang' => $keranjang,
-            'ppnRate' => $ppnRate,
-            'pphRate' => $pphRate,
-            'barang_ppn' => $data['barang_ppn'],
-            'konsumen' => $konsumen,
-        ]);
-    }
-
     public function keranjang_store(Request $request)
     {
         $data = $request->validate([
-            'barang_ppn' => 'required',
-            'barang_id' => 'required',
+            'barang_stok_harga_id' => 'required|exists:barang_stok_hargas,id',
             'jumlah' => 'required',
+            'barang_ppn' => 'required',
         ]);
 
-        $data['jumlah'] = str_replace('.', '', $data['jumlah']);
-        $data['harga_satuan'] = BarangStokHarga::where('barang_id', $data['barang_id'])->where('tipe', $data['barang_ppn'] == 1 ? 'ppn' : 'non-ppn')->first()->harga;
-        $data['total'] = $data['jumlah'] * $data['harga_satuan'];
+        $product = BarangStokHarga::find($data['barang_stok_harga_id']);
+
+        if($data['jumlah'] == 0 || $data['jumlah'] > $product->stok)
+        {
+            return redirect()->back()->with('error', 'Jumlah stok tidak mencukupi!');
+        }
+
         $data['user_id'] = auth()->user()->id;
+        $data['jumlah'] = str_replace('.', '', $data['jumlah']);
+        $data['barang_id'] = $product->barang_id;
+        $data['harga_satuan'] = $product->harga;
+        $data['total'] = $data['jumlah'] * $data['harga_satuan'];
 
         KeranjangJual::create($data);
 
         return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke keranjang');
-
     }
 
-    public function keranjang_destroy(KeranjangJual $keranjangJual)
+    public function keranjang_update(Request $request)
     {
-        $keranjangJual->delete();
+        $productId = $request->input('product_id');
+        $quantity = $request->input('quantity');
 
-        return redirect()->back()->with('success', 'Barang berhasil dihapus dari keranjang');
+        $product = ProductJadi::find($productId);
+        $cartItem = KeranjangJual::where('product_jadi_id', $productId)->first();
+
+        if ($cartItem) {
+            $newQuantity = $cartItem->jumlah + $quantity;
+            if ($newQuantity > $product->stock_packaging) {
+                return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
+            }
+            $cartItem->jumlah = $newQuantity;
+            if ($cartItem->jumlah <= 0) {
+                $cartItem->delete();
+            } else {
+                $cartItem->save();
+            }
+        } else {
+            if ($quantity > $product->stock_packaging) {
+                return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
+            }
+            KeranjangJual::create([
+                'product_jadi_id' => $productId,
+                'jumlah' => $quantity
+            ]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
-    public function keranjang_empty(Request $request)
+    public function keranjang_set(Request $request)
     {
-        KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', $request->barang_ppn)->delete();
+        $productId = $request->input('product_id');
+        $quantity = $request->input('quantity');
+
+        $product = ProductJadi::find($productId);
+
+        if ($quantity > $product->stock_packaging) {
+            return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
+        }
+
+        $cartItem = KeranjangJual::where('product_jadi_id', $productId)->first();
+
+        if ($cartItem) {
+            $cartItem->jumlah = $quantity;
+            if ($cartItem->jumlah <= 0) {
+                $cartItem->delete();
+            } else {
+                $cartItem->save();
+            }
+        } else {
+            KeranjangJual::create([
+                'product_jadi_id' => $productId,
+                'jumlah' => $quantity
+            ]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function keranjang_empty()
+    {
+        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+
+        if ($keranjang->isEmpty()) {
+            return redirect()->back()->with('error', 'Keranjang sudah kosong');
+        }
+
+        KeranjangJual::where('user_id', auth()->user()->id)->delete();
+
 
         return redirect()->back()->with('success', 'Keranjang berhasil dikosongkan');
     }
 
-    public function get_stok($id, $barangPpn)
-    {
-        $apa_ppn = $barangPpn == 1 ? 'ppn' : 'non-ppn';
 
-        $data = BarangStokHarga::where('barang_id', $id)->where('tipe', $apa_ppn)->first();
-
-        return response()->json($data);
-
-    }
 }

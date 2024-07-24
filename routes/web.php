@@ -376,7 +376,8 @@ Route::group(['middleware' => ['auth']], function() {
 
                 Route::prefix('keranjang')->group(function(){
                     Route::post('/store', [App\Http\Controllers\FormJualController::class, 'keranjang_store'])->name('billing.form-jual.keranjang.store');
-                    Route::delete('/delete/{keranjangJual}', [App\Http\Controllers\FormJualController::class, 'keranjang_destroy'])->name('billing.form-jual.keranjang.delete');
+                    Route::post('/update', [App\Http\Controllers\FormJualController::class, 'keranjang_update'])->name('billing.form-jual.keranjang.update');
+                    Route::post('/set-jumlah', [App\Http\Controllers\FormJualController::class, 'keranjang_set'])->name('billing.form-jual.keranjang.set-jumlah');
                     Route::post('/empty', [App\Http\Controllers\FormJualController::class, 'keranjang_empty'])->name('billing.form-jual.keranjang.empty');
                 });
             });
