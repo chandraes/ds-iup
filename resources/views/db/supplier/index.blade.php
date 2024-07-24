@@ -59,7 +59,13 @@
                     </div>
                 </td>
                 <td class="text-center align-middle">{{$d->kota}}</td>
-                <td class="text-center align-middle"></td>
+                <td class="text-center align-middle">
+                    @if ($d->pembayaran == 1)
+                    <span class="badge bg-success">Cash</span>
+                    @elseif($d->pembayaran == 2)
+                    <span class="badge bg-warning">Tempo {{$d->tempo_hari}} Hari</span>
+                    @endif
+                </td>
                 <td class="text-center align-middle">
                     @if ($d->status == 1)
                     <span class="badge bg-success">Aktif</span>
@@ -122,6 +128,18 @@
         document.getElementById('edit_nama_rek').value = data.nama_rek;
         document.getElementById('edit_no_rek').value = data.no_rek;
         document.getElementById('edit_bank').value = data.bank;
+
+        if (data.pembayaran == 2) {
+            $('#divTempoEdit').removeAttr('hidden');
+            $('#edit_tempo_hari').attr('required', true);
+        } else {
+            $('#divTempoEdit').attr('hidden', true);
+            $('#edit_tempo_hari').removeAttr('required');
+        }
+        document.getElementById('edit_pembayaran').value = data.pembayaran;
+        document.getElementById('edit_tempo_hari').value = data.tempo_hari;
+
+
         // Populate other fields...
         document.getElementById('editForm').action = '/db/supplier/update/' + id;
     }

@@ -31,6 +31,21 @@
                                 placeholder="" required>
                         </div>
                         <div class="col-4 mb-3">
+                            <label for="pembayaran" class="form-label">Sistem Bayar</label>
+                            <select class="form-select" name="pembayaran" id="pembayaran" required onchange="checkSistemBayar()">
+                                <option value="" disabled selected>-- Pilih Salah Satu --</option>
+                                <option value="1">Cash</option>
+                                <option value="2">Tempo</option>
+                            </select>
+                        </div>
+                        <div class="col-4 mb-3" id="divTempo" hidden>
+                            <label for="pembayaran" class="form-label">Tempo</label>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" name="tempo_hari" id="tempo_hari">
+                                <span class="input-group-text" id="basic-addon1">Hari</span>
+                              </div>
+                        </div>
+                        <div class="col-4 mb-3">
                             <label for="status" class="form-label">Status</label>
                             <select class="form-select" name="status" id="status" required>
                                 <option value="1" selected>Aktif</option>
@@ -71,3 +86,17 @@
         </div>
     </div>
 </div>
+@push('js')
+    <script>
+        function checkSistemBayar(){
+            var pembayaran = $('#pembayaran').val();
+            if(pembayaran == 2){
+                $('#divTempo').removeAttr('hidden');
+                $('#tempo_hari').attr('required', true);
+            }else{
+                $('#divTempo').attr('hidden', true);
+                $('#tempo_hari').removeAttr('required');
+            }
+        }
+    </script>
+@endpush

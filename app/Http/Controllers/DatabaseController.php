@@ -435,6 +435,8 @@ class DatabaseController extends Controller
             'no_rek' => 'required',
             'bank' => 'required',
             'nama_rek' => 'required',
+            'pembayaran' => 'required|in:1,2',
+            'tempo_hari' => 'required_if:pembayaran,2',
             'status' => 'required',
         ]);
 
@@ -456,6 +458,8 @@ class DatabaseController extends Controller
             'no_rek' => 'required',
             'bank' => 'required',
             'nama_rek' => 'required',
+            'pembayaran' => 'required|in:1,2',
+            'tempo_hari' => 'required_if:pembayaran,2',
             'status' => 'required',
         ]);
 

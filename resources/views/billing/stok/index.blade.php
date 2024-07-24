@@ -205,9 +205,6 @@
                                     @php
                                         $totalHargaBeli = $stokHarga ? ($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) * $stokHarga->stok : 0;
                                         $totalHargaJual = $stokHarga ? ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok : 0;
-                                        $sumTotalHargaJual += $totalHargaJual;
-                                        $sumTotalHargaBeli += $totalHargaBeli;
-                                        $margin = $stokHarga && $stokHarga->harga_beli != 0 ? ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100 : 0;
                                     @endphp
                                         <tr>
                                             @if (!$unitDisplayed)
@@ -242,7 +239,9 @@
                                                 {{ $stokHarga->nf_harga }}
                                             </td>
                                             <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
-                                            <td></td>
+                                            <td>
+                                                
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @endforeach
@@ -264,51 +263,6 @@
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-    function editFun(data)
-    {
-        if (data.stok_ppn) {
-            document.getElementById('harga').value = data.stok_ppn.nf_harga;
-        } else {
-            document.getElementById('harga').value = '';
-        }
-        // document.getElementById('harga').value = data.stok_ppn.nf_harga;
-        document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.id);
-    }
 
-    confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
-
-    function toggleNamaJabatan(id) {
-
-        // check if input is readonly
-        if ($('#nama_jabatan-'+id).attr('readonly')) {
-            // remove readonly
-            $('#nama_jabatan-'+id).removeAttr('readonly');
-            // show button
-            $('#buttonJabatan-'+id).removeAttr('hidden');
-        } else {
-            // add readonly
-            $('#nama_jabatan-'+id).attr('readonly', true);
-            // hide button
-            $('#buttonJabatan-'+id).attr('hidden', true);
-        }
-    }
-
-    $('.delete-form').submit(function(e){
-        e.preventDefault();
-        var formId = $(this).data('id');
-        Swal.fire({
-            title: 'Apakah Anda Yakin?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, simpan!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $(`#deleteForm${formId}`).unbind('submit').submit();
-                $('#spinner').show();
-            }
-        });
-    });
 </script>
 @endpush
