@@ -63,7 +63,7 @@
                     @if ($d->pembayaran == 1)
                     <span class="badge bg-success">Cash</span>
                     @elseif($d->pembayaran == 2)
-                    <span class="badge bg-warning">Tempo {{$d->tempo_hari}} Hari</span>
+                    <span class="badge bg-warning">Tempo <br><br> {{$d->tempo_hari}} Hari</span>
                     @endif
                 </td>
                 <td class="text-center align-middle">
