@@ -53,10 +53,6 @@ class BarangController extends Controller
                 ],
             ]);
 
-        $db = new BarangNama();
-
-        $data['urut'] = $db->max('urut') + 1;
-
         $this->storeDb(BarangNama::class, $data);
 
         return redirect()->back()->with('success', 'Data berhasil ditambahkan');

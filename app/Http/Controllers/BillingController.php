@@ -17,6 +17,7 @@ use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
+use App\Models\transaksi\KeranjangJual;
 use App\Services\StarSender;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -56,6 +57,8 @@ class BillingController extends Controller
         $units = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
         $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter);
 
+        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+
         // dd($units->toArray());
         return view('billing.stok.index', [
             'data' => $data,
@@ -68,6 +71,7 @@ class BillingController extends Controller
             'ppnRate' => $ppnRate,
             'selectType' => $selectType,
             'selectKategori' => $selectKategori,
+            'keranjang' => $keranjang,
         ]);
     }
 
