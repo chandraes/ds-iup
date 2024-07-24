@@ -62,6 +62,11 @@
                                 <option value="2">Barang Non PPN</option>
                             </select>
                         </div>
+                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                            <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
+                            <select class="form-select" name="detail_type[]" id="edit_detail_type" multiple>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -87,6 +92,7 @@
                 },
                 success: function (data) {
                     let select = document.getElementById('edit_barang_type_id');
+                    let detail_type = document.getElementById('edit_detail_type');
                     if (data.status == 0) {
                         // swal error
                         Swal.fire({
@@ -96,12 +102,16 @@
 
                         // clear select
                         select.innerHTML = '';
+                        detail_type.innerHTML = '';
                     } else { // Corrected syntax error here
 
                         select.innerHTML = '';
+                        detail_type.innerHTML = '';
                         data.data.forEach(element => {
-                            let option = new Option(element.nama, element.id); // Simplified option creation
+                            let option = new Option(element.nama, element.id);
+                            let optionDetail = new Option(element.nama, element.id);// Simplified option creation
                             select.add(option);
+                            detail_type.add(optionDetail);
                         });
                     }
                 }

@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createModal">
+                <h5 class="modal-title" id="createModalTitle">
                     Modal title
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -60,6 +60,11 @@
                                 <option value="2">Barang Non PPN</option>
                             </select>
                         </div>
+                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                            <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
+                            <select class="form-select" name="detail_type[]" id="detail_type" multiple>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -85,6 +90,7 @@
                 },
                 success: function (data) {
                     let select = document.getElementById('barang_type_id');
+                    let detail_type = document.getElementById('detail_type');
                     if (data.status == 0) {
                         // swal error
                         console.log(data);
@@ -95,12 +101,16 @@
 
                         // clear select
                         select.innerHTML = '';
+                        detail_type.innerHTML = '';
                     } else { // Corrected syntax error here
 
                         select.innerHTML = '';
+                        detail_type.innerHTML = '';
                         data.data.forEach(element => {
-                            let option = new Option(element.nama, element.id); // Simplified option creation
+                            let option = new Option(element.nama, element.id);
+                            let optionDetail = new Option(element.nama, element.id);// Simplified option creation
                             select.add(option);
+                            detail_type.add(optionDetail);
                         });
                     }
                 }

@@ -42,7 +42,7 @@ class BarangUnit extends Model
     public function barangAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $jenisFilter = null)
     {
           // Initial query optimized with necessary eager loading
-        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama', 'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
+        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama','types.barangs.detail_types.type', 'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $jenisFilter) {
             if ($typeFilter) {
                 $query->where('barang_type_id', $typeFilter);
             }

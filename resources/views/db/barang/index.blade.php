@@ -110,6 +110,7 @@
 
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
+                    <th class="text-center align-middle">Ket<br></th>
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
                     <th class="text-center align-middle">Action</th>
@@ -148,6 +149,16 @@
 
                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                     <td class="text-center align-middle">{{ $barang->merk }}</td>
+                    <td class="text-start align-middle">
+
+                        @if ($barang->detail_types)
+                        <ul>
+                            @foreach ($barang->detail_types as $detailType)
+                            <li>{{ $detailType->type->nama }}</li>
+                            @endforeach
+                        </ul>
+                        @endif
+                    </td>
                     <td class="text-center align-middle">
                         @if ($barang->jenis == 1)
                         <i class="fa fa-check"></i>
@@ -194,12 +205,25 @@
 
 @endsection
 @push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+
+    $('#detail_type').select2({
+        theme: 'classic',
+        width: '100%',
+        dropdownParent: $('#createModal')
+    });
+
+    $('#edit_detail_type').select2({
+            theme: 'classic',
+            width: '100%',
+            dropdownParent: $('#editModal')
+        });
+
     function editFun(data, type, unit)
     {
 
@@ -224,11 +248,17 @@
             getTypeEdit();
             setTimeout(() => {
                 document.getElementById('edit_barang_type_id').value = data.barang_type_id;
+                $('#edit_detail_type').val(null).trigger('change');
+                // Collect the IDs of the detail types to be selected
+                let selectedDetailTypeIds = data.detail_types.map(detailType => detailType.barang_type_id);
+                // Set the selected values
+                $('#edit_detail_type').val(selectedDetailTypeIds).trigger('change');
             }, 500);
 
         };
         unitSelect.dispatchEvent(new Event('change'));
         kategoriSelect.dispatchEvent(new Event('change'));
+
 
         document.getElementById('editForm').action = `{{route('db.barang.update', ':id')}}`.replace(':id', data.id);
     }

@@ -13,6 +13,11 @@ class Barang extends Model
 
     protected $appends = ['text_jenis'];
 
+    public function detail_types()
+    {
+        return $this->hasMany(BarangDetailType::class, 'barang_id');
+    }
+
     public function type()
     {
         return $this->belongsTo(BarangType::class, 'barang_type_id');

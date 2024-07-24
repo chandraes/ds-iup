@@ -242,9 +242,34 @@ class BarangController extends Controller
                                 ->where('kode', $request->kode);
                 }),
             ],
+            'detail_type' => 'nullable|array',
         ]);
 
-        $this->storeDb(Barang::class, $data);
+        try {
+
+            DB::beginTransaction();
+            $detailType = null;
+            if (isset($data['detail_type'])) {
+                $detailType = $data['detail_type'];
+                unset($data['detail_type']);
+            }
+
+            $store = Barang::create($data);
+
+            if ($detailType != null) {
+                foreach ($detailType as $key => $value) {
+                    $store->detail_types()->create([
+                        'barang_type_id' => $value,
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi masalah saat menambahkan data. '.$th->getMessage());
+        }
+
 
         return redirect()->back()->with('success', 'Berhasil menambahkan data barang!');
 
@@ -270,9 +295,37 @@ class BarangController extends Controller
                                     ->where('kode', $request->kode);
                     })->ignore($barang->id, 'id'),
                 ],
+            'detail_type' => 'nullable|array',
             ]);
 
-        $barang->update($data);
+            try {
+                DB::beginTransaction();
+                $detailType = null;
+                if(isset($data['detail_type'])){
+                    $detailType = $data['detail_type'];
+                    unset($data['detail_type']);
+                }
+
+
+                $store = $barang->update($data);
+
+                $barang->detail_types()->delete();
+
+                if ($detailType != null) {
+                    foreach ($detailType as $key => $value) {
+                        $barang->detail_types()->create([
+                            'barang_type_id' => $value,
+                        ]);
+                    }
+                }
+
+                DB::commit();
+
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Terjadi masalah saat mengubah data. '.$th->getMessage());
+            }
+
 
         return redirect()->back()->with('success', 'Berhasil mengubah data barang!');
     }
