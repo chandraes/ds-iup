@@ -153,8 +153,19 @@
                                                 {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
                                             </td>
                                             <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
-                                            <td class="text-end align-middle">
-
+                                            <td class="text-center align-middle">
+                                                @if ($keranjang->where('product_jadi_id', $stokHarga->id)->first())
+                                                <div class="input-group">
+                                                    <button class="btn btn-danger"
+                                                        onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stock_packaging}})">-</button>
+                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('product_jadi_id', $stokHarga->id)->first()->jumlah}}" min="1" max="{{$stokHarga->stock_packaging}}" onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stock_packaging}})">
+                                                    <button class="btn btn-success"
+                                                        onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stock_packaging}})">+</button>
+                                                </div>
+                                                @else
+                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
+                                                    onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">JUMLAH</button>
+                                                @endif
                                             </td>
 
                                         </tr>
@@ -241,17 +252,17 @@
                                             </td>
                                             <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                                             <td>
-                                                @if ($keranjang->where('product_jadi_id', $d->id)->first())
+                                                @if ($keranjang->where('product_jadi_id', $stokHarga->id)->first())
                                                 <div class="input-group">
                                                     <button class="btn btn-danger"
-                                                        onclick="updateCart({{$d->id}}, -1, {{$d->stock_packaging}})">-</button>
-                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('product_jadi_id', $d->id)->first()->jumlah}}" min="1" max="{{$d->stock_packaging}}" onchange="changeQuantity({{$d->id}}, this.value, {{$d->stock_packaging}})">
+                                                        onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stock_packaging}})">-</button>
+                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('product_jadi_id', $stokHarga->id)->first()->jumlah}}" min="1" max="{{$stokHarga->stock_packaging}}" onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stock_packaging}})">
                                                     <button class="btn btn-success"
-                                                        onclick="updateCart({{$d->id}}, 1, {{$d->stock_packaging}})">+</button>
+                                                        onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stock_packaging}})">+</button>
                                                 </div>
                                                 @else
                                                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
-                                                    onclick="setModalJumlah({{$d}}, {{$d->id}})">JUMLAH</button>
+                                                    onclick="setModalJumlah({{$d}}, {{$stokHarga->id}})">JUMLAH</button>
                                                 @endif
                                             </td>
                                         </tr>

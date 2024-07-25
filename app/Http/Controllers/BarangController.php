@@ -434,6 +434,7 @@ class BarangController extends Controller
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
+        $barangNamaFilter = $request->input('barang_nama');
 
         if (!empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
@@ -444,16 +445,23 @@ class BarangController extends Controller
                 });
             })->get();
 
+            $selectBarangNama = BarangNama::whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
         } else {
             $selectType = BarangType::all();
             $selectKategori = BarangKategori::all();
+            $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
         }
 
         $db = new BarangUnit();
 
         $jenis = 1;
 
-        $units = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $units = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
         return view('db.stok-ppn.index', [
             'data' => $data,
@@ -465,6 +473,8 @@ class BarangController extends Controller
             'selectType' => $selectType,
             'selectKategori' => $selectKategori,
             'ppnRate' => $ppnRate,
+            'barangNamaFilter' => $barangNamaFilter,
+            'selectBarangNama' => $selectBarangNama,
         ]);
     }
 

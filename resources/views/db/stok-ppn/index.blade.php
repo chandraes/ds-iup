@@ -38,9 +38,63 @@
     }
 </style>
 <div class="container-fluid mt-3 table-responsive ">
-    <form method="GET" action="{{route('db.stok-ppn')}}">
+    <form method="GET" action="{{route('db.stok-ppn')}}" class="mt-3 mb-5">
         <div class="row">
+            <div class="col-md-2">
+                <label for="unit">Unit</label>
+                <select name="unit" id="unit" class="form-select">
+                    <option value=""> ---------- </option>
+                    @foreach($units as $unit)
+                    <option value="{{ $unit->id }}" {{ request('unit')==$unit->id ? 'selected' : '' }}>
+                        {{ $unit->nama }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="type">Type</label>
+                <select name="type" id="type" class="form-select">
+                    <option value=""> ---------- </option>
+                    @foreach($selectType as $type)
+                    <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
+                        {{ $type->nama }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="kategori">Kelompok Barang</label>
+                <select name="kategori" id="kategori" class="form-select">
+                    <option value=""> ---------- </option>
+                    @foreach($selectKategori as $kat)
+                    <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
+                        {{ $kat->nama }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-4">
+                <label for="nama">Nama Barang</label>
+                <select class="form-select" name="barang_nama" id="filter_barang_nama">
+                    <option value=""> ---------- </option>
+                    @foreach ($selectBarangNama as $bn)
+                    <option value="{{ $bn->nama }}" {{ request('barang_nama')==$bn->nama ? 'selected' : '' }}>
+                        {{ $bn->nama }}
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="nama">
+                    ---------------
+                </label>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    {{-- reset filter button --}}
+                    <a href="{{route('db.stok-ppn')}}" class="btn btn-danger">Reset Filter</a>
+                </div>
+
+            </div>
+            {{-- <div class="col-md-4">
                 <label for="unit">Unit</label>
                 <select name="unit" id="unit" class="form-control">
                     <option value="">Semua Unit</option>
@@ -72,15 +126,14 @@
                     </option>
                     @endforeach
                 </select>
-            </div>
+            </div> --}}
         </div>
-        <div class="row mt-3">
+        {{-- <div class="row mt-3">
             <div class="col-md-12">
                 <button type="submit" class="btn btn-primary">Filter</button>
-                {{-- reset filter button --}}
                 <a href="{{route('db.stok-ppn')}}" class="btn btn-danger">Reset Filter</a>
             </div>
-        </div>
+        </div> --}}
     </form>
     <div class="table-container mt-4">
         <table class="table table-bordered" id="dataTable">
@@ -199,12 +252,17 @@
 
 @endsection
 @push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+      $('#filter_barang_nama').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
     function editFun(data)
     {
 

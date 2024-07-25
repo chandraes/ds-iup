@@ -100,13 +100,19 @@ class BarangUnit extends Model
     public function barangStok($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
     {
         $unitsQuery = $this->with([
-            'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenis) {
+            'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenis, $barangNamaFilter) {
                 if ($typeFilter) {
                     $query->where('id', $typeFilter);
                 }
-                $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenis) {
+
+                $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenis, $barangNamaFilter) {
                     if ($kategoriFilter) {
                         $query->where('barang_kategori_id', $kategoriFilter);
+                    }
+                    if ($barangNamaFilter) {
+                        $query->whereHas('barang_nama', function($query) use ($barangNamaFilter) {
+                            $query->where('nama', 'like', '%' . $barangNamaFilter . '%');
+                        });
                     }
                     $query->with(['kategori', 'barang_nama', 'stok_harga' => function($q) {
                         $q->where('stok', '>', 0);
