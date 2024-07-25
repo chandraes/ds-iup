@@ -232,7 +232,29 @@
     $('#detail_type').select2({
         theme: 'classic',
         width: '100%',
-        dropdownParent: $('#createModal')
+        dropdownParent: $('#createModal'),
+        placeholder: 'Select options',
+        allowClear: true
+    }).on('select2:open', function() {
+        // Add "Select All" option if it doesn't exist
+        if (!$('.select2-results__options .select-all').length) {
+            $('.select2-results__options').prepend('<li class="select2-results__option select-all" role="option" aria-selected="false">Select All</li>');
+        }
+    });
+
+    // Handle "Select All" click event
+    $(document).on('click', '.select2-results__option.select-all', function() {
+        var $select2 = $('#detail_type');
+        var allSelected = $select2.find('option').length === $select2.val().length;
+
+        if (allSelected) {
+            $select2.val(null).trigger('change');
+        } else {
+            var allValues = $select2.find('option').map(function() {
+                return $(this).val();
+            }).get();
+            $select2.val(allValues).trigger('change');
+        }
     });
 
     $('#filter_barang_nama').select2({

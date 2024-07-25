@@ -97,7 +97,7 @@ class BarangUnit extends Model
         return $units;
     }
 
-    public function barangStok($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null)
+    public function barangStok($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
     {
         $unitsQuery = $this->with([
             'types' => function ($query) use ($typeFilter, $kategoriFilter, $jenis) {
@@ -108,9 +108,7 @@ class BarangUnit extends Model
                     if ($kategoriFilter) {
                         $query->where('barang_kategori_id', $kategoriFilter);
                     }
-                    $query->with(['kategori', 'barang_nama', 'stok_harga' => function($q) {
-                        $q->where('stok', '>', 0);
-                    }])->where('jenis', $jenis); // Eager load kategori and nama for each barang
+                    $query->with(['kategori', 'barang_nama', 'stok_harga'])->where('jenis', $jenis); // Eager load kategori and nama for each barang
                 }])
                 ->withCount('barangs as totalBarangs'); // Count barangs directly in the query
             },

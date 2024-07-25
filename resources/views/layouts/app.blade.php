@@ -126,6 +126,13 @@
     <script src="{{asset('assets/js/cleave.min.js')}}"></script>
     <script src="{{asset('assets/js/swalConfirm.js')}}"></script>
     <script src="{{asset('assets/js/dt5.min.js')}}"></script>
+    <script>
+           $(document).ajaxStart(function() {
+                $("#spinner").show();
+            }).ajaxStop(function() {
+                $("#spinner").hide();
+            });
+    </script>
     @stack('js')
 
 </body>
