@@ -463,6 +463,10 @@ class DatabaseController extends Controller
             'status' => 'required',
         ]);
 
+        if($data['pembayaran'] == 1) {
+            $data['tempo_hari'] = null;
+        }
+
         $supplier->update($data);
 
         return redirect()->route('db.supplier')->with('success', 'Data berhasil diupdate');

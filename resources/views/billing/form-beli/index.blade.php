@@ -326,6 +326,8 @@
                         $('#barang_type_id').empty();
                         $('#barang_kategori_id').empty();
                         $('#barang_nama_id').empty();
+                        $('#barang_id').empty();
+                        $('#kode').val('');
                         $('#barang_type_id').append('<option value=""> -- Pilih Type -- </option>');
                         $.each(data.data, function(index, value){
                             $('#barang_type_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
@@ -333,7 +335,7 @@
                     } else {
                         $('#barang_type_id').empty();
                         $('#barang_type_id').append('<option value=""> -- Pilih Type -- </option>');
-
+                        $('#barang_id').empty();
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops...',
@@ -356,7 +358,9 @@
                 success: function(data){
                     if (data.status == 1) {
                         $('#barang_kategori_id').empty();
+                        $('#barang_nama_id').empty();
                         $('#barang_id').empty();
+                        $('#kode').val('');
                         $('#barang_kategori_id').append('<option value=""> -- Pilih Kelompok Barang -- </option>');
                         $.each(data.data, function(index, value){
                             $('#barang_kategori_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
@@ -393,11 +397,13 @@
                         console.log(data);
                         $('#barang_nama_id').empty();
                         $('#barang_nama_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
+                        $('#kode').val('');
                         $.each(data.data, function(index, value){
                             $('#barang_nama_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
                         });
                     } else {
                         $('#barang_nama_id').empty();
+                        $('#kode').val('');
                         $('#barang_nama_id').append('<option value=""> -- Pilih Nama Barang -- </option>');
 
                         Swal.fire({
@@ -428,12 +434,14 @@
                 success: function(data){
                     console.log(data);
                     if (data.status == 1) {
+                        $('#kode').val('');
                         $('#barang_id').empty();
                         $('#barang_id').append('<option value=""> -- Pilih Merk -- </option>');
                         $.each(data.data, function(index, value){
                             $('#barang_id').append('<option value="'+value.id+'">'+value.merk+'</option>');
                         });
                     } else {
+                        $('#kode').val('');
                         $('#barang_id').empty();
                         $('#barang_id').append('<option value=""> -- Pilih Merk -- </option>');
 
