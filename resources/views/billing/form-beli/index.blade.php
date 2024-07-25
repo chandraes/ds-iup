@@ -12,9 +12,9 @@
             <table>
                 <tr>
                     <td>
-                        <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja" >
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja" {{$keranjang->count() == 0 ? 'disabled' : ''}}>
                             <i class="fa fa-shopping-cart"> Keranjang </i> ({{$keranjang->count()}})
-                        </a>
+                        </button>
                         @include('billing.form-beli.keranjang')
                     </td>
                     <td>
@@ -22,7 +22,7 @@
                             @csrf
                             <input type="hidden" name="jenis" value="{{$jenis}}">
                             <input type="hidden" name="tempo" value="{{$req['tempo']}}">
-                            <button class="btn btn-danger" type="submit">
+                            <button class="btn btn-danger" type="submit" {{$keranjang->count() == 0 ? 'disabled' : ''}}>
                                 <i class="fa fa-trash"> Kosongkan Keranjang </i>
                             </button>
                         </form>
