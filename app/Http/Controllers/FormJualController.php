@@ -39,15 +39,15 @@ class FormJualController extends Controller
 
     public function keranjang_update(Request $request)
     {
-        $productId = $request->input('product_id');
+        $productId = $request->input('barang_stok_harga_id');
         $quantity = $request->input('quantity');
 
-        $product = ProductJadi::find($productId);
-        $cartItem = KeranjangJual::where('product_jadi_id', $productId)->first();
+        $product = BarangStokHarga::find($productId);
+        $cartItem = KeranjangJual::where('barang_stok_harga_id', $productId)->first();
 
         if ($cartItem) {
             $newQuantity = $cartItem->jumlah + $quantity;
-            if ($newQuantity > $product->stock_packaging) {
+            if ($newQuantity > $product->stok) {
                 return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
             }
             $cartItem->jumlah = $newQuantity;
@@ -57,12 +57,17 @@ class FormJualController extends Controller
                 $cartItem->save();
             }
         } else {
-            if ($quantity > $product->stock_packaging) {
+            if ($quantity > $product->stok) {
                 return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
             }
             KeranjangJual::create([
-                'product_jadi_id' => $productId,
-                'jumlah' => $quantity
+                'user_id' => auth()->user()->id,
+                'barang_ppn' => $product->barang->jenis == 1 ? 1 : 0,
+                'barang_id' => $product->barang_id,
+                'barang_stok_harga_id' => $productId,
+                'jumlah' => $quantity,
+                'harga_satuan' => $product->harga,
+                'total' => $quantity * $product->harga
             ]);
         }
 
@@ -71,16 +76,16 @@ class FormJualController extends Controller
 
     public function keranjang_set(Request $request)
     {
-        $productId = $request->input('product_id');
+        $productId = $request->input('barang_stok_harga_id');
         $quantity = $request->input('quantity');
 
-        $product = ProductJadi::find($productId);
+        $product = BarangStokHarga::find($productId);
 
-        if ($quantity > $product->stock_packaging) {
+        if ($quantity > $product->stok) {
             return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
         }
 
-        $cartItem = KeranjangJual::where('product_jadi_id', $productId)->first();
+        $cartItem = KeranjangJual::where('barang_stok_harga_id', $productId)->first();
 
         if ($cartItem) {
             $cartItem->jumlah = $quantity;
@@ -91,8 +96,13 @@ class FormJualController extends Controller
             }
         } else {
             KeranjangJual::create([
-                'product_jadi_id' => $productId,
-                'jumlah' => $quantity
+                'user_id' => auth()->user()->id,
+                'barang_ppn' => $product->barang->jenis == 1 ? 1 : 0,
+                'barang_id' => $product->barang_id,
+                'barang_stok_harga_id' => $productId,
+                'jumlah' => $quantity,
+                'harga_satuan' => $product->harga,
+                'total' => $quantity * $product->harga
             ]);
         }
 

@@ -8,11 +8,12 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" id="keranjangForm" action="#">
+            <form method="post" id="keranjangForm" action="{{route('billing.form-jual.keranjang.store')}}">
                 @csrf
 
             <div class="modal-body">
                 <input type="hidden" name="barang_stok_harga_id" id="barang_stok_harga_id">
+                <input type="hidden" name="barang_ppn" id="barang_ppn">
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <input type="text" class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId"

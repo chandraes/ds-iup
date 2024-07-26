@@ -154,17 +154,17 @@
                                             </td>
                                             <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                                             <td class="text-center align-middle">
-                                                @if ($keranjang->where('product_jadi_id', $stokHarga->id)->first())
+                                                @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
                                                 <div class="input-group">
                                                     <button class="btn btn-danger"
-                                                        onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stock_packaging}})">-</button>
-                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('product_jadi_id', $stokHarga->id)->first()->jumlah}}" min="1" max="{{$stokHarga->stock_packaging}}" onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stock_packaging}})">
+                                                        onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stok}})">-</button>
+                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}" min="1" max="{{$stokHarga->stok}}" onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stok}})">
                                                     <button class="btn btn-success"
-                                                        onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stock_packaging}})">+</button>
+                                                        onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stok}})">+</button>
                                                 </div>
                                                 @else
                                                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
-                                                    onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">JUMLAH</button>
+                                                    onclick="setModalJumlah({{$barang}}, {{$stokHarga->id}})">JUMLAH</button>
                                                 @endif
                                             </td>
 
@@ -182,7 +182,7 @@
     <br>
     <hr>
     <br>
-    <center><h2>Barang NON PPN</h2></center>
+    {{-- <center><h2>Barang NON PPN</h2></center>
     <div class="table-container mt-4">
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
@@ -252,11 +252,11 @@
                                             </td>
                                             <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                                             <td>
-                                                @if ($keranjang->where('product_jadi_id', $stokHarga->id)->first())
+                                                @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
                                                 <div class="input-group">
                                                     <button class="btn btn-danger"
                                                         onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stock_packaging}})">-</button>
-                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('product_jadi_id', $stokHarga->id)->first()->jumlah}}" min="1" max="{{$stokHarga->stock_packaging}}" onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stock_packaging}})">
+                                                        <input type="number" class="form-control text-center" value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}" min="1" max="{{$stokHarga->stock_packaging}}" onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stock_packaging}})">
                                                     <button class="btn btn-success"
                                                         onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stock_packaging}})">+</button>
                                                 </div>
@@ -274,18 +274,84 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
+    </div> --}}
 
 </div>
 
 @endsection
 @push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+{{-- <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet"> --}}
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
+{{-- <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script> --}}
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+    function setModalJumlah(data, id)
+    {
+        console.log(data);
+        document.getElementById('titleJumlah').innerText = data.barang_nama.nama;
+        document.getElementById('barang_stok_harga_id').value = id;
 
+        if (data.jenis == 1) {
+            document.getElementById('barang_ppn').value = 1;
+        } else {
+            document.getElementById('barang_ppn').value = 0;
+        }
+    }
+
+    function updateCart(productId, quantity, maxStock) {
+        let currentQuantity = parseInt($(`button[onclick="updateCart(${productId}, 1, ${maxStock})"]`).siblings('input').val());
+
+        if (currentQuantity + quantity > maxStock) {
+            alert('Jumlah item tidak boleh melebihi stok yang tersedia.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{route('billing.form-jual.keranjang.update')}}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                barang_stok_harga_id: productId,
+                quantity: quantity
+            },
+            success: function(response) {
+                $('#spinner').show();
+                console.log(response);
+                if (response.success) {
+                    location.reload(); // Reload the page to reflect the changes
+                } else {
+                    alert('Gagal memperbarui keranjang.');
+                }
+            }
+        });
+    }
+
+    function changeQuantity(productId, newQuantity, maxStock) {
+        newQuantity = parseInt(newQuantity);
+
+        if (newQuantity > maxStock) {
+            alert('Jumlah item tidak boleh melebihi stok yang tersedia.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{route('billing.form-jual.keranjang.set-jumlah')}}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                barang_stok_harga_id: productId,
+                quantity: newQuantity
+            },
+            success: function(response) {
+                $('#spinner').show();
+                if (response.success) {
+                    location.reload(); // Reload the page to reflect the changes
+                } else {
+                    alert('Gagal memperbarui keranjang.');
+                }
+            }
+        });
+    }
 </script>
 @endpush
