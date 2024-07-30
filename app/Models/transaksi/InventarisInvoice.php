@@ -201,9 +201,11 @@ class InventarisInvoice extends Model
                      "==========================\n".
                      "Sisa Saldo Kas Besar : \n".
                      "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                     "Total Modal Investor : \n".
+                     "Total Modal Investor PPN: \n".
                      "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                     "Sub total ".$inv->kategori->nama." : \n".
+                     "Grand Total Modal Investor: \n".
+                     "Rp. ".number_format($store->modal_investor_terakhir+$kas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n".
+                     "Sub total inventaris\n".$inv->kategori->nama." : \n".
                      "Rp. ".number_format($inv->kategori->sum_total, 0, ',', '.')."\n\n".
                      "Grand Total Inventaris: \n".
                      "Rp. ".number_format($inv_tot, 0, ',', '.')."\n\n".

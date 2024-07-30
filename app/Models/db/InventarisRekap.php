@@ -84,11 +84,11 @@ class InventarisRekap extends Model
                     'uraian' => $data['uraian'],
                     'jenis' => 1,
                     'nominal' => $data['total'],
-                    'saldo' => $kas->saldoTerakhir() + $data['total'],
+                    'saldo' => $kas->saldoTerakhir(1) + $data['total'],
                     'nama_rek' => $rekening->nama_rek,
                     'no_rek' => $rekening->no_rek,
                     'bank' => $rekening->bank,
-                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir()
+                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1)
                 ]);
 
                 $inv = InventarisJenis::find($data[$rekap->inventaris_jenis_id]);
