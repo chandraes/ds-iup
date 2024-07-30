@@ -134,6 +134,18 @@ class FormLainController extends Controller
                 'modal_investor' => $db->modalInvestorTerakhir(0),
             ];
 
+            if ($data['ppn_kas'] == 1) {
+                $addPesan = "Sisa Saldo Kas Besar: \n".
+                            "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                            "Total Modal Investor PPN: \n".
+                            "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
+             } else {
+                 $addPesan = "Sisa Saldo Kas Besar: \n".
+                             "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                             "Total Modal Investor Non PPN: \n".
+                             "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
+             }
+
             // sum modal investor
             $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
 
@@ -151,11 +163,8 @@ class FormLainController extends Controller
                     "Nama    : ".$store->nama_rek."\n".
                     "No. Rek : ".$store->no_rek."\n\n".
                     "==========================\n".
-                    "Sisa Saldo Kas Besar PPN: \n".
-                    "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
-                    "Sisa Saldo Kas Besar  NON PPN: \n".
-                    "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
-                    "Total Modal Investor : \n".
+                    $addPesan.
+                    "Grand Total Modal Investor : \n".
                     "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
