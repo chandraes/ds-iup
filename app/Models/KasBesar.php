@@ -135,12 +135,12 @@ class KasBesar extends Model
             if ($data['ppn_kas'] == 1) {
                $addPesan = "Sisa Saldo Kas Besar: \n".
                            "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
-                           "Total Modal Investor: \n".
+                           "Total Modal Investor PPN: \n".
                            "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
             } else {
                 $addPesan = "Sisa Saldo Kas Besar: \n".
                             "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
-                            "Total Modal Investor: \n".
+                            "Total Modal Investor Non PPN: \n".
                             "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
             }
 
@@ -230,12 +230,12 @@ class KasBesar extends Model
             if ($data['ppn_kas'] == 1) {
                 $addPesan = "Sisa Saldo Kas Besar: \n".
                             "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
-                            "Total Modal Investor: \n".
+                            "Total Modal Investor PPN: \n".
                             "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
              } else {
                  $addPesan = "Sisa Saldo Kas Besar: \n".
                              "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
-                             "Total Modal Investor: \n".
+                             "Total Modal Investor Non PPN: \n".
                              "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
              }
 
