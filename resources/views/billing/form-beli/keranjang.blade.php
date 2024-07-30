@@ -243,7 +243,7 @@
                         </tr>
                         @endif
                         <tr>
-                            <td class="text-end align-middle" colspan="9">Additional Fee</td>
+                            <td class="text-end align-middle" colspan="9">Adjustment</td>
                             <td class="text-end align-middle" id="tdAddFee">
                                 0
                             </td>
