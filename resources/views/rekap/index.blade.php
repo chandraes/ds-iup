@@ -40,7 +40,7 @@
         <div class="col-lg-3 mt-3 mb-3 text-center">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/rekap-invoice.svg')}}" alt="" width="70">
-                <h3 class="mt-2">INVOICE BELI</h3>
+                <h3 class="mt-2">INVOICE PEMBELIAN</h3>
             </a>
         </div>
         <div class="col-lg-3 mt-3 mb-3 text-center">
