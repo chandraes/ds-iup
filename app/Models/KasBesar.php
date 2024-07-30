@@ -567,6 +567,8 @@ class KasBesar extends Model
             'saldo_ppn' => $this->saldoTerakhir(1),
             'saldo_non_ppn' => $this->saldoTerakhir(0),
             'modal_investor_terakhir' => $this->modalInvestorTerakhir(1) + $this->modalInvestorTerakhir(0),
+            'modal_investor_ppn' => $this->modalInvestorTerakhir(1),
+            'modal_investor_non_ppn' => $this->modalInvestorTerakhir(0),
         ];
 
         return $kasPpn;

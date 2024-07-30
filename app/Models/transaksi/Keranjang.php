@@ -146,6 +146,18 @@ class Keranjang extends Model
 
                 $getKas = $kas->getKas();
 
+                if ($data['kas_ppn'] == 1) {
+                    $addPesan = "Sisa Saldo Kas Besar: \n".
+                                "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                                "Total Modal Investor PPN: \n".
+                                "Rp. ".number_format($getKas['modal_investor_ppn'], 0, ',', '.')."\n\n";
+                } else {
+                    $addPesan = "Sisa Saldo Kas Besar: \n".
+                                "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                                "Total Modal Investor Non PPN: \n".
+                                "Rp. ".number_format($getKas['modal_investor_non_ppn'], 0, ',', '.')."\n\n";
+                }
+
                 $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                             "*FORM BELI BARANG*\n".
                             "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -157,11 +169,8 @@ class Keranjang extends Model
                             "Nama    : ".$store->nama_rek."\n".
                             "No. Rek : ".$store->no_rek."\n\n".
                             "==========================\n".
-                            "Sisa Saldo Kas Besar PPN: \n".
-                            "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
-                            "Sisa Saldo Kas Besar  NON PPN: \n".
-                            "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
-                            "Total Modal Investor : \n".
+                            $addPesan.
+                            "Grand Total Modal Investor : \n".
                             "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                             "Total PPn Masukan : \n".
                             "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
