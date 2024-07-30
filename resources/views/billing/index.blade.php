@@ -65,29 +65,11 @@
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.invoice-supplier')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice-supplier.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE SUPPLIER
-                    @if ($is > 0)
-                    <span class="text-danger">({{$is}})</span>
-                    @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
                 <h4 class="mt-2">FORM JUAL</h4>
             </a>
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE KONSUMEN</h4>
-            </a>
-        </div>
-    </div>
-    <div class="row justify-content-left">
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.form-cost-operational')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
@@ -101,7 +83,24 @@
                 </h4>
             </a>
         </div>
-
+    </div>
+    <div class="row justify-content-left">
+        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+            <a href="{{route('billing.invoice-supplier')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-supplier.svg')}}" alt="" width="70">
+                <h4 class="mt-2">INVOICE SUPPLIER
+                    @if ($is > 0)
+                    <span class="text-danger">({{$is}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
+                <h4 class="mt-2">INVOICE KONSUMEN</h4>
+            </a>
+        </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
