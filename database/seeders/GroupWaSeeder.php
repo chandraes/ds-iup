@@ -14,9 +14,9 @@ class GroupWaSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['untuk' => 'kas-besar', 'nama_group' => 'Testing Group'],
+            ['untuk' => 'kas-besar-ppn', 'nama_group' => 'Testing Group'],
+            ['untuk' => 'kas-besar-non-ppn', 'nama_group' => 'Testing Group'],
             ['untuk' => 'kas-kecil', 'nama_group' => 'Testing Group'],
-            ['untuk' => 'team', 'nama_group' => 'Testing Group'],
         ];
 
         foreach ($data as $d) {
