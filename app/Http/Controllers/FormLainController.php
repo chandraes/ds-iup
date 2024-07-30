@@ -137,7 +137,9 @@ class FormLainController extends Controller
             // sum modal investor
             $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
 
-            $group = GroupWa::where('untuk', 'kas-besar')->first();
+            $groupName = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+            $group = GroupWa::where('untuk', $groupName)->first();
 
             $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Lain2 (Dana Keluar)*\n".

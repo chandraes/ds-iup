@@ -177,7 +177,7 @@ class KasBesar extends Model
         }
 
 
-        $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+        $tujuan = GroupWa::where('untuk', $kas)->first()->nama_group;
 
         $this->sendWa($tujuan, $pesan);
 
@@ -188,6 +188,7 @@ class KasBesar extends Model
     public function withdraw($data)
     {
         $rekening = InvestorModal::find($data['investor_modal_id']);
+        $kas = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
         $kodeKas = $data['ppn_kas'] == 1 ? 'Kas Besar PPN' : 'Kas Besar Non PPN';
         $data['uraian'] = "Withdraw";
         $data['nominal'] = str_replace('.', '', $data['nominal']);
@@ -257,7 +258,7 @@ class KasBesar extends Model
                 ];
         }
 
-        $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+        $tujuan = GroupWa::where('untuk', $kas)->first()->nama_group;
 
         $this->sendWa($tujuan, $pesan);
 
@@ -316,7 +317,7 @@ class KasBesar extends Model
 
             DB::commit();
 
-            $group = GroupWa::where('untuk', 'kas-besar')->first();
+            $group = GroupWa::where('untuk', $kas)->first();
 
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Form Lain2 (Dana Masuk)*\n".
@@ -529,8 +530,9 @@ class KasBesar extends Model
             return $result;
 
         }
+        $groupName = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
 
-        $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+        $tujuan = GroupWa::where('untuk', $groupName)->first()->nama_group;
 
         foreach($pesan as $p)
         {
@@ -752,7 +754,7 @@ class KasBesar extends Model
 
             DB::commit();
 
-            $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+            $tujuan = GroupWa::where('untuk', 'kas-besar-ppn')->first()->nama_group;
 
             $this->sendWa($tujuan, $pesan);
 
@@ -908,7 +910,8 @@ class KasBesar extends Model
 
             DB::commit();
 
-            $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+            $groupName = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+            $tujuan = GroupWa::where('untuk', $groupName)->first()->nama_group;
 
             foreach ($arrayPesan as $key => $value) {
                 // dd($value);

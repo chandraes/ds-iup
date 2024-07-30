@@ -115,7 +115,7 @@ class InventarisRekap extends Model
                         "Terima kasih 🙏🙏🙏\n";
 
                 // Retrieve the group name once, as it's the same for both conditions
-                $group = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+                $group = GroupWa::where('untuk', 'kas-besar-ppn')->first()->nama_group;
 
                 // Send the message
                 $kas->sendWa($group, $pesan);

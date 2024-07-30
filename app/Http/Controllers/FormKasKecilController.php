@@ -40,7 +40,7 @@ class FormKasKecilController extends Controller
 
 
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Kecil*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".

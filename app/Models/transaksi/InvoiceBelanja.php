@@ -220,7 +220,8 @@ class InvoiceBelanja extends Model
                             "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
-                $group = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+                $groupName = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+                $group = GroupWa::where('untuk', $groupName)->first()->nama_group;
 
                 $kas->sendWa($group, $pesan);
             }
@@ -332,7 +333,7 @@ class InvoiceBelanja extends Model
                         "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
-            $group = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+            $group = GroupWa::where('untuk', $kasMana)->first()->nama_group;
 
             $kas->sendWa($group, $pesan);
 

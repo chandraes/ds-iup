@@ -251,7 +251,7 @@ class BillingController extends Controller
 
 
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*FORM GAJI KARYAWAN*\n".

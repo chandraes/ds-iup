@@ -167,7 +167,9 @@ class Keranjang extends Model
                             "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
-                $group = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+                $groupName = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+                $group = GroupWa::where('untuk', $groupName)->first()->nama_group;
 
                 $kas->sendWa($group, $pesan);
             }
