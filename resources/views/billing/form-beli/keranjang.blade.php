@@ -130,7 +130,7 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="add_fee" class="form-label">Adjustment</label>
+                            <label for="add_fee" class="form-label">Penyesuaian</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control @if ($errors->has('add_fee'))
@@ -243,7 +243,7 @@
                         </tr>
                         @endif
                         <tr>
-                            <td class="text-end align-middle" colspan="9">Adjustment</td>
+                            <td class="text-end align-middle" colspan="9">Penyesuaian</td>
                             <td class="text-end align-middle" id="tdAddFee">
                                 0
                             </td>
