@@ -169,7 +169,6 @@
                 @php $namaDisplayed = false; @endphp
                 @foreach ($namaBarangs as $barang)
                 @php $stokDisplayed = false; @endphp
-                @php $rowspanNama = $namaBarangs->sum(function($barang) { return count($barang->stok_harga); }); @endphp
                 <tr>
                     @foreach ($barang->stok_harga as $stokHarga)
                     @php
@@ -193,7 +192,7 @@
                     @php $kategoriDisplayed = true; @endphp
                     @endif
                     @if (!$namaDisplayed)
-                        <td class="text-center align-middle" rowspan="{{ $rowspanNama }}">{{ $namaBarang }}</td>
+                        <td class="text-center align-middle" rowspan="{{ $barang->namaRowspan }}">{{ $namaBarang }}</td>
                         @php $namaDisplayed = true; @endphp
                     @endif
                     @if (!$stokDisplayed)

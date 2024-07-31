@@ -161,4 +161,69 @@ class BarangUnit extends Model
 
         return $units;
     }
+
+    public function barangStokV2($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
+    {
+        // $units = $this->with(['types' => function ($query) use ($typeFilter, $kategoriFilter, $jenis, $barangNamaFilter) {
+        //     $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenis, $barangNamaFilter) {
+        //         $query->with(['kategori', 'barang_nama', 'stok_harga' => function ($query) {
+        //             $query->where('stok', '>', 0);
+        //         }])->where('jenis', $jenis);
+        //     }]);
+        // }])->get();
+
+        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama',
+                        'types.barangs.detail_types.type',
+                        'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $barangNamaFilter, $jenis) {
+                            if ($typeFilter) {
+                                $query->where('barang_type_id', $typeFilter);
+                            }
+                            if ($kategoriFilter) {
+                                $query->where('barang_kategori_id', $kategoriFilter);
+                            }
+                            // inside types.barangs.barang_nama relation i want to filter it by nama
+                            if ($barangNamaFilter) {
+                                $query->whereHas('barang_nama', function($query) use ($barangNamaFilter) {
+                                    $query->where('nama', $barangNamaFilter);
+                                });
+                            }
+                            $query->where('jenis', $jenis);
+                        },
+                        'types.barangs.stok_harga'])
+                        ->whereHas('types.barangs.stok_harga', function($query) {
+                            $query->where('stok', '>', 0);
+                        });
+
+        if ($unitFilter) {
+            $query->where('id', $unitFilter);
+        }
+
+        $units = $query->get();
+
+        $units->each(function ($unit) {
+            $unit->unitRowspan = 0;
+
+            $unit->types->each(function ($type) use ($unit) {
+                $type->groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                $type->typeRowspan = 0;
+
+                $type->groupedBarangs->each(function ($barangs, $kategoriNama) use ($type, $unit) {
+                    $groupedByNama = $barangs->groupBy('barang_nama.nama');
+
+                    $groupedByNama->each(function ($namaBarangs) use ($type, $unit, $barangs) {
+                        $namaBarangs->each(function ($barang) use ($namaBarangs, $barangs) {
+                            $barang->kategoriRowspan = $barangs->count();
+                            $barang->namaRowspan = $namaBarangs->count();
+                            $barang->stokPpnRowspan = $barang->stok_harga->count();
+                        });
+
+                        $type->typeRowspan += $namaBarangs->count();
+                        $unit->unitRowspan += $namaBarangs->count();
+                    });
+                });
+            });
+        });
+
+        return $units;
+    }
 }

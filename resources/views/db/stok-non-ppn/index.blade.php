@@ -100,72 +100,80 @@
                 </tr>
             </thead>
             <tbody>
-                @php $number = 1; $sumTotalHargaBeli = 0; $sumTotalHargaJual= 0; @endphp
+                @php $number = 1; $sumTotalHargaBeli = 0; $sumTotalHargaJual= 0 @endphp
                 @foreach ($units as $unit)
-                    @php $unitDisplayed = false; @endphp
-                    @foreach ($unit->types as $type)
-                        @php $typeDisplayed = false; @endphp
-                        @foreach ($type->groupedBarangs as $kategoriNama => $barangs)
-                            @php $kategoriDisplayed = false; @endphp
-                            @foreach ($barangs->groupBy('barang_nama.nama') as $namaBarang => $namaBarangs)
-                                @php $namaDisplayed = false; @endphp
-                                @foreach ($namaBarangs as $barang)
-                                    @php $stokDisplayed = false; @endphp
-                                    @foreach ($barang->stok_harga as $stokHarga)
-                                        @php
-                                            $totalHargaBeli = ($stokHarga->harga_beli)*$stokHarga->stok;
-                                            $totalHargaJual = ($stokHarga->harga)*$stokHarga->stok;
-                                            $sumTotalHargaJual += $totalHargaJual;
-                                            $sumTotalHargaBeli += $totalHargaBeli;
-                                            $margin = ($stokHarga->harga - $stokHarga->harga_beli)/$stokHarga->harga_beli*100;
-                                        @endphp
-                                        <tr>
-                                            @if (!$unitDisplayed)
-                                                <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $number++ }}</td>
-                                                <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $unit->nama }}</td>
-                                                @php $unitDisplayed = true; @endphp
-                                            @endif
-                                            @if (!$typeDisplayed)
-                                                <td class="text-center align-middle" rowspan="{{ $type->typeRowspan }}">{{ $type->nama }}</td>
-                                                @php $typeDisplayed = true; @endphp
-                                            @endif
-                                            @if (!$kategoriDisplayed)
-                                                <td class="text-center align-middle" rowspan="{{ $barang->kategoriRowspan }}">{{ $kategoriNama }}</td>
-                                                @php $kategoriDisplayed = true; @endphp
-                                            @endif
-                                            @if (!$namaDisplayed)
-                                                <td class="text-center align-middle" rowspan="{{ $barang->namaRowspan }}">{{ $namaBarang }}</td>
-                                                @php $namaDisplayed = true; @endphp
-                                            @endif
-                                            @if (!$stokDisplayed)
-                                                <td class="text-center align-middle" rowspan="{{ $barang->stokPpnRowspan }}">{{ $barang->kode }}</td>
-                                                <td class="text-center align-middle" rowspan="{{ $barang->stokPpnRowspan }}">{{ $barang->merk }}</td>
-                                                @php $stokDisplayed = true; @endphp
-                                            @endif
-                                            <td class="text-end align-middle">{{ $stokHarga->nf_harga_beli }}</td>
-                                            <td class="text-end align-middle">
-                                                <div class="row mx-3">
-                                                    <a href="#" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
-                                                </div>
-                                            </td>
-                                            <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
-                                            <td class="text-end align-middle">
-                                                {{ number_format($totalHargaBeli, 0, ',','.') }}
-                                            </td>
-                                            <td class="text-end align-middle">
-                                                {{ number_format($totalHargaJual, 0, ',','.') }}
-                                            </td>
-                                            <td class="text-end align-middle @if ($margin < 10)
-                                                'table-danger'
-                                            @endif">
-                                                {{ number_format($margin, 2) }}%
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                @endforeach
-                            @endforeach
-                        @endforeach
-                    @endforeach
+                @php $unitDisplayed = false; @endphp
+                @foreach ($unit->types as $type)
+                @php $typeDisplayed = false; @endphp
+                @foreach ($type->groupedBarangs as $kategoriNama => $barangs)
+                @php $kategoriDisplayed = false; @endphp
+                @foreach ($barangs->groupBy('barang_nama.nama') as $namaBarang => $namaBarangs)
+                @php $namaDisplayed = false; @endphp
+                @foreach ($namaBarangs as $barang)
+                @php $stokDisplayed = false; @endphp
+                @php $rowspanNama = $namaBarangs->sum(function($barang) { return count($barang->stok_harga); }); @endphp
+                <tr>
+                    @foreach ($barang->stok_harga as $stokHarga)
+                    @php
+                    $totalHargaBeli = $stokHarga ? ($stokHarga->harga_beli * $stokHarga->stok) : 0;
+                    $totalHargaJual = $stokHarga ? ($stokHarga->harga * $stokHarga->stok) : 0;
+                    $sumTotalHargaJual += $totalHargaJual;
+                    $sumTotalHargaBeli += $totalHargaBeli;
+                    $margin = $stokHarga && $stokHarga->harga_beli != 0 ? ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100 : 0;
+                    @endphp
+                     @if (!$unitDisplayed)
+                     <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $number++ }}</td>
+                        <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $unit->nama }}</td>
+                        @php $unitDisplayed = true; @endphp
+                    @endif
+                    @if (!$typeDisplayed)
+                        <td class="text-center align-middle" rowspan="{{ $type->typeRowspan }}">{{ $type->nama }}</td>
+                        @php $typeDisplayed = true; @endphp
+                    @endif
+                    @if (!$kategoriDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $barang->kategoriRowspan }}">{{ $kategoriNama }}</td>
+                    @php $kategoriDisplayed = true; @endphp
+                    @endif
+                    @if (!$namaDisplayed)
+                        <td class="text-center align-middle" rowspan="{{ $rowspanNama }}">{{ $namaBarang }}</td>
+                        @php $namaDisplayed = true; @endphp
+                    @endif
+                    @if (!$stokDisplayed)
+                        <td class="text-center align-middle" rowspan="{{ $barang->stokPpnRowspan }}">{{ $barang->kode }}</td>
+                        <td class="text-center align-middle" rowspan="{{ $barang->stokPpnRowspan }}">{{ $barang->merk }}</td>
+                        @php $stokDisplayed = true; @endphp
+                    @endif
+                    <td class="text-end align-middle">{{ $stokHarga->nf_harga_beli }}</td>
+
+                    <td class="text-end align-middle">
+                        <div class="row mx-3">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
+                        </div>
+                    </td> 
+                    <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
+                    <td class="text-end align-middle">
+                        {{ number_format($totalHargaBeli, 0, ',','.') }}
+                    </td>
+                    <td class="text-end align-middle">
+                        {{ number_format($totalHargaJual, 0, ',','.') }}
+                    </td>
+                    <td class="text-end align-middle @if ($margin < 10)
+                        table-danger
+                    @endif">
+                        {{ number_format($margin, 2) }}%
+                    </td>
+                </tr>
+                @endforeach
+                @endforeach
+                @endforeach
+                @endforeach
+                @endforeach
+                @if (!$loop->last)
+                <tr>
+                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent">
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
             <tfoot>

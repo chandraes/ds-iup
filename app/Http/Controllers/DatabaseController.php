@@ -10,6 +10,7 @@ use App\Models\db\Karyawan;
 use App\Models\db\Supplier;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\db\Satuan;
 use App\Models\Pengelola;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,44 @@ use Illuminate\Validation\Rule;
 
 class DatabaseController extends Controller
 {
+
+    public function satuan()
+    {
+        $data = Satuan::all();
+
+        return view('db.satuan.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function satuan_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required'
+        ]);
+
+        Satuan::create($data);
+
+        return redirect()->route('db.satuan')->with('success', 'Data berhasil ditambahkan');
+    }
+
+    public function satuan_update(Satuan $satuan, Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required'
+        ]);
+
+        $satuan->update($data);
+
+        return redirect()->route('db.satuan')->with('success', 'Data berhasil diupdate');
+    }
+
+    public function satuan_delete(Satuan $satuan)
+    {
+        $satuan->delete();
+
+        return redirect()->route('db.satuan')->with('success', 'Data berhasil dihapus');
+    }
 
     public function cost_operational()
     {

@@ -9,6 +9,7 @@ use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
+use App\Models\db\Satuan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -214,6 +215,8 @@ class BarangController extends Controller
         $units = $db->barangAll($unitFilter, $typeFilter, $kategoriFilter, $jenisFilter, $barangNamaFilter);
         $kategori = $kategoriDb->with('barang_nama')->get();
 
+        $satuan = Satuan::all();
+
         return view('db.barang.index', [
             // 'data' => $data,
             'kategori' => $kategori,
@@ -226,6 +229,7 @@ class BarangController extends Controller
             'selectType' => $selectType,
             'selectKategori' => $selectKategori,
             'selectBarangNama' => $selectBarangNama,
+            'satuan' => $satuan,
         ]);
     }
 
@@ -244,6 +248,7 @@ class BarangController extends Controller
             'barang_type_id' => 'required|exists:barang_types,id',
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'barang_nama_id' => 'required|exists:barang_namas,id',
+            'satuan_id' => 'required|exists:satuans,id',
             'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
             'merk' => [
@@ -252,6 +257,7 @@ class BarangController extends Controller
                     return $query->where('barang_type_id', $request->barang_type_id)
                                 ->where('barang_kategori_id', $request->barang_kategori_id)
                                 ->where('barang_nama_id', $request->barang_nama_id)
+                                ->where('satuan_id', $request->satuan_id)
                                 ->where('jenis', $request->jenis)
                                 ->where('merk', $request->merk)
                                 ->where('kode', $request->kode);
@@ -297,6 +303,7 @@ class BarangController extends Controller
             'barang_type_id' => 'required|exists:barang_types,id',
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'barang_nama_id' => 'required|exists:barang_namas,id',
+            'satuan_id' => 'required|exists:satuans,id',
             'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
             'merk' => [
@@ -306,6 +313,7 @@ class BarangController extends Controller
                                     ->where('barang_kategori_id', $request->barang_kategori_id)
                                     ->where('barang_nama_id', $request->barang_nama_id)
                                     ->where('jenis', $request->jenis)
+                                    ->where('satuan_id', $request->satuan_id)
                                     ->where('merk', $request->merk)
                                     ->where('kode', $request->kode);
                     })->ignore($barang->id, 'id'),
@@ -461,7 +469,7 @@ class BarangController extends Controller
 
         $jenis = 1;
 
-        $units = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $units = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
         return view('db.stok-ppn.index', [
             'data' => $data,
@@ -523,7 +531,7 @@ class BarangController extends Controller
 
         $jenis = 2;
 
-        $units = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $units = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter);
 
         return view('db.stok-non-ppn.index', [
             'data' => $data,
