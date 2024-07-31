@@ -243,13 +243,13 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="12" class="text-end align-middle">Grand Total</th>
+                    <th colspan="13" class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
                     <th class="text-end align-middle"></th>
                 </tr>
                 <tr>
-                    <th colspan="12" class="text-end align-middle">Estimasi Profit</th>
+                    <th colspan="13" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle"></th>
                 </tr>
