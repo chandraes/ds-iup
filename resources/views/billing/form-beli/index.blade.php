@@ -172,9 +172,12 @@
             if (apa_ppn === 1) {
 
                 var gt = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
-                var vPpn = gt * ppnRate;
+                var vPpn = Math.round(gt * ppnRate);
+                // vPpn = vPpn.toFixed(0);
                 // Include add_fee in the total calculation
                 var totalap = gt + vPpn + addFee;
+                // totalap = totalap.toFixed(0);
+                // console.log(totalap);
                 var tF = totalap.toLocaleString('id-ID');
                 var vF = vPpn.toLocaleString('id-ID');
                 document.getElementById('grand_total').textContent = tF;
@@ -183,6 +186,7 @@
                 // Since PPN is not applied, directly update grand_total with tdTotalSetelahDiskon and add_fee
                 var gtWithoutPpn = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
                 var totalWithoutPpn = gtWithoutPpn + addFee;
+                totalWithoutPpn = totalWithoutPpn.toFixed(0);
                 var totalFormatted = totalWithoutPpn.toLocaleString('id-ID');
                 document.getElementById('grand_total').textContent = totalFormatted;
             }
@@ -223,6 +227,8 @@
 
                 var sisa_ppn = ppn_total - ppn_dp_num;
 
+                sisa_ppn = sisa_ppn.toFixed(0);
+
                 var sisa_ppnF = sisa_ppn.toLocaleString('id-ID');
 
                 document.getElementById('sisaPPN').textContent = sisa_ppnF;
@@ -252,11 +258,12 @@
             tdPPN = parseInt(tdPPN.replace(/\./g, ''), 10);
 
             var sisaPPN = tdPPN - dpPPNtd;
-
+            sisaPPN = sisaPPN.toFixed(0);
             document.getElementById('sisa').textContent = sisaF;
             document.getElementById('sisaPPN').textContent = sisaPPN.toLocaleString('id-ID');
 
             var totalDp = dp + dpPPNtd;
+            totalDp = totalDp.toFixed(0);
             document.getElementById('totalDpTd').textContent = totalDp.toLocaleString('id-ID');
 
         }
@@ -284,6 +291,7 @@
 
             var add_fee = new Cleave('#add_fee', {
                 numeral: true,
+                negative: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',
                 delimiter: '.'
