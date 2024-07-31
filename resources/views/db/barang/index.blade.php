@@ -127,6 +127,7 @@
 
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
+                    <th class="text-center align-middle">Satuan</th>
                     <th class="text-center align-middle">Ket<br></th>
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
@@ -166,6 +167,7 @@
 
                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                     <td class="text-center align-middle">{{ $barang->merk }}</td>
+                    <td class="text-center align-middle">{{ $barang->satuan ? $barang->satuan->nama : '' }}</td>
                     <td class="text-start align-middle">
 
                         @if ($barang->detail_types)
@@ -278,6 +280,7 @@
         document.getElementById('edit_barang_kategori_id').value = data.barang_kategori_id;
         document.getElementById('edit_kode').value = data.kode;
         document.getElementById('edit_merk').value = data.merk;
+        document.getElementById('edit_satuan_id').value = data.satuan_id;
 
         let kategoriSelect = document.getElementById('edit_barang_kategori_id');
         kategoriSelect.onchange = () => {

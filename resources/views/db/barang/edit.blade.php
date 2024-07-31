@@ -13,7 +13,7 @@
                 @method('patch')
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="barang_unit_id" class="form-label">UNIT</label>
                             <select class="form-select" name="barang_unit_id" id="edit_barang_unit_id" required onchange="getTypeEdit()">
                                 <option value="" disabled>-- Pilih Salah Satu --</option>
@@ -22,13 +22,13 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="barang_type_id" class="form-label">TYPE</label>
                             <select class="form-select" name="barang_type_id" id="edit_barang_type_id" required>
                                 <option value="">-- Pilih Salah Satu --</option>
                             </select>
                         </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="barang_kategori_id" class="form-label">KELOMPOK BARANG</label>
                             <select class="form-select" name="barang_kategori_id" id="edit_barang_kategori_id" required onchange="getNamaBarangEdit()">
                                 <option value="" disabled>-- Pilih Salah Satu --</option>
@@ -37,22 +37,31 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="nama" class="form-label">NAMA BARANG</label>
                             <select class="form-select" name="barang_nama_id" id="edit_barang_nama_id" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                             </select>
                         </div>
 
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="kode" class="form-label">KODE BARANG</label>
                             <input type="text" class="form-control" name="kode" id="edit_kode" aria-describedby="helpId"
                                 placeholder="">
                         </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="merk" class="form-label">MERK BARANG</label>
                             <input type="text" class="form-control" name="merk" id="edit_merk" aria-describedby="helpId"
                                 placeholder="" required>
+                        </div>
+                        <div class="col-lg-3 col-md-3 mb-3 mt-3">
+                            <label for="satuan_id" class="form-label">SATUAN BARANG</label>
+                            <select class="form-select" name="satuan_id" id="edit_satuan_id" required>
+                                <option value="" disabled selected>-- Pilih Salah Satu --</option>
+                                @foreach ($satuan as $s)
+                                <option value="{{$s->id}}">{{$s->nama}}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>

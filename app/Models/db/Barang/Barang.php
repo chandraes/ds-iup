@@ -2,6 +2,7 @@
 
 namespace App\Models\db\Barang;
 
+use App\Models\db\Satuan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +13,11 @@ class Barang extends Model
     protected $guarded = ['id'];
 
     protected $appends = ['text_jenis'];
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
 
     public function detail_types()
     {

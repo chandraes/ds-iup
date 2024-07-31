@@ -19,7 +19,6 @@ class BarangStokHarga extends Model
         return $this->belongsTo(Barang::class, 'barang_id');
     }
 
-
     public function getNfHargaAttribute()
     {
         return number_format($this->harga, 0, ',', '.');
