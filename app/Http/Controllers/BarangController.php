@@ -435,8 +435,8 @@ class BarangController extends Controller
 
     public function stok_ppn(Request $request)
     {
-        $kategori = BarangKategori::with(['barang_nama'])->get();
-        $data = BarangType::with(['unit', 'barangs'])->get();
+        // $kategori = BarangKategori::with(['barang_nama'])->get();
+        // $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
@@ -474,8 +474,9 @@ class BarangController extends Controller
 
         return view('db.stok-ppn.index', [
             'data' => $data,
-            'kategori' => $kategori,
+            // 'kategori' => $kategori,
             'units' => $units,
+            // 'type' => $type,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
@@ -506,13 +507,13 @@ class BarangController extends Controller
 
     public function stok_non_ppn(Request $request)
     {
-        $kategori = BarangKategori::with(['barang_nama'])->get();
-        $data = BarangType::with(['unit', 'barangs'])->get();
-        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+        // $kategori = BarangKategori::with(['barang_nama'])->get();
+        // $type = BarangType::with(['unit', 'barangs'])->get();
 
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
+        $barangNamaFilter = $request->input('barang_nama');
 
         if (!empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
@@ -523,26 +524,38 @@ class BarangController extends Controller
                 });
             })->get();
 
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
         } else {
             $selectType = BarangType::all();
             $selectKategori = BarangKategori::all();
+            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangUnit();
+        $db = new BarangStokHarga();
 
         $jenis = 2;
 
-        $units = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $units = BarangUnit::all();
+
 
         return view('db.stok-non-ppn.index', [
             'data' => $data,
-            'kategori' => $kategori,
+            // 'kategori' => $kategori,
             'units' => $units,
+            // 'type' => $type,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
             'selectType' => $selectType,
             'selectKategori' => $selectKategori,
+            'barangNamaFilter' => $barangNamaFilter,
+            'selectBarangNama' => $selectBarangNama,
 
         ]);
     }

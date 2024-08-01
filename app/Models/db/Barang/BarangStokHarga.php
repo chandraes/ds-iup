@@ -60,7 +60,11 @@ class BarangStokHarga extends Model
             ->whereHas('barang', function ($query) use ($jenis) {
                 $query->where('jenis', $jenis);
             })
-            ->orderBy('barang_unit_id');
+            ->orderBy('barang_unit_id')
+            ->orderBy('barang_type_id')
+            ->orderBy('barang_kategori_id')
+            ->orderBy('barang_nama_id')
+            ->orderBy('barang_id');
 
         if (!is_null($unitFilter)) {
             $query->where('barang_unit_id', $unitFilter);
