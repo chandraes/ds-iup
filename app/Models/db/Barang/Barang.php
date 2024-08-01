@@ -24,6 +24,11 @@ class Barang extends Model
         return $this->hasMany(BarangDetailType::class, 'barang_id');
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(BarangUnit::class, 'barang_unit_id');
+    }
+
     public function type()
     {
         return $this->belongsTo(BarangType::class, 'barang_type_id');

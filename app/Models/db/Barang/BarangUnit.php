@@ -13,7 +13,16 @@ class BarangUnit extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
-    public $unitRowspan = 0; // Variable to store rowspan for the unit
+    protected $attributes = [
+        'unitRowspan' => 0, // default value
+        // add other default attributes here
+    ];
+
+    // Optional: You can also use an accessor if needed
+    public function getUnitRowspanAttribute()
+    {
+        return $this->attributes['unitRowspan'] ?? 0;
+    } // Variable to store rowspan for the unit
 
     protected $appends = ['unitRowspan'];
 
@@ -164,35 +173,11 @@ class BarangUnit extends Model
 
     public function barangStokV2($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
     {
-        // $units = $this->with(['types' => function ($query) use ($typeFilter, $kategoriFilter, $jenis, $barangNamaFilter) {
-        //     $query->with(['barangs' => function ($query) use ($kategoriFilter, $jenis, $barangNamaFilter) {
-        //         $query->with(['kategori', 'barang_nama', 'stok_harga' => function ($query) {
-        //             $query->where('stok', '>', 0);
-        //         }])->where('jenis', $jenis);
-        //     }]);
-        // }])->get();
 
-        $query = $this->with(['types.barangs.kategori', 'types.barangs.barang_nama',
-                        'types.barangs.detail_types.type', 'types.barangs.satuan',
-                        'types.barangs' => function($query) use ($typeFilter, $kategoriFilter, $barangNamaFilter, $jenis) {
-                            if ($typeFilter) {
-                                $query->where('barang_type_id', $typeFilter);
-                            }
-                            if ($kategoriFilter) {
-                                $query->where('barang_kategori_id', $kategoriFilter);
-                            }
-                            // inside types.barangs.barang_nama relation i want to filter it by nama
-                            if ($barangNamaFilter) {
-                                $query->whereHas('barang_nama', function($query) use ($barangNamaFilter) {
-                                    $query->where('nama', $barangNamaFilter);
-                                });
-                            }
-                            $query->where('jenis', $jenis);
-                        },
-                        'types.barangs.stok_harga'])
-                        ->whereHas('types.barangs.stok_harga', function($query) {
-                            $query->where('stok', '>', 0);
-                        });
+        $query = $this->with(['types.barangs', 'types.barangs.stok_harga'])
+            ->whereHas('types.barangs.stok_harga', function($query) {
+                $query->where('stok', '>', 0);
+            });
 
         if ($unitFilter) {
             $query->where('id', $unitFilter);
@@ -204,23 +189,32 @@ class BarangUnit extends Model
             $unit->unitRowspan = 0;
 
             $unit->types->each(function ($type) use ($unit) {
-                $type->groupedBarangs = $type->barangs->groupBy('kategori.nama');
+                $type->barangs->load('stok_harga');
+
                 $type->typeRowspan = 0;
 
-                $type->groupedBarangs->each(function ($barangs, $kategoriNama) use ($type, $unit) {
-                    $groupedByNama = $barangs->groupBy('barang_nama.nama');
+                $type->barangs->groupBy('kategori_id')->each(function ($barangs, $kategoriId) use ($type, $unit) {
+                    $kategoriRowspan = 0;
 
-                    $groupedByNama->each(function ($namaBarangs) use ($type, $unit, $barangs) {
-                        $namaBarangs->each(function ($barang) use ($namaBarangs, $barangs) {
-                            $barang->kategoriRowspan = $barangs->count();
-                            $barang->namaRowspan = $namaBarangs->count();
-                            $barang->stokPpnRowspan = $barang->stok_harga->count();
-                            // $barang->satuanNama = $barang->satuan->nama ?? '';
+                    $barangs->groupBy('barang_nama_id')->each(function ($namaBarangs) use (&$kategoriRowspan, $type, $unit) {
+                        $namaRowspan = 0;
+
+                        $namaBarangs->each(function ($barang) use (&$namaRowspan) {
+                            $stokCount = $barang->stok_harga->count();
+                            $namaRowspan += $stokCount;
+
+                            $barang->namaRowspan = $stokCount;
+                            $barang->stokPpnRowspan = $stokCount;
                         });
 
-                        $type->typeRowspan += $namaBarangs->count();
-                        $unit->unitRowspan += $namaBarangs->count();
+                        $kategoriRowspan += $namaRowspan;
+                        $type->typeRowspan += $namaRowspan;
+                        $unit->unitRowspan += $namaRowspan;
                     });
+
+                    if ($barangs->isNotEmpty()) {
+                        $barangs->first()->kategoriRowspan = $kategoriRowspan;
+                    }
                 });
             });
         });

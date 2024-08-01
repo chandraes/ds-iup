@@ -285,7 +285,12 @@ class Keranjang extends Model
 
         // dd($keranjangItems);
         foreach($keranjangItems as $item){
+            $barang = Barang::find($item->barang_id);
             BarangStokHarga::create([
+                'barang_unit_id' => $barang->barang_unit_id,
+                'barang_type_id' => $barang->barang_type_id,
+                'barang_kategori_id' => $barang->barang_kategori_id,
+                'barang_nama_id' => $barang->barang_nama_id,
                 'barang_id' => $item->barang_id,
                 'stok' => $item->jumlah,
                 'harga_beli' => $item->harga,

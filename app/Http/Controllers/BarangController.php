@@ -274,7 +274,7 @@ class BarangController extends Controller
                 $detailType = $data['detail_type'];
                 unset($data['detail_type']);
             }
-
+            $data['barang_unit_id'] = BarangType::find($data['barang_type_id'])->barang_unit_id;
             $store = Barang::create($data);
 
             if ($detailType != null) {
@@ -453,7 +453,7 @@ class BarangController extends Controller
                 });
             })->get();
 
-            $selectBarangNama = BarangNama::whereHas('barangs', function ($query) use ($unitFilter) {
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
                 $query->whereHas('type', function ($query) use ($unitFilter) {
                     $query->where('barang_unit_id', $unitFilter);
                 });
@@ -462,14 +462,15 @@ class BarangController extends Controller
         } else {
             $selectType = BarangType::all();
             $selectKategori = BarangKategori::all();
-            $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
+            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangUnit();
+        $db = new BarangStokHarga();
 
         $jenis = 1;
 
-        $units = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $units = BarangUnit::all();
 
         return view('db.stok-ppn.index', [
             'data' => $data,
