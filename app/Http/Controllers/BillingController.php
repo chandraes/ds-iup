@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
+use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
@@ -29,8 +30,8 @@ class BillingController extends Controller
 
     public function lihat_stok(Request $request)
     {
-        $kategori = BarangKategori::with(['barang_nama'])->get();
-        $data = BarangType::with(['unit', 'barangs'])->get();
+         // $kategori = BarangKategori::with(['barang_nama'])->get();
+        // $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
@@ -47,7 +48,7 @@ class BillingController extends Controller
                 });
             })->get();
 
-            $selectBarangNama = BarangNama::whereHas('barangs', function ($query) use ($unitFilter) {
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
                 $query->whereHas('type', function ($query) use ($unitFilter) {
                     $query->where('barang_unit_id', $unitFilter);
                 });
@@ -56,14 +57,15 @@ class BillingController extends Controller
         } else {
             $selectType = BarangType::all();
             $selectKategori = BarangKategori::all();
-            $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
+            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangUnit();
+        $db = new BarangStokHarga();
 
         $jenis = 1;
 
-        $units = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $units = BarangUnit::all();
         // $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter);
 
         $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
@@ -71,9 +73,9 @@ class BillingController extends Controller
         // dd($units->toArray());
         return view('billing.stok.index', [
             'data' => $data,
-            // 'nonPpn' =>$nonPpn,
-            'kategori' => $kategori,
+            // 'kategori' => $kategori,
             'units' => $units,
+            // 'type' => $type,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
