@@ -21,10 +21,25 @@ class FormJualController extends Controller
 
         $product = BarangStokHarga::find($data['barang_stok_harga_id']);
 
-        if($data['jumlah'] == 0 || $data['jumlah'] > $product->stok)
-        {
-            return redirect()->back()->with('error', 'Jumlah stok tidak mencukupi!');
+        if ($data['jumlah'] == 0 || $data['jumlah'] > $product->stok || $product->harga == 0) {
+            $errorMessage = $data['jumlah'] == 0 || $data['jumlah'] > $product->stok
+                ? 'Jumlah stok tidak mencukupi!'
+                : 'Harga jual barang belum diatur!';
+            return redirect()->back()->with('error', $errorMessage);
         }
+
+        $ppnValue = $data['barang_ppn'];
+        $oppositePpnValue = $ppnValue == 1 ? 0 : 1;
+
+        $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->first();
+        if ($checkKeranjang) {
+            $errorMessage = $ppnValue == 1
+                ? 'Keranjang sudah terisi dengan barang non ppn. Silahkan hapus barang non ppn terlebih dahulu'
+                : 'Keranjang sudah terisi dengan barang ppn. Silahkan hapus barang ppn terlebih dahulu';
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
+
 
         $data['user_id'] = auth()->user()->id;
         $data['jumlah'] = str_replace('.', '', $data['jumlah']);

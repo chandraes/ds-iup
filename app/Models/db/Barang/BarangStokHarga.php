@@ -56,7 +56,7 @@ class BarangStokHarga extends Model
 
     public function barangStok($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
     {
-        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan'])
+        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
             ->whereHas('barang', function ($query) use ($jenis) {
                 $query->where('jenis', $jenis);
             })

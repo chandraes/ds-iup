@@ -65,6 +65,7 @@ class BillingController extends Controller
         $jenis = 1;
 
         $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
         // $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter);
 
@@ -73,6 +74,7 @@ class BillingController extends Controller
         // dd($units->toArray());
         return view('billing.stok.index', [
             'data' => $data,
+            'nonPpn' => $nonPpn,
             // 'kategori' => $kategori,
             'units' => $units,
             // 'type' => $type,
