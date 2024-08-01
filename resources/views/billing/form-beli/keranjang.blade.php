@@ -195,7 +195,7 @@
                             <td class="text-center align-middle">{{$b->barang->kode}}</td>
                             <td class="text-center align-middle">{{$b->barang->merk}}</td>
                             <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
-                            <td class="text-center align-middle">bh</td>
+                            <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama : '-'}}</td>
                             <td class="text-center align-middle">{{$b->nf_harga}}</td>
                             <td class="text-end align-middle">{{$b->nf_total}}
                             </td>

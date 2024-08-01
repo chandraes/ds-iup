@@ -35,7 +35,7 @@
     <form action="{{route('billing.form-beli.keranjang.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_unit_id" class="form-label">Unit</label>
                     <select class="form-select" name="barang_unit_id" id="barang_unit_id" onchange="funGetBarang()" required>
@@ -46,7 +46,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_type_id" class="form-label">Type</label>
                     <select class="form-select" name="barang_type_id" id="barang_type_id" required onchange="getKategori()">
@@ -54,7 +54,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_kategori_id" class="form-label">Kelompok Barang</label>
                     <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required onchange="getBarang()">
@@ -62,7 +62,9 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+        </div>
+        <div class="row">
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_nama_id" class="form-label">Nama Barang</label>
                     <select class="form-select" name="barang_nama_id" id="barang_nama_id" required onchange="getMerk()">
@@ -70,7 +72,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_id" class="form-label">Merk</label>
                     <select class="form-select" name="barang_id" id="barang_id" required onchange="getKode()">
@@ -78,20 +80,26 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label for="kode" class="form-label">Kode</label>
                     <input type="text" class="form-control" name="kode" id="kode" disabled>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <div class="mb-3">
+                    <label for="satuan" class="form-label">Satuan</label>
+                    <input type="text" class="form-control" name="satuan" id="satuan" disabled>
+                </div>
+            </div>
+            <div class="col-md-2">
                 <div class="mb-3">
                   <label for="jumlah" class="form-label">Jumlah</label>
                   <input type="text"
                     class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId" placeholder="" required>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <label for="harga" class="form-label">Harga Satuan</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
@@ -100,9 +108,9 @@
                 @endif" name="harga" id="harga" data-thousands="." required>
                   </div>
             </div>
-            <input type="hidden" name="tempo" value="{{$req['tempo']}}">
-            <input type="hidden" name="jenis" value="{{$jenis}}">
         </div>
+        <input type="hidden" name="tempo" value="{{$req['tempo']}}">
+        <input type="hidden" name="jenis" value="{{$jenis}}">
         <hr>
 
         <div class="d-grid gap-3 mt-3">
@@ -443,12 +451,14 @@
                     console.log(data);
                     if (data.status == 1) {
                         $('#kode').val('');
+                        $('#satuan').val('');
                         $('#barang_id').empty();
                         $('#barang_id').append('<option value=""> -- Pilih Merk -- </option>');
                         $.each(data.data, function(index, value){
                             $('#barang_id').append('<option value="'+value.id+'">'+value.merk+'</option>');
                         });
                     } else {
+                        $('#satuan').val('');
                         $('#kode').val('');
                         $('#barang_id').empty();
                         $('#barang_id').append('<option value=""> -- Pilih Merk -- </option>');
@@ -475,8 +485,10 @@
                 success: function(data){
                     if (data.status == 1) {
                         $('#kode').val(data.data.kode);
+                        $('#satuan').val(data.data.satuan);
                     } else {
                         $('#kode').val('');
+                        $('#satuan').val('');
                     }
                 }
             });

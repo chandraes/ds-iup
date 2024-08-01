@@ -123,7 +123,10 @@ class FormBeliController extends Controller
 
     public function getKode(Request $request)
     {
-        $data = Barang::find($request->barang_id);
+        $data = Barang::leftJoin('satuans as s', 's.id', 'barangs.satuan_id')
+                        ->where('barangs.id',$request->barang_id)
+                        ->select('barangs.*', 's.nama as satuan')
+                        ->first();
 
         if(!$data) {
             return response()->json([
