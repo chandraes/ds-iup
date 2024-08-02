@@ -51,7 +51,8 @@
                                 <div class="form-group row mt-2">
                                     <label class="col-form-label col-md-3">Sistem Pembayaran :</label>
                                     <div class="col-md-8">
-                                        <input type="text" name="pembayaran" id="pembayaran" class="form-control" disabled>
+                                        <input type="text" name="pembayaran" id="pembayaran" class="form-control"
+                                            disabled>
                                     </div>
                                 </div>
                                 <div class="form-group row mt-2">
@@ -62,7 +63,35 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
+                    <hr>
+                        <div class="row mt-4" id="konsumenTempRow" hidden>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="nama" class="form-label">Nama Konsumen</label>
+                                    <input type="text" class="form-control" name="nama" id="nama" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="no_hp" class="form-label">No HP</label>
+                                    <input type="text" class="form-control" name="no_hp" id="no_hp" placeholder="Kosongkan jika tidak ada"/>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="npwp" class="form-label">NPWP</label>
+                                    <input type="text" class="form-control" name="npwp" id="npwp" placeholder="Kosongkan jika tidak ada"/>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="alamat" class="form-label">Alamat</label>
+                                    <input type="text" class="form-control" name="alamat" id="alamat" placeholder="Kosongkan jika tidak ada"/>
+                                </div>
+                            </div>
+                        </div>
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead class="table-success">
@@ -89,19 +118,19 @@
                                     <td class="text-center align-middle">{{$b->barang->kode}}</td>
                                     <td class="text-center align-middle">{{$b->barang->merk}}</td>
                                     <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama : '-'}}</td>
+                                    <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
+                                        : '-'}}</td>
                                     <td class="text-center align-middle">{{$b->nf_harga}}</td>
                                     <td class="text-end align-middle">{{$b->nf_total}}
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
-
-
                             <tfoot>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">TOTAL</th>
-                                    <th class="text-end align-middle">{{number_format($keranjang->sum('total'), 0, ',','.')}}</th>
+                                    <th class="text-end align-middle">{{number_format($keranjang->sum('total'), 0,
+                                        ',','.')}}</th>
                                 </tr>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Ppn :</th>
@@ -113,7 +142,8 @@
                                 </tr>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Grand Total :</th>
-                                    <th class="text-end align-middle" id="grandTotalTh">{{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
+                                    <th class="text-end align-middle" id="grandTotalTh">
+                                        {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -122,7 +152,9 @@
                         <div class="col-md-12 text-end">
                             <button type="submit" class="btn btn-success"><i class="fa fa-credit-card"></i>
                                 Lanjutkan Pembayaran</button>
-                                {{-- <button type="button" class="btn btn-info text-white" onclick="javascript:window.print();"><i class="fa fa-print"></i> Print Invoice</button> --}}
+                            {{-- <button type="button" class="btn btn-info text-white"
+                                onclick="javascript:window.print();"><i class="fa fa-print"></i> Print Invoice</button>
+                            --}}
                         </div>
                     </div>
                 </div>
@@ -159,6 +191,8 @@
         if (id != '*') {
 
             document.getElementById('konsumenRow').hidden = false;
+            document.getElementById('konsumenTempRow').hidden = true;
+            document.getElementById('nama').required = false;
 
             $.ajax({
                 url: '{{route('billing.form-jual.keranjang.get-konsumen')}}',
@@ -175,8 +209,10 @@
         }
 
         document.getElementById('konsumenRow').hidden = true;
+        document.getElementById('konsumenTempRow').hidden = false;
 
-
+        // nama required
+        document.getElementById('nama').required = true;
 
     }
 

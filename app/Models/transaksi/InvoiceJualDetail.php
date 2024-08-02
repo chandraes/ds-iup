@@ -9,4 +9,9 @@ class InvoiceJualDetail extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+
+    public function invoice()
+    {
+        return $this->belongsTo(InvoiceJual::class);
+    }
 }
