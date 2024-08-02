@@ -99,14 +99,18 @@
     <div class="row my-3">
         <div class="col-md-6">
             <div class="row px-3">
-                <a href="" class="btn btn-success"><i class="fa fa-shopping-cart"></i> Keranjang</a>
+                <a href="{{route('billing.form-jual.keranjang')}}" class="btn btn-success @if ($keranjang->count() == 0) disabled
+                @endif" role="button"><i class="fa fa-shopping-cart"></i> Keranjang {{$keranjang->count() == 0 ? '' : '('.$keranjang->count().')'}}</a>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="row px-3">
-                <a href="" class="btn btn-danger"><i
-                        class="fa fa-trash"></i> Kosongkan Keranjang</a>
-            </div>
+            <form action="{{route('billing.form-jual.keranjang.empty')}}" method="post" id="keranjangEmpty">
+                @csrf
+                <div class="row px-3">
+                    <button class="btn btn-danger" @if ($keranjang->count() == 0) disabled
+                        @endif><i class="fa fa-trash"></i> Kosongkan Keranjang</button>
+                </div>
+            </form>
         </div>
     </div>
     <center>
@@ -394,6 +398,8 @@
     theme: 'bootstrap-5',
     width: '100%',
     });
+
+    confirmAndSubmit("#keranjangEmpty", "Apakah anda yakin untuk mengosongkan keranjang?");
     function setModalJumlah(data, id)
     {
         console.log(data);

@@ -387,6 +387,12 @@ Route::group(['middleware' => ['auth']], function() {
                     Route::post('/set-jumlah', [App\Http\Controllers\FormJualController::class, 'keranjang_set'])->name('billing.form-jual.keranjang.set-jumlah');
                     Route::post('/empty', [App\Http\Controllers\FormJualController::class, 'keranjang_empty'])->name('billing.form-jual.keranjang.empty');
                 });
+
+                Route::prefix('keranjang-jual')->group(function(){
+                    Route::get('/', [App\Http\Controllers\FormJualController::class, 'keranjang'])->name('billing.form-jual.keranjang');
+                    Route::post('/checkout', [App\Http\Controllers\FormJualController::class, 'keranjang_checkout'])->name('billing.form-jual.keranjang.checkout');
+                    Route::get('/get-konsumen', [App\Http\Controllers\FormJualController::class, 'get_konsumen'])->name('billing.form-jual.keranjang.get-konsumen');
+                });
             });
 
             Route::prefix('invoice-supplier')->group(function(){

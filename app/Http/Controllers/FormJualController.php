@@ -6,11 +6,24 @@ use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\transaksi\Keranjang;
 use App\Models\transaksi\KeranjangJual;
 use Illuminate\Http\Request;
 
 class FormJualController extends Controller
 {
+
+    public function get_konsumen(Request $request)
+    {
+        $data = $request->validate([
+            'id' => 'required|exists:konsumens,id'
+        ]);
+
+        $konsumen = Konsumen::find($data['id']);
+
+        return response()->json($konsumen);
+    }
+
     public function keranjang_store(Request $request)
     {
         $data = $request->validate([
@@ -136,6 +149,45 @@ class FormJualController extends Controller
 
 
         return redirect()->back()->with('success', 'Keranjang berhasil dikosongkan');
+    }
+
+    public function keranjang()
+    {
+
+        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+        $dbPajak = new Pajak();
+        $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
+        $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
+        $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
+        $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
+        $konsumen = Konsumen::where('active', 1)->get();
+
+        return view('billing.stok.keranjang-jual', [
+            'keranjang' => $keranjang,
+            'ppn' => $ppn,
+            'total' => $total,
+            'pphVal' => $pphVal,
+            'nominalPpn' => $nominalPpn,
+            'konsumen' => $konsumen
+        ]);
+    }
+
+    public function keranjang_checkout(Request $request)
+    {
+        $data = $request->validate([
+            'apa_pph' => 'required',
+            'konsumen_id' => 'required',
+            'nama' => 'required_if:konsumen_id,*',
+            'no_hp' => 'nullable',
+            'npwp' => 'nullable',
+            'alamat' => 'nullable',
+        ]);
+
+        $db = new KeranjangJual();
+
+        $res = $db->checkout($data);
+
+        return redirect()->route('billing.lihat-stok')->with($res['status'], $res['message']);
     }
 
 
