@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
+use App\Models\transaksi\InvoiceJual;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -45,6 +46,15 @@ class InvoiceController extends Controller
     {
         return view('billing.invoice-supplier.detail', [
             'data' => $invoice->load(['items.barang.type.unit', 'items.barang.kategori']),
+        ]);
+    }
+
+    public function invoice_konsumen()
+    {
+        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('lunas', 0)->get();
+
+        return view('billing.invoice-konsumen.index', [
+            'data' => $data
         ]);
     }
 }

@@ -402,6 +402,11 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });
 
+            Route::prefix('invoice-konsumen')->group(function(){
+                Route::get('/', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen'])->name('billing.invoice-konsumen');
+                Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
+            });
+
             Route::prefix('nota-ppn-masukan')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'nota_ppn_masukan'])->name('nota-ppn-masukan');
                 Route::post('/claim/{invoice}', [App\Http\Controllers\BillingController::class, 'claim_ppn'])->name('nota-ppn-masukan.claim');

@@ -57,6 +57,22 @@ class KeranjangJual extends Model
                 ];
             }
 
+            $dbPajak = new Pajak();
+            $dbInvoice = new InvoiceJual();
+            $data['total'] = $keranjang->sum('total');
+            $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
+            $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
+            $data['ppn'] = $keranjang->where('barang_ppn', 1)->first() ? ($data['total'] * $ppnVal / 100) : 0;
+            $data['pph'] = $data['apa_pph'] == '1' ? ($data['total'] * $pphVal / 100) : 0;
+
+            $data['nomor'] = $dbInvoice->generateNomor();
+            $data['kode'] = $data['nomor'] . '/' . date('m/Y').'/PT-IUP';
+
+            unset($data['apa_pph']);
+
+            $data['grand_total'] = $data['total'] + $data['ppn'] - $data['pph'];
+
+
             if ($data['konsumen_id'] == '*') {
                 $konsumen = KonsumenTemp::create([
                     'nama' => $data['nama'],
@@ -97,21 +113,6 @@ class KeranjangJual extends Model
 
             $stateBayar = $data['lunas'] == 1 ? 1 : 0;
 
-            $dbPajak = new Pajak();
-            $dbInvoice = new InvoiceJual();
-            $data['total'] = $keranjang->sum('total');
-            $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
-            $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
-            $data['ppn'] = $keranjang->where('barang_ppn', 1)->first() ? ($data['total'] * $ppnVal / 100) : 0;
-            $data['pph'] = $data['apa_pph'] == '1' ? ($data['total'] * $pphVal / 100) : 0;
-
-            $data['nomor'] = $dbInvoice->generateNomor();
-            $data['kode'] = $data['nomor'] . '/' . date('m/Y').'/PT-IUP';
-
-            unset($data['apa_pph']);
-
-            $data['grand_total'] = $data['total'] + $data['ppn'] - $data['pph'];
-
             $invoice = $dbInvoice->create($data);
 
             foreach ($keranjang as $item) {
@@ -124,7 +125,7 @@ class KeranjangJual extends Model
                 ]);
             }
 
-            if ($data['ppn'] > 0) {
+            if ($data['ppn'] > 0 && $stateBayar == 1) {
                 $this->ppn_keluaran($invoice->id, $data['ppn']);
             }
 

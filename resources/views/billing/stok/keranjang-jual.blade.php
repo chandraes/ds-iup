@@ -17,7 +17,7 @@
             @csrf
             <div class="card">
 
-                <div class="card-body">
+                <div class="card-body bg-white">
                     <h4 class="card-title">
                         {{-- <strong>#INVOICE : {{$invoice}}</strong> --}}
                     </h4>
@@ -61,6 +61,8 @@
                                         <textarea name="alamat" id="alamat" class="form-control" disabled></textarea>
                                     </div>
                                 </div>
+
+
                             </div>
                         </div>
 
@@ -91,6 +93,7 @@
                                     <input type="text" class="form-control" name="alamat" id="alamat" placeholder="Kosongkan jika tidak ada"/>
                                 </div>
                             </div>
+
                         </div>
                     <div class="table-responsive">
                         <table class="table table-bordered">
@@ -128,13 +131,13 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">TOTAL</th>
+                                    <th colspan="9" class="text-end align-middle">DPP :</th>
                                     <th class="text-end align-middle">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
                                 </tr>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Ppn :</th>
-                                    <th class="text-end align-middle">{{number_format(($nominalPpn), 0, ',','.')}}</th>
+                                    <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0, ',','.')}}</th>
                                 </tr>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Pph :</th>
@@ -144,6 +147,30 @@
                                     <th colspan="9" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
+                                </tr>
+                                {{-- <tr>
+                                    <th colspan="9" class="text-end align-middle">Additional Fee :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee" value="0" />
+                                    </th>
+                                </tr> --}}
+                                <tr id="trDp" hidden>
+                                    <th colspan="9" class="text-end align-middle">DP :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="0" onkeyup="addDp()"/>
+                                    </th>
+                                </tr>
+                                <tr id="trDpPpn" hidden>
+                                    <th colspan="9" class="text-end align-middle">DP PPn :</th>
+                                    <th class="text-end align-middle" id="thDpPpn">
+                                        0
+                                    </th>
+                                </tr>
+                                <tr id="trSisa" hidden>
+                                    <th colspan="9" class="text-end align-middle">Sisa Tagihan :</th>
+                                    <th class="text-end align-middle" id="thSisa">
+                                        0
+                                    </th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -166,6 +193,63 @@
 @push('js')
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
+
+    function checkSisa() {
+        var dp = document.getElementById('dp').value;
+        var gt = document.getElementById('grandTotalTh').innerText;
+        var dp_ppn = document.getElementById('thDpPpn').innerText;
+        dp_ppn = dp_ppn.replace(/\./g, '');
+        gt = gt.replace(/\./g, '');
+        dp = dp.replace(/\./g, '');
+
+        var dpNumber = parseFloat(dp);
+        var gtNumber = parseFloat(gt);
+        var dpPpnNumber = parseFloat(dp_ppn);
+
+        var sisa = gtNumber - dpNumber - dpPpnNumber;
+        var sisaNf = sisa.toLocaleString('id-ID');
+        document.getElementById('thSisa').innerText = sisaNf;
+    }
+
+
+    function addDp(){
+        console.log('add dp');
+        var dp = document.getElementById('dp').value;
+        var gt = document.getElementById('grandTotalTh').innerText;
+        gt = gt.replace(/\./g, '');
+        dp = dp.replace(/\./g, '');
+        var dpNumber = parseFloat(dp);
+        var gtNumber = parseFloat(gt);
+
+        if (dpNumber > gtNumber) {
+            console.log('dp melebihi gt');
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'DP tidak boleh melebihi Grand Total!',
+            });
+            document.getElementById('dp').value = 0;
+            document.getElementById('thDpPpn').innerText = 0;
+            return;
+        }
+
+        var thPpn = document.getElementById('thPpn').innerText;
+                        // remove . in ppnVal
+        if (thPpn != '0') {
+            var ppn = {{$ppn}};
+
+            var dpPpn = dpNumber * ppn / 100;
+
+            var dpPpnNf = dpPpn.toLocaleString('id-ID');
+
+            document.getElementById('thDpPpn').innerText = dpPpnNf;
+        }
+
+        checkSisa();
+
+    }
+
+
     function calculatePPh()
     {
         var apa_pph = document.getElementById('apa_pph').value;
@@ -182,6 +266,7 @@
         var gtVal = gt.toLocaleString('id-ID');
         document.getElementById('pphTh').innerText = pphNf;
         document.getElementById('grandTotalTh').innerText = gtVal;
+        checkSisa();
     }
 
     function getKonsumenData()
@@ -203,6 +288,28 @@
                 success: function(data) {
                     document.getElementById('pembayaran').value = data.sistem_pembayaran;
                     document.getElementById('alamat').value = data.alamat;
+                    if (data.pembayaran == 2) {
+                        document.getElementById('trDp').hidden = false;
+                        var dp = new Cleave('#dp', {
+                            numeral: true,
+                            numeralThousandsGroupStyle: 'thousand',
+                            numeralDecimalMark: ',',
+                            delimiter: '.'
+                        });
+                        var ppnVal = document.getElementById('thPpn').innerText;
+                        // remove . in ppnVal
+                        if (ppnVal != '0') {
+                            document.getElementById('trDpPpn').hidden = false;
+                        }
+
+                        var sisa = document.getElementById('grandTotalTh').innerText;
+                        document.getElementById('trSisa').hidden = false;
+                        document.getElementById('thSisa').innerText = sisa;
+                    } else {
+                        document.getElementById('trDp').hidden = true;
+                        document.getElementById('trDpPpn').hidden = true;
+                        document.getElementById('trSisa').hidden = true;
+                    }
                 }
             });
             return;

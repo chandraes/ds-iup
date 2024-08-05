@@ -181,6 +181,7 @@ class FormJualController extends Controller
             'no_hp' => 'nullable',
             'npwp' => 'nullable',
             'alamat' => 'nullable',
+            'dp' => 'nullable',
         ]);
 
         $db = new KeranjangJual();
