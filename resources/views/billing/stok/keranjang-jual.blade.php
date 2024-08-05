@@ -148,12 +148,12 @@
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
-                                {{-- <tr>
+                                <tr>
                                     <th colspan="9" class="text-end align-middle">Additional Fee :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" value="0" />
                                     </th>
-                                </tr> --}}
+                                </tr>
                                 <tr id="trDp" hidden>
                                     <th colspan="9" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
@@ -193,6 +193,14 @@
 @push('js')
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
+
+        var add_fee = new Cleave('#add_fee', {
+                numeral: true,
+                negative: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
 
     function checkSisa() {
         var dp = document.getElementById('dp').value;

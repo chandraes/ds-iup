@@ -308,15 +308,15 @@ class BarangController extends Controller
             'kode' => 'nullable',
             'merk' => [
                     'required',
-                    Rule::unique('barangs')->where(function ($query) use ($request) {
-                        return $query->where('barang_type_id', $request->barang_type_id)
-                                    ->where('barang_kategori_id', $request->barang_kategori_id)
-                                    ->where('barang_nama_id', $request->barang_nama_id)
-                                    ->where('jenis', $request->jenis)
-                                    ->where('satuan_id', $request->satuan_id)
-                                    ->where('merk', $request->merk)
-                                    ->where('kode', $request->kode);
-                    })->ignore($barang->id, 'id'),
+                    // Rule::unique('barangs')->where(function ($query) use ($request) {
+                    //     return $query->where('barang_type_id', $request->barang_type_id)
+                    //                 ->where('barang_kategori_id', $request->barang_kategori_id)
+                    //                 ->where('barang_nama_id', $request->barang_nama_id)
+                    //                 ->where('jenis', $request->jenis)
+                    //                 ->where('satuan_id', $request->satuan_id)
+                    //                 ->where('merk', $request->merk)
+                    //                 ->where('kode', $request->kode);
+                    // })->ignore($barang->id, 'id'),
                 ],
             'detail_type' => 'nullable|array',
             ]);
