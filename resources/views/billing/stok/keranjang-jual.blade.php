@@ -23,17 +23,17 @@
                     </h4>
                     <div class="row mt-3 mb-3">
                         <div class="col-md-8">
-                            <div class="form-group row mb-2">
+                            {{-- <div class="form-group row mb-2">
                                 <label class="col-form-label col-md-3">Menggunakan PPh :</label>
                                 <div class="col-md-8">
                                     <select class="form-select" name="apa_pph" id="apa_pph" required
                                         onchange="calculatePPh()">
-                                        <option value="" disabled selected>-- Pilih Salah Satu --</option>
+                                        <option value="" disabled>-- Pilih Salah Satu --</option>
                                         <option value="1">Ya</option>
-                                        <option value="0">Tidak</option>
+                                        <option value="0" selected>Tidak</option>
                                     </select>
                                 </div>
-                            </div>
+                            </div> --}}
                             <div class="form-group row">
                                 <label class="col-form-label col-md-3">Konsumen :</label>
                                 <div class="col-md-8">
@@ -139,10 +139,10 @@
                                     <th colspan="9" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0, ',','.')}}</th>
                                 </tr>
-                                <tr>
+                                {{-- <tr>
                                     <th colspan="9" class="text-end align-middle">Pph :</th>
                                     <th class="text-end align-middle" id="pphTh">0</th>
-                                </tr>
+                                </tr> --}}
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
@@ -154,11 +154,11 @@
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" value="0" />
                                     </th>
                                 </tr> --}}
-                                {{-- <tr>
+                                <tr>
                                     <th colspan="9" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
-                                </tr> --}}
+                                </tr>
                                 <tr id="trDp" hidden>
                                     <th colspan="9" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
