@@ -29,6 +29,11 @@ class KeranjangJual extends Model
         return $this->belongsTo(Barang::class);
     }
 
+    public function stok()
+    {
+        return $this->belongsTo(BarangStokHarga::class, 'barang_stok_harga_id');
+    }
+
     public function getNfHargaAttribute()
     {
         return number_format($this->harga_satuan, 0, ',', '.');

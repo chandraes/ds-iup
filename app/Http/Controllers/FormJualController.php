@@ -154,7 +154,7 @@ class FormJualController extends Controller
     public function keranjang()
     {
 
-        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::with('stok')->where('user_id', auth()->user()->id)->get();
         $dbPajak = new Pajak();
         $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;

@@ -23,7 +23,7 @@
                     </h4>
                     <div class="row mt-3 mb-3">
                         <div class="col-md-8">
-                            {{-- <div class="form-group row mb-2">
+                            <div class="form-group row mb-2" hidden>
                                 <label class="col-form-label col-md-3">Menggunakan PPh :</label>
                                 <div class="col-md-8">
                                     <select class="form-select" name="apa_pph" id="apa_pph" required
@@ -33,7 +33,7 @@
                                         <option value="0" selected>Tidak</option>
                                     </select>
                                 </div>
-                            </div> --}}
+                            </div>
                             <div class="form-group row">
                                 <label class="col-form-label col-md-3">Konsumen :</label>
                                 <div class="col-md-8">
@@ -103,8 +103,8 @@
                                     <th class="text-center align-middle">Type</th>
                                     <th class="text-center align-middle">Kategori Barang</th>
                                     <th class="text-center align-middle">Nama Barang</th>
-                                    <th class="text-center align-middle">Kode</th>
-                                    <th class="text-center align-middle">Merk</th>
+                                    <th class="text-center align-middle">Kode Barang</th>
+                                    <th class="text-center align-middle">Merk Barang</th>
                                     <th class="text-center align-middle">Banyak</th>
                                     <th class="text-center align-middle">Satuan</th>
                                     <th class="text-center align-middle">Harga Satuan</th>
@@ -114,12 +114,12 @@
                             <tbody>
                                 @foreach ($keranjang as $b)
                                 <tr>
-                                    <td class="text-center align-middle">{{$b->barang->type->unit->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->type->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->kategori->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->barang_nama->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->kode}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->merk}}</td>
+                                    <td class="text-center align-middle">{{$b->stok->unit->nama}}</td>
+                                    <td class="text-center align-middle">{{$b->stok->type->nama}}</td>
+                                    <td class="text-center align-middle">{{$b->stok->kategori->nama}}</td>
+                                    <td class="text-center align-middle">{{$b->stok->barang_nama->nama}}</td>
+                                    <td class="text-center align-middle">{{$b->stok->barang->kode}}</td>
+                                    <td class="text-center align-middle">{{$b->stok->barang->merk}}</td>
                                     <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
                                     <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
                                         : '-'}}</td>
