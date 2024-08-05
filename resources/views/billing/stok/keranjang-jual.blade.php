@@ -154,11 +154,11 @@
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" value="0" />
                                     </th>
                                 </tr> --}}
-                                <tr>
+                                {{-- <tr>
                                     <th colspan="9" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
-                                </tr>
+                                </tr> --}}
                                 <tr id="trDp" hidden>
                                     <th colspan="9" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
