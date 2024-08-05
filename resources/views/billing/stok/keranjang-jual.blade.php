@@ -56,12 +56,28 @@
                                     </div>
                                 </div>
                                 <div class="form-group row mt-2">
+                                    <label class="col-form-label col-md-3">Tempo:</label>
+                                    <div class="col-md-8">
+                                        <div class="input-group">
+
+                                            <input type="text" class="form-control" name="tempo_hari" id="tempo_hari" disabled>
+                                            <span class="input-group-text" id="basic-addon1">Hari</span>
+                                          </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row mt-2">
                                     <label class="col-form-label col-md-3">Alamat :</label>
                                     <div class="col-md-8">
                                         <textarea name="alamat" id="alamat" class="form-control" disabled></textarea>
                                     </div>
                                 </div>
-
+                                <div class="form-group row mt-2">
+                                    <label class="col-form-label col-md-3">NPWP:</label>
+                                    <div class="col-md-8">
+                                        <input type="text" name="npwp" id="npwp" class="form-control"
+                                            disabled>
+                                    </div>
+                                </div>
 
                             </div>
                         </div>
@@ -330,7 +346,9 @@
                 },
                 success: function(data) {
                     document.getElementById('pembayaran').value = data.sistem_pembayaran;
+                    document.getElementById('tempo_hari').value = data.tempo_hari;
                     document.getElementById('alamat').value = data.alamat;
+                    document.getElementById('npwp').value = data.npwp;
                     if (data.pembayaran == 2) {
                         document.getElementById('trDp').hidden = false;
                         var dp = new Cleave('#dp', {
