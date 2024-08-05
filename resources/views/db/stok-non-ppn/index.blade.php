@@ -182,8 +182,8 @@
                     <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
-                    <td class="text-center align-middle">{{ number_format($totalHargaBeli, 2, ',','.') }}</td>
-                    <td class="text-center align-middle">{{ number_format($totalHargaJual, 2, ',','.') }}</td>
+                    <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
+                    <td class="text-center align-middle">{{ number_format($totalHargaJual, 0, ',','.') }}</td>
                     <td class="text-end align-middle @if ($margin < 10)
                                     table-danger
                                 @endif">
