@@ -15,6 +15,7 @@ use App\Models\Rekening;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class KeranjangJual extends Model
 {
@@ -68,6 +69,10 @@ class KeranjangJual extends Model
             $data['nomor'] = $dbInvoice->generateNomor();
             $data['kode'] = $data['nomor'] . '/' . date('m/Y').'/PT-IUP';
 
+            $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
+
+            $data['dp_ppn'] = $data['dp'] > 0 ? $data['dp'] * $ppnVal / 100 : 0;
+
             unset($data['apa_pph']);
 
             $data['grand_total'] = $data['total'] + $data['ppn'] - $data['pph'];
@@ -107,11 +112,15 @@ class KeranjangJual extends Model
                             'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.'
                         ];
                     }
+
+                    $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
+
                 }
 
             }
 
             $stateBayar = $data['lunas'] == 1 ? 1 : 0;
+            $stateDP = 0;
 
             $invoice = $dbInvoice->create($data);
 
@@ -127,6 +136,14 @@ class KeranjangJual extends Model
 
             if ($data['ppn'] > 0 && $stateBayar == 1) {
                 $this->ppn_keluaran($invoice->id, $data['ppn']);
+            }
+
+            if ($data['dp_ppn'] > 0) {
+                $this->ppn_keluaran($invoice->id, $data['dp_ppn']);
+            }
+
+            if ($invoice->lunas == 0 && $invoice->dp > 0) {
+                $stateDP = 1;
             }
 
             $this->update_stok($keranjang);
@@ -177,14 +194,36 @@ class KeranjangJual extends Model
                 $waState = 1;
             }
 
+            if ($stateDP == 1) {
+                $ppn_kas = $data['ppn'] > 0 ? 1 : 0;
+                $totalDP = $data['dp'] + $data['dp_ppn'];
+                $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+                $rekening = Rekening::where('untuk', $untukRekening)->first();
+
+                $store = $dbKas->create([
+                    'ppn_kas' => $ppn_kas,
+                    'invoice_jual_id' => $invoice->id,
+                    'nominal' => $totalDP,
+                    'uraian' => 'DP '.$invoice->kode,
+                    'jenis' => 1,
+                    'saldo' => $dbKas->saldoTerakhir($ppn_kas) + $totalDP,
+                    'no_rek' => $rekening->no_rek,
+                    'nama_rek' => $rekening->nama_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $dbKas->modalInvestorTerakhir($ppn_kas),
+                ]);
+
+                $waState = 1;
+            }
+
             $this->where('user_id', auth()->user()->id)->delete();
-            // DB::commit();
+            DB::commit();
 
             if ($waState == 1) {
                 $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*FORM PENJUALAN*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                            "Invoice : *".$invoice->kode."*\n\n".
+                            "Uraian : *".$store->uraian."*\n\n".
                             "Konsumen : *".$konsumen->nama."*\n".
                             "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
                             "Ditransfer ke rek:\n\n".
@@ -232,12 +271,16 @@ class KeranjangJual extends Model
         $db = new PpnKeluaran();
 
         $saldo = $db->saldoTerakhir();
+        $invoice = InvoiceJual::find($invoice_id);
 
+        $uraianPrefix = $invoice->lunas == 0 ? 'DP PPN ' : 'PPN ';
         $db->create([
             'invoice_jual_id' => $invoice_id,
+            'uraian' => $uraianPrefix . $invoice->kode,
             'nominal' => $ppn,
             'saldo' => $saldo + $ppn
         ]);
+
 
         return true;
     }

@@ -4,6 +4,7 @@ namespace App\Models\transaksi;
 
 use App\Models\db\Barang\BarangHistory;
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Konsumen;
 use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
@@ -287,7 +288,7 @@ class InvoiceBelanja extends Model
 
             $kasMana = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
 
-            $rekening = Rekening::where('untuk', $kasMana)->first();
+            $rekening = Supplier::find($inv->supplier_id);
 
             $total = $inv->sisa;
 
@@ -295,9 +296,9 @@ class InvoiceBelanja extends Model
                 'invoice_belanja_id' => $inv->id,
                 'ppn_kas' => $inv->kas_ppn,
                 'uraian' => 'Pelunasan ' . $inv->uraian,
-                'jenis' => '1',
+                'jenis' => '0',
                 'nominal' => $total,
-                'saldo' => $kas->saldoTerakhir($inv->kas_ppn) + $total,
+                'saldo' => $kas->saldoTerakhir($inv->kas_ppn) - $total,
                 'nama_rek' => $rekening->nama_rek,
                 'no_rek' => $rekening->no_rek,
                 'bank' => $rekening->bank,
@@ -350,7 +351,7 @@ class InvoiceBelanja extends Model
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal membatalkan invoice. '.$th->getMessage()
+                'message' => 'Gagal melunasi invoice. '.$th->getMessage()
             ];
         }
 

@@ -49,12 +49,30 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function invoice_konsumen()
+    public function invoice_konsumen(Request $request)
     {
         $data = InvoiceJual::with('konsumen')->where('void', 0)->where('lunas', 0)->get();
 
         return view('billing.invoice-konsumen.index', [
             'data' => $data
         ]);
+    }
+
+    public function invoice_konsumen_detail(InvoiceJual $invoice)
+    {
+        $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+
+        return view('billing.invoice-konsumen.detail', [
+            'data' => $data
+        ]);
+    }
+
+    public function invoice_konsumen_bayar(InvoiceJual $invoice)
+    {
+        $db = new InvoiceJual();
+
+        $res = $db->bayar($invoice->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
     }
 }

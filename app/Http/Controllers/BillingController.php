@@ -19,6 +19,7 @@ use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
+use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\KeranjangJual;
 use App\Services\StarSender;
 use Carbon\Carbon;
@@ -94,8 +95,10 @@ class BillingController extends Controller
     {
 
         $is = InvoiceBelanja::where('tempo', 1)->where('void', 0)->count();
+        $ik = InvoiceJual::where('lunas', 0)->where('void', 0)->count();
         return view('billing.index', [
             'is' => $is,
+            'ik' => $ik,
         ]);
     }
 

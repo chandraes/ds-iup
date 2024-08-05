@@ -41,16 +41,15 @@
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">
-            <thead class=" table-success">
+            <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
-                    <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
                     <th class="text-center align-middle">PPh</th>
-                    <th class="text-center align-middle">Add Fee</th>
+                    {{-- <th class="text-center align-middle">Add Fee</th> --}}
                     <th class="text-center align-middle">Total<br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
                     <th class="text-center align-middle">DP<br>PPN</th>
@@ -61,79 +60,51 @@
                 </tr>
             </thead>
             <tbody>
-                {{-- @foreach ($data as $d)
+                @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->supplier->nama}}</td>
+                    <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
                     <td class="text-center align-middle">
-                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
+                        <a href="{{route('billing.invoice-konsumen.detail', $d)}}">
                             {{$d->kode}}
                         </a>
+
                     </td>
-                    <td class="text-start align-middle">{{$d->uraian}}</td>
+                    <td class="text-end align-middle">{{$d->dpp}}</td>
+                    <td class="text-end align-middle">{{$d->nf_ppn}}</td>
+                    <td class="text-end align-middle">{{$d->nf_pph}}</td>
+                    <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
+                    <td class="text-end align-middle">{{$d->nf_dp}}</td>
+                    <td class="text-end align-middle">{{$d->nf_dp_ppn}}</td>
+                    <td class="text-end align-middle">{{$d->sisa_ppn}}</td>
+                    <td class="text-end align-middle">{{$d->sisa_tagihan}}</td>
+                    <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
                     <td class="text-end align-middle">
-                        {{$d->dpp}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_diskon}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_ppn}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_add_fee}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_total}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_dp}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_dp_ppn}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_sisa_ppn}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_sisa}}
-                    </td>
-                    <td class="text-center align-middle">
-                        {{$d->id_jatuh_tempo}}
-                    </td>
-                    <td class="text-center align-middle">
-                        <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
-                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa}}">
+                        <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
+                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->sisa_tagihan}}">
                             @csrf
+                            <div class="row p-3">
                                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
+                            </div>
                         </form>
-                        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-                        <form action="{{route('billing.invoice-supplier.void', ['invoice' => $d])}}" method="post" id="voidForm{{ $d->id }}"
-                            class="void-form m-3" data-id="{{ $d->id }}">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
-                        </form>
-                        @endif
                     </td>
                 </tr>
-                @endforeach --}}
+                @endforeach
             </tbody>
-            {{-- <tfoot>
+            <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="4">Grand Toal</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('total')-$data->sum('ppn')+$data->sum('diskon'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle" colspan="3">Grand Toal</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('pph'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('sisa_ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('sisa'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle"></th>
-                    <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle">{{number_format($data->sum('ppn')-$data->sum('dp_ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('grand_total')-$data->sum('dp')-$data->sum('dp_ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle" colspan="2"></th>
                 </tr>
-            </tfoot> --}}
+            </tfoot>
 
         </table>
     </div>
