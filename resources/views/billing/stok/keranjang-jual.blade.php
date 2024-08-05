@@ -148,11 +148,16 @@
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
-                                <tr>
+                                {{-- <tr>
                                     <th colspan="9" class="text-end align-middle">Additional Fee :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" value="0" />
                                     </th>
+                                </tr> --}}
+                                <tr>
+                                    <th colspan="9" class="text-end align-middle">Total Tagihan :</th>
+                                    <th class="text-end align-middle" id="totalTagihanTh">
+                                        {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
                                 <tr id="trDp" hidden>
                                     <th colspan="9" class="text-end align-middle">DP :</th>
@@ -206,17 +211,47 @@
         var dp = document.getElementById('dp').value;
         var gt = document.getElementById('grandTotalTh').innerText;
         var dp_ppn = document.getElementById('thDpPpn').innerText;
+        var add_fee = document.getElementById('add_fee').value;
+        add_fee = add_fee.replace(/\./g, '');
         dp_ppn = dp_ppn.replace(/\./g, '');
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
 
+        var addFeeNumber = parseFloat(add_fee);
         var dpNumber = parseFloat(dp);
         var gtNumber = parseFloat(gt);
         var dpPpnNumber = parseFloat(dp_ppn);
 
-        var sisa = gtNumber - dpNumber - dpPpnNumber;
+        var sisa = gtNumber - dpNumber - dpPpnNumber - addFeeNumber;
         var sisaNf = sisa.toLocaleString('id-ID');
         document.getElementById('thSisa').innerText = sisaNf;
+    }
+
+    function addCheck() {
+        var add_fee = document.getElementById('add_fee').value;
+        var gt = document.getElementById('grandTotalTh').innerText;
+        gt = gt.replace(/\./g, '');
+        add_fee = add_fee.replace(/\./g, '');
+
+        var addFeeNumber = parseFloat(add_fee);
+        var gtNumber = parseFloat(gt);
+
+        if (addFeeNumber > gtNumber) {
+            console.log('add fee melebihi gt');
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Additional Fee tidak boleh melebihi Grand Total!',
+            });
+            document.getElementById('add_fee').value = 0;
+            return;
+        }
+
+        totahTagihan = gtNumber + addFeeNumber;
+        var totahTagihanNf = totahTagihan.toLocaleString('id-ID');
+        document.getElementById('totalTagihanTh').innerText = totahTagihanNf;
+
+        checkSisa();
     }
 
 
