@@ -2,6 +2,7 @@
 
 namespace App\Models\transaksi;
 
+use App\Models\Config;
 use App\Models\db\Konsumen;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
@@ -68,9 +69,21 @@ class InvoiceJual extends Model
         return number_format($this->grand_total - $this->dp - $this->dp_ppn, 0, ',', '.');
     }
 
-    public function generateNomor()
+    public function generateNomor($barang_ppn)
     {
-        return $this->max('nomor') + 1;
+        return $this->where('kas_ppn', $barang_ppn)->whereYear('created_at', date('Y'))->max('nomor') + 1;
+    }
+
+    public function generateKode($barang_ppn)
+    {
+        $untuk = $barang_ppn == 1 ? 'resmi' : 'non-resmi';
+        $app = Config::where('untuk', $untuk)->first();
+        $singkatan = $app->singkatan;
+        $nomor = $this->generateNomor($barang_ppn);
+        $kode = $barang_ppn == 1 ? str_pad($nomor, 3, '0', STR_PAD_LEFT).'/'.$singkatan.'-INV/'.date('m/Y') : str_pad($nomor, 3, '0', STR_PAD_LEFT).'/'.$singkatan.'/'.date('m/Y');
+
+        return $kode;
+
     }
 
     public function konsumen()

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\Keranjang;
 use App\Models\transaksi\KeranjangJual;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 class FormJualController extends Controller
@@ -162,23 +166,39 @@ class FormJualController extends Controller
         $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
         $konsumen = Konsumen::where('active', 1)->get();
 
+        Carbon::setLocale('id');
+
+        // Format the date
+        $tanggal = Carbon::now()->translatedFormat('d F Y');
+        $jam = Carbon::now()->translatedFormat('H:i');
+
+        $untuk = $keranjang->first()->barang_ppn == 1 ? 'resmi' : 'non-resmi';
+
+        $db = new InvoiceJual();
+
+        $kode = $db->generateKode($keranjang->first()->barang_ppn);
+
         return view('billing.stok.keranjang-jual', [
             'keranjang' => $keranjang,
             'ppn' => $ppn,
             'total' => $total,
             'pphVal' => $pphVal,
             'nominalPpn' => $nominalPpn,
-            'konsumen' => $konsumen
+            'konsumen' => $konsumen,
+            'tanggal' => $tanggal,
+            'jam' => $jam,
+            'kode' => $kode,
         ]);
     }
 
     public function keranjang_checkout(Request $request)
     {
         $data = $request->validate([
-            'apa_pph' => 'required',
             'konsumen_id' => 'required',
+            'diskon' => 'required',
+            'add_fee' => 'required',
             'nama' => 'required_if:konsumen_id,*',
-            'no_hp' => 'nullable',
+            'no_hp' => 'required_if:konsumen_id,*',
             'npwp' => 'nullable',
             'alamat' => 'nullable',
             'dp' => 'nullable',

@@ -22,95 +22,118 @@
                         {{-- <strong>#INVOICE : {{$invoice}}</strong> --}}
                     </h4>
                     <div class="row mt-3 mb-3">
-                        <div class="col-md-8">
-                            <div class="form-group row mb-2" hidden>
-                                <label class="col-form-label col-md-3">Menggunakan PPh :</label>
-                                <div class="col-md-8">
-                                    <select class="form-select" name="apa_pph" id="apa_pph" required
-                                        onchange="calculatePPh()">
-                                        <option value="" disabled>-- Pilih Salah Satu --</option>
-                                        <option value="1">Ya</option>
-                                        <option value="0" selected>Tidak</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-form-label col-md-3">Konsumen :</label>
-                                <div class="col-md-8">
-                                    <select class="form-select" name="konsumen_id" id="konsumen_id" required
-                                        onchange="getKonsumenData()">
-                                        <option value="" disabled selected>-- Pilih Konsumen --</option>
-                                        <option value="*">INPUT MANUAL</option>
-                                        @foreach ($konsumen as $k)
-                                        <option value="{{$k->id}}">{{$k->nama}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row" id="konsumenRow" hidden>
-                                <div class="form-group row mt-2">
-                                    <label class="col-form-label col-md-3">Sistem Pembayaran :</label>
-                                    <div class="col-md-8">
-                                        <input type="text" name="pembayaran" id="pembayaran" class="form-control"
-                                            disabled>
-                                    </div>
-                                </div>
-                                <div class="form-group row mt-2">
-                                    <label class="col-form-label col-md-3">Tempo:</label>
-                                    <div class="col-md-8">
-                                        <div class="input-group">
+                        <div class="col-md-12 my-3">
+                            <div class="row" id="konsumenRow">
+                                <div class="row invoice-info">
+                                    <div class="col-md-6 invoice-col">
+                                        <table style="width: 90%">
+                                            <tr>
+                                                <td class="text-start align-middle">Konsumen</td>
+                                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                                <td class="text-start align-middle">
+                                                    <select class="form-select" name="konsumen_id" id="konsumen_id" required
+                                                        onchange="getKonsumenData()">
+                                                        <option value="" disabled selected>-- Pilih Konsumen --</option>
+                                                        <option value="*">INPUT MANUAL</option>
+                                                        @foreach ($konsumen as $k)
+                                                        <option value="{{$k->id}}">{{$k->nama}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            <tr id="namaTr" hidden>
+                                                <td class="text-start align-middle">Nama</td>
+                                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                                <td class="text-start align-middle">
+                                                    <input type="text" name="nama" id="nama"
+                                                        class="form-control">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start align-middle">Sistem Pembayaran</td>
+                                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                                <td class="text-start align-middle">
+                                                    <input type="text" name="pembayaran" id="pembayaran"
+                                                        class="form-control" disabled>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start align-middle">Tempo</td>
+                                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                                <td class="text-start align-middle">
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="tempo_hari"
+                                                            id="tempo_hari" disabled>
+                                                        <span class="input-group-text" id="basic-addon1">Hari</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start align-middle">NPWP</td>
+                                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                                <td class="text-start align-middle">
+                                                    <input type="text" name="npwp" id="npwp" class="form-control"
+                                                        disabled>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start align-middle">Alamat</td>
+                                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                                <td class="text-start align-middle">
+                                                    <textarea name="alamat" id="alamat" class="form-control"
+                                                        disabled></textarea>
+                                                </td>
+                                            </tr>
 
-                                            <input type="text" class="form-control" name="tempo_hari" id="tempo_hari" disabled>
-                                            <span class="input-group-text" id="basic-addon1">Hari</span>
-                                          </div>
+                                        </table>
                                     </div>
-                                </div>
-                                <div class="form-group row mt-2">
-                                    <label class="col-form-label col-md-3">Alamat :</label>
-                                    <div class="col-md-8">
-                                        <textarea name="alamat" id="alamat" class="form-control" disabled></textarea>
-                                    </div>
-                                </div>
-                                <div class="form-group row mt-2">
-                                    <label class="col-form-label col-md-3">NPWP:</label>
-                                    <div class="col-md-8">
-                                        <input type="text" name="npwp" id="npwp" class="form-control"
-                                            disabled>
-                                    </div>
-                                </div>
+                                    <!-- /.col -->
+                                    <div class="col-md-6 invoice-col" >
+                                        <div class="row d-flex justify-content-end">
+                                            <table style="width: 90%">
+                                                <tr>
+                                                    <td class="text-start align-middle">Invoice</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <input type="text" name="kode" id="kode" class="form-control"
+                                                            disabled value="{{$kode}}">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start align-middle">Tanggal</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <input type="text" name="tanggal" id="tanggal" class="form-control"
+                                                            value="{{$tanggal}}" disabled>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start align-middle">Jam</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <input type="text" name="jam" id="jam" class="form-control"
+                                                            value="{{$jam}}" disabled>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start align-middle">No WA</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <input type="text" name="no_hp" id="no_hp" class="form-control"
+                                                            disabled>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
 
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
 
                     </div>
                     <hr>
-                        <div class="row mt-4" id="konsumenTempRow" hidden>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label for="nama" class="form-label">Nama Konsumen</label>
-                                    <input type="text" class="form-control" name="nama" id="nama" />
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label for="no_hp" class="form-label">No HP</label>
-                                    <input type="text" class="form-control" name="no_hp" id="no_hp" placeholder="Kosongkan jika tidak ada"/>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label for="npwp" class="form-label">NPWP</label>
-                                    <input type="text" class="form-control" name="npwp" id="npwp" placeholder="Kosongkan jika tidak ada"/>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label for="alamat" class="form-label">Alamat</label>
-                                    <input type="text" class="form-control" name="alamat" id="alamat" placeholder="Kosongkan jika tidak ada"/>
-                                </div>
-                            </div>
-
-                        </div>
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead class="table-success">
@@ -148,12 +171,25 @@
                             <tfoot>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">DPP :</th>
-                                    <th class="text-end align-middle">{{number_format($keranjang->sum('total'), 0,
+                                    <th class="text-end align-middle" id="dppTh">{{number_format($keranjang->sum('total'), 0,
+                                        ',','.')}}</th>
+                                </tr>
+                                <tr id="trDiskon">
+                                    <th colspan="9" class="text-end align-middle">Diskon :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="diskon" id="diskon" value="0"
+                                            onkeyup="addDiskon()" />
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="9" class="text-end align-middle">DPP Setelah Diskon :</th>
+                                    <th class="text-end align-middle" id="thDppDiskon">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
                                 </tr>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Ppn :</th>
-                                    <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0, ',','.')}}</th>
+                                    <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0,
+                                        ',','.')}}</th>
                                 </tr>
                                 {{-- <tr>
                                     <th colspan="9" class="text-end align-middle">Pph :</th>
@@ -164,12 +200,13 @@
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
-                                {{-- <tr>
-                                    <th colspan="9" class="text-end align-middle">Additional Fee :</th>
+                                <tr>
+                                    <th colspan="9" class="text-end align-middle">Penyesuaian:</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee" value="0" />
+                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
+                                            value="0" />
                                     </th>
-                                </tr> --}}
+                                </tr>
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
@@ -178,7 +215,8 @@
                                 <tr id="trDp" hidden>
                                     <th colspan="9" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="0" onkeyup="addDp()"/>
+                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="0"
+                                            onkeyup="addDp()" />
                                     </th>
                                 </tr>
                                 <tr id="trDpPpn" hidden>
@@ -214,8 +252,7 @@
 @push('js')
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
-
-        var add_fee = new Cleave('#add_fee', {
+    var add_fee = new Cleave('#add_fee', {
                 numeral: true,
                 negative: true,
                 numeralThousandsGroupStyle: 'thousand',
@@ -223,24 +260,82 @@
                 delimiter: '.'
             });
 
+    var diskon = new Cleave('#diskon', {
+        numeral: true,
+        numeralThousandsGroupStyle: 'thousand',
+        numeralDecimalMark: ',',
+        delimiter: '.'
+    });
+
     function checkSisa() {
         var dp = document.getElementById('dp').value;
-        var gt = document.getElementById('grandTotalTh').innerText;
+        var gt = document.getElementById('totalTagihanTh').innerText;
         var dp_ppn = document.getElementById('thDpPpn').innerText;
-        var add_fee = document.getElementById('add_fee').value;
-        add_fee = add_fee.replace(/\./g, '');
         dp_ppn = dp_ppn.replace(/\./g, '');
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
 
-        var addFeeNumber = parseFloat(add_fee);
         var dpNumber = parseFloat(dp);
         var gtNumber = parseFloat(gt);
         var dpPpnNumber = parseFloat(dp_ppn);
-
-        var sisa = gtNumber - dpNumber - dpPpnNumber - addFeeNumber;
+        var sisa = gtNumber - dpNumber - dpPpnNumber;
         var sisaNf = sisa.toLocaleString('id-ID');
+
         document.getElementById('thSisa').innerText = sisaNf;
+    }
+
+    function addDiskon() {
+        var dpp = document.getElementById('dppTh').innerText;
+        var diskon = document.getElementById('diskon').value == '' ? 0 : document.getElementById('diskon').value;
+        dpp = dpp.replace(/\./g, '');
+        diskon = diskon == 0 ? 0 : diskon.replace(/\./g, '');
+
+        var dppNumber = parseFloat(dpp);
+        var diskonNumber = parseFloat(diskon);
+
+        var dppDiskon = dppNumber - diskonNumber;
+        var dppDiskonNf = dppDiskon.toLocaleString('id-ID');
+        document.getElementById('thDppDiskon').innerText = dppDiskonNf;
+
+        calculatePpn();
+    }
+
+    function calculatePpn()
+    {
+        var dpp = document.getElementById('thDppDiskon').innerText;
+        dpp = parseFloat(dpp.replace(/\./g, ''));
+        var ppn = {{$ppn}};
+
+        var dppNumber = parseFloat(dpp);
+
+        var ppnVal = Math.round(dppNumber * ppn / 100);
+
+        var grandTotal = dppNumber + ppnVal;
+        // console.log(ppnVal);
+        var ppnValNf = ppnVal.toLocaleString('id-ID');
+        var grandTotalNf = grandTotal.toLocaleString('id-ID');
+
+        document.getElementById('thPpn').innerText = ppnValNf;
+        document.getElementById('grandTotalTh').innerText = grandTotalNf;
+
+        checkSisa();
+        calculateTotalTagihan();
+    }
+
+    function calculateTotalTagihan() {
+        var gt = document.getElementById('grandTotalTh').innerText;
+        var add_fee = document.getElementById('add_fee').value;
+        gt = gt.replace(/\./g, '');
+        add_fee = add_fee.replace(/\./g, '');
+
+        var addFeeNumber = parseFloat(add_fee);
+        var gtNumber = parseFloat(gt);
+
+        totahTagihan = gtNumber + addFeeNumber;
+        var totahTagihanNf = totahTagihan.toLocaleString('id-ID');
+        document.getElementById('totalTagihanTh').innerText = totahTagihanNf;
+
+        checkSisa();
     }
 
     function addCheck() {
@@ -274,7 +369,7 @@
     function addDp(){
         console.log('add dp');
         var dp = document.getElementById('dp').value;
-        var gt = document.getElementById('grandTotalTh').innerText;
+        var gt = document.getElementById('totalTagihanTh').innerText;
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
         var dpNumber = parseFloat(dp);
@@ -285,7 +380,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: 'DP tidak boleh melebihi Grand Total!',
+                text: 'DP tidak boleh melebihi Total Tagihan!',
             });
             document.getElementById('dp').value = 0;
             document.getElementById('thDpPpn').innerText = 0;
@@ -309,35 +404,16 @@
     }
 
 
-    function calculatePPh()
-    {
-        var apa_pph = document.getElementById('apa_pph').value;
-        var total = {{$total ?? 0}};
-        var ppn = {{$nominalPpn}};
-        var pph = 0;
-
-        if (apa_pph == 1) {
-            pph = total * {{$pphVal / 100}};
-        }
-        console.log(pph);
-        var gt = total + ppn - pph;
-        var pphNf = pph.toLocaleString('id-ID');
-        var gtVal = gt.toLocaleString('id-ID');
-        document.getElementById('pphTh').innerText = pphNf;
-        document.getElementById('grandTotalTh').innerText = gtVal;
-        checkSisa();
-    }
-
     function getKonsumenData()
     {
         var id = document.getElementById('konsumen_id').value;
 
         if (id != '*') {
-
-            document.getElementById('konsumenRow').hidden = false;
-            document.getElementById('konsumenTempRow').hidden = true;
             document.getElementById('nama').required = false;
-
+            document.getElementById('namaTr').hidden = true;
+            document.getElementById('alamat').disabled = true;
+            document.getElementById('npwp').disabled = true;
+            document.getElementById('no_hp').disabled = true;
             $.ajax({
                 url: '{{route('billing.form-jual.keranjang.get-konsumen')}}',
                 type: 'GET',
@@ -346,10 +422,12 @@
                 },
                 success: function(data) {
                     document.getElementById('pembayaran').value = data.sistem_pembayaran;
-                    document.getElementById('tempo_hari').value = data.tempo_hari;
+
                     document.getElementById('alamat').value = data.alamat;
                     document.getElementById('npwp').value = data.npwp;
+                    document.getElementById('no_hp').value = data.no_hp;
                     if (data.pembayaran == 2) {
+                        document.getElementById('tempo_hari').value = data.tempo_hari;
                         document.getElementById('trDp').hidden = false;
                         var dp = new Cleave('#dp', {
                             numeral: true,
@@ -367,6 +445,7 @@
                         document.getElementById('trSisa').hidden = false;
                         document.getElementById('thSisa').innerText = sisa;
                     } else {
+                        document.getElementById('tempo_hari').value = '-';
                         document.getElementById('trDp').hidden = true;
                         document.getElementById('trDpPpn').hidden = true;
                         document.getElementById('trSisa').hidden = true;
@@ -376,9 +455,20 @@
             return;
         }
 
-        document.getElementById('konsumenRow').hidden = true;
-        document.getElementById('konsumenTempRow').hidden = false;
-
+        document.getElementById('trDp').hidden = true;
+        document.getElementById('trDpPpn').hidden = true;
+        document.getElementById('trSisa').hidden = true;
+        document.getElementById('namaTr').hidden = false;
+        document.getElementById('pembayaran').value = 'Cash';
+        document.getElementById('tempo_hari').value = '-';
+        document.getElementById('npwp').value = '';
+        // remove disabled from alamat & npwp
+        document.getElementById('alamat').disabled = false;
+        document.getElementById('npwp').disabled = false;
+        document.getElementById('no_hp').disabled = false;
+        document.getElementById('no_hp').value = '';
+        document.getElementById('no_hp').required = true;
+        document.getElementById('alamat').value = '';
         // nama required
         document.getElementById('nama').required = true;
 

@@ -56,6 +56,7 @@ class KeranjangJual extends Model
 
             $keranjang = $this->where('user_id', auth()->user()->id)->get();
 
+
             if ($keranjang->isEmpty()) {
                 return [
                     'status' => 'error',
@@ -63,25 +64,27 @@ class KeranjangJual extends Model
                 ];
             }
 
+            $barang_ppn = $keranjang->first()->barang_ppn;
+
             $dbPajak = new Pajak();
             $dbInvoice = new InvoiceJual();
             $data['total'] = $keranjang->sum('total');
+            $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
+            $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
             $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
-            $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
-            $data['ppn'] = $keranjang->where('barang_ppn', 1)->first() ? ($data['total'] * $ppnVal / 100) : 0;
-            $data['pph'] = $data['apa_pph'] == '1' ? ($data['total'] * $pphVal / 100) : 0;
+            $dppSetelahDiskon = $data['total'] - $data['diskon'];
+            $data['ppn'] = $keranjang->where('barang_ppn', 1)->first() ? ($dppSetelahDiskon * $ppnVal / 100) : 0;
 
-            $data['nomor'] = $dbInvoice->generateNomor();
-            $data['kode'] = $data['nomor'] . '/' . date('m/Y').'/PT-IUP';
+            $data['kas_ppn'] = $barang_ppn;
+
+            $data['nomor'] = $dbInvoice->generateNomor($barang_ppn);
+            $data['kode'] = $dbInvoice->generateKode($barang_ppn);
 
             $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
 
-            $data['dp_ppn'] = $data['dp'] > 0 ? $data['dp'] * $ppnVal / 100 : 0;
+            $data['dp_ppn'] = $data['dp'] > 0 && $barang_ppn == 1 ? $data['dp'] * $ppnVal / 100 : 0;
 
-            unset($data['apa_pph']);
-
-            $data['grand_total'] = $data['total'] + $data['ppn'] - $data['pph'];
-
+            $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
 
             if ($data['konsumen_id'] == '*') {
                 $konsumen = KonsumenTemp::create([
@@ -89,6 +92,7 @@ class KeranjangJual extends Model
                     'no_hp' => isset($data['no_hp']) ?? null,
                     'npwp' => isset($data['npwp']) ?? null,
                     'alamat' => isset($data['alamat']) ?? null,
+                    'no_hp' => isset($data['no_hp']) ?? null,
                 ]);
                 unset($data['konsumen_id']);
                 $data['konsumen_temp_id'] = $konsumen->id;
@@ -222,9 +226,21 @@ class KeranjangJual extends Model
             }
 
             $this->where('user_id', auth()->user()->id)->delete();
-            DB::commit();
+
+            // DB::commit();
 
             if ($waState == 1) {
+                if ($barang_ppn == 1) {
+                    $addPesan = "Sisa Saldo Kas Besar: \n".
+                                "Rp. ".number_format($dbKas->saldoTerakhir(1), 0, ',', '.')."\n\n".
+                                "Total Modal Investor PPN: \n".
+                                "Rp. ".number_format($dbKas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
+                 } else {
+                     $addPesan = "Sisa Saldo Kas Besar: \n".
+                                 "Rp. ".number_format($dbKas->saldoTerakhir(0), 0, ',', '.')."\n\n".
+                                 "Total Modal Investor Non PPN: \n".
+                                 "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
+                 }
                 $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*FORM PENJUALAN*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -236,10 +252,7 @@ class KeranjangJual extends Model
                             "Nama    : ".$store->nama_rek."\n".
                             "No. Rek : ".$store->no_rek."\n\n".
                             "==========================\n".
-                            "Sisa Saldo Kas Besar : \n".
-                            "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                            "Total Modal Investor : \n".
-                            "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                            $addPesan.
                             "Terima kasih 🙏🙏🙏\n";
 
                 $group = GroupWa::where('untuk', $untukRekening)->first()->nama_group;
@@ -256,7 +269,8 @@ class KeranjangJual extends Model
 
         return [
             'status' => 'success',
-            'message' => 'Transaksi berhasil'
+            'message' => 'Transaksi berhasil',
+            'invoice' => $invoice
         ];
     }
 
