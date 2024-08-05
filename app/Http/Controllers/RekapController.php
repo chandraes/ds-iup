@@ -497,4 +497,13 @@ class RekapController extends Controller
             'data' => $data
         ]);
     }
+
+    public function invoice_penjualan_detail(InvoiceJual $invoice)
+    {
+        $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+
+        return view('rekap.invoice-penjualan.detail', [
+            'data' => $data
+        ]);
+    }
 }

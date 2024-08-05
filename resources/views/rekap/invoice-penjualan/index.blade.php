@@ -59,7 +59,7 @@
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
                     <td class="text-center align-middle">
-                        <a href="{{route('billing.invoice-konsumen.detail', $d)}}">
+                        <a href="{{route('rekap.invoice-penjualan.detail', $d)}}">
                             {{$d->kode}}
                         </a>
 
