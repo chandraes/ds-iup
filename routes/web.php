@@ -281,6 +281,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'inventaris'])->name('rekap.inventaris');
                 Route::get('/{jenis}', [App\Http\Controllers\RekapController::class, 'inventaris_detail'])->name('rekap.inventaris.detail');
             });
+
+            Route::prefix('invoice-penjualan')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
+            });
         });
     });
 

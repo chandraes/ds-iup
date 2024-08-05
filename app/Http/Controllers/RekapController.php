@@ -488,4 +488,13 @@ class RekapController extends Controller
             'inventaris' => $jenis->load('kategori'),
         ]);
     }
+
+    public function invoice_penjualan()
+    {
+        $data = InvoiceJual::with('konsumen')->where('lunas', 1)->where('void', 0)->get();
+
+        return view('rekap.invoice-penjualan.index', [
+            'data' => $data
+        ]);
+    }
 }

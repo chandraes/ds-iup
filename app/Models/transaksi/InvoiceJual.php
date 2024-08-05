@@ -3,6 +3,7 @@
 namespace App\Models\transaksi;
 
 use App\Models\db\Konsumen;
+use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KonsumenTemp;
 use App\Models\PpnKeluaran;
@@ -111,14 +112,60 @@ class InvoiceJual extends Model
                 'uraian' => 'Pelunasan ' . $inv->kode,
                 'jenis' => '1',
                 'nominal' => $sisa_tagihan,
-                'saldo' => $kas->saldoTerakhir($inv->kas_ppn) + $sisa_tagihan,
+                'saldo' => $kas->saldoTerakhir($kas_ppn) + $sisa_tagihan,
                 'nama_rek' => $rekening->nama_rek,
                 'no_rek' => $rekening->no_rek,
                 'bank' => $rekening->bank,
-                'modal_investor_terakhir' => $kas->modalInvestorTerakhir($inv->kas_ppn),
+                'modal_investor_terakhir' => $kas->modalInvestorTerakhir($kas_ppn),
             ]);
 
-            // DB::commit();
+            $inv->update([
+                'lunas' => 1,
+            ]);
+
+            DB::commit();
+
+            $getKas = $kas->getKas();
+
+            $dbPpnKeluaran = new PpnKeluaran();
+            $ppnKeluaran = $dbPpnKeluaran->saldoTerakhir();
+
+            if ($kas_ppn == 1) {
+                $addPesan = "Sisa Saldo Kas Besar: \n".
+                            "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            "Total Modal Investor PPN: \n".
+                            "Rp. ".number_format($kas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
+             } else {
+                 $addPesan = "Sisa Saldo Kas Besar: \n".
+                             "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                             "Total Modal Investor Non PPN: \n".
+                             "Rp. ".number_format($getKas['modal_investor_non_ppn'], 0, ',', '.')."\n\n";
+             }
+            //  dd($kasMana);
+            $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                        "*PELUNASAN JUAL BARANG*\n".
+                        "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                        "Uraian :  *".$store->uraian."*\n\n".
+                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank      : ".$store->bank."\n".
+                        "Nama    : ".$store->nama_rek."\n".
+                        "No. Rek : ".$store->no_rek."\n\n".
+                        "==========================\n".
+                        $addPesan.
+                        "Total PPn Keluaran : \n".
+                        "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+            $group = GroupWa::where('untuk', $kasMana)->first()->nama_group;
+            //  dd($group);
+            $kas->sendWa($group, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil melunasi invoice!!'
+            ];
+
         } catch (\Throwable $th) {
             DB::rollBack();
             return ['status' => 'error', 'message' => $th->getMessage()];
