@@ -6,8 +6,12 @@ use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\GroupWa;
+use App\Models\KasBesar;
+use App\Models\KasKonsumen;
 use App\Models\KonsumenTemp;
 use App\Models\PpnKeluaran;
+use App\Models\Rekening;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -62,9 +66,36 @@ class KeranjangJual extends Model
                 ]);
                 unset($data['konsumen_id']);
                 $data['konsumen_temp_id'] = $konsumen->id;
+                $data['lunas'] = 1;
             } else {
                 $konsumen = Konsumen::find($data['konsumen_id']);
+
+                $data['lunas'] = $konsumen->pembayaran == 1 ? 1 : 0;
+
+                if($konsumen->pembayaran == 2) {
+                    $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+                    if ($sisaTerakhir + $data['grand_total'] > $konsumen->plafon) {
+                        return [
+                            'status' => 'error',
+                            'message' => 'Plafon konsumen sudah melebihi batas.'
+                        ];
+                    }
+                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                        ->where('lunas', 0)
+                        ->where('jatuh_tempo', '>', now())
+                        ->exists();
+
+                    if ($checkInvoice) {
+                        return [
+                            'status' => 'error',
+                            'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.'
+                        ];
+                    }
+                }
+
             }
+
+            $stateBayar = $data['lunas'] == 1 ? 1 : 0;
 
             $dbPajak = new Pajak();
             $dbInvoice = new InvoiceJual();
@@ -99,8 +130,77 @@ class KeranjangJual extends Model
 
             $this->update_stok($keranjang);
 
+            if (isset($data['konsumen_id'])) {
+                $dbKasKonsumen = new KasKonsumen();
+                $sisaTerakhirKonsumen = $dbKasKonsumen->sisaTerakhir($konsumen->id);
+                $isPembayaranTunai = $konsumen->pembayaran == 1;
+
+                $sisaTerakhirKonsumen = $isPembayaranTunai
+                    ? $sisaTerakhirKonsumen - $data['grand_total']
+                    : $sisaTerakhirKonsumen + $data['grand_total'];
+
+                $sisa = $isPembayaranTunai && $sisaTerakhirKonsumen < 0
+                    ? 0
+                    : $sisaTerakhirKonsumen;
+
+                $dbKasKonsumen->create([
+                    'konsumen_id' => $konsumen->id,
+                    'uraian' => $invoice->kode,
+                    $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total'],
+                    'sisa' => $sisa,
+                ]);
+            }
+
+            $waState = 0;
+            $dbKas = new KasBesar();
+
+            if ($stateBayar == 1) {
+
+                $ppn_kas = $data['ppn'] > 0 ? 1 : 0;
+                $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+                $rekening = Rekening::where('untuk', $untukRekening)->first();
+
+                $store = $dbKas->create([
+                    'ppn_kas' => $ppn_kas,
+                    'invoice_jual_id' => $invoice->id,
+                    'nominal' => $data['grand_total'],
+                    'uraian' => 'Penjualan '.$invoice->kode,
+                    'jenis' => 1,
+                    'saldo' => $dbKas->saldoTerakhir($ppn_kas) + $data['grand_total'],
+                    'no_rek' => $rekening->no_rek,
+                    'nama_rek' => $rekening->nama_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $dbKas->modalInvestorTerakhir($ppn_kas),
+                ]);
+
+                $waState = 1;
+            }
+
             $this->where('user_id', auth()->user()->id)->delete();
             // DB::commit();
+
+            if ($waState == 1) {
+                $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                            "*FORM PENJUALAN*\n".
+                            "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                            "Invoice : *".$invoice->kode."*\n\n".
+                            "Konsumen : *".$konsumen->nama."*\n".
+                            "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            "Bank      : ".$store->bank."\n".
+                            "Nama    : ".$store->nama_rek."\n".
+                            "No. Rek : ".$store->no_rek."\n\n".
+                            "==========================\n".
+                            "Sisa Saldo Kas Besar : \n".
+                            "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                            "Total Modal Investor : \n".
+                            "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                            "Terima kasih 🙏🙏🙏\n";
+
+                $group = GroupWa::where('untuk', $untukRekening)->first()->nama_group;
+                $dbKas->sendWa($group, $pesan);
+            }
+
         } catch (\Throwable $th) {
             DB::rollBack();
             return [

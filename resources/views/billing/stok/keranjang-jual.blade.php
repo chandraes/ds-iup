@@ -40,7 +40,7 @@
                                     <select class="form-select" name="konsumen_id" id="konsumen_id" required
                                         onchange="getKonsumenData()">
                                         <option value="" disabled selected>-- Pilih Konsumen --</option>
-                                        <option value="*" selected>INPUT MANUAL</option>
+                                        <option value="*">INPUT MANUAL</option>
                                         @foreach ($konsumen as $k)
                                         <option value="{{$k->id}}">{{$k->nama}}</option>
                                         @endforeach
