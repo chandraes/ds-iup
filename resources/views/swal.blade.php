@@ -1,10 +1,11 @@
+
 @if (session('success'))
 <script>
-    Swal.fire(
-            'Berhasil!',
-            '{{session('success')}}',
-            'success'
-        )
+    Swal.fire({
+        title: 'Berhasil!',
+        text: '{{ session('success') }}',
+        icon: 'success'
+    });
 </script>
 @endif
 @if (session('error'))

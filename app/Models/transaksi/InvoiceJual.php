@@ -18,6 +18,7 @@ class InvoiceJual extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_pph', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
 
     public function getTanggalAttribute()
     {
@@ -34,15 +35,16 @@ class InvoiceJual extends Model
         return number_format($this->total, 0, ',', '.');
     }
 
+    public function getDppSetelahDiskon()
+    {
+        return number_format($this->total - $this->diskon, 0, ',', '.') ?? 0;
+    }
+
     public function getNfPpnAttribute()
     {
         return number_format($this->ppn, 0, ',', '.');
     }
 
-    public function getNfPphAttribute()
-    {
-        return number_format($this->pph, 0, ',', '.');
-    }
 
     public function getNfGrandTotalAttribute()
     {
@@ -51,12 +53,12 @@ class InvoiceJual extends Model
 
     public function getNfDpAttribute()
     {
-        return number_format($this->dp, 0, ',', '.');
+        return number_format($this->dp, 0, ',', '.') ?? 0;
     }
 
     public function getNfDpPpnAttribute()
     {
-        return number_format($this->dp_ppn, 0, ',', '.');
+        return number_format($this->dp_ppn, 0, ',', '.') ?? 0;
     }
 
     public function getSisaPpnAttribute()

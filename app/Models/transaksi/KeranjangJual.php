@@ -110,9 +110,11 @@ class KeranjangJual extends Model
                             'message' => 'Plafon konsumen sudah melebihi batas.'
                         ];
                     }
+
                     $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
                         ->where('lunas', 0)
-                        ->where('jatuh_tempo', '>', now())
+                        ->where('void', 0)
+                        ->where('jatuh_tempo', '<', today())
                         ->exists();
 
                     if ($checkInvoice) {

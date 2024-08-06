@@ -382,7 +382,14 @@
         </table>
     </div>
 </div>
-
+@if(session('pdfUrl'))
+    <script type="text/javascript">
+        window.onload = function() {
+            var pdfUrl = "{{ session('pdfUrl') }}";
+            window.open(pdfUrl, '_blank');
+        };
+    </script>
+@endif
 @endsection
 @push('css')
 {{--
