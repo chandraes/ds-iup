@@ -1,6 +1,6 @@
 @extends('layouts.doc')
 @push('header')
-<img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" width="150">
+<img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
 <div class="header-div">
     <h3 style="margin-top: 20px; margin-bottom:0; padding: 0;">{{$pt->nama}}</h3>
     <p style="font-size:10px">{{$pt->alamat}}</p>

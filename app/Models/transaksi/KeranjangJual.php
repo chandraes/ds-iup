@@ -229,7 +229,7 @@ class KeranjangJual extends Model
 
             $this->where('user_id', auth()->user()->id)->delete();
 
-            DB::commit();
+            // DB::commit();
 
             if ($waState == 1) {
                 if ($barang_ppn == 1) {
