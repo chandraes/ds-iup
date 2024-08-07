@@ -17,6 +17,7 @@ use App\Services\StarSender;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class RekapController extends Controller
 {
@@ -501,9 +502,13 @@ class RekapController extends Controller
     public function invoice_penjualan_detail(InvoiceJual $invoice)
     {
         $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+        $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
 
         return view('rekap.invoice-penjualan.detail', [
-            'data' => $data
+            'data' => $data,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
         ]);
     }
 }

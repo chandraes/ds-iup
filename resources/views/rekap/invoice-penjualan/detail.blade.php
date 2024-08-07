@@ -22,32 +22,86 @@
 </div>
 <div class="container table-responsive ml-3">
     <div class="row">
-        <div class="col-md-8">
-            <div class="form-group row mt-2">
-                <label class="col-form-label col-md-3">Invoice :</label>
-                <div class="col-md-8">
-                    <input type="text" name="invoice" id="invoice" class="form-control" value="{{$data->kode}}"
-                        disabled>
-                </div>
-            </div>
-            <div class="form-group row mt-2">
-                <label class="col-form-label col-md-3">Konsumen :</label>
-                <div class="col-md-8">
-                    <input type="text" name="konsumen" id="konsumen" class="form-control" value="{{$data->konsumen->nama}}"
-                        disabled>
-                </div>
-            </div>
-            <div class="form-group row mt-2">
-                <label class="col-form-label col-md-3">Sistem Pembayaran :</label>
-                <div class="col-md-8">
-                    <input type="text" name="pembayaran" id="pembayaran" class="form-control" value="{{$data->konsumen->sistem_pembayaran}}"
-                        disabled>
-                </div>
-            </div>
-            <div class="form-group row mt-2">
-                <label class="col-form-label col-md-3">Alamat :</label>
-                <div class="col-md-8">
-                    <textarea name="alamat" id="alamat" class="form-control" disabled>{{$data->konsumen->alamat}}</textarea>
+        <div class="col-md-12 my-3">
+            <div class="row" id="konsumenRow">
+                <div class="row invoice-info">
+                    <div class="col-md-6 invoice-col">
+                        <table style="width: 90%">
+                            <tr>
+                                <td class="text-start align-middle">Konsumen</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                    {{$data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-start align-middle">Sistem Pembayaran</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                    {{$data->konsumen ? $data->konsumen->sistem_pembayaran : 'Cash'}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-start align-middle">Tempo</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                    {{$data->konsumen ? $data->konsumen->tempo_hari . ' Hari' : '-'}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-start align-middle">NPWP</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                    {{$data->konsumen ? $data->konsumen->npwp : $data->konsumen_temp->npwp}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-start align-middle">Alamat</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                    {{$data->konsumen ? $data->konsumen->alamat : $data->konsumen_temp->alamat}}
+                                </td>
+                            </tr>
+
+                        </table>
+                    </div>
+                    <!-- /.col -->
+                    <div class="col-md-6 invoice-col" >
+                        <div class="row d-flex justify-content-end">
+                            <table style="width: 90%">
+                                <tr>
+                                    <td class="text-start align-middle">Invoice</td>
+                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle">
+                                        <strong>
+                                            {{$data->kode}}
+                                        </strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start align-middle">Tanggal</td>
+                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle">
+                                        {{$tanggal}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start align-middle">Jam</td>
+                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle">
+                                        {{$jam}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start align-middle">No WA</td>
+                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle">
+                                        {{$data->konsumen ? $data->konsumen->no_hp : $data->konsumen_temp->no_hp}}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -61,9 +62,13 @@ class InvoiceController extends Controller
     public function invoice_konsumen_detail(InvoiceJual $invoice)
     {
         $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+        $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
+            $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
 
         return view('billing.invoice-konsumen.detail', [
-            'data' => $data
+            'data' => $data,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
         ]);
     }
 
