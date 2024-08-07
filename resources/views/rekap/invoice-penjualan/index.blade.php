@@ -47,9 +47,9 @@
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
+                    <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
-                    <th class="text-center align-middle">PPh</th>
-                    {{-- <th class="text-center align-middle">Add Fee</th> --}}
+                    <th class="text-center align-middle">Penyesuaian</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
                 </tr>
             </thead>
@@ -66,7 +66,6 @@
                     </td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
                     <td class="text-end align-middle">{{$d->nf_ppn}}</td>
-                    <td class="text-end align-middle">{{$d->nf_pph}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                 </tr>
                 @endforeach
