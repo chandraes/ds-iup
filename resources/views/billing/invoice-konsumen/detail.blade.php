@@ -112,9 +112,11 @@
                 <tr>
                     <th class="text-center align-middle">Unit</th>
                     <th class="text-center align-middle">Type</th>
-                    <th class="text-center align-middle">Kategori</th>
-                    <th class="text-center align-middle">Barang</th>
-                    <th class="text-center align-middle">Qty</th>
+                    <th class="text-center align-middle">Kategori Barang</th>
+                    <th class="text-center align-middle">Nama Barang</th>
+                    <th class="text-center align-middle">Kode Barang</th>
+                    <th class="text-center align-middle">Merk Barang</th>
+                    <th class="text-center align-middle">Banyak</th>
                     <th class="text-center align-middle">Satuan</th>
                     <th class="text-center align-middle">Harga Satuan</th>
                     <th class="text-center align-middle">Total</th>
@@ -136,6 +138,12 @@
                         {{$d->stok->barang_nama->nama}}
                     </td>
                     <td class="text-center align-middle">
+                        {{$d->stok->barang->kode}}
+                    </td>
+                    <td class="text-center align-middle">
+                        {{$d->stok->barang->merk}}
+                    </td>
+                    <td class="text-center align-middle">
                         {{$d->nf_jumlah}}
                     </td>
                     <td class="text-center align-middle">
@@ -152,43 +160,49 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Total DPP</th>
-                    <th class="text-end align-middle">{{$data->dpp}}</th>
+                    <th style="text-align: right" colspan="9">Total DPP : </th>
+                    <th style="text-align: right">{{$data->dpp}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Ppn</th>
-                    <th class="text-end align-middle">{{$data->nf_ppn}}</th>
+                    <th style="text-align: right" colspan="9">Diskon : </th>
+                    <th style="text-align: right">{{number_format($data->diskon, 0 ,',', '.')}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Pph</th>
-                    <th class="text-end align-middle">{{$data->nf_pph}}</th>
-                </tr>
-                {{-- <tr>
-                    <th class="text-end align-middle" colspan="7">Additional Fee</th>
-                    <th class="text-end align-middle">{{$data->nf_add_fee}}</th>
-                </tr> --}}
-                <tr>
-                    <th class="text-end align-middle" colspan="7">Grand Total</th>
-                    <th class="text-end align-middle">{{$data->nf_grand_total}}</th>
+                    <th style="text-align: right" colspan="9">DPP Setelah Diskon : </th>
+                    <th style="text-align: right">{{number_format($data->total-$data->diskon, 0 ,',', '.')}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">DP</th>
-                    <th class="text-end align-middle">{{$data->nf_dp}}</th>
+                    <th style="text-align: right" colspan="9">Ppn : </th>
+                    <th style="text-align: right">{{$data->nf_ppn}}</th>
+                </tr>
+                <tr>
+                    <th style="text-align: right" colspan="9">Penyesuaian : </th>
+                    <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
+                </tr>
+                <tr>
+                    <th style="text-align: right" colspan="9">Grand Total : </th>
+                    <th style="text-align: right">{{$data->nf_grand_total}}</th>
+                </tr>
+                @if ($data->konsumen && $data->konsumen->pembayaran == 2)
+                <tr>
+                    <th style="text-align: right" colspan="9">DP : </th>
+                    <th style="text-align: right">{{$data->nf_dp}}</th>
                 </tr>
                 @if ($data->ppn > 0)
                 <tr>
-                    <th class="text-end align-middle" colspan="7">DP PPn</th>
-                    <th class="text-end align-middle">{{$data->nf_dp_ppn}}</th>
+                    <th style="text-align: right" colspan="9">DP PPn : </th>
+                    <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
+                </tr>
+                <tr>
+                    <th style="text-align: right" colspan="9">Sisa PPN : </th>
+                    <th style="text-align: right">{{$data->sisa_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Sisa PPN</th>
-                    <th class="text-end align-middle">{{$data->sisa_ppn}}</th>
+                    <th style="text-align: right" colspan="9">Sisa Tagihan : </th>
+                    <th style="text-align: right">{{$data->sisa_tagihan}}</th>
                 </tr>
-                <tr>
-                    <th class="text-end align-middle" colspan="7">Sisa Tagihan</th>
-                    <th class="text-end align-middle">{{$data->sisa_tagihan}}</th>
-                </tr>
+                @endif
             </tfoot>
         </table>
 
