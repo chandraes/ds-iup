@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\db\CostOperational;
 use App\Models\transaksi\InvoiceBelanja;
+use App\Models\transaksi\InvoiceJual;
 use App\Services\StarSender;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,11 @@ class KasBesar extends Model
     public function invoice_belanja()
     {
         return $this->belongsTo(InvoiceBelanja::class);
+    }
+
+    public function invoice_jual()
+    {
+        return $this->belongsTo(InvoiceJual::class);
     }
 
     public function investorModal()

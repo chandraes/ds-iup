@@ -231,6 +231,8 @@ class KeranjangJual extends Model
 
             DB::commit();
 
+            $dpNt = 0;
+
             if ($waState == 1) {
                 if ($barang_ppn == 1) {
                     $addPesan = "Sisa Saldo Kas Besar: \n".
@@ -243,9 +245,12 @@ class KeranjangJual extends Model
                                  "Total Modal Investor Non PPN: \n".
                                  "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
                  }
+
                 $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*FORM PENJUALAN*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                            "No Invoice:\n".
+                            "*".$invoice->kode."*\n\n".
                             "Uraian : *".$store->uraian."*\n\n".
                             "Konsumen : *".$konsumen->nama."*\n".
                             "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".

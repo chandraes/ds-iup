@@ -25,6 +25,11 @@ class InvoiceJual extends Model
         return Carbon::parse($this->created_at)->format('d-m-Y');
     }
 
+    public function getFullKodeAttribute()
+    {
+        return  str_pad($this->nomor, 3, '0', STR_PAD_LEFT) . '/' . Carbon::parse($this->created_at)->format('Y');
+    }
+
     public function getIdJatuhTempoAttribute()
     {
         return Carbon::parse($this->jatuh_tempo)->format('d-m-Y');
