@@ -57,7 +57,7 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
+                    <td class="text-center align-middle">{{$d->konsumen ? $d->konsumen->nama : $d->konsumen_temp->nama}}</td>
                     <td class="text-center align-middle">
                         <a href="{{route('rekap.invoice-penjualan.detail', $d)}}">
                             {{$d->kode}}

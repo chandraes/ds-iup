@@ -45,6 +45,16 @@ class InvoiceJual extends Model
         return number_format($this->ppn, 0, ',', '.');
     }
 
+    public function getNfAddFeeAttribute()
+    {
+        return number_format($this->add_fee, 0, ',', '.');
+    }
+
+    public function getNfDiskonAttribute()
+    {
+        return number_format($this->diskon, 0, ',', '.');
+    }
+
 
     public function getNfGrandTotalAttribute()
     {

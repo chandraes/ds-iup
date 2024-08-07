@@ -249,8 +249,13 @@
     </div>
 </div>
 @endsection
+@push('css')
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
+@endpush
 @push('js')
-<script src="{{asset('assets/js/cleave.min.js')}}"></script>
+{{-- <script src="{{asset('assets/js/cleave.min.js')}}"></script> --}}
+<script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
     var add_fee = new Cleave('#add_fee', {
                 numeral: true,

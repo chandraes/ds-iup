@@ -47,9 +47,9 @@
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
+                    <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
-                    <th class="text-center align-middle">PPh</th>
-                    {{-- <th class="text-center align-middle">Add Fee</th> --}}
+                    <th class="text-center align-middle">Penyesuaian</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
                     <th class="text-center align-middle">DP<br>PPN</th>
@@ -71,8 +71,9 @@
 
                     </td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
+                    <td class="text-end align-middle">{{$d->nf_diskon}}</td>
                     <td class="text-end align-middle">{{$d->nf_ppn}}</td>
-                    <td class="text-end align-middle">{{$d->nf_pph}}</td>
+                    <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                     <td class="text-end align-middle">{{$d->nf_dp}}</td>
                     <td class="text-end align-middle">{{$d->nf_dp_ppn}}</td>
@@ -95,8 +96,9 @@
                 <tr>
                     <th class="text-end align-middle" colspan="3">Grand Toal</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('pph'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</th>
