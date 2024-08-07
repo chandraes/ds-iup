@@ -183,7 +183,7 @@
             "ordering": false,
             "searching": false,
             "scrollCollapse": true,
-            "scrollY": "550px",
+            "scrollY": "450px",
             "scrollX": true,
             "autoWidth": false,
         });
