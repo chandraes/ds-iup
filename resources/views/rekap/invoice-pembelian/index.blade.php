@@ -124,6 +124,8 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
+            // default sorting column 3
+            "order": [[ 2, "asc" ]],
         });
 
         $('#supplier_id').select2({
