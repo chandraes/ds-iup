@@ -28,8 +28,10 @@
                 <tr>
                     <th class="text-center align-middle">Unit</th>
                     <th class="text-center align-middle">Type</th>
-                    <th class="text-center align-middle">Kategori</th>
+                    <th class="text-center align-middle">Kelompok</th>
                     <th class="text-center align-middle">Barang</th>
+                    <th class="text-center align-middle">Kode</th>
+                    <th class="text-center align-middle">Merk</th>
                     <th class="text-center align-middle">Qty</th>
                     <th class="text-center align-middle">Satuan</th>
                     <th class="text-center align-middle">Harga Satuan</th>
@@ -40,7 +42,7 @@
                 @foreach ($data->items as $d)
                 <tr>
                     <td class="text-center align-middle">
-                        {{$d->barang->type->unit->nama}}
+                        {{$d->barang->unit->nama}}
                     </td>
                     <td class="text-center align-middle">
                         {{$d->barang->type->nama}}
@@ -48,14 +50,20 @@
                     <td class="text-center align-middle">
                         {{$d->barang->kategori->nama}}
                     </td>
+                    <td class="text-start align-middle">
+                        {{$d->barang->barang_nama->nama}}
+                    </td>
                     <td class="text-center align-middle">
-                        {{$d->nama}}
+                        {{$d->barang->kode}}
+                    </td>
+                    <td class="text-center align-middle">
+                        {{$d->barang->merk}}
                     </td>
                     <td class="text-center align-middle">
                         {{$d->nf_jumlah}}
                     </td>
                     <td class="text-center align-middle">
-                        bh
+                        {{$d->barang->satuan ? $d->barang->satuan->nama : '-'}}
                     </td>
                     <td class="text-end align-middle">
                         {{$d->nf_harga}}
@@ -68,48 +76,48 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Total DPP</th>
+                    <th class="text-end align-middle" colspan="9">Total DPP</th>
                     <th class="text-end align-middle">{{$data->dpp}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Diskon</th>
+                    <th class="text-end align-middle" colspan="9">Diskon</th>
                     <th class="text-end align-middle">{{$data->nf_diskon}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Total DPP Setelah Diskon</th>
+                    <th class="text-end align-middle" colspan="9">Total DPP Setelah Diskon</th>
                     <th class="text-end align-middle">{{$data->dpp_setelah_diskon}}</th>
                 </tr>
                 @if ($data->kas_ppn == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="7">PPN</th>
+                    <th class="text-end align-middle" colspan="9">PPN</th>
                     <th class="text-end align-middle">{{$data->nf_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Additional Fee</th>
+                    <th class="text-end align-middle" colspan="9">Penyesuaian</th>
                     <th class="text-end align-middle">{{$data->nf_add_fee}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Grand Total</th>
+                    <th class="text-end align-middle" colspan="9">Grand Total</th>
                     <th class="text-end align-middle">{{$data->nf_total}}</th>
                 </tr>
                 @if ($data->tempo == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="7">DP</th>
+                    <th class="text-end align-middle" colspan="9">DP</th>
                     <th class="text-end align-middle">{{$data->nf_dp}}</th>
                 </tr>
                 @if ($data->kas_ppn == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="7">DP PPN</th>
+                    <th class="text-end align-middle" colspan="9">DP PPN</th>
                     <th class="text-end align-middle">{{$data->nf_dp_ppn}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Sisa PPN</th>
+                    <th class="text-end align-middle" colspan="9">Sisa PPN</th>
                     <th class="text-end align-middle">{{$data->nf_sisa_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
-                    <th class="text-end align-middle" colspan="7">Sisa Tagihan</th>
+                    <th class="text-end align-middle" colspan="9">Sisa Tagihan</th>
                     <th class="text-end align-middle">{{$data->nf_sisa}}</th>
                 </tr>
                 @endif
