@@ -150,12 +150,18 @@ class Keranjang extends Model
                     $addPesan = "Sisa Saldo Kas Besar: \n".
                                 "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
                                 "Total Modal Investor PPN: \n".
-                                "Rp. ".number_format($getKas['modal_investor_ppn'], 0, ',', '.')."\n\n";
+                                "Rp. ".number_format($getKas['modal_investor_ppn'], 0, ',', '.')."\n\n".
+                                "Grand Total Modal Investor : \n".
+                                "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                                "Total PPn Masukan : \n".
+                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n";
                 } else {
                     $addPesan = "Sisa Saldo Kas Besar: \n".
                                 "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
                                 "Total Modal Investor Non PPN: \n".
-                                "Rp. ".number_format($getKas['modal_investor_non_ppn'], 0, ',', '.')."\n\n";
+                                "Rp. ".number_format($getKas['modal_investor_non_ppn'], 0, ',', '.')."\n\n".
+                                "Grand Total Modal Investor : \n".
+                                "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n";
                 }
 
                 $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -170,10 +176,6 @@ class Keranjang extends Model
                             "No. Rek : ".$store->no_rek."\n\n".
                             "==========================\n".
                             $addPesan.
-                            "Grand Total Modal Investor : \n".
-                            "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
-                            "Total PPn Masukan : \n".
-                            "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
                 $groupName = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
