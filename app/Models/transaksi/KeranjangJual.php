@@ -229,7 +229,7 @@ class KeranjangJual extends Model
 
             $this->where('user_id', auth()->user()->id)->delete();
 
-            // DB::commit();
+            DB::commit();
 
             $dpNt = 0;
 
@@ -284,7 +284,7 @@ class KeranjangJual extends Model
 
     private function generateInvoicePdf($invoice)
     {
-        
+
     }
 
     private function update_stok($keranjang)
