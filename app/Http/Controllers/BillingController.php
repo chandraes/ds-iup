@@ -155,6 +155,8 @@ class BillingController extends Controller
                     'bank' => 'required',
                 ]);
 
+        $data['ppn_kas'] = 1;
+
         $db = new KasBesar();
 
         $res = $db->cost_operational($data);

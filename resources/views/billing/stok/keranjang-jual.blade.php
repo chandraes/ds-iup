@@ -257,6 +257,11 @@
 {{-- <script src="{{asset('assets/js/cleave.min.js')}}"></script> --}}
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+
+    $('#konsumen_id').select2({
+        width: '100%',
+    });
+
     var add_fee = new Cleave('#add_fee', {
                 numeral: true,
                 negative: true,

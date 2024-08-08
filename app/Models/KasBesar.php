@@ -733,7 +733,7 @@ class KasBesar extends Model
         $data['jenis'] = 0;
         $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
 
-        if ($data['saldo'] < $data['nominal']) {
+        if ($this->saldoTerakhir($data['ppn_kas']) < $data['nominal']) {
             return [
                 'status' => 'error',
                 'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($this->saldoTerakhir($data['ppn_kas']), 0, ',', '.'),
