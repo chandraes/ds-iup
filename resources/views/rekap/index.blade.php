@@ -37,7 +37,7 @@
             </a>
         </div>
         <div class="col-lg-3 mt-3 mb-3 text-center">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('rekap.invoice-pembelian')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-invoice.svg')}}" alt="" width="70">
                 <h3 class="mt-2">INVOICE PEMBELIAN</h3>
             </a>

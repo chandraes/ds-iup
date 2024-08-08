@@ -89,10 +89,9 @@ class KeranjangJual extends Model
             if ($data['konsumen_id'] == '*') {
                 $konsumen = KonsumenTemp::create([
                     'nama' => $data['nama'],
-                    'no_hp' => isset($data['no_hp']) ?? null,
-                    'npwp' => isset($data['npwp']) ?? null,
-                    'alamat' => isset($data['alamat']) ?? null,
-                    'no_hp' => isset($data['no_hp']) ?? null,
+                    'no_hp' => isset($data['no_hp']) ? $data['no_hp'] : null,
+                    'npwp' => isset($data['npwp']) ? $data['npwp'] : null,
+                    'alamat' => isset($data['alamat']) ? $data['alamat'] : null,
                 ]);
                 unset($data['konsumen_id']);
                 $data['konsumen_temp_id'] = $konsumen->id;
@@ -188,12 +187,13 @@ class KeranjangJual extends Model
                 $ppn_kas = $data['ppn'] > 0 ? 1 : 0;
                 $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
                 $rekening = Rekening::where('untuk', $untukRekening)->first();
-
+                $pembayaran = 'Lunas';
+                $uraian = 'Cash';
                 $store = $dbKas->create([
                     'ppn_kas' => $ppn_kas,
                     'invoice_jual_id' => $invoice->id,
                     'nominal' => $data['grand_total'],
-                    'uraian' => 'Penjualan '.$invoice->kode,
+                    'uraian' => 'Cash Lunas',
                     'jenis' => 1,
                     'saldo' => $dbKas->saldoTerakhir($ppn_kas) + $data['grand_total'],
                     'no_rek' => $rekening->no_rek,
@@ -229,7 +229,7 @@ class KeranjangJual extends Model
 
             $this->where('user_id', auth()->user()->id)->delete();
 
-            DB::commit();
+            // DB::commit();
 
             $dpNt = 0;
 
@@ -251,7 +251,8 @@ class KeranjangJual extends Model
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                             "No Invoice:\n".
                             "*".$invoice->kode."*\n\n".
-                            "Uraian : *".$store->uraian."*\n\n".
+                            "Uraian : *".$uraian."*\n".
+                            "Pembayaran : *".$pembayaran."*\n\n".
                             "Konsumen : *".$konsumen->nama."*\n".
                             "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
                             "Ditransfer ke rek:\n\n".
@@ -279,6 +280,11 @@ class KeranjangJual extends Model
             'message' => 'Transaksi berhasil',
             'invoice' => $invoice
         ];
+    }
+
+    private function generateInvoicePdf($invoice)
+    {
+        
     }
 
     private function update_stok($keranjang)

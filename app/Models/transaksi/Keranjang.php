@@ -230,7 +230,7 @@ class Keranjang extends Model
         $supplier = Supplier::find($data['supplier_id']);
 
         $invoice = [
-            'nomor' => $db->generateNomor(),
+            'nomor' => $db->generateNomor($data['kas_ppn']),
             'kas_ppn' => $data['kas_ppn'],
             'uraian' => $data['uraian'],
             'ppn' => $data['ppn'],

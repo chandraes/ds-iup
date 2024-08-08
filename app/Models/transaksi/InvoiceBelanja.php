@@ -55,9 +55,9 @@ class InvoiceBelanja extends Model
         return number_format($this->raw_dpp - $this->diskon, 0, ',', '.');
     }
 
-    public function generateNomor()
+    public function generateNomor($kas_ppn)
     {
-        return $this->max('nomor') + 1;
+        return $this->where('kas_ppn', $kas_ppn)->max('nomor') + 1;
     }
 
     public function supplier()

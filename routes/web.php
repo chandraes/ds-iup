@@ -236,9 +236,6 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/{kas}/void', [App\Http\Controllers\RekapController::class, 'void_kas_kecil'])->name('rekap.kas-kecil.void');
             });
 
-            Route::get('/invoice', [App\Http\Controllers\RekapController::class, 'rekap_invoice'])->name('rekap.invoice');
-            Route::get('/invoice/detail-project', [App\Http\Controllers\RekapController::class, 'rekap_invoice_detail_project'])->name('rekap.invoice.detail-project');
-
             Route::get('/statistik/{customer}', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik.index');
             Route::get('/statistik/{customer}/print', [App\Http\Controllers\StatistikController::class, 'print'])->name('statistik.print');
 
@@ -285,6 +282,11 @@ Route::group(['middleware' => ['auth']], function() {
             Route::prefix('invoice-penjualan')->group(function(){
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
+            });
+
+            Route::prefix('invoice-pembelian')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_pembelian'])->name('rekap.invoice-pembelian');
+                Route::get('/detail/{invoice}', [App\Http\Controllers\RekapController::class, 'invoice_pembelian_detail'])->name('rekap.invoice-pembelian.detail');
             });
         });
     });

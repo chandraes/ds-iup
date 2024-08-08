@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
 use App\Models\db\Konsumen;
+use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\InvestorModal;
 use App\Models\KasBesar;
@@ -12,6 +13,7 @@ use App\Models\KasKecil;
 use App\Models\KasKonsumen;
 use App\Models\PesanWa;
 use App\Models\RekapGaji;
+use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
@@ -509,6 +511,20 @@ class RekapController extends Controller
             'data' => $data,
             'jam' => $jam,
             'tanggal' => $tanggal,
+        ]);
+    }
+
+    public function invoice_pembelian()
+    {
+        $data = InvoiceBelanja::with(['supplier'])->where('tempo', 0)->where('void', 0)->get();
+        // get unique supplier_id from $data
+        $supplierIds = $data->pluck('supplier_id')->unique();
+
+        $supplier = Supplier::where('status', 1)->whereIn('id', $supplierIds)->get();
+
+        return view('rekap.invoice-pembelian.index', [
+            'data' => $data,
+            'supplier' => $supplier
         ]);
     }
 }
