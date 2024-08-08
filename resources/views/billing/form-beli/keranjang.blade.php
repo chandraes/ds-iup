@@ -264,6 +264,7 @@
                             </td>
                             <td class="text-center align-middle"></td>
                         </tr>
+                        @if ($req['kas_ppn'] == 1)
                         <tr>
                             <td class="text-end align-middle" colspan="9">DP PPN</td>
                             <td class="text-end align-middle" id="dpPPNtd">
@@ -285,6 +286,7 @@
                             </td>
                             <td class="text-center align-middle"></td>
                         </tr>
+                        @endif
                         <tr>
                             <td class="text-end align-middle" colspan="9">Sisa Tagihan</td>
                             <td class="text-end align-middle" id="sisa">

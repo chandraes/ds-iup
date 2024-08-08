@@ -76,8 +76,9 @@ class Keranjang extends Model
         // dd($data);
         $kas = new KasBesar();
         $saldo = $kas->saldoTerakhir($data['kas_ppn']);
-
-        if($saldo < $data['total']) {
+        
+        if ((isset($data['dp']) && $data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) ||
+            (!isset($data['dp']) || $data['dp'] <= 0) && $saldo < $data['total']) {
             return [
                 'status' => 'error',
                 'message' => 'Saldo kas tidak mencukupi!',

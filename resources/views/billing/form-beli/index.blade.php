@@ -141,7 +141,7 @@
 
         function add_diskon() {
             // Existing code to calculate discount and total after discount
-            var diskonT = document.getElementById('diskon').value;
+            var diskonT = document.getElementById('diskon').value ?? 0;
             var diskon = diskonT.replace(/\./g, '');
             var total = document.getElementById('tdTotal').textContent;
             total = total.replace(/\./g, '');
@@ -217,7 +217,7 @@
         }
 
         function add_dp_ppn(){
-            var apa_dp_ppn = document.getElementById('dp_ppn').value;
+            var apa_dp_ppn = document.getElementById('dp_ppn') ? document.getElementById('dp_ppn').value || 0 : 0;
             if(apa_dp_ppn === '1')
             {
                 var dp_ppn = document.getElementById('dp').value;
@@ -243,9 +243,13 @@
 
 
             } else {
-                document.getElementById('dpPPNtd').textContent = 0;
-                document.getElementById('sisaPPN').textContent = 0;
+                if (document.getElementById('dpPPNtd')) {
+                    document.getElementById('dpPPNtd').textContent = 0;
+                }
 
+                if (document.getElementById('sisaPPN')) {
+                    document.getElementById('sisaPPN').textContent = 0;
+                }
             }
 
             check_sisa();
@@ -256,22 +260,42 @@
             grand_total = parseInt(grand_total.replace(/\./g, ''), 10);
             var dp = document.getElementById('dpTd').textContent;
             dp = parseInt(dp.replace(/\./g, ''), 10);
-            var dpPPNtd = document.getElementById('dpPPNtd').textContent;
+            var dpPPNtd = document.getElementById('dpPPNtd') ? document.getElementById('dpPPNtd').textContent : '0';
             dpPPNtd = parseInt(dpPPNtd.replace(/\./g, ''), 10);
+
+            // Jika ingin memastikan dpPPNtd selalu berupa angka valid
+            if (isNaN(dpPPNtd)) {
+                dpPPNtd = 0;
+            }
 
             var sisa = grand_total - dp - dpPPNtd;
             var sisaF = sisa.toLocaleString('id-ID');
-
-            var tdPPN = document.getElementById('tdPpn').textContent;
+            console.log(sisaF);
+            var tdPPN = document.getElementById('tdPpn') ? document.getElementById('tdPpn').textContent : '0';
             tdPPN = parseInt(tdPPN.replace(/\./g, ''), 10);
 
+            if (isNaN(tdPPN)) {
+                tdPPN = 0;
+            }
+
             var sisaPPN = tdPPN - dpPPNtd;
+            console.log(sisaPPN);
             sisaPPN = sisaPPN.toFixed(0);
             document.getElementById('sisa').textContent = sisaF;
-            document.getElementById('sisaPPN').textContent = sisaPPN.toLocaleString('id-ID');
+
+            if (sisaPPN == 0) {
+                if (document.getElementById('sisaPPN'))
+                document.getElementById('sisaPPN').textContent = 0;
+            } else {
+                if (document.getElementById('sisaPPN'))
+                document.getElementById('sisaPPN').textContent = sisaPPN.toLocaleString('id-ID');
+
+            }
 
             var totalDp = dp + dpPPNtd;
             totalDp = totalDp.toFixed(0);
+
+            if (document.getElementById('totalDpTd'))
             document.getElementById('totalDpTd').textContent = totalDp.toLocaleString('id-ID');
 
         }
