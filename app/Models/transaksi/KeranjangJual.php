@@ -210,12 +210,13 @@ class KeranjangJual extends Model
                 $totalDP = $data['dp'] + $data['dp_ppn'];
                 $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
                 $rekening = Rekening::where('untuk', $untukRekening)->first();
-
+                $uraian = 'DP ';
+                $pembayaran = $konsumen->sistem_pembayaran. ' '. $konsumen->tempo_hari.' Hari';
                 $store = $dbKas->create([
                     'ppn_kas' => $ppn_kas,
                     'invoice_jual_id' => $invoice->id,
                     'nominal' => $totalDP,
-                    'uraian' => 'DP '.$invoice->kode,
+                    'uraian' => $uraian . ' '. $pembayaran,
                     'jenis' => 1,
                     'saldo' => $dbKas->saldoTerakhir($ppn_kas) + $totalDP,
                     'no_rek' => $rekening->no_rek,
