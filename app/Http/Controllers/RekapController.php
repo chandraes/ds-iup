@@ -514,9 +514,17 @@ class RekapController extends Controller
         ]);
     }
 
-    public function invoice_pembelian()
+    public function invoice_pembelian(Request $request)
     {
-        $data = InvoiceBelanja::with(['supplier'])->where('tempo', 0)->where('void', 0)->get();
+
+        $data = InvoiceBelanja::with(['supplier'])->where('tempo', 0)->where('void', 0);
+
+        if ($request->supplier_id && $request->supplier_id != '') {
+            $data->where('supplier_id', $request->supplier_id);
+        }
+
+        $data = $data->get();
+
         // get unique supplier_id from $data
         $supplierIds = $data->pluck('supplier_id')->unique();
 

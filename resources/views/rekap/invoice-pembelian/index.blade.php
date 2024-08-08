@@ -21,7 +21,7 @@
     </div>
     <div class="row">
         <div class="col-md-6">
-            <form action="{{ route('billing.invoice-supplier') }}" method="GET" class="form-inline">
+            <form action="{{ route('rekap.invoice-pembelian') }}" method="GET" class="form-inline">
                 <div class="form-group mb-2">
                     <label for="supplier_id" class="sr-only">Supplier:</label>
                     <select name="supplier_id" id="supplier_id" class="form-control">
@@ -32,7 +32,7 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">Filter</button>
-                <a href="{{ route('billing.invoice-supplier') }}" class="btn btn-secondary mb-2">Reset Filter</a>
+                <a href="{{ route('rekap.invoice-pembelian') }}" class="btn btn-secondary mb-2">Reset Filter</a>
             </form>
         </div>
     </div>
@@ -46,17 +46,13 @@
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Supplier</th>
                     <th class="text-center align-middle">Nota</th>
+                    <th class="text-center align-middle">Jenis<br>Barang</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
                     <th class="text-center align-middle">Add Fee</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
-                    <th class="text-center align-middle">DP</th>
-                    <th class="text-center align-middle">DP<br>PPN</th>
-                    <th class="text-center align-middle">Sisa<br>PPN</th>
-                    <th class="text-center align-middle">Sisa<br>Tagihan</th>
-                    <th class="text-center align-middle">Jatuh<br>Tempo</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,6 +64,13 @@
                         <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
                             {{$d->kode}}
                         </a>
+                    </td>
+                    <td class="text-center align-middle">
+                        @if($d->kas_ppn == 1)
+                        <span class="badge bg-success">PPN</span>
+                        @else
+                        <span class="badge bg-danger">NON PPN</span>
+                        @endif
                     </td>
                     <td class="text-start align-middle">{{$d->uraian}}</td>
                     <td class="text-end align-middle">
@@ -85,21 +88,6 @@
                     <td class="text-end align-middle">
                         {{$d->nf_total}}
                     </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_dp}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_dp_ppn}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_sisa_ppn}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_sisa}}
-                    </td>
-                    <td class="text-center align-middle">
-                        {{$d->id_jatuh_tempo}}
-                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -111,11 +99,6 @@
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('sisa_ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('sisa'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>
 
