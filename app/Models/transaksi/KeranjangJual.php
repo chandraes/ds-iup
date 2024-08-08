@@ -247,6 +247,15 @@ class KeranjangJual extends Model
                                  "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
                  }
 
+                 if ($konsumen->pembayaran == 2) {
+                    $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+                    $plafon = $konsumen->plafon;
+                    $addPesan .= "Total Tagihan Konsumen: \n".
+                                "Rp. ".number_format($sisaTerakhir, 0, ',', '.')."\n\n".
+                                "Plafon Konsumen: \n".
+                                "Rp. ".number_format($plafon, 0, ',', '.')."\n\n";
+                 }
+
                 $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*FORM PENJUALAN*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
