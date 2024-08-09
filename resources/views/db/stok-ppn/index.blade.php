@@ -109,12 +109,12 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
+                    <th class="text-center align-middle">Stok<br>Barang</th>
+                    <th class="text-center align-middle">Satuan<br>Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
-                    <th class="text-center align-middle">Stok<br>Barang</th>
-                    <th class="text-center align-middle">Satuan</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Margin<br>Profit</th>
@@ -169,6 +169,9 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
+                    <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
+                    <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
+                        $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php
                     $totalHargaBeli = ($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) *
                     $stokHarga->stok;
@@ -189,9 +192,7 @@
                     <td class="text-end align-middle">
                         {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
                     </td>
-                    <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
-                    <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
-                        $stokHarga->barang->satuan->nama : '-' }}</td>
+
                     <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
                     <td class="text-center align-middle">{{ number_format($totalHargaJual, 0, ',','.') }}</td>
                     <td class="text-end align-middle @if ($margin < 10)
