@@ -150,7 +150,7 @@ class Keranjang extends Model
             $this->where('user_id', auth()->user()->id)->where('jenis', $data['jenis'])
                     ->where('tempo', $data['tempo'])->delete();
 
-            // DB::commit();
+            DB::commit();
             // check if there is $store
             if ($state == 1) {
                 $dbPPn = new PpnMasukan();
