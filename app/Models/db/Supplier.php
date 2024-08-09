@@ -12,6 +12,16 @@ class Supplier extends Model
 
     protected $appends = ['kode_supplier'];
 
+    public function getSistemPembayaranAttribute()
+    {
+        $sistem = [
+            '1' => 'Cash',
+            '2' => 'Tempo'
+        ];
+
+        return $sistem[$this->pembayaran];
+    }
+
     public function getKodeSupplierAttribute()
     {
         return 'S' . str_pad($this->kode, 2, '0', STR_PAD_LEFT);

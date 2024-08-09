@@ -25,19 +25,19 @@
             <div class="row" id="konsumenRow">
                 <div class="row invoice-info">
                     <div class="col-md-6 invoice-col">
-                        <table style="width: 90%">
+                        <table style="width: 50%">
                             <tr>
                                 <td class="text-start align-middle">Nomor PO</td>
-                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle" style="width: 5%">:</td>
                                 <td class="text-start align-middle">
-                                    {{$data->kode}}
+                                    <strong>{{$data->kode}}</strong>
                                 </td>
                             </tr>
-                            <tr id="namaTr" hidden>
+                            <tr id="namaTr">
                                 <td class="text-start align-middle">Supplier</td>
-                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle" style="width: 5%">:</td>
                                 <td class="text-start align-middle">
-                                   {{$data->supplier->nama}}
+                                   <strong>{{$data->supplier->nama}}</strong>
                                 </td>
                             </tr>
 
@@ -46,19 +46,19 @@
                     <!-- /.col -->
                     <div class="col-md-6 invoice-col" >
                         <div class="row d-flex justify-content-end">
-                            <table style="width: 90%">
+                            <table style="width: 50%">
                                 <tr>
                                     <td class="text-start align-middle">Sistem Pembayaran</td>
-                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle" style="width: 5%">:</td>
                                     <td class="text-start align-middle">
-                                        {{$data->supplier->sistem_pembayaran}}
+                                        <strong>{{$data->supplier->sistem_pembayaran}}</strong>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="text-start align-middle">Tanggal Jatuh Tempo</td>
-                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle" style="width: 5%">:</td>
                                     <td class="text-start align-middle">
-                                       {{$data->id_jatuh_tempo}}
+                                       <strong>{{$data->id_jatuh_tempo}}</strong>
                                     </td>
                                 </tr>
 
