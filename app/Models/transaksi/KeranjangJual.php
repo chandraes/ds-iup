@@ -156,6 +156,11 @@ class KeranjangJual extends Model
                 $stateDP = 1;
             }
 
+            $stateTempoWa = 0;
+            if ($invoice->lunas == 0 && $invoice->dp == 0) {
+                $stateTempoWa = 1;
+            }
+
             $this->update_stok($keranjang);
 
             if (isset($data['konsumen_id'])) {
@@ -165,7 +170,7 @@ class KeranjangJual extends Model
 
                 $sisaTerakhirKonsumen = $isPembayaranTunai
                     ? $sisaTerakhirKonsumen - $data['grand_total']
-                    : $sisaTerakhirKonsumen + $data['grand_total'];
+                    : $sisaTerakhirKonsumen + $data['grand_total']-($data['dp']+$data['dp_ppn']);
 
                 $sisa = $isPembayaranTunai && $sisaTerakhirKonsumen < 0
                     ? 0
@@ -174,7 +179,7 @@ class KeranjangJual extends Model
                 $dbKasKonsumen->create([
                     'konsumen_id' => $konsumen->id,
                     'uraian' => $invoice->kode,
-                    $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total'],
+                    $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total']-($data['dp']+$data['dp_ppn']),
                     'sisa' => $sisa,
                 ]);
             }
@@ -232,8 +237,6 @@ class KeranjangJual extends Model
 
             DB::commit();
 
-            $dpNt = 0;
-
             if ($waState == 1) {
                 if ($barang_ppn == 1) {
                     $addPesan = "Sisa Saldo Kas Besar: \n".
@@ -273,8 +276,64 @@ class KeranjangJual extends Model
                             $addPesan.
                             "Terima kasih 🙏🙏🙏\n";
 
+
+
                 $group = GroupWa::where('untuk', $untukRekening)->first()->nama_group;
                 $dbKas->sendWa($group, $pesan);
+            }
+
+            if ($stateTempoWa == 1) {
+                if ($barang_ppn == 1) {
+                    $addPesan = "Sisa Saldo Kas Besar: \n".
+                                "Rp. ".number_format($dbKas->saldoTerakhir(1), 0, ',', '.')."\n\n".
+                                "Total Modal Investor PPN: \n".
+                                "Rp. ".number_format($dbKas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
+                 } else {
+                     $addPesan = "Sisa Saldo Kas Besar: \n".
+                                 "Rp. ".number_format($dbKas->saldoTerakhir(0), 0, ',', '.')."\n\n".
+                                 "Total Modal Investor Non PPN: \n".
+                                 "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
+                 }
+
+                if ($konsumen->pembayaran == 2) {
+                    $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+                    $plafon = $konsumen->plafon;
+                    $pembayaran = $konsumen->sistem_pembayaran. ' '. $konsumen->tempo_hari. ' Hari';
+                    $addPesan .= "Total Tagihan Konsumen: \n".
+                                "Rp. ".number_format($sisaTerakhir, 0, ',', '.')."\n\n".
+                                "Plafon Konsumen: \n".
+                                "Rp. ".number_format($plafon, 0, ',', '.')."\n\n";
+                }
+
+                // if ($barang_ppn == 1) {
+                //     $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
+                // } else {
+                //     $rekening = Rekening::where('untuk', 'kas-besar-non-ppn')->first();
+                // }
+
+
+                 $pesan =    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                                "*FORM PENJUALAN*\n".
+                                "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                                "No Invoice:\n".
+                                "*".$invoice->kode."*\n\n".
+                                "Uraian : *Tanpa DP*\n".
+                                "Pembayaran : *".$pembayaran."*\n\n".
+                                "Konsumen : *".$konsumen->nama."*\n".
+                                "Nilai :  *Rp. ".$invoice->sisa_tagihan."*\n\n".
+                                // "Ditransfer ke rek:\n\n".
+                                // "Bank      : ".$rekening->bank."\n".
+                                // "Nama    : ".$rekening->nama_rek."\n".
+                                // "No. Rek : ".$rekening->no_rek."\n\n".
+                                "==========================\n".
+                                $addPesan.
+                                "Terima kasih 🙏🙏🙏\n";
+
+                    $ppn_kas = $data['ppn'] > 0 ? 1 : 0;
+                    $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+                    $group = GroupWa::where('untuk', $untukRekening)->first()->nama_group;
+                    $dbKas->sendWa($group, $pesan);
             }
 
         } catch (\Throwable $th) {
