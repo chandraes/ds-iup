@@ -71,7 +71,7 @@
                 <th class="text-center align-middle">URAIAN</th>
                 <th class="text-center align-middle">DEPOSIT</th>
                 <th class="text-center align-middle">KAS<br>KECIL</th>
-                <th class="text-center align-middle">BELI<br>BAHAN</th>
+                <th class="text-center align-middle">PO</th>
                 <th class="text-center align-middle">INVOICE</th>
                 <th class="text-center align-middle">MASUK</th>
                 <th class="text-center align-middle">KELUAR</th>

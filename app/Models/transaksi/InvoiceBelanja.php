@@ -84,7 +84,7 @@ class InvoiceBelanja extends Model
 
     public function getKodeAttribute()
     {
-        return 'BB' . str_pad($this->nomor, 2, '0', STR_PAD_LEFT);
+        return 'PO' . str_pad($this->nomor, 2, '0', STR_PAD_LEFT);
     }
 
     public function getNfDiskonAttribute()

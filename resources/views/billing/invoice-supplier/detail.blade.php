@@ -26,6 +26,7 @@
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
+                    <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Unit</th>
                     <th class="text-center align-middle">Type</th>
                     <th class="text-center align-middle">Kelompok</th>
@@ -41,6 +42,9 @@
             <tbody>
                 @foreach ($data->items as $d)
                 <tr>
+                    <td class="text-center align-middle">
+                        {{$loop->iteration}}
+                    </td>
                     <td class="text-center align-middle">
                         {{$d->barang->unit->nama}}
                     </td>
@@ -76,48 +80,48 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Total DPP</th>
+                    <th class="text-end align-middle" colspan="10">Total DPP</th>
                     <th class="text-end align-middle">{{$data->dpp}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Diskon</th>
+                    <th class="text-end align-middle" colspan="10">Diskon</th>
                     <th class="text-end align-middle">{{$data->nf_diskon}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Total DPP Setelah Diskon</th>
+                    <th class="text-end align-middle" colspan="10">Total DPP Setelah Diskon</th>
                     <th class="text-end align-middle">{{$data->dpp_setelah_diskon}}</th>
                 </tr>
                 @if ($data->kas_ppn == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="9">PPN</th>
+                    <th class="text-end align-middle" colspan="10">PPN</th>
                     <th class="text-end align-middle">{{$data->nf_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Penyesuaian</th>
+                    <th class="text-end align-middle" colspan="10">Penyesuaian</th>
                     <th class="text-end align-middle">{{$data->nf_add_fee}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Grand Total</th>
+                    <th class="text-end align-middle" colspan="10">Grand Total</th>
                     <th class="text-end align-middle">{{$data->nf_total}}</th>
                 </tr>
                 @if ($data->tempo == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="9">DP</th>
+                    <th class="text-end align-middle" colspan="10">DP</th>
                     <th class="text-end align-middle">{{$data->nf_dp}}</th>
                 </tr>
                 @if ($data->kas_ppn == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="9">DP PPN</th>
+                    <th class="text-end align-middle" colspan="10">DP PPN</th>
                     <th class="text-end align-middle">{{$data->nf_dp_ppn}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Sisa PPN</th>
+                    <th class="text-end align-middle" colspan="10">Sisa PPN</th>
                     <th class="text-end align-middle">{{$data->nf_sisa_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
-                    <th class="text-end align-middle" colspan="9">Sisa Tagihan</th>
+                    <th class="text-end align-middle" colspan="10">Sisa Tagihan</th>
                     <th class="text-end align-middle">{{$data->nf_sisa}}</th>
                 </tr>
                 @endif
