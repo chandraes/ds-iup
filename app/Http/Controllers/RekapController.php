@@ -547,7 +547,8 @@ class RekapController extends Controller
         $data = $request->validate([
             'ppn_kas' => 'required',
         ]);
-        $jenis = $data['ppn_kas'];
+
+
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
@@ -577,11 +578,12 @@ class RekapController extends Controller
         }
 
         $db = new BarangStokHarga();
-
+        $jenis = $data['ppn_kas'];
         $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
 
         return view('rekap.pricelist.index', [
+            'ppn_kas' => $jenis,
             'data' => $data,
             // 'kategori' => $kategori,
             'units' => $units,

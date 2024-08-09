@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>STOK & HARGA JUAL BARANG PPN</u></h1>
+            <h1><u>PRICE LIST BARANG {{$ppn_kas == 1 ? 'PPN' : 'NON PPN'}}</u></h1>
         </div>
     </div>
     @include('swal')
@@ -38,7 +38,8 @@
     }
 </style>
 <div class="container-fluid mt-3 table-responsive ">
-    <form method="GET" action="{{route('db.stok-ppn')}}" class="mt-3 mb-5">
+    <form method="GET" action="{{route('rekap.pricelist')}}" class="mt-3 mb-5">
+        <input type="hidden" name="ppn_kas" value="{{$ppn_kas}}">
         <div class="row">
             <div class="col-md-2">
                 <label for="unit">Unit</label>
@@ -90,7 +91,7 @@
                 <div class="btn-group">
                     <button type="submit" class="btn btn-primary">Apply Filter</button>
                     {{-- reset filter button --}}
-                    <a href="{{route('db.stok-ppn')}}" class="btn btn-danger">Reset Filter</a>
+                    <a href="{{route('rekap.pricelist')}}" class="btn btn-danger">Reset Filter</a>
                 </div>
 
             </div>
@@ -109,15 +110,12 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
-                    <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
-                    <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    @if ($ppn_kas == 1)
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
-                    <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
-                    <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
-                    <th class="text-center align-middle">Margin<br>Profit</th>
+                    @endif
+
 
                 </tr>
             </thead>
@@ -169,7 +167,6 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php
@@ -180,26 +177,14 @@
                     $sumTotalHargaBeli += $totalHargaBeli;
                     $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
                     @endphp
-                    <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
-                    <td class="text-center align-middle">{{ number_format(($stokHarga->harga_beli +
-                        ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') }}</td>
                     <td class="text-end align-middle">
-                        <div class="row mx-3">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
-                                onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
-                        </div>
+                        {{ $stokHarga->nf_harga }}
                     </td>
+                    @if ($ppn_kas == 1)
                     <td class="text-end align-middle">
                         {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
                     </td>
-
-                    <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
-                    <td class="text-center align-middle">{{ number_format($totalHargaJual, 0, ',','.') }}</td>
-                    <td class="text-end align-middle @if ($margin < 10)
-                                    table-danger
-                                @endif">
-                        {{ number_format($margin, 2) }}%
-                    </td>
+                    @endif
                 </tr>
                 @endif
                 @endforeach
@@ -215,20 +200,6 @@
                 @endif
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="13" class="text-end align-middle">Grand Total</th>
-                    <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
-                    <th class="text-end align-middle"></th>
-                </tr>
-                <tr>
-                    <th colspan="13" class="text-end align-middle">Estimasi Profit</th>
-                    <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
-                        0 ,',','.')}}</th>
-                    <th class="text-end align-middle"></th>
-                </tr>
-            </tfoot>
     </div>
 
 </div>

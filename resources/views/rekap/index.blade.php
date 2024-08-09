@@ -56,7 +56,38 @@
             </a>
         </div>
         <div class="col-lg-3 mt-3 mb-3 text-center">
-            <a href="{{route('rekap.invoice-penjualan')}}" class="text-decoration-none">
+
+            <div class="modal fade" id="modalPricelist" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="pricelistTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="pricelistTitle">
+                                Barang PPN / NON PPN
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{route('rekap.pricelist')}}" method="get">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <select class="form-select form-select-lg" name="ppn_kas" id="ppn_kas">
+                                        <option value="1">Barang PPN</option>
+                                        <option value="2">Barang Non PPN</option>
+                                    </select>
+                                </div>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Close
+                                </button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalPricelist">
                 <img src="{{asset('images/pricelist.svg')}}" alt="" width="70">
                 <h3 class="mt-2">PRICE LIST</h3>
             </a>
