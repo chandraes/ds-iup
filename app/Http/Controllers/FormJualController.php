@@ -279,6 +279,10 @@ class FormJualController extends Controller
         // Generate the URL for the PDF
         $pdfUrl = asset('storage/invoices/invoice-' . $invoice->id . '.pdf');
 
+        // convert it to be image
+        // $pdf = new Pdf($pdfPath);
+        
+
         $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
         // if ($konsumen->no_hp) {
