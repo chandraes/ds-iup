@@ -400,6 +400,8 @@ Route::group(['middleware' => ['auth']], function() {
                     Route::post('/checkout', [App\Http\Controllers\FormJualController::class, 'keranjang_checkout'])->name('billing.form-jual.keranjang.checkout');
                     Route::get('/get-konsumen', [App\Http\Controllers\FormJualController::class, 'get_konsumen'])->name('billing.form-jual.keranjang.get-konsumen');
                 });
+
+                Route::get('/invoice/{invoice}', [App\Http\Controllers\FormJualController::class, 'invoice'])->name('billing.form-jual.invoice');
             });
 
             Route::prefix('invoice-supplier')->group(function(){

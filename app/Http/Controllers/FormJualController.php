@@ -210,39 +210,77 @@ class FormJualController extends Controller
         $res = $db->checkout($data);
         // dd($res['invoice']->id);
         if ($res['status'] == 'success') {
-            $untuk = $res['invoice']->kas_ppn == 1 ? 'resmi' : 'non-resmi';
-            $pt = Config::where('untuk', $untuk)->first();
-            Carbon::setLocale('id');
+            // $untuk = $res['invoice']->kas_ppn == 1 ? 'resmi' : 'non-resmi';
+            // $pt = Config::where('untuk', $untuk)->first();
+            // Carbon::setLocale('id');
 
-            $jam = CarbonImmutable::parse($res['invoice']->created_at)->translatedFormat('H:i');
-            $tanggal = CarbonImmutable::parse($res['invoice']->created_at)->translatedFormat('d F Y');
+            // $jam = CarbonImmutable::parse($res['invoice']->created_at)->translatedFormat('H:i');
+            // $tanggal = CarbonImmutable::parse($res['invoice']->created_at)->translatedFormat('d F Y');
 
-            $pdf = PDF::loadview('billing.stok.invoice-pdf', [
-                'data' => $res['invoice']->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
-                'pt' => $pt,
-                'jam' => $jam,
-                'tanggal' => $tanggal,
-            ])->setPaper('a4', 'portrait');
+            // $pdf = PDF::loadview('billing.stok.invoice-pdf', [
+            //     'data' => $res['invoice']->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
+            //     'pt' => $pt,
+            //     'jam' => $jam,
+            //     'tanggal' => $tanggal,
+            // ])->setPaper('a4', 'portrait');
 
-            $directory = storage_path('app/public/invoices');
-            $pdfPath = $directory . '/invoice-' . $res['invoice']->id . '.pdf';
+            // $directory = storage_path('app/public/invoices');
+            // $pdfPath = $directory . '/invoice-' . $res['invoice']->id . '.pdf';
 
-            if (!file_exists($directory)) {
-                mkdir($directory, 0755, true);
-            }
+            // if (!file_exists($directory)) {
+            //     mkdir($directory, 0755, true);
+            // }
 
-            $pdf->save($pdfPath);
+            // $pdf->save($pdfPath);
 
-            $pdfUrl = asset('storage/invoices/invoice-' . $res['invoice']->id . '.pdf');
+            // $pdfUrl = asset('storage/invoices/invoice-' . $res['invoice']->id . '.pdf');
 
-            return redirect()->route('billing.lihat-stok')
-                ->with('status', 'success')
-                ->with('message', 'Invoice berhasil dibuat.')
-                ->with('pdfUrl', $pdfUrl);
+            return redirect()->route('billing.form-jual.invoice', ['invoice' => $res['invoice']->id]);
         }
 
 
         return redirect()->route('billing.lihat-stok')->with($res['status'], $res['message']);
+    }
+
+    public function invoice(InvoiceJual $invoice)
+    {
+        $pt = Config::where('untuk', $invoice->kas_ppn == 1 ? 'resmi' : 'non-resmi')->first();
+        Carbon::setLocale('id');
+
+        $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
+
+        $pdf = PDF::loadview('billing.stok.invoice-pdf', [
+            'data' => $invoice->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
+            'pt' => $pt,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
+        ])->setPaper('a4', 'portrait');
+
+        $directory = storage_path('app/public/invoices');
+        $pdfPath = $directory . '/invoice-' . $invoice->id . '.pdf';
+
+        // Check if the directory exists, if not, create it
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+       // Check if the PDF file already exists
+        if (file_exists($pdfPath)) {
+            // Delete the existing file
+            unlink($pdfPath);
+        }
+
+        // Save the new PDF, overriding the existing one if it exists
+        $pdf->save($pdfPath);
+
+        // Generate the URL for the PDF
+        $pdfUrl = asset('storage/invoices/invoice-' . $invoice->id . '.pdf');
+
+        return view('billing.stok.invoice',
+        [
+            'pdfUrl' => $pdfUrl,
+        ]);
     }
 
 
