@@ -288,6 +288,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_pembelian'])->name('rekap.invoice-pembelian');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\RekapController::class, 'invoice_pembelian_detail'])->name('rekap.invoice-pembelian.detail');
             });
+
+            Route::prefix('pricelist')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'pricelist'])->name('rekap.pricelist');
+            });
         });
     });
 

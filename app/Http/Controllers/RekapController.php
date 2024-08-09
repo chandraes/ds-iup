@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangNama;
+use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Barang\BarangType;
+use App\Models\db\Barang\BarangUnit;
 use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
 use App\Models\db\Konsumen;
+use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\InvestorModal;
@@ -533,6 +539,61 @@ class RekapController extends Controller
         return view('rekap.invoice-pembelian.index', [
             'data' => $data,
             'supplier' => $supplier
+        ]);
+    }
+
+    public function pricelist(Request $request)
+    {
+        $data = $request->validate([
+            'ppn_kas' => 'required',
+        ]);
+        $jenis = $data['ppn_kas'];
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        $unitFilter = $request->input('unit');
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+        $barangNamaFilter = $request->input('barang_nama');
+
+        if (!empty($unitFilter) && $unitFilter != '') {
+            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
+
+            $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+        } else {
+            $selectType = BarangType::all();
+            $selectKategori = BarangKategori::all();
+            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+        }
+
+        $db = new BarangStokHarga();
+
+        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $units = BarangUnit::all();
+
+        return view('rekap.pricelist.index', [
+            'data' => $data,
+            // 'kategori' => $kategori,
+            'units' => $units,
+            // 'type' => $type,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+            'selectType' => $selectType,
+            'selectKategori' => $selectKategori,
+            'ppnRate' => $ppnRate,
+            'barangNamaFilter' => $barangNamaFilter,
+            'selectBarangNama' => $selectBarangNama,
         ]);
     }
 }

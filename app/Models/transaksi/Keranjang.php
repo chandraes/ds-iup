@@ -77,13 +77,27 @@ class Keranjang extends Model
         $kas = new KasBesar();
         $saldo = $kas->saldoTerakhir($data['kas_ppn']);
 
-        if ((isset($data['dp']) && $data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) ||
-            (!isset($data['dp']) || $data['dp'] <= 0) && $saldo < $data['total']) {
+        if ($data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) {
             return [
-                'status' => 'error',
-                'message' => 'Saldo kas tidak mencukupi!',
-            ];
+                        'status' => 'error',
+                        'message' => 'Saldo kas tidak mencukupi!',
+                    ];
         }
+
+        if ($data['tempo'] == 0 && $saldo < $data['total']) {
+            return [
+                        'status' => 'error',
+                        'message' => 'Saldo kas tidak mencukupi!',
+                    ];
+        }
+
+        // if ((isset($data['dp']) && $data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) ||
+        //     (!isset($data['dp']) || $data['dp'] <= 0) && $saldo < $data['total']) {
+        //     return [
+        //         'status' => 'error',
+        //         'message' => 'Saldo kas tidak mencukupi!',
+        //     ];
+        // }
 
         try {
             DB::beginTransaction();
