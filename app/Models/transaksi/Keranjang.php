@@ -197,6 +197,48 @@ class Keranjang extends Model
                 $kas->sendWa($group, $pesan);
             }
 
+            if($data['tempo'] == 1 && $data['dp'] == 0)
+            {
+                $dbPPn = new PpnMasukan();
+                $ppnMasukan = $dbPPn->saldoTerakhir();
+
+                $getKas = $kas->getKas();
+
+                if ($data['kas_ppn'] == 1) {
+                    $addPesan = "Sisa Saldo Kas Besar: \n".
+                                "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                                "Total Modal Investor PPN: \n".
+                                "Rp. ".number_format($getKas['modal_investor_ppn'], 0, ',', '.')."\n\n".
+                                "Grand Total Modal Investor : \n".
+                                "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                                "Total PPn Masukan : \n".
+                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n";
+                } else {
+                    $addPesan = "Sisa Saldo Kas Besar: \n".
+                                "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                                "Total Modal Investor Non PPN: \n".
+                                "Rp. ".number_format($getKas['modal_investor_non_ppn'], 0, ',', '.')."\n\n".
+                                "Grand Total Modal Investor : \n".
+                                "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n";
+                }
+
+                $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                            "*FORM BELI BARANG*\n".
+                            "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                             "*".$kodeKas."*\n".
+                            "Uraian :  *".$data['uraian']."*\n\n".
+                            "Nilai    :  *Rp. ".number_format($data['sisa'], 0, ',', '.')."*\n\n".
+                            "==========================\n".
+                            $addPesan.
+                            "Terima kasih 🙏🙏🙏\n";
+
+                $groupName = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+                $group = GroupWa::where('untuk', $groupName)->first()->nama_group;
+
+                $kas->sendWa($group, $pesan);
+            }
+
 
             return [
                 'status' => 'success',
