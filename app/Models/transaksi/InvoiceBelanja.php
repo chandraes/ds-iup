@@ -305,7 +305,7 @@ class InvoiceBelanja extends Model
                 'modal_investor_terakhir' => $kas->modalInvestorTerakhir($inv->kas_ppn),
             ]);
 
-            $this->update_stok($inv->id);
+            // $this->update_stok($inv->id);
 
             DB::commit();
 

@@ -76,7 +76,7 @@ class Keranjang extends Model
         // dd($data);
         $kas = new KasBesar();
         $saldo = $kas->saldoTerakhir($data['kas_ppn']);
-        
+
         if ((isset($data['dp']) && $data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) ||
             (!isset($data['dp']) || $data['dp'] <= 0) && $saldo < $data['total']) {
             return [
@@ -127,10 +127,7 @@ class Keranjang extends Model
                 }
             }
 
-            if ($data['tempo'] == 0) {
-                $this->update_barang($data);
-            }
-
+            $this->update_barang($data);
 
             if ($data['kas_ppn'] == 1) {
                 $this->store_ppn($store_inv);

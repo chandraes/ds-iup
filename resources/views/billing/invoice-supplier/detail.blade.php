@@ -4,7 +4,6 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>DETAIL INVOICE SUPPLIER</u></h1>
-            <h1>{{$data->uraian}}</h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -21,6 +20,57 @@
     </div>
 </div>
 <div class="container table-responsive ml-3">
+    <div class="row">
+        <div class="col-md-12 my-3">
+            <div class="row" id="konsumenRow">
+                <div class="row invoice-info">
+                    <div class="col-md-6 invoice-col">
+                        <table style="width: 90%">
+                            <tr>
+                                <td class="text-start align-middle">Nomor PO</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                    {{$data->kode}}
+                                </td>
+                            </tr>
+                            <tr id="namaTr" hidden>
+                                <td class="text-start align-middle">Supplier</td>
+                                <td class="text-start align-middle" style="width: 10%">:</td>
+                                <td class="text-start align-middle">
+                                   {{$data->supplier->nama}}
+                                </td>
+                            </tr>
+
+                        </table>
+                    </div>
+                    <!-- /.col -->
+                    <div class="col-md-6 invoice-col" >
+                        <div class="row d-flex justify-content-end">
+                            <table style="width: 90%">
+                                <tr>
+                                    <td class="text-start align-middle">Sistem Pembayaran</td>
+                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle">
+                                        {{$data->supplier->sistem_pembayaran}}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start align-middle">Tanggal Jatuh Tempo</td>
+                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                    <td class="text-start align-middle">
+                                       {{$data->id_jatuh_tempo}}
+                                    </td>
+                                </tr>
+
+                            </table>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row mt-3">
         @if ($data->void == 0)
         <table class="table table-hover table-bordered" id="rekapTable">
