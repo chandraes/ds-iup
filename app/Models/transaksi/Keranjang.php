@@ -221,13 +221,14 @@ class Keranjang extends Model
                                 "Grand Total Modal Investor : \n".
                                 "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n";
                 }
-
+                $jatuhTempo = Carbon::createFromFormat('Y-m-d', $data['jatuh_tempo'])->format('d-m-Y');
                 $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
                             "*FORM BELI BARANG*\n".
                             "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
                              "*".$kodeKas."*\n".
                             "Uraian :  *".$data['uraian']."*\n\n".
                             "Nilai    :  *Rp. ".number_format($data['sisa'], 0, ',', '.')."*\n\n".
+                            "Jatuh Tempo :  *".$jatuhTempo."*\n\n".
                             "==========================\n".
                             $addPesan.
                             "Terima kasih 🙏🙏🙏\n";
