@@ -6,8 +6,10 @@ use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\KonsumenTemp;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\KeranjangJual;
+use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -276,6 +278,17 @@ class FormJualController extends Controller
 
         // Generate the URL for the PDF
         $pdfUrl = asset('storage/invoices/invoice-' . $invoice->id . '.pdf');
+
+        $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
+
+        // if ($konsumen->no_hp) {
+
+        //     $no_hp = str_replace('-', '', $konsumen->no_hp);
+        //     $pesan = '';
+        //     $send = new StarSender($no_hp, $pesan, $pdfUrl);
+        //     $res = $send->sendGroup();
+
+        // }
 
         return view('billing.stok.invoice',
         [

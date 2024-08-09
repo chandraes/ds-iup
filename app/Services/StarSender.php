@@ -6,24 +6,36 @@ use Illuminate\Support\Facades\Http;
 
 class StarSender
 {
-    private $apikey, $tujuan, $pesan;
+    private $apikey, $tujuan, $pesan, $file;
 
-    function __construct($tujuan, $pesan)
+    function __construct($tujuan, $pesan, $file=null)
     {
         $this->apikey = env('STARSENDER_KEY');
         $this->tujuan = $tujuan;
         $this->pesan = $pesan;
+        $this->file = $file;
     }
 
     public function sendGroup()
     {
         $apikey=$this->apikey;
+        $file=$this->file;
 
-        $pesan = [
-            'messageType' => 'text',
-            'to' => $this->tujuan,
-            'body' => $this->pesan
-        ];
+        if ($file != null) {
+            $pesan = [
+                'messageType' => 'text',
+                'to' => $this->tujuan,
+                'body' => $this->pesan,
+                'file' => $file
+            ];
+        } else {
+            $pesan = [
+                'messageType' => 'text',
+                'to' => $this->tujuan,
+                'body' => $this->pesan
+            ];
+        }
+
         $curl = curl_init();
 
 
