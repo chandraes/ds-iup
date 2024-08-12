@@ -165,28 +165,30 @@ class Keranjang extends Model
 
                 $getKas = $kas->getKas();
 
-                if ($data['kas_ppn'] == 1) {
-                    $addPesan = "Sisa Saldo Kas Besar: \n".
-                                "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
-                                 "Total PPn Masukan : \n".
-                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
-                                "Total Invoice Supplier: \n".
-                                "Rp. ".number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice PPn: \n".
-                                "Rp. ".number_format($grandTotalPpn, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice Non PPn: \n".
-                                "Rp. ".number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
-                               ;
-                } else {
-                    $addPesan = "Sisa Saldo Kas Besar: \n".
-                                "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
-                                "Total Invoice Supplier: \n".
-                                "Rp. ".number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice PPn: \n".
-                                "Rp. ".number_format($grandTotalPpn, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice Non PPn: \n".
-                                "Rp. ".number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
+                $addPesan = "";
+
+                if (isset($data['dp']) && $data['dp'] > 0) {
+                    $addPesan .= "Invoice : Rp. ".number_format($data['dp']+$data['dp_ppn'], 0, ',', '.')."\n".
+                                "Sisa Invoice : Rp. ".number_format($data['sisa'], 0, ',', '.')."\n\n".
+                                "==========================\n";
                 }
+
+                $addPesan .= "Sisa Saldo Kas Besar PPN: \n".
+                            "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            "Sisa Saldo Kas Besar Non PPN: \n".
+                            "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n";
+
+                if ($data['kas_ppn'] == 1) {
+                    $addPesan .= "Total PPn Masukan : \n".
+                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n";
+                }
+
+                $addPesan .= "Total Invoice Supplier: \n".
+                            "Rp. ".number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice PPn: \n".
+                            "Rp. ".number_format($grandTotalPpn, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice Non PPn: \n".
+                            "Rp. ".number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
 
                 $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                             "*FORM BELI BARANG*\n".
@@ -216,40 +218,35 @@ class Keranjang extends Model
 
                 $getKas = $kas->getKas();
 
-                if ($data['kas_ppn'] == 1) {
-                    $addPesan = "Sisa Saldo Kas Besar: \n".
-                                "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
-                                "Total PPn Masukan : \n".
-                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
-                                "Total Invoice Supplier: \n".
-                                "Rp. ".number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice PPn: \n".
-                                "Rp. ".number_format($grandTotalPpn, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice Non PPn: \n".
-                                "Rp. ".number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
+                $addPesan = "Sisa Saldo Kas Besar PPN: \n".
+                            "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            "Sisa Saldo Kas Besar Non PPN: \n".
+                            "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n";
 
-                } else {
-                    $addPesan = "Sisa Saldo Kas Besar: \n".
-                                "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
-                                "Total Invoice Supplier: \n".
-                                "Rp. ".number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice PPn: \n".
-                                "Rp. ".number_format($grandTotalPpn, 0, ',', '.')."\n\n".
-                                "Grand Total Invoice Non PPn: \n".
-                                "Rp. ".number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
+                if ($data['kas_ppn'] == 1) {
+                    $addPesan .= "Total PPn Masukan : \n".
+                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n";
                 }
+
+                $addPesan .= "Total Invoice Supplier: \n".
+                            "Rp. ".number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice PPn: \n".
+                            "Rp. ".number_format($grandTotalPpn, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice Non PPn: \n".
+                            "Rp. ".number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
+
                 $jatuhTempo = Carbon::createFromFormat('Y-m-d', $data['jatuh_tempo'])->format('d-m-Y');
                 $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
-                            "*FORM BELI BARANG*\n".
-                            "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
-                             "*".$kodeKas."*\n".
-                            "Uraian :  *".$data['uraian']."*\n\n".
-                            "Invoice    :  *Rp. ".number_format($data['sisa'], 0, ',', '.')."*\n\n".
-                            "Supplier  :  *".$store_inv->supplier->nama."*\n".
-                            "Jatuh Tempo :  *".$jatuhTempo."*\n\n".
-                            "==========================\n".
-                            $addPesan.
-                            "Terima kasih 🙏🙏🙏\n";
+                        "*FORM BELI BARANG*\n".
+                        "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                            "*".$kodeKas."*\n".
+                        "Uraian :  *".$data['uraian']."*\n\n".
+                        "Invoice    :  *Rp. ".number_format($data['sisa'], 0, ',', '.')."*\n\n".
+                        "Supplier  :  *".$store_inv->supplier->nama."*\n".
+                        "Jatuh Tempo :  *".$jatuhTempo."*\n\n".
+                        "==========================\n".
+                        $addPesan.
+                        "Terima kasih 🙏🙏🙏\n";
 
                 $groupName = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
 
