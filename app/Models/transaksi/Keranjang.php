@@ -228,6 +228,7 @@ class Keranjang extends Model
                              "*".$kodeKas."*\n".
                             "Uraian :  *".$data['uraian']."*\n\n".
                             "Nilai    :  *Rp. ".number_format($data['sisa'], 0, ',', '.')."*\n\n".
+                            "Supplier  :  *".$store_inv->supplier->nama."*\n".
                             "Jatuh Tempo :  *".$jatuhTempo."*\n\n".
                             "==========================\n".
                             $addPesan.
