@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE SUPPLIER PPN</u></h1>
+            <h1><u>INVOICE SUPPLIER NON PPN</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -21,7 +21,7 @@
     </div>
     <div class="row">
         <div class="col-md-6">
-            <form action="{{ route('billing.invoice-supplier') }}" method="GET" class="form-inline">
+            <form action="{{ route('billing.invoice-supplier.non-ppn') }}" method="GET" class="form-inline">
                 <div class="form-group mb-2">
                     <label for="supplier_id" class="sr-only">Supplier:</label>
                     <select name="supplier_id" id="supplier_id" class="form-control">

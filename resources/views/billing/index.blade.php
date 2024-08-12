@@ -88,9 +88,19 @@
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.invoice-supplier')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-supplier.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE SUPPLIER
+                <h4 class="mt-2">INVOICE SUPPLIER<br>PPN
                     @if ($is > 0)
                     <span class="text-danger">({{$is}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+            <a href="{{route('billing.invoice-supplier.non-ppn')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-jual-non-ppn.svg')}}" alt="" width="70">
+                <h4 class="mt-2">INVOICE SUPPLIER<br>NON PPN
+                    @if ($isn > 0)
+                    <span class="text-danger">({{$isn}})</span>
                     @endif
                 </h4>
             </a>
