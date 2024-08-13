@@ -118,7 +118,7 @@
     </center>
     <div class="table-container mt-4">
 
-        <table class="table table-bordered" id="dataTable">
+        <table class="table table-bordered" id="dataTable" style="font-size:12px">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -257,7 +257,7 @@
     </center>
     <div class="table-container mt-4">
 
-        <table class="table table-bordered" id="dataTable">
+        <table class="table table-bordered" id="dataTable" style="font-size:12px">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -347,7 +347,7 @@
                         </ul>
                         @endif
                     </td>
-                    <td class="text-center align-middle">
+                    <td class="text-center align-middle" >
                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
                         <div class="input-group">
                             <button class="btn btn-danger"

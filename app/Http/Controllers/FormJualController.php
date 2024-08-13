@@ -14,6 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Spatie\Browsershot\Browsershot;
 
 class FormJualController extends Controller
 {
@@ -237,7 +238,7 @@ class FormJualController extends Controller
 
             // $pdfUrl = asset('storage/invoices/invoice-' . $res['invoice']->id . '.pdf');
 
-            return redirect()->route('billing.form-jual.invoice', ['invoice' => $res['invoice']->id]);
+            return redirect()->route('billing.invoice-konsumen.invoice-jpeg', ['invoice' => $res['invoice']->id]);
         }
 
 
@@ -281,18 +282,10 @@ class FormJualController extends Controller
 
         // convert it to be image
         // $pdf = new Pdf($pdfPath);
-        
+
 
         $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
-        // if ($konsumen->no_hp) {
-
-        //     $no_hp = str_replace('-', '', $konsumen->no_hp);
-        //     $pesan = '';
-        //     $send = new StarSender($no_hp, $pesan, $pdfUrl);
-        //     $res = $send->sendGroup();
-
-        // }
 
         return view('billing.stok.invoice',
         [
@@ -300,7 +293,61 @@ class FormJualController extends Controller
         ]);
     }
 
+    public function invoice_image(InvoiceJual $invoice)
+    {
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+        $pt = Config::where('untuk', $invoice->kas_ppn == 1 ? 'resmi' : 'non-resmi')->first();
+        Carbon::setLocale('id');
 
+        $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
+
+        // Render HTML view and store it as a string
+        $html = view('billing.stok.invoice-pdf', [
+            'data' => $invoice->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
+            'pt' => $pt,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
+        ])->render();
+
+        $directory = storage_path('app/public/invoices');
+        $jpegPath = $directory . '/invoice-' . $invoice->id . '.jpeg';
+
+        // Check if the directory exists, if not, create it
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        // Delete the existing JPEG if it exists
+        if (file_exists($jpegPath)) {
+            unlink($jpegPath);
+        }
+
+        // Save the new JPEG
+        Browsershot::html($html)
+                    ->windowSize(707, 1000) // Ukuran A4 dalam portrait
+                    ->setOption('landscape', false) // Atur ke true jika ingin landscape
+                            ->save($jpegPath);
+
+        // Generate the URL for the JPEG
+        $jpegUrl = asset('storage/invoices/invoice-' . $invoice->id . '.jpeg');
+
+        $konsumen = $invoice->konsumen ?? $invoice->konsumen_temp;
+
+        if ($konsumen && $konsumen->no_hp) {
+            $tujuan = str_replace('-', '', $konsumen->no_hp);
+            $pesan = 'Terima kasih telah berbelanja di ' . $pt->nama;
+            $file = $jpegPath;
+            $wa = new StarSender($tujuan, $pesan, $file);
+
+            $wa->sendGroup();
+        }
+
+        return view('billing.stok.invoice', [
+            'jpegUrl' => $jpegUrl,
+        ]);
+    }
 
 
 }

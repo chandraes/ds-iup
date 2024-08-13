@@ -8,6 +8,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 10mm;
         }
         .header {
             text-align: center;

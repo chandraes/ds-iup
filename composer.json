@@ -13,7 +13,8 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.2",
-        "riskihajar/terbilang": "^2.0"
+        "riskihajar/terbilang": "^2.0",
+        "spatie/browsershot": "^4.1"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.9",

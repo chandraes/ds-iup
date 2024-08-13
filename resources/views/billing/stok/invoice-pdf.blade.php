@@ -1,6 +1,8 @@
 @extends('layouts.doc')
 @push('header')
+@if ($pt->logo)
 <img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
+@endif
 <div class="header-div">
     <h3 style="margin-top: 20px; margin-bottom:0; padding: 0;">{{$pt->nama}}</h3>
     <p style="font-size:10px">{{$pt->alamat}}</p>
@@ -17,16 +19,16 @@
     <table style="font-size: 12px">
         <div class="row invoice-info">
             <div class="col-md-6 invoice-col">
-                <table style="width: 100%">
+                <table style="width: 100%; font-size: 10px">
                     <tr id="namaTr">
                         <td class="text-start align-middle" style="width: 20%">Nama</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle" style="width: 200px">
                             <strong>{{$data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama}}</strong>
                         </td>
                         <td style="width: 80px">&nbsp;</td>
                         <td class="text-start align-middle" style="width: 20%">Invoice</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle" style="width: 20%">
                             <strong>{{$data->kode}}</strong>
                         </td>
@@ -47,32 +49,32 @@
                     </tr>
                     <tr>
                         <td class="text-start align-middle">Tempo</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle">
                             {{$data->konsumen ? $data->konsumen->tempo_hari . ' Hari' : '-'}} </td>
                         <td style="width: 5%"></td>
                         <td class="text-start align-middle">Jam</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle">
                             {{$jam}}
                         </td>
                     </tr>
                     <tr>
                         <td class="text-start align-middle">NPWP</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle">
                             {{$data->konsumen ? $data->konsumen->npwp : $data->konsumen_temp->npwp}}
                         </td>
                         <td style="width: 5%"></td>
                         <td class="text-start align-middle">No HP</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle">
                             {{$data->konsumen ? $data->konsumen->no_hp : $data->konsumen_temp->no_hp}}
                         </td>
                     </tr>
                     <tr>
                         <td class="text-start align-middle">Alamat</td>
-                        <td class="text-start align-middle" style="width: 10%">:</td>
+                        <td class="text-start align-middle" style="width: 15px">:</td>
                         <td class="text-start align-middle">
                             {{$data->konsumen ? $data->konsumen->alamat : $data->konsumen_temp->alamat}}
                         </td>

@@ -88,6 +88,7 @@
                                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
                             </div>
                         </form>
+                        <a href="{{route('billing.invoice-konsumen.invoice-jpeg')}}" class="btn btn-sm btn-primary"></a>
                     </td>
                 </tr>
                 @endforeach
