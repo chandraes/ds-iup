@@ -37,47 +37,23 @@
             @endphp
 
             <tbody>
-                @foreach ($data as $unitId => $types)
-                @php $unitDisplayed = false; @endphp
-                @foreach ($types as $typeId => $categories)
-                @php $typeDisplayed = false; @endphp
-                @foreach ($categories as $kategoriId => $barangs)
-                @php $kategoriDisplayed = false; @endphp
-                @foreach ($barangs as $namaId => $items)
-                @php $namaDisplayed = false; @endphp
-                @foreach ($items as $barangId => $stokHargas)
-                @php $barangDisplayed = false; @endphp
-                @foreach ($stokHargas as $stokHarga)
+                @foreach ($data as $stokHarga)
                 @if ($stokHarga->stok > 0)
                 <tr>
-                    @if (!$unitDisplayed)
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->unitRowspan }}">{{ $number++ }}</td>
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->unitRowspan }}">{{
+
+                    <td class="text-center align-middle table-pdf text-pdf">{{ $number++ }}</td>
+                    <td class="text-center align-middle table-pdf text-pdf">{{
                         $stokHarga->unit->nama }}</td>
-                    @php $unitDisplayed = true; @endphp
-                    @endif
-                    @if (!$typeDisplayed)
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->typeRowspan }}">{{
+                    <td class="text-center align-middle table-pdf text-pdf">{{
                         $stokHarga->type->nama }}</td>
-                    @php $typeDisplayed = true; @endphp
-                    @endif
-                    @if (!$kategoriDisplayed)
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->kategoriRowspan }}">{{
+                    <td class="text-center align-middle table-pdf text-pdf">{{
                         $stokHarga->kategori->nama }}</td>
-                    @php $kategoriDisplayed = true; @endphp
-                    @endif
-                    @if (!$namaDisplayed)
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->namaRowspan }}">{{
+                    <td class="text-center align-middle table-pdf text-pdf">{{
                         $stokHarga->barang_nama->nama }}</td>
-                    @php $namaDisplayed = true; @endphp
-                    @endif
-                    @if (!$barangDisplayed)
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->barangRowspan }}">{{
+                    <td class="text-center align-middle table-pdf text-pdf">{{
                         $stokHarga->barang->kode }}</td>
-                    <td class="text-center align-middle table-pdf text-pdf" rowspan="{{ $stokHarga->barangRowspan }}">{{
+                    <td class="text-center align-middle table-pdf text-pdf">{{
                         $stokHarga->barang->merk }}</td>
-                    @php $barangDisplayed = true; @endphp
-                    @endif
                     <td class="text-center align-middle table-pdf text-pdf">{{ $stokHarga->nf_stok }}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
@@ -120,12 +96,7 @@
                     </td>
                 </tr>
                 @endif
-                @endforeach
-                @endforeach
-                @endforeach
-                @endforeach
-                @endforeach
-                @if (!$loop->last)
+                @if ($stokHarga->unit_id != $data->last()->unit_id)
                 <tr>
                     <td colspan="16" style="border: none; background-color:transparent; border-bottom-color:transparent; height:20px">
                     </td>

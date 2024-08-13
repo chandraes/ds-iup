@@ -142,4 +142,37 @@ class BarangStokHarga extends Model
             return $data;
 
     }
+
+    public function barangStokPdf($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
+    {
+        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
+            ->whereHas('barang', function ($query) use ($jenis) {
+                $query->where('jenis', $jenis);
+            })
+            ->orderBy('barang_unit_id')
+            ->orderBy('barang_type_id')
+            ->orderBy('barang_kategori_id')
+            ->orderBy('barang_nama_id')
+            ->orderBy('barang_id');
+
+        if (!is_null($unitFilter)) {
+            $query->where('barang_unit_id', $unitFilter);
+        }
+
+        if (!is_null($typeFilter)) {
+            $query->where('barang_type_id', $typeFilter);
+        }
+
+        if (!is_null($kategoriFilter)) {
+            $query->where('barang_kategori_id', $kategoriFilter);
+        }
+        // dd($barangNamaFilter);
+        if (!is_null($barangNamaFilter)) {
+            $query->where('barang_nama_id', $barangNamaFilter);
+        }
+
+        $data = $query->get();
+
+        return $data;
+    }
 }

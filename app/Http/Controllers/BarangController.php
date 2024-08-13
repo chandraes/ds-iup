@@ -563,6 +563,9 @@ class BarangController extends Controller
 
     public function stok_ppn_download(Request $request)
     {
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
@@ -595,7 +598,7 @@ class BarangController extends Controller
 
         $jenis = 1;
 
-        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStokPdf($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
         $pdf = PDF::loadview('db.stok-ppn.pdf', [
            'data' => $data,
