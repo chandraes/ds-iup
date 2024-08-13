@@ -14,10 +14,25 @@
         <div class="col-md-12">
             <table class="table">
                 <tr class="text-center">
-                    <td class="text-center align-middle"><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td class="text-center align-middle"><a href="{{route('db')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
+                    <td class="text-center align-middle"><a href="{{route('home')}}"><img
+                                src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30"> Dashboard</a></td>
+                    <td class="text-center align-middle"><a href="{{route('db')}}"><img
+                                src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
+                    <td class="text-center align-middle">
+                        <form action="{{route('db.stok-non-ppn.download')}}" method="get" target="_blank">
+                            <input type="hidden" name="unit" value="{{request('unit')}}">
+                            <input type="hidden" name="type" value="{{request('type')}}">
+                            <input type="hidden" name="kategori" value="{{request('kategori')}}">
+                            <input type="hidden" name="barang_nama" value="{{request('barang_nama')}}">
+                            <div class="row">
+                                <button type="submit" class="btn"><img src="{{asset('images/print.svg')}}" alt="dokumen"
+                                        width="30">
+                                    PDF</button>
+                            </div>
+
+                        </form>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -28,6 +43,7 @@
         max-height: 500px;
         overflow-y: auto;
     }
+
     thead th {
         position: sticky;
         top: 0;
@@ -214,7 +230,8 @@
                 </tr>
                 <tr>
                     <th colspan="11" class="text-end align-middle">Estimasi Profit</th>
-                    <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli, 0 ,',','.')}}</th>
+                    <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
+                        0 ,',','.')}}</th>
                     <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>
