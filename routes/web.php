@@ -209,6 +209,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('stok-ppn')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
+                Route::get('/download', [App\Http\Controllers\BarangController::class, 'stok_ppn_download'])->name('db.stok-ppn.download');
                 Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
             });
 

@@ -13,6 +13,7 @@ use App\Models\db\Satuan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BarangController extends Controller
 {
@@ -558,6 +559,58 @@ class BarangController extends Controller
             'selectBarangNama' => $selectBarangNama,
 
         ]);
+    }
+
+    public function stok_ppn_download(Request $request)
+    {
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        $unitFilter = $request->input('unit');
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+        $barangNamaFilter = $request->input('barang_nama');
+
+        if (!empty($unitFilter) && $unitFilter != '') {
+            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
+
+            $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+        } else {
+            $selectType = BarangType::all();
+            $selectKategori = BarangKategori::all();
+            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+        }
+
+        $db = new BarangStokHarga();
+
+        $jenis = 1;
+
+        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+
+        $pdf = PDF::loadview('db.stok-ppn.pdf', [
+           'data' => $data,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+            'selectType' => $selectType,
+            'selectKategori' => $selectKategori,
+            'ppnRate' => $ppnRate,
+            'barangNamaFilter' => $barangNamaFilter,
+            'selectBarangNama' => $selectBarangNama,
+        ])
+        ->setPaper('a4', 'landscape');
+            $tanggal = date('d-m-Y');
+        return $pdf->stream('StokPpn-'.$tanggal.'.pdf');
     }
 
 

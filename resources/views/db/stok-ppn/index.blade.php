@@ -19,6 +19,20 @@
                     <td class="text-center align-middle"><a href="{{route('db')}}"><img
                                 src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
+                    <td class="text-center align-middle">
+                        <form action="{{route('db.stok-ppn.download')}}" method="get" target="_blank">
+                            <input type="hidden" name="unit" value="{{request('unit')}}">
+                            <input type="hidden" name="type" value="{{request('type')}}">
+                            <input type="hidden" name="kategori" value="{{request('kategori')}}">
+                            <input type="hidden" name="barang_nama" value="{{request('barang_nama')}}">
+                            <div class="row">
+                                <button type="submit" class="btn"><img src="{{asset('images/print.svg')}}" alt="dokumen"
+                                        width="30">
+                                    PDF</button>
+                            </div>
+
+                        </form>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -179,9 +193,9 @@
                     $sumTotalHargaJual += $totalHargaJual;
                     $sumTotalHargaBeli += $totalHargaBeli;
                     if ($stokHarga->harga_beli == 0) {
-                        $margin = '-';
+                    $margin = '-';
                     } else {
-                        $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
+                    $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
 
                     }
 
@@ -206,11 +220,11 @@
                     @else
                     @if ($margin < 10.01) table-danger @endif
                     @endif">
-                    @if ($margin == '-')
-                    {{$margin}}
-                    @else
-                    {{number_format($margin, 2, '.',',')}}%
-                    @endif
+                        @if ($margin == '-')
+                        {{$margin}}
+                        @else
+                        {{number_format($margin, 2, '.',',')}}%
+                        @endif
                     </td>
                 </tr>
                 @endif
@@ -241,6 +255,7 @@
                     <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>
+        </table>
     </div>
 
 </div>
