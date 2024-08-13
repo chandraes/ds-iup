@@ -178,7 +178,13 @@
                     $totalHargaJual = ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok;
                     $sumTotalHargaJual += $totalHargaJual;
                     $sumTotalHargaBeli += $totalHargaBeli;
-                    $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
+                    if ($stokHarga->harga_beli == 0) {
+                        $margin = '-';
+                    } else {
+                        $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
+
+                    }
+
                     @endphp
                     <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
                     <td class="text-center align-middle">{{ number_format(($stokHarga->harga_beli +
@@ -195,10 +201,16 @@
 
                     <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
                     <td class="text-center align-middle">{{ number_format($totalHargaJual, 0, ',','.') }}</td>
-                    <td class="text-end align-middle @if ($margin < 10)
-                                    table-danger
-                                @endif">
-                        {{ number_format($margin, 2) }}%
+                    <td class="text-end align-middle @if ($margin == '-')
+                    table-warning
+                    @else
+                    @if ($margin < 10.01) table-danger @endif
+                    @endif">
+                    @if ($margin == '-')
+                    {{$margin}}
+                    @else
+                    {{number_format($margin, 2, '.',',')}}%
+                    @endif
                     </td>
                 </tr>
                 @endif
