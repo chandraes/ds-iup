@@ -199,7 +199,7 @@ class BarangController extends Controller
                 });
             })->get();
 
-            $selectBarangNama = BarangNama::whereHas('barangs', function ($query) use ($unitFilter) {
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
                 $query->whereHas('type', function ($query) use ($unitFilter) {
                     $query->where('barang_unit_id', $unitFilter);
                 });
