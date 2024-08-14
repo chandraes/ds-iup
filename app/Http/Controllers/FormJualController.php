@@ -238,7 +238,7 @@ class FormJualController extends Controller
 
             // $pdfUrl = asset('storage/invoices/invoice-' . $res['invoice']->id . '.pdf');
 
-            return redirect()->route('billing.invoice-konsumen.invoice-jpeg', ['invoice' => $res['invoice']->id]);
+            return redirect()->route('billing.form-jual.invoice', ['invoice' => $res['invoice']->id]);
         }
 
 
@@ -286,6 +286,14 @@ class FormJualController extends Controller
 
         $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
+        if ($konsumen && $konsumen->no_hp) {
+            $tujuan = str_replace('-', '', $konsumen->no_hp);
+            $pesan = 'Terima kasih telah berbelanja di ' . $pt->nama;
+            $file = $pdfUrl;
+            $wa = new StarSender($tujuan, $pesan, $file);
+
+            $wa->sendGroup();
+        }
 
         return view('billing.stok.invoice',
         [

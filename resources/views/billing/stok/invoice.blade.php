@@ -21,9 +21,10 @@
 </div>
 <div class="container-fluid mt-3 table-responsive">
     <center>
-        <img id="invoiceImage" src="{{ $jpegUrl }}" alt="Invoice Image" width="50%">
-        <p>. <a href="{{ $jpegUrl }}" target="_blank">Klik di sini untuk mendownload Invoice</a>.</p>
-        <!-- Tombol untuk mencetak gambar -->
+        <object id="invoicePdf" data="{{ $pdfUrl }}" type="application/pdf" width="100%" height="600px">
+            <p>Browser Anda tidak mendukung tampilan PDF. <a href="{{ $pdfUrl }}" target="_blank">Klik di sini untuk mendownload Invoice</a>.</p>
+        </object>
+        <!-- Tombol untuk mencetak PDF -->
     </center>
 </div>
 </div>
@@ -36,28 +37,28 @@
 @endpush
 @push('js')
 <script>
-      function printInvoice() {
-        // Dapatkan elemen gambar
-        var img = document.getElementById("invoiceImage");
+function printInvoice() {
+    // Dapatkan elemen PDF
+    var pdfUrl = document.getElementById("invoicePdf").getAttribute("data");
 
-        // Buka jendela baru
-        var printWindow = window.open('', '_blank');
+    // Buka jendela baru
+    var printWindow = window.open('', '_blank');
 
-        // Tambahkan HTML yang berisi hanya gambar ke jendela baru
-        printWindow.document.write('<html><head><title>Cetak Invoice</title>');
-        printWindow.document.write('</head><body style="margin: 0; padding: 0; text-align: center;">');
-        printWindow.document.write('<img src="' + img.src + '" style="width:100%; max-width:100%;">');
-        printWindow.document.write('</body></html>');
+    // Tambahkan HTML yang berisi hanya PDF ke jendela baru
+    printWindow.document.write('<html><head><title>Cetak Invoice</title>');
+    printWindow.document.write('</head><body style="margin: 0; padding: 0; text-align: center;">');
+    printWindow.document.write('<embed src="' + pdfUrl + '" type="application/pdf" width="100%" height="100%">');
+    printWindow.document.write('</body></html>');
 
-        // Tutup dokumen untuk memastikan bahwa gambar telah dimuat
-        printWindow.document.close();
+    // Tutup dokumen untuk memastikan bahwa PDF telah dimuat
+    printWindow.document.close();
 
-        // Tunggu hingga konten siap, lalu cetak
-        printWindow.onload = function() {
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        };
-    }
+    // Tunggu hingga konten siap, lalu cetak
+    printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    };
+}
 </script>
 @endpush
