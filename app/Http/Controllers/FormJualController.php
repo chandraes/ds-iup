@@ -288,13 +288,23 @@ class FormJualController extends Controller
 
         if ($konsumen && $konsumen->no_hp) {
             $tujuan = str_replace('-', '', $konsumen->no_hp);
-
             $pesan = "Invoice Pembelian\n" . $pt->nama . "\n" . $invoice->kode . "\n\n" .
                     $tanggal . " " . $jam . "\n\n" .
                     "Total : Rp " . number_format($invoice->total, 0, ',', '.') . "\n" .
-                    "PPN : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n" .
-                    "Total " . ($invoice->lunas == 1 ? "Bayar" : "Tagihan") . " : Rp " . number_format($invoice->total_bayar, 0, ',', '.') . "\n\n" .
-                    "Terima kasih";
+                    "PPN : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
+
+            if ($invoice->lunas == 1) {
+                $pesan .= "Total Bayar : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
+            } else {
+                if ($invoice->dp > 0) {
+                    $pesan .= "DP : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n" .
+                            "Sisa Tagihan : Rp " . number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.') . "\n\n";
+                } else {
+                    $pesan .= "Total Tagihan : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
+                }
+            }
+
+            $pesan .= "Terima kasih";
 
             // $file = $pdfUrl;
             $wa = new StarSender($tujuan, $pesan);
