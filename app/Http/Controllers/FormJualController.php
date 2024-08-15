@@ -288,10 +288,13 @@ class FormJualController extends Controller
 
         if ($konsumen && $konsumen->no_hp) {
             $tujuan = str_replace('-', '', $konsumen->no_hp);
-            $pesan = "Invoice Pembelian\n" . $pt->nama . "\n" . $invoice->kode . "\n\n" .
+            $pesan = "*Invoice Pembelian*\n" . $pt->nama . "\n\n" . "*".$invoice->kode."*" . "\n\n" .
                     $tanggal . " " . $jam . "\n\n" .
-                    "Total : Rp " . number_format($invoice->total, 0, ',', '.') . "\n" .
-                    "PPN : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
+                    "Total Belanja : Rp " . number_format($invoice->total, 0, ',', '.') . "\n";
+
+            if ($invoice->kas_ppn == 1) {
+                $pesan.= "PPN : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
+            }
 
             if ($invoice->lunas == 1) {
                 $pesan .= "Total Bayar : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
