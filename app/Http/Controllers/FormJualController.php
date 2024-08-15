@@ -284,16 +284,16 @@ class FormJualController extends Controller
         // $pdf = new Pdf($pdfPath);
 
 
-        $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
+        // $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
+        //
+        // if ($konsumen && $konsumen->no_hp) {
+        //     $tujuan = str_replace('-', '', $konsumen->no_hp);
+        //     $pesan = 'Terima kasih telah berbelanja di ' . $pt->nama;
+        //     $file = $pdfUrl;
+        //     $wa = new StarSender($tujuan, $pesan, $file);
 
-        if ($konsumen && $konsumen->no_hp) {
-            $tujuan = str_replace('-', '', $konsumen->no_hp);
-            $pesan = 'Terima kasih telah berbelanja di ' . $pt->nama;
-            $file = $pdfUrl;
-            $wa = new StarSender($tujuan, $pesan, $file);
-
-            $wa->sendGroup();
-        }
+        //     $wa->sendGroup();
+        // }
 
         return view('billing.stok.invoice',
         [
