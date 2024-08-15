@@ -116,6 +116,12 @@
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
+                <h4 class="mt-2">GANTI RUGI<br>BARANG HILANG</h4>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
                 <h4 class="mt-2">DASHBOARD
