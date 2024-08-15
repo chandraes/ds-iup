@@ -300,7 +300,7 @@ class FormJualController extends Controller
                     $pesan .= "DP : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n" .
                             "Sisa Tagihan : Rp " . number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.') . "\n\n";
                 } else {
-                    $pesan .= "Total Tagihan : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
+                    $pesan .= "Sisa Tagihan : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
                 }
             }
 
