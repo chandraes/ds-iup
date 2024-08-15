@@ -284,16 +284,23 @@ class FormJualController extends Controller
         // $pdf = new Pdf($pdfPath);
 
 
-        // $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
-        //
-        // if ($konsumen && $konsumen->no_hp) {
-        //     $tujuan = str_replace('-', '', $konsumen->no_hp);
-        //     $pesan = 'Terima kasih telah berbelanja di ' . $pt->nama;
-        //     $file = $pdfUrl;
-        //     $wa = new StarSender($tujuan, $pesan, $file);
+        $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
-        //     $wa->sendGroup();
-        // }
+        if ($konsumen && $konsumen->no_hp) {
+            $tujuan = str_replace('-', '', $konsumen->no_hp);
+
+            $pesan = "Invoice Pembelian\n" . $pt->nama . "\n" . $invoice->kode . "\n\n" .
+                    $tanggal . " " . $jam . "\n\n" .
+                    "Total : Rp " . number_format($invoice->total, 0, ',', '.') . "\n" .
+                    "PPN : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n" .
+                    "Total " . ($invoice->lunas == 1 ? "Bayar" : "Tagihan") . " : Rp " . number_format($invoice->total_bayar, 0, ',', '.') . "\n\n" .
+                    "Terima kasih";
+
+            // $file = $pdfUrl;
+            $wa = new StarSender($tujuan, $pesan);
+
+            $wa->sendGroup();
+        }
 
         return view('billing.stok.invoice',
         [
