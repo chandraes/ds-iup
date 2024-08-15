@@ -316,6 +316,10 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('billing')->group(function() {
 
+            Route::prefix('ganti-rugi')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'ganti_rugi'])->name('billing.ganti-rugi');
+            });
+
             Route::get('/lihat-stok', [App\Http\Controllers\BillingController::class, 'lihat_stok'])->name('billing.lihat-stok');
 
             Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');

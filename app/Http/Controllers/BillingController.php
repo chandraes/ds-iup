@@ -332,4 +332,9 @@ class BillingController extends Controller
 
         return redirect()->route('billing')->with($res['status'], $res['message']);
     }
+
+    public function ganti_rugi(Request $request)
+    {
+        return view('billing.ganti-rugi.index');
+    }
 }
