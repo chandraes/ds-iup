@@ -113,7 +113,7 @@
 
     </form>
     <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable">
+        <table class="table table-bordered" id="dataTable" style="font-size:9pt">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -228,7 +228,7 @@
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        <button class="btn btn-warning">Hilang</button>
+                        <button class="btn btn-sm btn-warning">Hilang</button>
                     </td>
                 </tr>
                 @endif
