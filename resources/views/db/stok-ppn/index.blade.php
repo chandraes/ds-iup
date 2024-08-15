@@ -10,19 +10,6 @@
     @include('swal')
     @include('db.stok-ppn.edit')
     @include('db.stok-ppn.action')
-    <!-- Modal trigger button -->
-    <button
-        type="button"
-        class="btn btn-primary btn-lg"
-
-    >
-        Launch demo modal
-    </button>
-
-    <!-- Modal Body -->
-    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-
-
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
