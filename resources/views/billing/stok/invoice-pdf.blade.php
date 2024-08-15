@@ -1,6 +1,6 @@
 @extends('layouts.doc')
 @push('header')
-@if ($pt->logo)
+@if ($pt->logo != null)
 <img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
 @endif
 <div class="header-div">
