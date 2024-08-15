@@ -229,7 +229,7 @@
                         </div>
                         @else
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
-                            onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">JUMLAH</button>
+                            onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">Jual</button>
                         @endif
                     </td>
                 </tr>
@@ -361,7 +361,7 @@
                         </div>
                         @else
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
-                            onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">JUMLAH</button>
+                            onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">Jual</button>
                         @endif
                     </td>
                 </tr>
