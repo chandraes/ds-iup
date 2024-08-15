@@ -9,6 +9,20 @@
     </div>
     @include('swal')
     @include('db.stok-ppn.edit')
+    @include('db.stok-ppn.action')
+    <!-- Modal trigger button -->
+    <button
+        type="button"
+        class="btn btn-primary btn-lg"
+
+    >
+        Launch demo modal
+    </button>
+
+    <!-- Modal Body -->
+    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+
+
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
@@ -113,7 +127,7 @@
 
     </form>
     <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable" style="font-size:9pt">
+        <table class="table table-bordered" id="dataTable" >
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -132,7 +146,7 @@
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Margin<br>Profit</th>
-                    <th class="text-center align-middle">ACT</th>
+                    {{-- <th class="text-center align-middle">ACT</th> --}}
 
                 </tr>
             </thead>
@@ -173,8 +187,9 @@
                     @php $kategoriDisplayed = true; @endphp
                     @endif
                     @if (!$namaDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">{{
-                        $stokHarga->barang_nama->nama }}</td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
+                        <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal">{{$stokHarga->barang_nama->nama }}</a>
+                        </td>
                     @php $namaDisplayed = true; @endphp
                     @endif
                     @if (!$barangDisplayed)
@@ -227,9 +242,9 @@
                         {{number_format($margin, 2, '.',',')}}%
                         @endif
                     </td>
-                    <td class="text-center align-middle">
+                    {{-- <td class="text-center align-middle">
                         <button class="btn btn-sm btn-warning">Hilang</button>
-                    </td>
+                    </td> --}}
                 </tr>
                 @endif
                 @endforeach
