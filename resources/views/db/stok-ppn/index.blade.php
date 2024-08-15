@@ -132,6 +132,7 @@
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Margin<br>Profit</th>
+                    <th class="text-center align-middle">ACT</th>
 
                 </tr>
             </thead>
@@ -225,6 +226,9 @@
                         @else
                         {{number_format($margin, 2, '.',',')}}%
                         @endif
+                    </td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-warning">Hilang</button>
                     </td>
                 </tr>
                 @endif
