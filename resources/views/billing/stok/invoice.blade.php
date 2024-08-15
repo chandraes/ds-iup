@@ -12,8 +12,8 @@
                     <td class="text-center align-middle"><a href="{{route('billing')}}"><img
                                 src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
                             Billing</a></td>
-                <td class="text-center align-middle"><a href="#" onclick="printInvoice()"><i class="fa fa-print"></i> Cetak Invoice
-                            </a></td>
+                {{-- <td class="text-center align-middle"><a href="#" onclick="printInvoice()"><i class="fa fa-print"></i> Cetak Invoice
+                            </a></td> --}}
                 </tr>
             </table>
         </div>
