@@ -100,7 +100,8 @@
         <div class="col-md-6">
             <div class="row px-3">
                 <a href="{{route('billing.form-jual.keranjang')}}" class="btn btn-success @if ($keranjang->count() == 0) disabled
-                @endif" role="button"><i class="fa fa-shopping-cart"></i> Keranjang {{$keranjang->count() == 0 ? '' : '('.$keranjang->count().')'}}</a>
+                @endif" role="button"><i class="fa fa-shopping-cart"></i> Keranjang {{$keranjang->count() == 0 ? '' :
+                    '('.$keranjang->count().')'}}</a>
             </div>
         </div>
         <div class="col-md-6">
@@ -113,6 +114,7 @@
             </form>
         </div>
     </div>
+    @if ($keranjang->where('barang_ppn', 0)->count() == 0)
     <center>
         <h2>Barang PPN</h2>
     </center>
@@ -252,6 +254,8 @@
     <br>
     <hr>
     <br>
+    @endif
+    @if ($keranjang->where('barang_ppn', 1)->count() == 0)
     <center>
         <h2>Barang Non PPN</h2>
     </center>
@@ -347,7 +351,7 @@
                         </ul>
                         @endif
                     </td>
-                    <td class="text-center align-middle" >
+                    <td class="text-center align-middle">
                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
                         <div class="input-group">
                             <button class="btn btn-danger"
@@ -382,13 +386,15 @@
         </table>
     </div>
 </div>
+@endif
+
 @if(session('pdfUrl'))
-    <script type="text/javascript">
-        window.onload = function() {
+<script type="text/javascript">
+    window.onload = function() {
             var pdfUrl = "{{ session('pdfUrl') }}";
             window.open(pdfUrl, '_blank');
         };
-    </script>
+</script>
 @endif
 @endsection
 @push('css')
