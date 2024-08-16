@@ -96,11 +96,13 @@ class BillingController extends Controller
 
         $is = InvoiceBelanja::where('tempo', 1)->where('void', 0)->where('kas_ppn', 1)->count();
         $isn = InvoiceBelanja::where('tempo', 1)->where('void', 0)->where('kas_ppn', 0)->count();
-        $ik = InvoiceJual::where('lunas', 0)->where('void', 0)->count();
+        $ik = InvoiceJual::where('lunas', 0)->where('void', 0)->where('kas_ppn', 1)->count();
+        $ikn = InvoiceJual::where('lunas', 0)->where('void', 0)->where('kas_ppn', 0)->count();
         return view('billing.index', [
             'is' => $is,
             'ik' => $ik,
             'isn' => $isn,
+            'ikn' => $ikn,
         ]);
     }
 

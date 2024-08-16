@@ -175,7 +175,7 @@
                     @endif
                     @if (!$namaDisplayed)
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
-                        <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal">{{$stokHarga->barang_nama->nama }}</a>
+                        {{$stokHarga->barang_nama->nama }}</a>
                         </td>
                     @php $namaDisplayed = true; @endphp
                     @endif
@@ -186,7 +186,7 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
+                    <td class="text-center align-middle"><a href="#"data-bs-toggle="modal" data-bs-target="#actionModal">{{ $stokHarga->nf_stok }}</a></td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php

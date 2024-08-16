@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE KONSUMEN<br>PPN</u></h1>
+            <h1><u>INVOICE KONSUMEN<br>NON PPN</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -48,12 +48,9 @@
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
-                    <th class="text-center align-middle">PPn</th>
                     <th class="text-center align-middle">Penyesuaian</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
-                    <th class="text-center align-middle">DP<br>PPN</th>
-                    <th class="text-center align-middle">Sisa<br>PPN</th>
                     <th class="text-center align-middle">Sisa<br>Tagihan</th>
                     <th class="text-center align-middle">Jatuh<br>Tempo</th>
                     <th class="text-center align-middle">ACT</th>
@@ -72,12 +69,9 @@
                     </td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
                     <td class="text-end align-middle">{{$d->nf_diskon}}</td>
-                    <td class="text-end align-middle">{{$d->nf_ppn}}</td>
                     <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                     <td class="text-end align-middle">{{$d->nf_dp}}</td>
-                    <td class="text-end align-middle">{{$d->nf_dp_ppn}}</td>
-                    <td class="text-end align-middle">{{$d->sisa_ppn}}</td>
                     <td class="text-end align-middle">{{$d->sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
                     <td class="text-end align-middle">
@@ -98,12 +92,9 @@
                     <th class="text-end align-middle" colspan="3">Grand Toal</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('ppn')-$data->sum('dp_ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total')-$data->sum('dp')-$data->sum('dp_ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle" colspan="2"></th>
                 </tr>

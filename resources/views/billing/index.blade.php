@@ -108,9 +108,19 @@
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.invoice-konsumen')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE KONSUMEN
+                <h4 class="mt-2">INVOICE KONSUMEN<br>PPN
                     @if ($ik > 0)
                     <span class="text-danger">({{$ik}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+            <a href="{{route('billing.invoice-konsumen.non-ppn')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-konsumen-non.svg')}}" alt="" width="70">
+                <h4 class="mt-2">INVOICE KONSUMEN<br>NON PPN
+                    @if ($ikn > 0)
+                    <span class="text-danger">({{$ikn}})</span>
                     @endif
                 </h4>
             </a>
