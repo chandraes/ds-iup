@@ -40,7 +40,7 @@
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->short_pesan()}}</td>
-                <td class="text-center align-middle">{{$d->group_id}}</td>
+                <td class="text-center align-middle">{{$d->group_id ?? $d->tujuan}}</td>
                 <td class="text-center align-middle">
                     @if ($d->status == 0)
                     <span class="badge bg-danger">Belum Terkirim</span>

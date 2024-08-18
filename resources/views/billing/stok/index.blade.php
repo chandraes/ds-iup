@@ -413,10 +413,12 @@
     });
 
     confirmAndSubmit("#keranjangEmpty", "Apakah anda yakin untuk mengosongkan keranjang?");
+
     function setModalJumlah(data, id)
     {
         console.log(data);
         document.getElementById('titleJumlah').innerText = data.barang_nama.nama;
+        document.getElementById('jumlah_satuan').innerText = data.barang.satuan ? data.barang.satuan.nama : '';
         document.getElementById('barang_stok_harga_id').value = id;
 
         if (data.barang.jenis == 1) {
