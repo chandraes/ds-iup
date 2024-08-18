@@ -547,7 +547,7 @@ class BarangController extends Controller
 
         $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
         $units = BarangUnit::all();
-
+        $karyawan = Karyawan::where('status', 1)->get();
 
         return view('db.stok-non-ppn.index', [
             'data' => $data,
@@ -561,6 +561,7 @@ class BarangController extends Controller
             'selectKategori' => $selectKategori,
             'barangNamaFilter' => $barangNamaFilter,
             'selectBarangNama' => $selectBarangNama,
+            'karyawan' => $karyawan,
 
         ]);
     }

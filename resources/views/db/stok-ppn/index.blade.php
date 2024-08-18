@@ -186,7 +186,9 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    <td class="text-center align-middle"><a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a></td>
+                    <td class="text-center align-middle">
+                        <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a>
+                    </td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php

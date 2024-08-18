@@ -9,7 +9,7 @@
     </div>
     @include('swal')
     @include('db.stok-ppn.edit')
-
+    @include('db.stok-non-ppn.action')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
@@ -179,7 +179,7 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
+                    <td class="text-center align-middle"><a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a></td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php
@@ -252,6 +252,18 @@
         // document.getElementById('harga').value = data.stok_ppn.nf_harga;
         document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.id);
     }
+
+    function actionFun(data)
+    {
+
+        document.getElementById('harga_beli_dpp_act').value = data.nf_harga_beli;
+        document.getElementById('stok_act').value = data.nf_stok;
+        document.getElementById('stok_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
+        document.getElementById('hilang_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
+
+        document.getElementById('actionForm').action = `{{route('db.stok-hilang', ':id')}}`.replace(':id', data.id);
+    }
+    confirmAndSubmit("#actionForm", "Apakah anda yakin?");
 
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
 
