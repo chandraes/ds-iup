@@ -395,16 +395,20 @@ class KasBesar extends Model
 
     public function sendWa($tujuan, $pesan)
     {
+        $storeWa = PesanWa::create([
+            'pesan' => $pesan,
+            'tujuan' => $tujuan,
+            'status' => 0,
+        ]);
+        
         $send = new StarSender($tujuan, $pesan);
         $res = $send->sendGroup();
 
-        $status = ($res == 'true') ? 1 : 0;
+        if ($res == 'true') {
+            $storeWa->update(['status' => 1]);
+        }
 
-        PesanWa::create([
-            'pesan' => $pesan,
-            'tujuan' => $tujuan,
-            'status' => $status,
-        ]);
+
     }
 
     private function tambahModal($nominal, $investor_id)

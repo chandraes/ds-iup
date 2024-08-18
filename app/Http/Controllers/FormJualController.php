@@ -6,7 +6,9 @@ use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\KasKonsumen;
 use App\Models\KonsumenTemp;
+use App\Models\PesanWa;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\KeranjangJual;
 use App\Services\StarSender;
@@ -286,14 +288,47 @@ class FormJualController extends Controller
 
         $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
+        if ($invoice->konsumen_id) {
+            if ($konsumen->pembayaran == 1) {
+                $uraian = '*Cash*';
+                $pembayaran = 'Lunas';
+            } else {
+                if ($konsumen->pembayaran == 2 && $invoice->dp > 0) {
+                    $uraian = '*DP*';
+                } else {
+                    $uraian = '*Tanpa DP*';
+                }
+                $pembayaran = $konsumen->sistem_pembayaran . ' ' . $konsumen->tempo_hari . ' Hari';
+            }
+        } else {
+            $uraian = '*Cash*';
+            $pembayaran = 'Lunas';
+        }
+
         if ($konsumen && $konsumen->no_hp) {
             $tujuan = str_replace('-', '', $konsumen->no_hp);
-            $pesan = "*Invoice Pembelian*\n" . $pt->nama . "\n\n" . "*".$invoice->kode."*" . "\n\n" .
-                    $tanggal . " " . $jam . "\n\n" .
-                    "Total Belanja : Rp " . number_format($invoice->total, 0, ',', '.') . "\n";
+            $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                    "*Invoice Pembelian*\n".
+                    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n" .
+                    $pt->nama . "\n\n" .
+                    "No Invoice:\n".
+                    "*".$invoice->kode."*\n\n".
+                    $tanggal . "\n" .
+                    $jam . "\n\n" .
+                    "Uraian : ".$uraian."\n".
+                    "Pembayaran : ".$pembayaran."\n";
+
+            if ($invoice->konsumen_id && $konsumen->pembayaran == 2) {
+                $jatuhTempo = Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d-m-Y');
+                $pesan .= "Tgl Jatuh Tempo : ".$jatuhTempo."\n\n";
+
+            }
+
+            $pesan .= "Konsumen : *".$konsumen->nama."*\n\n".
+                    "Nilai DPP : Rp " . number_format($invoice->total, 0, ',', '.') . "\n";
 
             if ($invoice->kas_ppn == 1) {
-                $pesan.= "PPN : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
+                $pesan.= "PPN     : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
             }
 
             if ($invoice->lunas == 1) {
@@ -307,12 +342,47 @@ class FormJualController extends Controller
                 }
             }
 
-            $pesan .= "Terima kasih";
+            $pesan .= "==========================\n";
+
+            if ($invoice->konsumen_id) {
+                $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+                $pesan .= "Total Tagihan Konsumen: \n".
+                "Rp. ".number_format($sisaTerakhir, 0, ',', '.')."\n\n";
+
+                $pesan .= "==========================\n";
+
+                $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)->where('lunas', 0)->where('void', 0)->where('jatuh_tempo', '<', Carbon::now()->subDays(7))->get();
+
+                if ($checkInvoice->count() > 0) {
+                    $pesan .= "Tagihan jatuh tempo :\n";
+                    foreach ($checkInvoice as $key => $value) {
+                        $pesan .= "No Invoice :".$value->kode . "\n" .
+                                    "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
+                                    "Nilai Tagihan  :  Rp " . number_format($value->grand_total-$value->dp-$value->dp_ppn, 0, ',', '.') . "\n\n";
+                    }
+                }
+
+            }
+
+            //tambahkan warning jika ada tagihan sudah 7 hari sebelum jatuh tempo ( Nomor invoice, tanggal jatuh tempo, dan nilai tagihan)
+            $pesan .= "Terima kasih 🙏🙏🙏";
+
+            $storePesan = PesanWa::create([
+                'pesan' => $pesan,
+                'tujuan' => $tujuan,
+                'status' => 0,
+            ]);
 
             // $file = $pdfUrl;
             $wa = new StarSender($tujuan, $pesan);
 
-            $wa->sendGroup();
+            $send = $wa->sendGroup();
+
+            if ($send == 'true') {
+                $storePesan->update([
+                    'status' => 1,
+                ]);
+            }
         }
 
         return view('billing.stok.invoice',
