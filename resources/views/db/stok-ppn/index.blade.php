@@ -186,7 +186,7 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    <td class="text-center align-middle"><a href="#"data-bs-toggle="modal" data-bs-target="#actionModal">{{ $stokHarga->nf_stok }}</a></td>
+                    <td class="text-center align-middle"><a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a></td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php
@@ -278,6 +278,13 @@
         theme: 'bootstrap-5',
         width: '100%',
     });
+
+    $('#karyawan_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        dropdownParent: $('#actionModal')
+    });
+
     function editFun(data)
     {
 
@@ -287,6 +294,20 @@
         document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.id);
     }
 
+    function actionFun(data)
+    {
+        var harga_beli_ppn = data.harga_beli + (data.harga_beli * {{$ppnRate}} / 100);
+        // make harga_beli_ppn to number format
+        var formatted_harga_beli_ppn = harga_beli_ppn.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+        document.getElementById('harga_beli_dpp_act').value = formatted_harga_beli_ppn;
+        document.getElementById('stok_act').value = data.nf_stok;
+        document.getElementById('stok_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
+        document.getElementById('hilang_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
+
+        document.getElementById('actionForm').action = `{{route('db.stok-hilang', ':id')}}`.replace(':id', data.id);
+    }
+    confirmAndSubmit("#actionForm", "Apakah anda yakin?");
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
 
     function toggleNamaJabatan(id) {

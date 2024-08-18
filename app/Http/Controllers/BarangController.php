@@ -8,8 +8,10 @@ use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
+use App\Models\db\Karyawan;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
+use App\Models\GantiRugi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -472,6 +474,7 @@ class BarangController extends Controller
 
         $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
+        $karyawan = Karyawan::where('status', 1)->get();
 
         return view('db.stok-ppn.index', [
             'data' => $data,
@@ -486,6 +489,7 @@ class BarangController extends Controller
             'ppnRate' => $ppnRate,
             'barangNamaFilter' => $barangNamaFilter,
             'selectBarangNama' => $selectBarangNama,
+            'karyawan' => $karyawan,
         ]);
     }
 
@@ -669,6 +673,44 @@ class BarangController extends Controller
         ->setPaper('a4', 'landscape');
             $tanggal = date('d-m-Y');
         return $pdf->stream('StokNonPpn-'.$tanggal.'.pdf');
+    }
+
+
+    public function ganti_rugi(BarangStokHarga $stok, Request $request)
+    {
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
+        $data = $request->validate([
+            'harga_beli_dpp_act' => 'required',
+            'karyawan_id' => 'required|exists:karyawans,id',
+            'kas_ppn' => 'required|in:0,1',
+            'jumlah_hilang' => 'required',
+            'aksi' => 'required|in:1,2',
+        ]);
+
+        if ($data['jumlah_hilang'] <= 0 || $data['jumlah_hilang'] > $stok->stok) {
+            $errorMessage = $data['jumlah_hilang'] <= 0 ? 'Jumlah hilang tidak boleh kurang dari atau sama dengan 0!' : 'Jumlah hilang tidak boleh lebih besar dari stok!';
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
+        $data['jumlah'] = str_replace('.', '', $data['jumlah_hilang']);
+        $data['harga'] = str_replace('.', '', $data['harga_beli_dpp_act']);
+        $data['total'] = $data['jumlah'] * $data['harga'];
+        $data['lunas'] = $data['aksi'] == 1 ? 1 : 0;
+        $data['total_bayar'] = $data['lunas'] == 1 ? $data['total'] : 0;
+        $data['sisa'] = $data['lunas'] == 1 ? 0 : $data['total'];
+        $data['barang_stok_harga_id'] = $stok->id;
+        $data['barang_id'] = $stok->barang_id;
+
+        unset($data['jumlah_hilang'], $data['harga_beli_dpp_act'], $data['aksi']);
+
+        $db = new GantiRugi();
+
+        $res = $db->ganti_rugi($data);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+
     }
 
 

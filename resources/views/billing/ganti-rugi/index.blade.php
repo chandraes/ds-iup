@@ -60,7 +60,42 @@
                 </tr>
             </thead>
             <tbody>
-
+                @foreach ($data as $d)
+                    <tr>
+                        <td class="text-center align-middle">{{$loop->iteration}}</td>
+                        <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
+                        <td class="text-center align-middle">{{$d->tanggal}}</td>
+                        <td class="text-center align-middle">{{$d->barang_stok_harga->barang->barang_nama->nama}}</td>
+                        <td class="text-center align-middle">{{$d->barang_stok_harga->barang->kode}}</td>
+                        <td class="text-center align-middle">{{$d->barang_stok_harga->barang->merk}}</td>
+                        <td class="text-center align-middle">{{$d->jumlah}}</td>
+                        <td class="text-center align-middle">{{$d->barang_stok_harga->barang->satuan ? $d->barang_stok_harga->barang->satuan->nama : '-'}}</td>
+                        <td class="text-center align-middle">
+                            @if ($d->kas_ppn == 1)
+                                {{$d->nf_harga}}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td class="text-center align-middle">
+                            @if ($d->kas_ppn == 0)
+                                {{$d->nf_harga}}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td class="text-center align-middle">
+                            {{$d->nf_total}}
+                        </td>
+                        <td class="text-center align-middle">
+                            {{$d->nf_total_bayar}}
+                        </td>
+                        <td class="text-center align-middle">
+                            {{$d->nf_sisa}}
+                        </td>
+                        <td class="text-center align-middle"></td>
+                    </tr>
+                @endforeach
             </tbody>
             <tfoot>
 

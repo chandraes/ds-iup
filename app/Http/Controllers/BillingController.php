@@ -10,6 +10,7 @@ use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\Karyawan;
 use App\Models\db\Pajak;
+use App\Models\GantiRugi;
 use App\Models\GroupWa;
 use App\Models\Investor;
 use App\Models\InvestorModal;
@@ -98,11 +99,14 @@ class BillingController extends Controller
         $isn = InvoiceBelanja::where('tempo', 1)->where('void', 0)->where('kas_ppn', 0)->count();
         $ik = InvoiceJual::where('lunas', 0)->where('void', 0)->where('kas_ppn', 1)->count();
         $ikn = InvoiceJual::where('lunas', 0)->where('void', 0)->where('kas_ppn', 0)->count();
+        $gr = GantiRugi::where('lunas', 0)->count();
+
         return view('billing.index', [
             'is' => $is,
             'ik' => $ik,
             'isn' => $isn,
             'ikn' => $ikn,
+            'gr' => $gr,
         ]);
     }
 
@@ -337,6 +341,11 @@ class BillingController extends Controller
 
     public function ganti_rugi(Request $request)
     {
-        return view('billing.ganti-rugi.index');
+        $data = GantiRugi::with(['barang_stok_harga.barang.satuan','barang_stok_harga.barang.barang_nama', 'karyawan'])->where('lunas', 0)
+                ->orderBy('karyawan_id')->get();
+
+        return view('billing.ganti-rugi.index', [
+            'data' => $data,
+        ]);
     }
 }

@@ -128,7 +128,11 @@
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="{{route('billing.ganti-rugi')}}" class="text-decoration-none">
                 <img src="{{asset('images/ganti-rugi.svg')}}" alt="" width="70">
-                <h4 class="mt-2">GANTI RUGI<br>BARANG HILANG</h4>
+                <h4 class="mt-2">GANTI RUGI<br>BARANG HILANG
+                    @if ($gr > 0)
+                    <span class="text-danger">({{$gr}})</span>
+                    @endif
+                </h4>
             </a>
         </div>
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
