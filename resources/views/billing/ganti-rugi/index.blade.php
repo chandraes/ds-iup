@@ -40,7 +40,7 @@
 </div>
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
-        <table class="table table-hover table-bordered" id="rekapTable">
+        <table class="table table-hover table-bordered" id="rekapTable" style="font-size: 10pt">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">No</th>
@@ -63,34 +63,34 @@
                 @foreach ($data as $d)
                     <tr>
                         <td class="text-center align-middle">{{$loop->iteration}}</td>
-                        <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
+                        <td class="text-start align-middle">{{$d->karyawan->nama}}</td>
                         <td class="text-center align-middle">{{$d->tanggal}}</td>
-                        <td class="text-center align-middle">{{$d->barang_stok_harga->barang->barang_nama->nama}}</td>
+                        <td class="text-start align-middle">{{$d->barang_stok_harga->barang->barang_nama->nama}}</td>
                         <td class="text-center align-middle">{{$d->barang_stok_harga->barang->kode}}</td>
                         <td class="text-center align-middle">{{$d->barang_stok_harga->barang->merk}}</td>
                         <td class="text-center align-middle">{{$d->jumlah}}</td>
                         <td class="text-center align-middle">{{$d->barang_stok_harga->barang->satuan ? $d->barang_stok_harga->barang->satuan->nama : '-'}}</td>
-                        <td class="text-center align-middle">
+                        <td class="text-end align-middle">
                             @if ($d->kas_ppn == 1)
                                 {{$d->nf_harga}}
                             @else
                                 -
                             @endif
                         </td>
-                        <td class="text-center align-middle">
+                        <td class="text-end align-middle">
                             @if ($d->kas_ppn == 0)
                                 {{$d->nf_harga}}
                             @else
                                 -
                             @endif
                         </td>
-                        <td class="text-center align-middle">
+                        <td class="text-end align-middle">
                             {{$d->nf_total}}
                         </td>
-                        <td class="text-center align-middle">
+                        <td class="text-end align-middle">
                             {{$d->nf_total_bayar}}
                         </td>
-                        <td class="text-center align-middle">
+                        <td class="text-end align-middle">
                             {{$d->nf_sisa}}
                         </td>
                         <td class="text-center align-middle"></td>
@@ -98,7 +98,25 @@
                 @endforeach
             </tbody>
             <tfoot>
-
+                <tr>
+                    <th class="text-end align-middle" colspan="8">Grand Total : </th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->where('kas_ppn', 1)->sum('harga'), 0, ',', '.')}}
+                    </th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->where('kas_ppn', 0)->sum('harga'), 0, ',', '.')}}
+                    </th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->sum('total'), 0, ',', '.')}}
+                    </th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->sum('total_bayar'), 0, ',', '.')}}
+                    </th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->sum('sisa'), 0, ',', '.')}}
+                    </th>
+                    <th class="text-center align-middle"></th>
+                </tr>
             </tfoot>
 
         </table>
