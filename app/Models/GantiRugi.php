@@ -15,6 +15,12 @@ class GantiRugi extends Model
 
     protected $guarded = [];
 
+    public function sisa($karyawan_id)
+    {
+        $total = $this->where('karyawan_id', $karyawan_id)->where('lunas', 0)->sum('sisa');
+        return $total;
+    }
+
     public function karyawan()
     {
         return $this->belongsTo(Karyawan::class);
@@ -89,17 +95,21 @@ class GantiRugi extends Model
             $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n" .
                     "*FORM GANTI RUGI*\n" .
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n" .
-                    "Uraian :  *" . $store->uraian . "*\n" .
-                    "Jumlah  :  *" . $data['jumlah']. " ". $satuan."*\n" .
-                    "Oleh    :  *" . $karyawan->nama . "*\n\n" .
-                    "Nilai    :  *Rp. " . number_format($store->nominal, 0, ',', '.') . "*\n\n" .
+                    "Uraian :  *Ganti Rugi*\n" .
+                    "Nama    :  *" . $karyawan->nama . "*\n\n" .
+                    "Nama Barang : *" . $barang->barang_nama->nama . "*\n" .
+                    "Kode Barang : *" . $barang->barang->kode . "*\n" .
+                    "Merk Barang : *" . $barang->barang->merk . "*\n\n" .
+                    "Modal    :  *Rp. " . number_format($data['harga'], 0, ',', '.') . "*\n" .
+                    "Jumlah  :  *" . $data['jumlah']. " ". $satuan."*\n\n" .
+                    "Total    :  *Rp. " . number_format($data['total'], 0, ',', '.') . "*\n\n" .
                     "Ditransfer ke rek:\n\n" .
                     "Bank      : " . $store->bank . "\n" .
                     "Nama    : " . $store->nama_rek . "\n" .
                     "No. Rek : " . $store->no_rek . "\n\n" .
                     "==========================\n";
-
-            $sisaSaldoKas = "Sisa Saldo Kas Besar: \n" .
+            $textKas = $data['kas_ppn'] == 1 ? "PPN" : "Non PPN";
+            $sisaSaldoKas = "Sisa Saldo Kas Besar ".$textKas.": \n" .
                             "Rp. " . number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
 
             $totalModalInvestor = $db['kas_ppn'] == 1 ?
@@ -134,12 +144,13 @@ class GantiRugi extends Model
                                 "Nama    :  *" . $karyawan->nama . "*\n\n" .
                                 "Nama Barang : *" . $barang->barang_nama->nama . "*\n" .
                                 "Kode Barang : *" . $barang->barang->kode . "*\n" .
-                                "Kode Barang : *" . $barang->barang->merk . "*\n\n" .
+                                "Merk Barang : *" . $barang->barang->merk . "*\n\n" .
                                 "Modal    :  *Rp. " . number_format($data['harga'], 0, ',', '.') . "*\n" .
                                 "Jumlah  :  *" . $data['jumlah']. " ". $satuan."*\n\n" .
+                                "Total    :  *Rp. " . number_format($data['total'], 0, ',', '.') . "*\n\n" .
                                 "==========================\n".
                                 "Grand total ganti rugi:\n".
-                                "Rp. " . number_format($storeKasbon->nominal, 0, ',', '.') . "\n\n".
+                                "Rp. " . number_format($this->sisa($karyawan->id), 0, ',', '.') . "\n\n".
                                 "Terima kasih 🙏🙏🙏\n";
 
                 $db->sendWa($group, $pesanKasBon);
