@@ -176,8 +176,9 @@
                     @php $kategoriDisplayed = true; @endphp
                     @endif
                     @if (!$namaDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">{{
-                        $stokHarga->barang_nama->nama }}</td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
+                        {{$stokHarga->barang_nama->nama }}</a>
+                        </td>
                     @php $namaDisplayed = true; @endphp
                     @endif
                     @if (!$barangDisplayed)
@@ -187,14 +188,6 @@
                         $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    @php
-                    $totalHargaBeli = ($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) *
-                    $stokHarga->stok;
-                    $totalHargaJual = ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok;
-                    $sumTotalHargaJual += $totalHargaJual;
-                    $sumTotalHargaBeli += $totalHargaBeli;
-                    $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
-                    @endphp
                     <td class="text-end align-middle">
                         {{$stokHarga->nf_harga}}
                     </td>
