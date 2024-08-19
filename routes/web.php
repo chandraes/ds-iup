@@ -295,6 +295,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('pricelist')->group(function(){
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'pricelist'])->name('rekap.pricelist');
+                Route::get('/pdf', [App\Http\Controllers\RekapController::class, 'pricelist_pdf'])->name('rekap.pricelist.pdf');
             });
         });
     });

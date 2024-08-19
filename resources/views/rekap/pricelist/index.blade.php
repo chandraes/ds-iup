@@ -19,6 +19,21 @@
                     <td class="text-center align-middle"><a href="{{route('rekap')}}"><img
                                 src="{{asset('images/rekap.svg')}}" alt="dokumen" width="30">
                             Rekap</a></td>
+                    <td class="text-center align-middle">
+                        <form action="{{route('rekap.pricelist.pdf')}}" method="get" target="_blank">
+                            <input type="hidden" name="ppn_kas" value="{{$ppn_kas}}">
+                            <input type="hidden" name="unit" value="{{request('unit')}}">
+                            <input type="hidden" name="type" value="{{request('type')}}">
+                            <input type="hidden" name="kategori" value="{{request('kategori')}}">
+                            <input type="hidden" name="barang_nama" value="{{request('barang_nama')}}">
+                            <div class="row">
+                                <button type="submit" class="btn"><img src="{{asset('images/print.svg')}}" alt="dokumen"
+                                        width="30">
+                                    PDF</button>
+                            </div>
+
+                        </form>
+                    </td>
                 </tr>
             </table>
         </div>
