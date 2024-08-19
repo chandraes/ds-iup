@@ -66,6 +66,10 @@
             font-size: 12px;
         }
 
+        .bold-text {
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body style="margin-left:-50px">

@@ -21,7 +21,8 @@
                     <th class="text-center align-middle table-pdf text-pdf">Kode<br>Barang</th>
                     <th class="text-center align-middle table-pdf text-pdf">Merk<br>Barang</th>
                     <th class="text-center align-middle table-pdf text-pdf">Satuan<br>Barang</th>
-                    <th class="text-center align-middle table-pdf text-pdf" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle table-pdf text-pdf" style="width: 7%;">Harga DPP<br>Jual Barang
+                    </th>
                     @if ($ppn_kas == 1)
                     <th class="text-center align-middle table-pdf text-pdf">Harga+PPN<br>Jual Barang</th>
                     @endif
@@ -60,18 +61,29 @@
                     $sumTotalHargaJual += $totalHargaJual;
                     $sumTotalHargaBeli += $totalHargaBeli;
                     if ($stokHarga->harga_beli == 0) {
-                        $margin = '-';
+                    $margin = '-';
                     } else {
-                        $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
+                    $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
 
                     }
                     @endphp
+
+
                     <td class="text-end align-middle text-pdf table-pdf">
+                        @if ($ppn_kas == 1)
                         {{ $stokHarga->nf_harga }}
+                        @else
+                        <strong>
+                            {{ $stokHarga->nf_harga }}
+                        </strong>
+                        @endif
                     </td>
                     @if ($ppn_kas == 1)
                     <td class="text-end align-middle text-pdf table-pdf">
-                        {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
+                        <strong>
+                            {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
+                        </strong>
+
                     </td>
                     @endif
 
@@ -79,7 +91,8 @@
                 @endif
                 @if ($stokHarga->unit_id != $data->last()->unit_id)
                 <tr>
-                    <td colspan="11" style="border: none; background-color:transparent; border-bottom-color:transparent; height:20px">
+                    <td colspan="11"
+                        style="border: none; background-color:transparent; border-bottom-color:transparent; height:20px">
                     </td>
                 </tr>
                 @endif
