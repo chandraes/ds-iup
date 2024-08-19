@@ -130,20 +130,17 @@ class GantiRugi extends Model
                 $pesanKasBon = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n" .
                                 "*KASBON GANTI RUGI*\n" .
                                 "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n" .
-                                "Uraian  :  *" . $storeKasbon->uraian . "*\n" .
-                                "Jumlah  :  *" . $data['jumlah']. " ". $satuan."*\n" .
-                                "Oleh    :  *" . $karyawan->nama . "*\n\n" .
-                                "Nilai    :  *Rp. " . number_format($storeKasbon->nominal, 0, ',', '.') . "*\n\n" .
-                                "==========================\n";
-                $sisaSaldoKas = "Sisa Saldo Kas Besar: \n" .
-                                "Rp. " . number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
-
-                $totalModalInvestor = $db['kas_ppn'] == 1 ?
-                                        "Total Modal Investor PPN: \n" .
-                                        "Rp. " . number_format($db->modalInvestorTerakhir(1), 0, ',', '.') . "\n\n" :
-                                        "Total Modal Investor Non PPN: \n" .
-                                        "Rp. " . number_format($db->modalInvestorTerakhir(0), 0, ',', '.') . "\n\n";
-                $pesanKasBon .= $sisaSaldoKas . $totalModalInvestor . "Terima kasih 🙏🙏🙏\n";
+                                "Uraian  :  *Kasbon Ganti Rugi*\n" .
+                                "Nama    :  *" . $karyawan->nama . "*\n\n" .
+                                "Nama Barang : *" . $barang->barang_nama->nama . "*\n" .
+                                "Kode Barang : *" . $barang->barang->kode . "*\n" .
+                                "Kode Barang : *" . $barang->barang->merk . "*\n\n" .
+                                "Modal    :  *Rp. " . number_format($data['harga'], 0, ',', '.') . "*\n" .
+                                "Jumlah  :  *" . $data['jumlah']. " ". $satuan."*\n\n" .
+                                "==========================\n".
+                                "Grand total ganti rugi:\n".
+                                "Rp. " . number_format($storeKasbon->nominal, 0, ',', '.') . "\n\n".
+                                "Terima kasih 🙏🙏🙏\n";
 
                 $db->sendWa($group, $pesanKasBon);
             }
@@ -160,6 +157,6 @@ class GantiRugi extends Model
 
     public function bayar($data)
     {
-        
+
     }
 }
