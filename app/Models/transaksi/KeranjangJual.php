@@ -271,7 +271,7 @@ class KeranjangJual extends Model
                         $addPesan .= "==========================\n";
                         $addPesan .= "Tagihan jatuh tempo :\n\n";
                         foreach ($checkInvoice as $key => $value) {
-                            $addPesan .= "No Invoice :".$value->kode . "\n" .
+                            $addPesan .= "No Invoice : ".$value->kode . "\n" .
                                         "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
                                         "Nilai Tagihan  :  Rp " . number_format($value->grand_total-$value->dp-$value->dp_ppn, 0, ',', '.') . "\n\n";
                         }
@@ -343,7 +343,7 @@ class KeranjangJual extends Model
                         $addPesan .= "==========================\n";
                         $addPesan .= "Tagihan jatuh tempo :\n\n";
                         foreach ($checkInvoice as $key => $value) {
-                            $addPesan .= "No Invoice :".$value->kode . "\n" .
+                            $addPesan .= "No Invoice : ".$value->kode . "\n" .
                                         "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
                                         "Nilai Tagihan  :  Rp " . number_format($value->grand_total-$value->dp-$value->dp_ppn, 0, ',', '.') . "\n\n";
                         }
