@@ -286,18 +286,8 @@ class KeranjangJual extends Model
             }
 
             if ($stateTempoWa == 1) {
-                if ($barang_ppn == 1) {
-                    $addPesan = "Sisa Saldo Kas Besar PPN: \n".
-                                "Rp. ".number_format($dbKas->saldoTerakhir(1), 0, ',', '.')."\n\n".
-                                "Total Modal Investor PPN: \n".
-                                "Rp. ".number_format($dbKas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
-                 } else {
-                     $addPesan = "Sisa Saldo Kas Besar Non PPPN: \n".
-                                 "Rp. ".number_format($dbKas->saldoTerakhir(0), 0, ',', '.')."\n\n".
-                                 "Total Modal Investor Non PPN: \n".
-                                 "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
-                 }
-
+                $addPesan = '';
+                
                 if ($konsumen->pembayaran == 2) {
                     $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
                     $plafon = $konsumen->plafon;
@@ -307,6 +297,19 @@ class KeranjangJual extends Model
                                 "Plafon Konsumen: \n".
                                 "Rp. ".number_format($plafon, 0, ',', '.')."\n\n";
                 }
+
+                if ($barang_ppn == 1) {
+                    $addPesan .= "Sisa Saldo Kas Besar PPN: \n".
+                                "Rp. ".number_format($dbKas->saldoTerakhir(1), 0, ',', '.')."\n\n".
+                                "Total Modal Investor PPN: \n".
+                                "Rp. ".number_format($dbKas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
+                 } else {
+                     $addPesan .= "Sisa Saldo Kas Besar Non PPPN: \n".
+                                 "Rp. ".number_format($dbKas->saldoTerakhir(0), 0, ',', '.')."\n\n".
+                                 "Total Modal Investor Non PPN: \n".
+                                 "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
+                 }
+
 
                 // if ($barang_ppn == 1) {
                 //     $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
