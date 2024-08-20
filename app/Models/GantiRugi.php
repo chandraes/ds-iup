@@ -150,14 +150,14 @@ class GantiRugi extends Model
                                 "Grand total ganti rugi:\n".
                                 "Rp. " . number_format($this->sisa($karyawan->id), 0, ',', '.') . "\n\n";
 
-            $textKas = $data['kas_ppn'] == 1 ? "PPN" : "Non PPN";
-            $sisaSaldoKas = "Sisa Saldo Kas Besar ".$textKas.": \n" .
-                            "Rp. " . number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
+                $textKas = $data['kas_ppn'] == 1 ? "PPN" : "Non PPN";
+                $sk = "Sisa Saldo Kas Besar ".$textKas.": \n" .
+                                "Rp. " . number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
 
-            $totalModalInvestor = "Total Modal Investor ".$textKas.": \n" .
-                                  "Rp. " . number_format($db->modalInvestorTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
+                $tm = "Total Modal Investor ".$textKas.": \n" .
+                                    "Rp. " . number_format($db->modalInvestorTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
 
-            $pesanKasBon .= $sisaSaldoKas . $totalModalInvestor . "Terima kasih 🙏🙏🙏\n";
+                $pesanKasBon .= $sk . $tm . "Terima kasih 🙏🙏🙏\n";
 
             $db->sendWa($group, $pesanKasBon);
             }
