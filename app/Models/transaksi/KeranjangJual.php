@@ -269,7 +269,7 @@ class KeranjangJual extends Model
 
                     if ($checkInvoice->count() > 0) {
                         $addPesan .= "==========================\n";
-                        $addPesan .= "Tagihan jatuh tempo :\n";
+                        $addPesan .= "Tagihan jatuh tempo :\n\n";
                         foreach ($checkInvoice as $key => $value) {
                             $addPesan .= "No Invoice :".$value->kode . "\n" .
                                         "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
@@ -341,7 +341,7 @@ class KeranjangJual extends Model
 
                     if ($checkInvoice->count() > 0) {
                         $addPesan .= "==========================\n";
-                        $addPesan .= "Tagihan jatuh tempo :\n";
+                        $addPesan .= "Tagihan jatuh tempo :\n\n";
                         foreach ($checkInvoice as $key => $value) {
                             $addPesan .= "No Invoice :".$value->kode . "\n" .
                                         "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
