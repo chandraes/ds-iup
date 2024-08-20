@@ -215,7 +215,7 @@ class KeranjangJual extends Model
                 $totalDP = $data['dp'] + $data['dp_ppn'];
                 $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
                 $rekening = Rekening::where('untuk', $untukRekening)->first();
-                $uraian = 'DP ';
+                $uraian = 'DP';
                 $pembayaran = $konsumen->sistem_pembayaran. ' '. $konsumen->tempo_hari.' Hari';
                 $store = $dbKas->create([
                     'ppn_kas' => $ppn_kas,
@@ -287,7 +287,7 @@ class KeranjangJual extends Model
 
             if ($stateTempoWa == 1) {
                 $addPesan = '';
-                
+
                 if ($konsumen->pembayaran == 2) {
                     $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
                     $plafon = $konsumen->plafon;

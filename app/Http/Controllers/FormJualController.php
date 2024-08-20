@@ -314,7 +314,7 @@ class FormJualController extends Controller
                     "No Invoice:\n".
                     "*".$invoice->kode."*\n\n".
                     "Tanggal : ".$tanggal . "\n" .
-                    "Jam    : ".$jam . "\n\n" .
+                    "Jam       : ".$jam . "\n\n" .
                     "Uraian : ".$uraian."\n".
                     "Pembayaran : ".$pembayaran."\n";
 
