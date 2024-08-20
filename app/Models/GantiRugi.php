@@ -176,4 +176,33 @@ class GantiRugi extends Model
     {
 
     }
+
+    public function void($id)
+    {
+        $data = $this->find($id);
+
+        if ($data->lunas == 1 || $data->total_bayar > 0) {
+            return ['status' => 'error', 'message' => 'Data tidak bisa dihapus, karena sudah terdapat pembayaran!!'];
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $barang = BarangStokHarga::find($data->barang_stok_harga_id);
+            
+            $barang->update([
+                'stok' => $barang->stok + $data->jumlah,
+            ]);
+
+            $data->delete();
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return ['status' => 'error', 'message' => "Gagal!! " . $th->getMessage()];
+        }
+
+        return ['status' => 'success', 'message' => 'Berhasil melakukan void Data!!'];
+    }
 }

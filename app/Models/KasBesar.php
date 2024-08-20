@@ -352,14 +352,19 @@ class KasBesar extends Model
                     "Bank      : ".$store->bank."\n".
                     "Nama    : ".$store->nama_rek."\n".
                     "No. Rek : ".$store->no_rek."\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Besar PPN: \n".
-                    "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
-                    "Sisa Saldo Kas Besar  NON PPN: \n".
-                    "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
-                    "Total Modal Investor : \n".
-                    "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
+                    "==========================\n";
+            if ($data['ppn_kas'] == 1) {
+                $pesan .= "Sisa Saldo Kas Besar PPN: \n".
+                            "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Total Modal Investor PPN: \n".
+                        "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
+            } else {
+                $pesan .= "Sisa Saldo Kas Besar Non PPN: \n".
+                            "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                            "Total Modal Investor Non PPN: \n".
+                            "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
+            }
+                    $pesan .= "Terima kasih 🙏🙏🙏\n";
 
             $this->sendWa($group->nama_group, $pesan);
 

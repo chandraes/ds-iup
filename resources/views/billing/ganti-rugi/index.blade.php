@@ -17,27 +17,26 @@
                 </tr>
             </table>
         </div>
-
     </div>
     <div class="row">
         <div class="col-md-6">
-            {{-- <form action="{{ route('billing.invoice-supplier') }}" method="GET" class="form-inline">
+            <form action="{{ route('billing.ganti-rugi') }}" method="GET" class="form-inline">
                 <div class="form-group mb-2">
-                    <label for="supplier_id" class="sr-only">Supplier:</label>
-                    <select name="supplier_id" id="supplier_id" class="form-control">
-                        <option value="" disabled selected>Pilih Supplier</option>
-                        @foreach($supplier as $sup)
-                            <option value="{{ $sup->id }}" {{ request('supplier_id') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
+                    <label for="karyawan" class="sr-only">Karyawan:</label>
+                    <select name="karyawan" id="karyawan" class="form-control">
+                        <option value="" disabled selected>-- Pilih Staff/Direksi --</option>
+                        @foreach($karyawan as $sup)
+                            <option value="{{ $sup->id }}" {{ request('karyawan') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
                         @endforeach
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">Filter</button>
-                <a href="{{ route('billing.invoice-supplier') }}" class="btn btn-secondary mb-2">Reset Filter</a>
-            </form> --}}
+                <a href="{{ route('billing.ganti-rugi') }}" class="btn btn-secondary mb-2">Reset Filter</a>
+            </form>
         </div>
     </div>
-
 </div>
+@include('billing.ganti-rugi.aksi')
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable" style="font-size: 10pt">
@@ -93,7 +92,21 @@
                         <td class="text-end align-middle">
                             {{$d->nf_sisa}}
                         </td>
-                        <td class="text-center align-middle"></td>
+                        <td class="text-center align-middle">
+                            <div class="row m-1">
+                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
+                                data-bs-target="#bayarModal"><i class="fa fa-credit-card"></i> Bayar</button>
+                            </div>
+                            @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
+                            <form action="{{route('billing.ganti-rugi.void', ['rugi' => $d])}}" method="post" id="voidForm{{ $d->id }}"
+                                class="void-form m-3" data-id="{{ $d->id }}">
+                                @csrf
+                                <div class="row">
+                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
+                                </div>
+                            </form>
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
@@ -115,7 +128,9 @@
                     <th class="text-end align-middle">
                         {{number_format($data->sum('sisa'), 0, ',', '.')}}
                     </th>
-                    <th class="text-center align-middle"></th>
+                    <th class="text-center align-middle">
+
+                    </th>
                 </tr>
             </tfoot>
 

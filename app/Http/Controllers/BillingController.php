@@ -342,10 +342,31 @@ class BillingController extends Controller
     public function ganti_rugi(Request $request)
     {
         $data = GantiRugi::with(['barang_stok_harga.barang.satuan','barang_stok_harga.barang.barang_nama', 'karyawan'])->where('lunas', 0)
-                ->orderBy('karyawan_id')->get();
+                ->orderBy('karyawan_id');
+
+        if ($request->filled('karyawan')) {
+            $data->where('karyawan_id', $request->karyawan);
+        }
+
+        $data = $data->get();
+
+
+        $karyawan = Karyawan::whereHas('ganti_rugi', function ($query) {
+            $query->where('lunas', 0);
+        })->get();
 
         return view('billing.ganti-rugi.index', [
             'data' => $data,
+            'karyawan' => $karyawan,
         ]);
+    }
+
+    public function ganti_rugi_void(GantiRugi $rugi)
+    {
+        $db = new GantiRugi();
+
+        $res = $db->void($rugi->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
     }
 }
