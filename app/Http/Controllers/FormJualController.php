@@ -309,12 +309,12 @@ class FormJualController extends Controller
             $tujuan = str_replace('-', '', $konsumen->no_hp);
             $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
                     "*Invoice Pembelian*\n".
-                    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n" .
+                    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n" .
                     $pt->nama . "\n\n" .
                     "No Invoice:\n".
                     "*".$invoice->kode."*\n\n".
-                    $tanggal . "\n" .
-                    $jam . "\n\n" .
+                    "Tanggal : ".$tanggal . "\n" .
+                    "Jam    : ".$jam . "\n\n" .
                     "Uraian : ".$uraian."\n".
                     "Pembayaran : ".$pembayaran."\n";
 
@@ -325,17 +325,17 @@ class FormJualController extends Controller
             }
 
             $pesan .= "Konsumen : *".$konsumen->nama."*\n\n".
-                    "Nilai DPP : Rp " . number_format($invoice->total, 0, ',', '.') . "\n";
+                    "Nilai DPP    : Rp " . number_format($invoice->total, 0, ',', '.') . "\n";
 
             if ($invoice->kas_ppn == 1) {
-                $pesan.= "PPN     : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
+                $pesan.= "PPN         : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
             }
 
             if ($invoice->lunas == 1) {
                 $pesan .= "Total Bayar : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
             } else {
                 if ($invoice->dp > 0) {
-                    $pesan .= "DP : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n" .
+                    $pesan .= "DP      : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n" .
                             "Sisa Tagihan : Rp " . number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.') . "\n\n";
                 } else {
                     $pesan .= "Sisa Tagihan : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
@@ -346,7 +346,7 @@ class FormJualController extends Controller
 
             if ($invoice->konsumen_id) {
                 $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
-                $pesan .= "Total Tagihan Konsumen: \n".
+                $pesan .= "Grand Total Tagihan Konsumen: \n".
                 "Rp. ".number_format($sisaTerakhir, 0, ',', '.')."\n\n";
 
                 $pesan .= "==========================\n";
