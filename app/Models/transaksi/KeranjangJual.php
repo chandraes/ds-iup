@@ -260,6 +260,26 @@ class KeranjangJual extends Model
                                  "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
                  }
 
+                 if ($invoice->konsumen_id) {
+                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                                ->where('lunas', 0)
+                                ->where('void', 0)
+                                ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
+                                ->get();
+
+                    if ($checkInvoice->count() > 0) {
+                        $addPesan .= "==========================\n";
+                        $addPesan .= "Tagihan jatuh tempo :\n";
+                        foreach ($checkInvoice as $key => $value) {
+                            $addPesan .= "No Invoice :".$value->kode . "\n" .
+                                        "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
+                                        "Nilai Tagihan  :  Rp " . number_format($value->grand_total-$value->dp-$value->dp_ppn, 0, ',', '.') . "\n\n";
+                        }
+                    }
+                 }
+
+
+
 
 
                 $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
@@ -308,6 +328,26 @@ class KeranjangJual extends Model
                                  "Rp. ".number_format($dbKas->saldoTerakhir(0), 0, ',', '.')."\n\n".
                                  "Total Modal Investor Non PPN: \n".
                                  "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
+                 }
+
+
+
+                 if ($invoice->konsumen_id) {
+                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                                ->where('lunas', 0)
+                                ->where('void', 0)
+                                ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
+                                ->get();
+
+                    if ($checkInvoice->count() > 0) {
+                        $addPesan .= "==========================\n";
+                        $addPesan .= "Tagihan jatuh tempo :\n";
+                        foreach ($checkInvoice as $key => $value) {
+                            $addPesan .= "No Invoice :".$value->kode . "\n" .
+                                        "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
+                                        "Nilai Tagihan  :  Rp " . number_format($value->grand_total-$value->dp-$value->dp_ppn, 0, ',', '.') . "\n\n";
+                        }
+                    }
                  }
 
 

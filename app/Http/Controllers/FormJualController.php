@@ -329,16 +329,18 @@ class FormJualController extends Controller
 
             if ($invoice->kas_ppn == 1) {
                 $pesan.= "PPN         : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
+            }else {
+                $pesan.="\n";
             }
 
             if ($invoice->lunas == 1) {
                 $pesan .= "Total Bayar : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
             } else {
                 if ($invoice->dp > 0) {
-                    $pesan .= "DP      : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n" .
-                            "Sisa Tagihan : Rp " . number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.') . "\n\n";
+                    $pesan .= "DP      : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n\n" .
+                            "Sisa Tagihan : *Rp " . number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.') . "*\n\n";
                 } else {
-                    $pesan .= "Sisa Tagihan : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
+                    $pesan .= "Sisa Tagihan : *Rp " . number_format($invoice->grand_total, 0, ',', '.') . "*\n\n";
                 }
             }
 
@@ -358,7 +360,7 @@ class FormJualController extends Controller
                             ->get();
 
                 if ($checkInvoice->count() > 0) {
-                    $pesan .= "Tagihan jatuh tempo :\n";
+                    $pesan .= "Tagihan jatuh tempo :\n\n";
                     foreach ($checkInvoice as $key => $value) {
                         $pesan .= "No Invoice :".$value->kode . "\n" .
                                     "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
