@@ -135,12 +135,12 @@ class FormLainController extends Controller
             ];
 
             if ($data['ppn_kas'] == 1) {
-                $addPesan = "Sisa Saldo Kas Besar: \n".
+                $addPesan = "Sisa Saldo Kas Besar PPN: \n".
                             "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
                             "Total Modal Investor PPN: \n".
                             "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
              } else {
-                 $addPesan = "Sisa Saldo Kas Besar: \n".
+                 $addPesan = "Sisa Saldo Kas Besar Non PPN: \n".
                              "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                              "Total Modal Investor Non PPN: \n".
                              "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
@@ -164,22 +164,20 @@ class FormLainController extends Controller
                     "No. Rek : ".$store->no_rek."\n\n".
                     "==========================\n".
                     $addPesan.
-                    "Grand Total Modal Investor : \n".
-                    "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
             $send = new StarSender($group->nama_group, $pesan);
             $res = $send->sendGroup();
 
-
-            $status = ($res == 'true') ? 1 : 0;
-
-            PesanWa::create([
+            $storeWa = PesanWa::create([
                 'pesan' => $pesan,
                 'tujuan' => $group->nama_group,
-                'status' => $status,
+                'status' => 0,
             ]);
 
+            if ($res == 'true') {
+                $storeWa->update(['status' => 1]);
+            }
 
 
             return redirect()->route('billing')->with('success', 'Data Berhasil Ditambahkan');
