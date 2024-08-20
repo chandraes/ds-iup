@@ -96,15 +96,15 @@ class GantiRugi extends Model
                     "*FORM GANTI RUGI*\n" .
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n" .
                     "Uraian :  *Ganti Rugi*\n" .
-                    "Nama    :  *" . $karyawan->nama . "*\n\n" .
+                    "Nama   :  *" . $karyawan->nama . "*\n\n" .
                     "Nama Barang : *" . $barang->barang_nama->nama . "*\n" .
-                    "Kode Barang : *" . $barang->barang->kode . "*\n" .
-                    "Merk Barang : *" . $barang->barang->merk . "*\n\n" .
+                    "Kode Barang  : *" . $barang->barang->kode . "*\n" .
+                    "Merk Barang  : *" . $barang->barang->merk . "*\n\n" .
                     "Modal    :  *Rp. " . number_format($data['harga'], 0, ',', '.') . "*\n" .
                     "Jumlah  :  *" . $data['jumlah']. " ". $satuan."*\n\n" .
                     "Total    :  *Rp. " . number_format($data['total'], 0, ',', '.') . "*\n\n" .
                     "Ditransfer ke rek:\n\n" .
-                    "Bank      : " . $store->bank . "\n" .
+                    "Bank     : " . $store->bank . "\n" .
                     "Nama    : " . $store->nama_rek . "\n" .
                     "No. Rek : " . $store->no_rek . "\n\n" .
                     "==========================\n";
@@ -112,11 +112,9 @@ class GantiRugi extends Model
             $sisaSaldoKas = "Sisa Saldo Kas Besar ".$textKas.": \n" .
                             "Rp. " . number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
 
-            $totalModalInvestor = $db['kas_ppn'] == 1 ?
-                                    "Total Modal Investor PPN: \n" .
-                                    "Rp. " . number_format($db->modalInvestorTerakhir(1), 0, ',', '.') . "\n\n" :
-                                    "Total Modal Investor Non PPN: \n" .
-                                    "Rp. " . number_format($db->modalInvestorTerakhir(0), 0, ',', '.') . "\n\n";
+            $totalModalInvestor = "Total Modal Investor ".$textKas.": \n" .
+                                    "Rp. " . number_format($db->modalInvestorTerakhir($data['kas_ppn']), 0, ',', '.') . "\n\n";
+
             $pesan .= $sisaSaldoKas . $totalModalInvestor . "Terima kasih 🙏🙏🙏\n";
 
             $group = GroupWa::where('untuk', $untuk)->first()->nama_group;
