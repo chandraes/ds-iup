@@ -80,7 +80,7 @@ class GantiRugi extends Model
                 'no_rek' => $rekening->no_rek,
                 'nama_rek' => $rekening->nama_rek,
                 'bank' => $rekening->bank,
-                'modal_investor_terakhir' => $db->saldoTerakhir($data['kas_ppn']),
+                'modal_investor_terakhir' => $db->modalInvestorTerakhir($data['kas_ppn']),
             ]);
 
             $this->create($data);
@@ -131,7 +131,7 @@ class GantiRugi extends Model
                     'no_rek' => "-",
                     'nama_rek' => "-",
                     'bank' => "-",
-                    'modal_investor_terakhir' => $db->saldoTerakhir($data['kas_ppn']),
+                    'modal_investor_terakhir' => $db->modalInvestorTerakhir($data['kas_ppn']),
                 ]);
 
 
