@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE PENJUALAN</u></h1>
+            <h1><u>INVOICE PENJUALAN {{$ppn_kas == 1 ? "PPN" : "NON PPN" }}</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -12,28 +12,60 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
+                    <td><a href="{{route('rekap')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen" width="30">
                             Billing</a></td>
                 </tr>
             </table>
         </div>
 
     </div>
+    @php
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+    @endphp
     <div class="row">
-        <div class="col-md-6">
-            {{-- <form action="{{ route('billing.invoice-supplier') }}" method="GET" class="form-inline">
-                <div class="form-group mb-2">
-                    <label for="supplier_id" class="sr-only">Supplier:</label>
-                    <select name="supplier_id" id="supplier_id" class="form-control">
-                        <option value="" disabled selected>Pilih Supplier</option>
-                        @foreach($supplier as $sup)
-                            <option value="{{ $sup->id }}" {{ request('supplier_id') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
-                        @endforeach
-                    </select>
+        <div class="col-md-12">
+            <form action="{{ route('rekap.invoice-penjualan') }}" method="GET" class="form-inline">
+                <input type="hidden" name="ppn_kas" value="{{$ppn_kas}}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group mb-2 mr-2">
+                            <label for="bulan" class="sr-only">Bulan:</label>
+                            <select name="bulan" id="bulan" class="form-control">
+                                <option value="" disabled selected>Pilih Bulan</option>
+                                @foreach($months as $key => $month)
+                                    <option value="{{ $key }}" {{ $bulan == $key ? 'selected' : '' }}>{{ $month }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group mb-2 mr-2">
+                            <label for="tahun" class="sr-only">Tahun:</label>
+                            <select name="tahun" id="tahun" class="form-control">
+                                <option value="" disabled selected>Pilih Tahun</option>
+                                @foreach($dataTahun as $year)
+                                    <option value="{{ $year->tahun }}" {{ $tahun == $year->tahun ? 'selected' : '' }}>{{ $year->tahun }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary mb-2">Filter</button>
-                <a href="{{ route('billing.invoice-supplier') }}" class="btn btn-secondary mb-2">Reset Filter</a>
-            </form> --}}
+                <button type="submit" class="btn btn-primary mb-2 mr-2">Filter</button>
+                <a href="{{ route('rekap.invoice-penjualan', ['ppn_kas' => $ppn_kas]) }}" class="btn btn-secondary mb-2">Reset Filter</a>
+            </form>
         </div>
     </div>
 
@@ -62,10 +94,11 @@
                         <a href="{{route('rekap.invoice-penjualan.detail', $d)}}">
                             {{$d->kode}}
                         </a>
-
                     </td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
+                    <td class="text-end align-middle">{{$d->nf_diskon}}</td>
                     <td class="text-end align-middle">{{$d->nf_ppn}}</td>
+                    <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                 </tr>
                 @endforeach
@@ -74,8 +107,9 @@
                 <tr>
                     <th class="text-end align-middle" colspan="3">Grand Toal</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('pph'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                 </tr>
             </tfoot>

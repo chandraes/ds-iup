@@ -20,6 +20,25 @@ class InvoiceJual extends Model
     protected $guarded = ['id'];
     protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_pph', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
 
+    public function dataTahun()
+    {
+        return $this->selectRaw('YEAR(created_at) as tahun')
+            ->groupBy('tahun')
+            ->orderBy('tahun', 'desc')
+            ->get();
+    }
+
+    public function invoiceByMonth($bulan, $tahun, $kas_ppn)
+    {
+        return $this->whereMonth('created_at', $bulan)
+                ->where('kas_ppn', $kas_ppn)
+                ->where('void', 0)
+                ->where('lunas', 1)
+                ->whereYear('created_at', $tahun)
+                ->orderBy('created_at', 'desc')
+                ->get();
+    }
+
     public function getTanggalAttribute()
     {
         return Carbon::parse($this->created_at)->format('d-m-Y');

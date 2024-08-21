@@ -463,7 +463,6 @@ class RekapController extends Controller
 
         $nfKelebihan = number_format($kelebihan, 2, ',', '.');
 
-
         $dataTahun = $db->dataTahun();
 
         $data = $db->pphBadan($tahun, $kelebihan);
@@ -498,12 +497,27 @@ class RekapController extends Controller
         ]);
     }
 
-    public function invoice_penjualan()
+    public function invoice_penjualan(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('lunas', 1)->where('void', 0)->get();
+        $data = $request->validate([
+            'ppn_kas' => 'required|in:1,0',
+        ]);
+
+        $db = new InvoiceJual();
+
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->invoiceByMonth($bulan, $tahun, $data['ppn_kas']);
 
         return view('rekap.invoice-penjualan.index', [
-            'data' => $data
+            'data' => $data,
+            'ppn_kas' => $request->ppn_kas,
+            'dataTahun' => $dataTahun,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
         ]);
     }
 
