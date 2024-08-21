@@ -265,7 +265,7 @@ class BillingController extends Controller
             $arrayKasBesar['nama_rek'] = "Msng2 Karyawan";
             $arrayKasBesar['bank'] = 'BCA';
             $arrayKasBesar['no_rek'] = '-';
-
+            $arrayKasBesar['ppn_kas'] = 1;
             $storeKasBesar = $db->create($arrayKasBesar);
 
             DB::commit();

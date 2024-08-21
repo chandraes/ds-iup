@@ -52,7 +52,7 @@ class FormJualController extends Controller
         $ppnValue = $data['barang_ppn'];
         $oppositePpnValue = $ppnValue == 1 ? 0 : 1;
 
-        $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->first();
+        $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->where('user_id', auth()->user()->id)->first();
         if ($checkKeranjang) {
             $errorMessage = $ppnValue == 1
                 ? 'Keranjang sudah terisi dengan barang non ppn. Silahkan hapus barang non ppn terlebih dahulu'

@@ -175,7 +175,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('barang-unit')->group(function(){
 
-                Route::get('/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
+
                 Route::get('/getBarangNama', [App\Http\Controllers\BarangController::class, 'get_barang_nama'])->name('db.barang.get-barang-nama');
 
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'unit'])->name('db.unit');
@@ -302,6 +302,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     // END ROUTE REKAP
     Route::group(['middleware' => ['role:su,admin,user']], function() {
+        
+        Route::get('/db/barang-unit/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
 
         Route::prefix('po')->group(function(){
             Route::get('/', [App\Http\Controllers\PoController::class, 'index'])->name('po');
