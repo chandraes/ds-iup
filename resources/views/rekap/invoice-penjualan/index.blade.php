@@ -80,7 +80,10 @@
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
+                    @if ($ppn_kas == 1)
                     <th class="text-center align-middle">PPn</th>
+                    @endif
+
                     <th class="text-center align-middle">Penyesuaian</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
                 </tr>
@@ -97,7 +100,9 @@
                     </td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
                     <td class="text-end align-middle">{{$d->nf_diskon}}</td>
+                    @if ($ppn_kas == 1)
                     <td class="text-end align-middle">{{$d->nf_ppn}}</td>
+                    @endif
                     <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                 </tr>
@@ -108,7 +113,9 @@
                     <th class="text-end align-middle" colspan="3">Grand Toal</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
+                    @if ($ppn_kas == 1)
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
+                    @endif
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                 </tr>
