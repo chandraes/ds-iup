@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE PEMBELIAN</u></h1>
+            <h1><u>INVOICE PEMBELIAN {{$ppn_kas == 1 ? 'PPN' : "NON PPN"}}</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -19,20 +19,63 @@
         </div>
 
     </div>
+    @php
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+    @endphp
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
             <form action="{{ route('rekap.invoice-pembelian') }}" method="GET" class="form-inline">
-                <div class="form-group mb-2">
-                    <label for="supplier_id" class="sr-only">Supplier:</label>
-                    <select name="supplier_id" id="supplier_id" class="form-control">
-                        <option value="" disabled selected>Pilih Supplier</option>
-                        @foreach($supplier as $sup)
-                            <option value="{{ $sup->id }}" {{ request('supplier_id') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
-                        @endforeach
-                    </select>
+                <input type="hidden" name="ppn_kas" value="{{$ppn_kas}}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-2 mr-2">
+                            <label for="supplier_id" class="sr-only">Supplier:</label>
+                            <select name="supplier_id" id="supplier_id" class="form-control">
+                                <option value="" disabled selected>Pilih Supplier</option>
+                                @foreach($supplier as $sup)
+                                    <option value="{{ $sup->id }}" {{ request('supplier_id') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-2 mr-2">
+                            <label for="bulan" class="sr-only">Bulan:</label>
+                            <select name="bulan" id="bulan" class="form-control">
+                                <option value="" disabled selected>Pilih Bulan</option>
+                                @foreach($months as $key => $month)
+                                    <option value="{{ $key }}" {{ $bulan == $key ? 'selected' : '' }}>{{ $month }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-2 mr-2">
+                            <label for="tahun" class="sr-only">Tahun:</label>
+                            <select name="tahun" id="tahun" class="form-control">
+                                <option value="" disabled selected>Pilih Tahun</option>
+                                @foreach($dataTahun as $year)
+                                    <option value="{{ $year->tahun }}" {{ $tahun == $year->tahun ? 'selected' : '' }}>{{ $year->tahun }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary mb-2">Filter</button>
-                <a href="{{ route('rekap.invoice-pembelian') }}" class="btn btn-secondary mb-2">Reset Filter</a>
+                <button type="submit" class="btn btn-primary mb-2 mr-2">Filter</button>
+                <a href="{{ route('rekap.invoice-pembelian', ['ppn_kas' => $ppn_kas]) }}" class="btn btn-secondary mb-2">Reset Filter</a>
             </form>
         </div>
     </div>
@@ -46,7 +89,6 @@
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Supplier</th>
                     <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">Jenis<br>Barang</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nilai<br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
@@ -64,13 +106,6 @@
                         <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
                             {{$d->kode}}
                         </a>
-                    </td>
-                    <td class="text-center align-middle">
-                        @if($d->kas_ppn == 1)
-                        <span class="badge bg-success">PPN</span>
-                        @else
-                        <span class="badge bg-danger">NON PPN</span>
-                        @endif
                     </td>
                     <td class="text-start align-middle">{{$d->uraian}}</td>
                     <td class="text-end align-middle">

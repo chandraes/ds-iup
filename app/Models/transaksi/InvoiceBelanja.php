@@ -140,18 +140,24 @@ class InvoiceBelanja extends Model
 
     public function dataTahun()
     {
-        return $this->selectRaw('YEAR(tanggal) as tahun')
+        return $this->selectRaw('YEAR(created_at) as tahun')
             ->groupBy('tahun')
             ->orderBy('tahun', 'desc')
             ->get();
     }
 
-    public function invoiceByMonth($bulan, $tahun)
+    public function invoiceByMonth($bulan, $tahun, $kas_ppn, $supplier_id = null)
     {
-        return $this->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->orderBy('tanggal', 'desc')
-            ->get();
+        return $this->whereMonth('created_at', $bulan)
+                ->where('kas_ppn', $kas_ppn)
+                ->where('void', 0)
+                ->where('tempo', 0)
+                ->whereYear('created_at', $tahun)
+                ->when($supplier_id, function ($query, $supplier_id) {
+                    return $query->where('supplier_id', $supplier_id);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
     }
 
     public function void($id)

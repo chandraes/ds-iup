@@ -522,23 +522,30 @@ class RekapController extends Controller
 
     public function invoice_pembelian(Request $request)
     {
+        $data = $request->validate([
+            'ppn_kas' => 'required|in:1,0',
+        ]);
 
-        $data = InvoiceBelanja::with(['supplier'])->where('tempo', 0)->where('void', 0);
+        $db = new InvoiceBelanja();
 
-        if ($request->supplier_id && $request->supplier_id != '') {
-            $data->where('supplier_id', $request->supplier_id);
-        }
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
 
-        $data = $data->get();
+        $dataTahun = $db->dataTahun();
 
-        // get unique supplier_id from $data
+        $data = $db->invoiceByMonth($bulan, $tahun, $data['ppn_kas'], $request->supplier_id ?? null);
+
         $supplierIds = $data->pluck('supplier_id')->unique();
 
         $supplier = Supplier::where('status', 1)->whereIn('id', $supplierIds)->get();
 
         return view('rekap.invoice-pembelian.index', [
             'data' => $data,
-            'supplier' => $supplier
+            'supplier' => $supplier,
+            'ppn_kas' => $request->ppn_kas,
+            'dataTahun' => $dataTahun,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
         ]);
     }
 
