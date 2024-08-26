@@ -521,6 +521,33 @@ class RekapController extends Controller
         ]);
     }
 
+    public function invoice_penjualan_download(Request $request)
+    {
+        $data = $request->validate([
+            'ppn_kas' => 'required|in:1,0',
+        ]);
+
+        $db = new InvoiceJual();
+        $ppn_kas = $data['ppn_kas'];
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        $data = $db->invoiceByMonth($bulan, $tahun, $data['ppn_kas']);
+
+        $pdf = PDF::loadview('rekap.invoice-penjualan.pdf', [
+            'data' => $data,
+            'ppn_kas' => $ppn_kas,
+            'tahun' => $tahun,
+            'bulan' => $bulan,
+            'stringBulanNow' => $stringBulanNow,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Invoice-penjualan '.$stringBulanNow.' '.$tahun.'.pdf');
+    }
+
     public function invoice_penjualan_detail(InvoiceJual $invoice)
     {
         $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
@@ -561,6 +588,33 @@ class RekapController extends Controller
             'bulan' => $bulan,
             'tahun' => $tahun,
         ]);
+    }
+
+    public function invoice_pembelian_download(Request $request)
+    {
+        $data = $request->validate([
+            'ppn_kas' => 'required|in:1,0',
+        ]);
+
+        $db = new InvoiceBelanja();
+
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $ppn_kas = $data['ppn_kas'];
+
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        $data = $db->invoiceByMonth($bulan, $tahun, $data['ppn_kas'], $request->supplier_id ?? null);
+
+        $pdf = PDF::loadview('rekap.invoice-pembelian.pdf', [
+            'data' => $data,
+            'ppn_kas' => $ppn_kas,
+            'tahun' => $tahun,
+            'bulan' => $bulan,
+            'stringBulanNow' => $stringBulanNow,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Invoice-pembelian '.$stringBulanNow.' '.$tahun.'.pdf');
     }
 
     public function pricelist(Request $request)

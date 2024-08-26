@@ -44,6 +44,10 @@
             float: left;
             width: 25%;
         }
+
+        body {
+            margin-left: -45px;
+        }
     </style>
 </head>
 <body>

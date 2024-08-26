@@ -14,6 +14,17 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('rekap')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen" width="30">
                             Rekap</a></td>
+                    <td>
+                        <form action="{{route('rekap.invoice-pembelian.pdf')}}" method="get" target="_blank">
+                            <input type="hidden" name="bulan" value="{{$bulan}}">
+                            <input type="hidden" name="supplier_id" value="{{request('supplier_id')}}">
+                            <input type="hidden" name="tahun" value="{{$tahun}}">
+                            <input type="hidden" name="ppn_kas" value="{{$ppn_kas}}">
+                            <button class="btn"><img src="{{asset('images/print.svg')}}" alt="dokumen"
+                                width="30"> PDF</button>
+                        </form>
+
+                    </td>
                 </tr>
             </table>
         </div>
