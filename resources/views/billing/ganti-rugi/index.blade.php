@@ -95,7 +95,7 @@
                         <td class="text-center align-middle">
                             <div class="row m-1">
                                 <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
-                                data-bs-target="#bayarModal"><i class="fa fa-credit-card"></i> Bayar</button>
+                                data-bs-target="#bayarModal" onclick="bayar({{$d->id}})"><i class="fa fa-credit-card"></i> Bayar</button>
                             </div>
                             @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
                             <form action="{{route('billing.ganti-rugi.void', ['rugi' => $d])}}" method="post" id="voidForm{{ $d->id }}"
@@ -149,6 +149,10 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
 
+    function bayar(id) {
+        document.getElementById('pembayaranForm').action = `{{route('billing.ganti-rugi.bayar', ':id')}}`.replace(':id', id);
+    }
+
     $(document).ready(function() {
         $('#rekapTable').DataTable({
             "paging": false,
@@ -163,25 +167,23 @@
             width: '100%',
         });
 
-        $('.bayar-form').submit(function(e){
+        $('#pembayaranForm').submit(function(e){
             e.preventDefault();
-            var formId = $(this).data('id');
-            var nominal = $(this).data('nominal');
             Swal.fire({
-                title: 'Apakah Anda Yakin? Sisa Tagihan Sebesar: Rp. ' + nominal,
+                title: 'Apakah anda yakin?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Ya, simpan!'
-            }).then((result) => {
+                }).then((result) => {
                 if (result.isConfirmed) {
-                    $(`#bayarForm${formId}`).unbind('submit').submit();
                     $('#spinner').show();
-                }
-            });
-        });
+                    this.submit();
 
+                }
+            })
+        });
 
 
         $('.void-form').submit(function(e){

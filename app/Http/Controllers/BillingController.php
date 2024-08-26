@@ -369,4 +369,18 @@ class BillingController extends Controller
 
         return redirect()->back()->with($res['status'], $res['message']);
     }
+
+    public function ganti_rugi_bayar(GantiRugi $rugi, Request $request)
+    {
+        $data = $request->validate([
+            'jenis' => 'required',
+            'nominal' => 'required_if:jenis,1',
+        ]);
+
+        $db = new GantiRugi();
+
+        $res = $db->bayar($rugi->id, $data);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
 }

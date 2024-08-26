@@ -172,8 +172,107 @@ class GantiRugi extends Model
         return ['status' => 'success', 'message' => 'Berhasil menyimpan data!!'];
     }
 
-    public function bayar($data)
+    public function bayar($id, $data)
     {
+        $inv = $this->find($id);
+        $pesan = '';
+
+        try {
+            DB::beginTransaction();
+
+            $db = new KasBesar();
+
+            $untuk = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+            $rekening = Rekening::where('untuk', $untuk)->first();
+
+            if ($data['jenis'] == 0) {
+                $store = $db->create([
+                    'ppn_kas' => $inv->kas_ppn,
+                    'uraian' => 'Pelunasan Ganti Rugi ' . $inv->barang->barang_nama->nama,
+                    'jenis' => 1,
+                    'nominal' => $inv->sisa,
+                    'saldo' => $db->saldoTerakhir($inv->kas_ppn) + $inv->sisa,
+                    'no_rek' => $rekening->no_rek,
+                    'nama_rek' => $rekening->nama_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $db->modalInvestorTerakhir($inv->kas_ppn),
+                ]);
+
+                $inv->update([
+                    'lunas' => 1,
+                ]);
+                $uraian = 'Pelunasan Ganti Rugi';
+
+            } else {
+                $data['nominal'] = str_replace('.', '', $data['nominal']);
+
+                if ($data['nominal'] > $inv->sisa) {
+                    return ['status' => 'error', 'message' => 'Nominal yang dibayar melebihi sisa!!'];
+                }
+
+                $nominal = $data['nominal'];
+                $saldoTerakhir = $db->saldoTerakhir($inv->kas_ppn);
+                $modalInvestorTerakhir = $db->modalInvestorTerakhir($inv->kas_ppn);
+
+                $store = $db->create([
+                    'ppn_kas' => $inv->kas_ppn,
+                    'uraian' => 'Cicilan Ganti Rugi ' . $inv->barang->barang_nama->nama,
+                    'jenis' => 1,
+                    'nominal' => $nominal,
+                    'saldo' => $saldoTerakhir + $nominal,
+                    'no_rek' => $rekening->no_rek,
+                    'nama_rek' => $rekening->nama_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $modalInvestorTerakhir,
+                ]);
+
+                $uraian = 'Cicilan Ganti Rugi';
+
+                $inv->update([
+                    'lunas' => $nominal == $inv->sisa ? 1 : $inv->lunas,
+                    'total_bayar' => $inv->total_bayar + $nominal,
+                    'sisa' => $inv->sisa - $nominal,
+                ]);
+
+
+            }
+
+            $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n" .
+                    "*BAYAR GANTI RUGI*\n" .
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n" .
+                    "Uraian :  *".$uraian."*\n" .
+                    "Nama   :  *" . $inv->karyawan->nama . "*\n\n" .
+                    "Nama Barang : *" . $inv->barang->barang_nama->nama . "*\n" .
+                    "Kode Barang  : *" . $inv->barang->kode . "*\n" .
+                    "Merk Barang  : *" . $inv->barang->merk . "*\n\n" .
+                    "Nilai    :  *Rp. " . number_format($store['nominal'], 0, ',', '.') . "*\n\n" .
+                    "Ditransfer ke rek:\n\n" .
+                    "Bank     : " . $store->bank . "\n" .
+                    "Nama    : " . $store->nama_rek . "\n" .
+                    "No. Rek : " . $store->no_rek . "\n\n" .
+                    "==========================\n";
+
+                    $textKas = $inv->kas_ppn == 1 ? "PPN" : "Non PPN";
+                    $sisaSaldoKas = "Sisa Saldo Kas Besar ".$textKas.": \n" .
+                                    "Rp. " . number_format($db->saldoTerakhir($inv->kas_ppn), 0, ',', '.') . "\n\n";
+
+                    $totalModalInvestor = "Total Modal Investor ".$textKas.": \n" .
+                                            "Rp. " . number_format($db->modalInvestorTerakhir($inv->kas_ppn), 0, ',', '.') . "\n\n";
+
+                    $pesan .= $sisaSaldoKas . $totalModalInvestor . "Terima kasih 🙏🙏🙏\n";
+
+                    $group = GroupWa::where('untuk', $untuk)->first()->nama_group;
+                    $db->sendWa($group, $pesan);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return ['status' => 'error', 'message' => "Gagal!! " . $th->getMessage()];
+        }
+
+        return ['status' => 'success', 'message' => 'Berhasil melakukan pembayaran!!'];
 
     }
 
@@ -189,7 +288,7 @@ class GantiRugi extends Model
             DB::beginTransaction();
 
             $barang = BarangStokHarga::find($data->barang_stok_harga_id);
-            
+
             $barang->update([
                 'stok' => $barang->stok + $data->jumlah,
             ]);

@@ -14,7 +14,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="jenis" class="form-label">Pembayaran</label>
-                            <select class="form-select" name="jenis" id="jenis" onchange="checkJenis()">
+                            <select class="form-select" name="jenis" id="jenis" onchange="checkJenis()" required>
                                 <option value="" disabled selected>-- Pilih salah satu --</option>
                                 <option value="0">Lunas</option>
                                 <option value="1">Cicil</option>

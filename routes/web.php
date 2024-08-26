@@ -302,7 +302,7 @@ Route::group(['middleware' => ['auth']], function() {
 
     // END ROUTE REKAP
     Route::group(['middleware' => ['role:su,admin,user']], function() {
-        
+
         Route::get('/db/barang-unit/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
 
         Route::prefix('po')->group(function(){
@@ -323,6 +323,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('ganti-rugi')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'ganti_rugi'])->name('billing.ganti-rugi');
+                Route::post('/bayar/{rugi}', [App\Http\Controllers\BillingController::class, 'ganti_rugi_bayar'])->name('billing.ganti-rugi.bayar');
                 Route::post('/void/{rugi}', [App\Http\Controllers\BillingController::class, 'ganti_rugi_void'])->name('billing.ganti-rugi.void');
             });
 
