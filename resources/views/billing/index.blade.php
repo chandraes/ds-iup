@@ -13,13 +13,7 @@
             </a>
             @include('billing.modal-form-deposit')
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKecil">
-                <img src="{{asset('images/form-kas-kecil.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM KAS KECIL</h4>
-            </a>
-            @include('billing.modal-form-kas-kecil')
-        </div>
+
         <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalLain">
                 <img src="{{asset('images/form-lain.svg')}}" alt="" width="70">
@@ -168,14 +162,6 @@
         }
     }
 
-    function funKecil(){
-        var selectKecil = document.getElementById('selectKecil').value;
-        if(selectKecil == 'masuk'){
-            window.location.href = "{{route('form-kas-kecil.masuk')}}";
-        }else if(selectKecil == 'keluar'){
-            window.location.href = "{{route('form-kas-kecil.keluar')}}";
-        }
-    }
 
 
 </script>
