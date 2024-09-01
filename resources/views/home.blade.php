@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container text-center">
-    <h1>DASHBOARD</h1>
+    <h1><u>DASHBOARD</u></h1>
 </div>
 <div class="container mt-3">
     <div class="row justify-content-left">
