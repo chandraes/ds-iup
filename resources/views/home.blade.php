@@ -52,6 +52,35 @@
                 <h4 class="mt-2">LAPORAN<br>KEUANGAN</h4>
             </a>
         </div>
+
+        @endif
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">STATISTIK</h4>
+            </a>
+        </div>
+    </div>
+    <div class="row justify-content-left">
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">LEGALITAS</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">STRUKTUR ORGANISASI</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">DOKUMEN</h4>
+            </a>
+        </div>
+        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengaturan.svg')}}" alt="" width="70">
