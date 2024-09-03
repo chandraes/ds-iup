@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>NAMA INVESTOR</u></h1>
+            <h1><u>PERSENTASE DIVIDEN INVESTOR</u></h1>
         </div>
     </div>
     <div class="flex-row justify-content-between mt-3">
