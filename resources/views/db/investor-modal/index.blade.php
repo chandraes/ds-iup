@@ -35,6 +35,7 @@
                 <th class="text-center align-middle">NO REK</th>
                 <th class="text-center align-middle">ATAS NAMA</th>
                 <th class="text-center align-middle">BANK</th>
+                <th class="text-center align-middle">PERSENTASE</th>
                 <th class="text-center align-middle">ACT</th>
             </tr>
         </thead>
@@ -47,6 +48,7 @@
                 <td class="text-center align-middle">{{$d->no_rek}}</td>
                 <td class="text-center align-middle">{{$d->nama_rek}}</td>
                 <td class="text-center align-middle">{{$d->bank}}</td>
+                <td class="text-center align-middle">{{$d->persentase}}%</td>
                 <td class="text-center align-middle">
                     <div class="d-flex justify-content-center">
                         <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
