@@ -6,6 +6,17 @@
 </div>
 <div class="container mt-5">
     <div class="row justify-content-left">
+        <h2>Data Lama</h2>
+
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.staff')}}" class="text-decoration-none">
+                <img src="{{asset('images/karyawan.svg')}}" alt="" width="70">
+                <h5 class="mt-2">BIODATA & GAJI<br>DIREKSI & STAFF</h5>
+            </a>
+        </div>
+    </div>
+    <hr>
+    <div class="row justify-content-left mt-4">
         <h2>Data Internal</h2>
         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
@@ -27,21 +38,15 @@
             </a>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('db.staff')}}" class="text-decoration-none">
-                <img src="{{asset('images/karyawan.svg')}}" alt="" width="70">
-                <h5 class="mt-2">BIODATA & GAJI<br>DIREKSI & STAFF</h5>
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">BIODATA & GAJI<br>DIREKSI</h4>
             </a>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('db.rekening')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekening.svg')}}" alt="" width="70">
-                <h5 class="mt-2">REKENING<br>TRANSAKSI</h5>
-            </a>
-        </div>
-        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('db.pajak')}}" class="text-decoration-none">
-                <img src="{{asset('images/pajak.svg')}}" alt="" width="70">
-                <h5 class="mt-2">PERSENTASE<br>PAJAK</h5>
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">BIODATA & GAJI<br>STAFF</h4>
             </a>
         </div>
     </div>
@@ -60,7 +65,18 @@
                 <h5 class="mt-2">BIODATA<br>KONSUMEN</h5>
             </a>
         </div>
-
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.rekening')}}" class="text-decoration-none">
+                <img src="{{asset('images/rekening.svg')}}" alt="" width="70">
+                <h5 class="mt-2">REKENING<br>TRANSAKSI</h5>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.pajak')}}" class="text-decoration-none">
+                <img src="{{asset('images/pajak.svg')}}" alt="" width="70">
+                <h5 class="mt-2">PERSENTASE<br>PAJAK</h5>
+            </a>
+        </div>
     </div>
     <hr>
     <div class="row justify-content-left mt-4">
