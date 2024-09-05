@@ -4,6 +4,8 @@
     <h1>INVENTARIS</h1>
 </div>
 <div class="container mt-3">
+   
+
     <div class="row justify-content-left">
         {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('rekap')}}" class="text-decoration-none">

@@ -6,18 +6,30 @@
 @include('swal')
 <div class="container mt-3">
     <div class="row justify-content-left">
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+        <h4 class="mt-3">UMUM</h4>
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formDeposit">
                 <img src="{{asset('images/form-deposit.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM DEPOSIT</h4>
+                <h4 class="mt-3">FORM DEPOSIT</h4>
             </a>
             @include('billing.modal-form-deposit')
         </div>
-
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.form-dividen')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-deviden.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM DIVIDEN</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM KASBON</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalLain">
                 <img src="{{asset('images/form-lain.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM LAIN-LAIN</h4>
+                <h4 class="mt-3">FORM LAIN-LAIN</h4>
             </a>
             <div class="modal fade" id="modalLain" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="modalLainTitle" aria-hidden="true">
@@ -41,98 +53,127 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-dividen')}}" class="text-decoration-none">
-                <img src="{{asset('images/form-deviden.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM DIVIDEN</h4>
-            </a>
-        </div>
-    </div>
-
-
-    <div class="row justify-content-left">
-        @include('billing.modal-form-beli')
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalBeli">
-                <img src="{{asset('images/form-beli.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM BELI</h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
-                <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM JUAL</h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-cost-operational')}}" class="text-decoration-none">
-                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM COST<br>OPERATIONAL</h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.form-inventaris')}}" class="text-decoration-none">
-                <img src="{{asset('images/form-inventaris.svg')}}" alt="" width="70">
-                <h4 class="mt-2">FORM INVENTARIS
-                </h4>
-            </a>
-        </div>
-    </div>
-    <div class="row justify-content-left">
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.invoice-supplier')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice-supplier.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE SUPPLIER<br>PPN
-                    @if ($is > 0)
-                    <span class="text-danger">({{$is}})</span>
-                    @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.invoice-supplier.non-ppn')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice-jual-non-ppn.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE SUPPLIER<br>NON PPN
-                    @if ($isn > 0)
-                    <span class="text-danger">({{$isn}})</span>
-                    @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.invoice-konsumen')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE KONSUMEN<br>PPN
-                    @if ($ik > 0)
-                    <span class="text-danger">({{$ik}})</span>
-                    @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
-            <a href="{{route('billing.invoice-konsumen.non-ppn')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice-konsumen-non.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVOICE KONSUMEN<br>NON PPN
-                    @if ($ikn > 0)
-                    <span class="text-danger">({{$ikn}})</span>
-                    @endif
-                </h4>
-            </a>
-        </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.ganti-rugi')}}" class="text-decoration-none">
                 <img src="{{asset('images/ganti-rugi.svg')}}" alt="" width="70">
-                <h4 class="mt-2">GANTI RUGI<br>BARANG HILANG
+                <h4 class="mt-3">FORM GANTI RUGI
                     @if ($gr > 0)
                     <span class="text-danger">({{$gr}})</span>
                     @endif
                 </h4>
             </a>
         </div>
-        <div class="col-lg-3 col-md-3 col-sm-6 text-center mt-5">
+    </div>
+    <hr>
+    <br>
+    <div class="row justify-content-left">
+        <h4 class="mt-3">COST OPERATIONAL</h4>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.form-cost-operational.cost-operational')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM OPERATIONAL</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKecil">
+                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM KAS KECIL</h4>
+            </a>
+            @include('billing.modal-form-kas-kecil')
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.form-cost-operational.gaji')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-gaji.svg')}}" alt="" width="70">
+                <h3 class="mt-3">FORM GAJI</h3>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM BUNGA INVESTOR</h4>
+            </a>
+        </div>
+    </div>
+    <hr>
+    <br>
+    <div class="row justify-content-left">
+        <h4 class="mt-3">TRANSAKSI</h4>
+        @include('billing.modal-form-beli')
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalBeli">
+                <img src="{{asset('images/form-beli.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM BELI</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM JUAL</h4>
+            </a>
+        </div>
+    </div>
+    <hr>
+    <br>
+    <div class="row justify-content-left">
+        <h4 class="mt-3">INVOICE</h4>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.invoice-supplier')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-supplier.svg')}}" alt="" width="70">
+                <h4 class="mt-3">INVOICE SUPPLIER<br>PPN
+                    @if ($is > 0)
+                    <span class="text-danger">({{$is}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.invoice-supplier.non-ppn')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-jual-non-ppn.svg')}}" alt="" width="70">
+                <h4 class="mt-3">INVOICE SUPPLIER<br>NON PPN
+                    @if ($isn > 0)
+                    <span class="text-danger">({{$isn}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.invoice-konsumen')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
+                <h4 class="mt-3">INVOICE KONSUMEN<br>PPN
+                    @if ($ik > 0)
+                    <span class="text-danger">({{$ik}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.invoice-konsumen.non-ppn')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-konsumen-non.svg')}}" alt="" width="70">
+                <h4 class="mt-3">INVOICE KONSUMEN<br>NON PPN
+                    @if ($ikn > 0)
+                    <span class="text-danger">({{$ikn}})</span>
+                    @endif
+                </h4>
+            </a>
+        </div>
+
+
+    </div>
+    <hr>
+    <br>
+    <div class="row justify-content-left">
+        <h4 class="mt-3">INVENTARIS</h4>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.form-inventaris')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-inventaris.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM INVENTARIS
+                </h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
-                <h4 class="mt-2">DASHBOARD
+                <h4 class="mt-3">DASHBOARD
 
                 </h4>
             </a>
