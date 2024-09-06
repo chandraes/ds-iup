@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container text-center">
-    <h1>BILLING</h1>
+    <h1><u>BILLING</u></h1>
 </div>
 @include('swal')
 <div class="container mt-3">
