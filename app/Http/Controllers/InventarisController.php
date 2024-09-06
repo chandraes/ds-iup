@@ -14,9 +14,10 @@ class InventarisController extends Controller
     public function index()
     {
         $kategori = InventarisKategori::has('jenis')->get();
-
+        $hi = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->where('void', 0)->count();
         return view('inventaris.index', [
-            'kategori' => $kategori
+            'kategori' => $kategori,
+            'hi' => $hi
         ]);
     }
 

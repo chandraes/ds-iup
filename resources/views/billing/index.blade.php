@@ -63,6 +63,12 @@
                 </h4>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM CSR</h4>
+            </a>
+        </div>
     </div>
     <hr>
     <br>
@@ -156,11 +162,18 @@
                 </h4>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('home')}}" class="text-decoration-none">
+                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
+                <h4 class="mt-3">DASHBOARD
 
+                </h4>
+            </a>
+        </div>
 
     </div>
     <hr>
-    <br>
+    {{-- <br>
     <div class="row justify-content-left">
         <h4 class="mt-3">INVENTARIS</h4>
         <div class="col-md-2 text-center mt-5">
@@ -170,15 +183,7 @@
                 </h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('home')}}" class="text-decoration-none">
-                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
-                <h4 class="mt-3">DASHBOARD
-
-                </h4>
-            </a>
-        </div>
-    </div>
+    </div> --}}
 </div>
 @endsection
 @push('js')

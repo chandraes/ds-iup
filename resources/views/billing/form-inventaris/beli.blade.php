@@ -181,7 +181,7 @@
 
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Beli</button>
-            <a href="{{route('billing.form-inventaris')}}" class="btn btn-secondary" type="button">Batal</a>
+            <a href="{{route('inventaris.index')}}" class="btn btn-secondary" type="button">Batal</a>
         </div>
     </form>
 </div>
