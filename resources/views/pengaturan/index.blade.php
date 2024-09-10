@@ -80,7 +80,7 @@
         <div class="col-md-3 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
-                <h5 class="mt-3">Dashboard</h5>
+                <h5 class="mt-3">DASHBOARD</h5>
             </a>
         </div>
     </div>
