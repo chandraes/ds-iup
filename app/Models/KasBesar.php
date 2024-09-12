@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\db\CostOperational;
+use App\Models\Legalitas\LegalitasDokumen;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Services\StarSender;
@@ -155,6 +156,18 @@ class KasBesar extends Model
 
             $this->tambahModal($store->nominal, $store->investor_modal_id);
 
+            $checkLegalitas = LegalitasDokumen::whereNotNull('tanggal_expired')
+            ->where('tanggal_expired', '<', Carbon::now()->addDays(45))->get();
+            $warningPesan = '';
+
+            if($checkLegalitas->count() > 0){
+                $warningPesan = "\n==========================\nWARNING : \n";
+                $no = 1;
+                foreach($checkLegalitas as $legalitas){
+                    $warningPesan .= $no++.". ".$legalitas->nama." - ".date('d-m-Y', strtotime($legalitas->tanggal_expired))."\n";
+                }
+            }
+
             $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                         "*Form Permintaan Deposit*\n".
                         "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -170,7 +183,8 @@ class KasBesar extends Model
                         $addPesan.
                         "Grand Total Modal Investor : \n".
                         "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
-                        "Terima kasih 🙏🙏🙏\n";
+                        "Terima kasih 🙏🙏🙏\n".
+                        $warningPesan;
 
             DB::commit();
 
@@ -250,6 +264,18 @@ class KasBesar extends Model
 
             DB::commit();
 
+            $checkLegalitas = LegalitasDokumen::whereNotNull('tanggal_expired')
+            ->where('tanggal_expired', '<', Carbon::now()->addDays(45))->get();
+            $warningPesan = '';
+
+            if($checkLegalitas->count() > 0){
+                $warningPesan = "\n==========================\nWARNING : \n";
+                $no = 1;
+                foreach($checkLegalitas as $legalitas){
+                    $warningPesan .= $no++.". ".$legalitas->nama." - ".date('d-m-Y', strtotime($legalitas->tanggal_expired))."\n";
+                }
+            }
+
             $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*Form Pengembalian Deposit*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -264,7 +290,8 @@ class KasBesar extends Model
                         $addPesan.
                         "Grand Total Modal Investor : \n".
                         "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
-                        "Terima kasih 🙏🙏🙏\n";
+                        "Terima kasih 🙏🙏🙏\n".
+                        $warningPesan;
 
             $result = [
                 'status' => "success",
