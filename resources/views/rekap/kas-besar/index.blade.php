@@ -148,7 +148,9 @@
                     {{-- latest saldo --}}
                     <td class="text-end align-middle">
                         <strong>
-                            {{$data->last() ? $data->last()->nf_saldo : ''}}
+                            {{number_format($data->where('jenis',
+                            1)->sum('nominal') - $data->where('jenis',
+                            0)->sum('nominal') + ($dataSebelumnya ? $dataSebelumnya->saldo : 0), 0,',','.')}}
                         </strong>
                     </td>
                     <td></td>
