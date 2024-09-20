@@ -187,7 +187,7 @@
             delimiter: '-',
             blocks: [4, 4, 8]
         });
-        // masukForm on submit, sweetalert confirm
+        // masukForm on submit, svvvweetalert confirm
         $('#masukForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
