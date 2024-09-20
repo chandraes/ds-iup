@@ -22,7 +22,7 @@
                                     src="{{asset('images/document.svg')}}" alt="add-document" width="30">
                                 Dokumen</a>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalCreate"><img
-                                src="{{asset('images/kontrak-tambang.svg')}}" alt="add-document" width="30"> Tambah
+                                src="{{asset('images/kontrak-vendor.svg')}}" alt="add-document" width="30"> Tambah
                             Kontrak Supplier</a>
                     </td>
                 </tr>
