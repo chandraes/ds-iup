@@ -55,7 +55,7 @@
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
-                    <th class="text-center align-middle">No</th>
+                    <th class="text-center align-middle">Tanggal Input</th>
                     <th class="text-center align-middle">Nota</th>
 
                     <th class="text-center align-middle">Konsumen</th>
@@ -67,7 +67,7 @@
             <tbody>
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle"></td>
+                    <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal : '-'}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceJual)
                         <a href="{{route('billing.invoice-konsumen.detail', ['invoice' => $d->invoice_jual_id])}}">
@@ -117,10 +117,10 @@
             "order": [
                 [1, 'asc']
             ],
-            "rowCallback": function(row, data, index) {
-                // Update the row number
-                $('td:eq(0)', row).html(index + 1);
-            }
+            // "rowCallback": function(row, data, index) {
+            //     // Update the row number
+            //     $('td:eq(0)', row).html(index + 1);
+            // }
 
         });
 
