@@ -89,7 +89,7 @@
                         0
                     </td>
                     <td class="text-end align-middle">
-                        
+
                     </td>
                 </tr>
                 @endforeach
@@ -99,6 +99,7 @@
                     <th class="text-end align-middle" colspan="5">Saldo PPn Keluaran</th>
                     <th class="text-end align-middle">{{number_format($saldo, 0, ',','.')}}</th>
                     <th class="text-end align-middle">0</th>
+                    <th></th>
                 </tr>
             </tfoot>
         </table>
