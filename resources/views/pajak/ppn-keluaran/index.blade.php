@@ -55,6 +55,7 @@
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
+                    <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nota</th>
@@ -64,6 +65,7 @@
             <tbody>
                 @foreach ($data as $d)
                 <tr>
+                    <td class="text-center align-middle"></td>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
@@ -84,7 +86,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="3">Saldo PPn Keluaran</th>
+                    <th class="text-end align-middle" colspan="4">Saldo PPn Keluaran</th>
                     <th class="text-end align-middle">{{number_format($saldo, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
@@ -100,10 +102,7 @@
 <script>
 
     $(document).ready(function() {
-        $.fn.dataTable.ext.order['date-dmy-pre'] = function (d) {
-            var parts = d.split('-');
-            return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
-        };
+
 
         $('#rekapTable').DataTable({
             "paging": false,
@@ -111,9 +110,11 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",
-            "columnDefs": [
-                { "type": "date-dmy", "targets": 0 }
-            ]
+            "rowCallback": function(row, data, index) {
+                // Update the row number
+                $('td:eq(0)', row).html(index + 1);
+            }
+
         });
 
     });
