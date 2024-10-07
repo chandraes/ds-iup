@@ -61,7 +61,8 @@
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Tanggal Bayar</th>
-                    <th class="text-center align-middle">Nominal</th>
+                    <th class="text-center align-middle">Sebelum<br>Terbit<br>Faktur</th>
+                    <th class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,13 +85,17 @@
                     <td class="text-end align-middle">
                         {{$d->nf_nominal}}
                     </td>
+                    <td class="text-end align-middle">
+                        0
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="4">Saldo PPn Keluaran</th>
+                    <th class="text-end align-middle" colspan="5">Saldo PPn Keluaran</th>
                     <th class="text-end align-middle">{{number_format($saldo, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">0</th>
                 </tr>
             </tfoot>
         </table>
