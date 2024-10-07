@@ -32,7 +32,7 @@ class PajakController extends Controller
     {
         $db = new PpnKeluaran();
 
-        $data = $db->with('invoiceJual')->get();
+        $data = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->get();
         $saldo = $db->saldoTerakhir();
 
         return view('pajak.ppn-keluaran.index', [

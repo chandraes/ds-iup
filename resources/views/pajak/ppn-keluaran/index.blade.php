@@ -57,6 +57,7 @@
                 <tr>
                     <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nominal</th>
@@ -67,6 +68,7 @@
                 <tr>
                     <td class="text-center align-middle"></td>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-center align-middle">{{$d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->nama : $d->invoiceJual->konsumen_temp->nama}}</td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
                     </td>
