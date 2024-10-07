@@ -56,10 +56,11 @@
             <thead class=" table-success">
                 <tr>
                     <th class="text-center align-middle">No</th>
-                    <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Nota</th>
+
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
-                    <th class="text-center align-middle">Nota</th>
+                    <th class="text-center align-middle">Tanggal Bayar</th>
                     <th class="text-center align-middle">Nominal</th>
                 </tr>
             </thead>
@@ -67,11 +68,6 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle"></td>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->nama : $d->invoiceJual->konsumen_temp->nama}}</td>
-                    <td class="text-start align-middle">
-                        {{$d->uraian}}
-                    </td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceJual)
                         <a href="{{route('billing.invoice-konsumen.detail', ['invoice' => $d->invoice_jual_id])}}">
@@ -80,6 +76,11 @@
                         @endif
 
                     </td>
+                    <td class="text-center align-middle">{{$d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->nama : $d->invoiceJual->konsumen_temp->nama}}</td>
+                    <td class="text-start align-middle">
+                        {{$d->uraian}}
+                    </td>
+                    <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-end align-middle">
                         {{$d->nf_nominal}}
                     </td>
@@ -112,6 +113,10 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",
+            // default order column 1
+            "order": [
+                [1, 'asc']
+            ],
             "rowCallback": function(row, data, index) {
                 // Update the row number
                 $('td:eq(0)', row).html(index + 1);
