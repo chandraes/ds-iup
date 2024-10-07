@@ -95,6 +95,7 @@ Route::group(['middleware' => ['auth']], function() {
         // Route::view('/pajak', 'pajak.index')->name('pajak.index');
         Route::get('/', [App\Http\Controllers\PajakController::class, 'index'])->name('pajak.index');
         Route::get('/ppn-masukan', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
+        Route::get('/ppn-keluaran', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
     });
 
     Route::prefix('laporan-keuangan')->group(function(){

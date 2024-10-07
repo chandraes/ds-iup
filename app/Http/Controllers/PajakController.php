@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
@@ -25,5 +26,19 @@ class PajakController extends Controller
             'data' => $data,
             'saldo' => $saldo
         ]);
+    }
+
+    public function ppn_keluaran(Request $request)
+    {
+        $db = new PpnKeluaran();
+
+        $data = $db->with('invoiceJual')->get();
+        $saldo = $db->saldoTerakhir();
+
+        return view('pajak.ppn-keluaran.index', [
+            'data' => $data,
+            'saldo' => $saldo
+        ]);
+
     }
 }
