@@ -100,13 +100,20 @@
 <script>
 
     $(document).ready(function() {
+        $.fn.dataTable.ext.order['date-dmy-pre'] = function (d) {
+            var parts = d.split('-');
+            return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+        };
+
         $('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",
-
+            "columnDefs": [
+                { "type": "date-dmy", "targets": 0 }
+            ]
         });
 
     });
