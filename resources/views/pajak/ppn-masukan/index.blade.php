@@ -55,18 +55,21 @@
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
-                    <th class="text-center align-middle">Tanggal</th>
-                    <th class="text-center align-middle">Uraian</th>
+                    <th class="text-center align-middle">Tanggal Input</th>
                     <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">Nominal</th>
+                    <th class="text-center align-middle">Supplier</th>
+                    <th class="text-center align-middle">Uraian</th>
+                    <th class="text-center align-middle">Tanggal Bayar</th>
+                    <th class="text-center align-middle">Sebelum<br>Terbit<br>Faktur</th>
+                    <th class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
+                    <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-start align-middle">
-                        {{$d->uraian}}
+                    <td class="text-center align-middle">
+                      {{$d->invoiceBelanja->tanggal}}
                     </td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceBelanja)
@@ -74,18 +77,32 @@
                             {{$d->invoiceBelanja->kode}}
                         </a>
                         @endif
-
                     </td>
+                    <td class="text-center align-middle">
+                        {{$d->invoiceBelanja->supplier->nama}}
+                      </td>
+                    <td class="text-start align-middle">
+                        {{$d->uraian}}
+                    </td>
+                    <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-end align-middle">
                         {{$d->nf_nominal}}
+                    </td>
+                    <td class="text-end align-middle">
+                        0
+                    </td>
+                    <td class="text-end align-middle">
+
                     </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="3">Saldo PPn Masukan</th>
+                    <th class="text-end align-middle" colspan="5">Saldo PPn Masukan</th>
                     <th class="text-end align-middle">{{number_format($saldo, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">0</th>
+                    <th></th>
                 </tr>
             </tfoot>
         </table>
@@ -105,7 +122,15 @@
             "ordering": true,
             "searching": false,
             "scrollCollapse": true,
-            "scrollY": "550px",
+            "scrollY": "400px",
+            // default order column 1
+            "order": [
+                [1, 'asc']
+            ],
+            // "rowCallback": function(row, data, index) {
+            //     // Update the row number
+            //     $('td:eq(0)', row).html(index + 1);
+            // }
 
         });
 

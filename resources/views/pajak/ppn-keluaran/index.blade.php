@@ -57,12 +57,12 @@
                 <tr>
                     <th class="text-center align-middle">Tanggal Input</th>
                     <th class="text-center align-middle">Nota</th>
-
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Tanggal Bayar</th>
                     <th class="text-center align-middle">Sebelum<br>Terbit<br>Faktur</th>
                     <th class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
+                    <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>
             <tbody>
@@ -87,6 +87,9 @@
                     </td>
                     <td class="text-end align-middle">
                         0
+                    </td>
+                    <td class="text-end align-middle">
+                        
                     </td>
                 </tr>
                 @endforeach

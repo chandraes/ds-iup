@@ -19,7 +19,7 @@ class PajakController extends Controller
     {
         $db = new PpnMasukan();
 
-        $data = $db->with(['invoiceBelanja'])->get();
+        $data = $db->with(['invoiceBelanja.supplier'])->get();
         $saldo = $db->saldoTerakhir();
 
         return view('pajak.ppn-masukan.index', [
