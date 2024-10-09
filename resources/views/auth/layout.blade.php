@@ -36,7 +36,7 @@
 
 	</head>
 
-	<body class="bg-primary bg-gradient">
+	<body class="bg-primary bg-gradient"> 
 
 		<div>
 
