@@ -14,7 +14,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-6 col-md-6 mb-3">
-                            <label for="barang_unit_id" class="form-label">UNIT</label>
+                            <label for="barang_unit_id" class="form-label">Kategori Perusahaan</label>
                             <select class="form-select" name="barang_unit_id" id="edit_barang_unit_id" required>
                                 <option selected>-- Pilih Salah Satu --</option>
                                 @foreach ($data as $k)
