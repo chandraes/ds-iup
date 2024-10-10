@@ -14,7 +14,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
-                            <label for="barang_unit_id" class="form-label">UNIT</label>
+                            <label for="barang_unit_id" class="form-label">KATEGORI PERUSAHAAN</label>
                             <select class="form-select" name="barang_unit_id" id="edit_barang_unit_id" required onchange="getTypeEdit()">
                                 <option value="" disabled>-- Pilih Salah Satu --</option>
                                 @foreach ($units as $k)
@@ -23,7 +23,7 @@
                             </select>
                         </div>
                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
-                            <label for="barang_type_id" class="form-label">TYPE</label>
+                            <label for="barang_type_id" class="form-label">BIDANG</label>
                             <select class="form-select" name="barang_type_id" id="edit_barang_type_id" required>
                                 <option value="">-- Pilih Salah Satu --</option>
                             </select>
