@@ -69,11 +69,11 @@
                                 <option value="2">Barang Non PPN</option>
                             </select>
                         </div>
-                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                        {{-- <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
                             <select class="form-select" name="detail_type[]" id="detail_type" multiple>
                             </select>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
                 <div class="modal-footer">

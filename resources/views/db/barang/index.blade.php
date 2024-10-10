@@ -128,7 +128,7 @@
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Satuan</th>
-                    <th class="text-center align-middle">Ket<br></th>
+                    {{-- <th class="text-center align-middle">Ket<br></th> --}}
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
                     <th class="text-center align-middle">Action</th>
@@ -168,7 +168,7 @@
                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                     <td class="text-center align-middle">{{ $barang->merk }}</td>
                     <td class="text-center align-middle">{{ $barang->satuan ? $barang->satuan->nama : '' }}</td>
-                    <td class="text-start align-middle">
+                    {{-- <td class="text-start align-middle">
 
                         @if ($barang->detail_types)
                         <ul>
@@ -177,7 +177,7 @@
                             @endforeach
                         </ul>
                         @endif
-                    </td>
+                    </td> --}}
                     <td class="text-center align-middle">
                         @if ($barang->jenis == 1)
                         <i class="fa fa-check"></i>
