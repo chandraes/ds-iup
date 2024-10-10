@@ -13,7 +13,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
-                            <label for="barang_unit_id" class="form-label">KATEGORI PERUSAHAAN</label>
+                            <label for="barang_unit_id" class="form-label">PERUSAHAAN</label>
                             <select class="form-select" name="barang_unit_id" id="barang_unit_id" required onchange="getType()">
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 @foreach ($units as $k)

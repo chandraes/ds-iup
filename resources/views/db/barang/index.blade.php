@@ -120,7 +120,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
-                    <th class="text-center align-middle">Kategori<br>Perusahaan</th>
+                    <th class="text-center align-middle">Perusahaan</th>
                     <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Kelompok<br>Barang</th>
                     <th class="text-center align-middle">Nama<br>Barang</th>
