@@ -94,8 +94,8 @@
         <table class="table-items" style="font-size: 10px">
             <thead class=" table-success">
                 <tr>
-                    <th class="text-center align-middle">Unit</th>
-                    <th class="text-center align-middle">Type</th>
+                    <th class="text-center align-middle">Perusahaan</th>
+                    <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Kategori Barang</th>
                     <th class="text-center align-middle">Nama Barang</th>
                     <th class="text-center align-middle">Kode Barang</th>

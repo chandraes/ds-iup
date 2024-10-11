@@ -14,8 +14,8 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle table-pdf text-pdf" style="width: 15px">No</th>
-                    <th class="text-center align-middle table-pdf text-pdf">Unit</th>
-                    <th class="text-center align-middle table-pdf text-pdf">Tipe</th>
+                    <th class="text-center align-middle table-pdf text-pdf">Perusahaan</th>
+                    <th class="text-center align-middle table-pdf text-pdf">Bidang</th>
                     <th class="text-center align-middle table-pdf text-pdf">Kelompok<br>Barang</th>
                     <th class="text-center align-middle table-pdf text-pdf">Nama<br>Barang</th>
                     <th class="text-center align-middle table-pdf text-pdf">Kode<br>Barang</th>

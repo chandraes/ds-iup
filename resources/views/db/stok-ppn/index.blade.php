@@ -56,7 +56,7 @@
     <form method="GET" action="{{route('db.stok-ppn')}}" class="mt-3 mb-5">
         <div class="row">
             <div class="col-md-2">
-                <label for="unit">Unit</label>
+                <label for="unit">Perusahaan</label>
                 <select name="unit" id="unit" class="form-select">
                     <option value=""> ---------- </option>
                     @foreach($units as $unit)
@@ -67,7 +67,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label for="type">Type</label>
+                <label for="type">Bidang</label>
                 <select name="type" id="type" class="form-select">
                     <option value=""> ---------- </option>
                     @foreach($selectType as $type)
@@ -118,8 +118,8 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
-                    <th class="text-center align-middle">Unit</th>
-                    <th class="text-center align-middle">Tipe</th>
+                    <th class="text-center align-middle">Perusahaan</th>
+                    <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Kelompok<br>Barang</th>
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>

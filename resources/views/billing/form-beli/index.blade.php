@@ -37,9 +37,9 @@
         <div class="row">
             <div class="col-md-2">
                 <div class="mb-3">
-                    <label for="barang_unit_id" class="form-label">Unit</label>
+                    <label for="barang_unit_id" class="form-label">Perusahaan</label>
                     <select class="form-select" name="barang_unit_id" id="barang_unit_id" onchange="funGetBarang()" required>
-                        <option value=""> -- Pilih Unit -- </option>
+                        <option value=""> -- Pilih Perusahaan -- </option>
                         @foreach ($data as $k)
                             <option value="{{$k->id}}">{{$k->nama}}</option>
                         @endforeach
@@ -48,9 +48,9 @@
             </div>
             <div class="col-md-2">
                 <div class="mb-3">
-                    <label for="barang_type_id" class="form-label">Type</label>
+                    <label for="barang_type_id" class="form-label">Bidang</label>
                     <select class="form-select" name="barang_type_id" id="barang_type_id" required onchange="getKategori()">
-                        <option value=""> -- Pilih Type -- </option>
+                        <option value=""> -- Pilih Bidang -- </option>
                     </select>
                 </div>
             </div>
