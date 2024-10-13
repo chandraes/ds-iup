@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>KATEGORI MERK UNIT</u></h1>
+            <h1><u>KATEGORI PERUSAHAAN</u></h1>
         </div>
     </div>
     @include('swal')
@@ -22,12 +22,12 @@
                             Database</a></td>
                     <td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img
-                                src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Unit</a>
+                                src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Perusahaan</a>
                     </td>
                     <td>
                         <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#createModal">
-                            <img src=" {{asset('images/unit.svg')}}" alt="dokumen" width="30"> Tambah Type</a>
+                            <img src=" {{asset('images/unit.svg')}}" alt="dokumen" width="30"> Tambah Bidang</a>
                     </td>
                 </tr>
             </table>
@@ -52,8 +52,8 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
-                    <th class="text-center align-middle">Unit</th>
-                    <th class="text-center align-middle">Tipe</th>
+                    <th class="text-center align-middle">Perusahaan</th>
+                    <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>

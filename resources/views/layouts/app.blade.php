@@ -64,7 +64,7 @@
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
                     <img src="{{asset('images/iup.png')}}" alt="DS CGM" class="img-responsive img-header" width=40">
-                     <strong>PT INDOSUPPLY UNIVERSAL PERKASA</strong>
+                     <strong>PT IUP - DISTRIBUTOR</strong>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"

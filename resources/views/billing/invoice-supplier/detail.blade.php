@@ -77,8 +77,8 @@
             <thead class=" table-success">
                 <tr>
                     <th class="text-center align-middle">No</th>
-                    <th class="text-center align-middle">Unit</th>
-                    <th class="text-center align-middle">Type</th>
+                    <th class="text-center align-middle">Perusahaan</th>
+                    <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Kelompok</th>
                     <th class="text-center align-middle">Barang</th>
                     <th class="text-center align-middle">Kode</th>

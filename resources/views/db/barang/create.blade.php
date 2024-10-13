@@ -13,7 +13,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
-                            <label for="barang_unit_id" class="form-label">UNIT</label>
+                            <label for="barang_unit_id" class="form-label">PERUSAHAAN</label>
                             <select class="form-select" name="barang_unit_id" id="barang_unit_id" required onchange="getType()">
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 @foreach ($units as $k)
@@ -22,7 +22,7 @@
                             </select>
                         </div>
                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
-                            <label for="barang_type_id" class="form-label">TYPE</label>
+                            <label for="barang_type_id" class="form-label">BIDANG</label>
                             <select class="form-select" name="barang_type_id" id="barang_type_id" required>
                                 <option selected>-- Pilih Salah Satu --</option>
                             </select>
@@ -69,11 +69,11 @@
                                 <option value="2">Barang Non PPN</option>
                             </select>
                         </div>
-                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                        {{-- <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
                             <select class="form-select" name="detail_type[]" id="detail_type" multiple>
                             </select>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
                 <div class="modal-footer">
