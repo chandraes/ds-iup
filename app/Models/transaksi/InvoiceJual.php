@@ -18,7 +18,7 @@ class InvoiceJual extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_pph', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
 
     public function dataTahun()
     {
@@ -59,7 +59,7 @@ class InvoiceJual extends Model
         return number_format($this->total, 0, ',', '.');
     }
 
-    public function getDppSetelahDiskon()
+    public function getDppSetelahDiskonAttribute()
     {
         return number_format($this->total - $this->diskon, 0, ',', '.') ?? 0;
     }

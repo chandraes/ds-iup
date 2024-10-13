@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>PPN MASUKAN</u></h1>
@@ -13,44 +13,20 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('pajak.index')}}"><img src="{{asset('images/pajak.svg')}}" alt="dokumen" width="30">
+                    <td><a href="{{route('pajak.index')}}"><img src="{{asset('images/pajak.svg')}}" alt="dokumen"
+                                width="30">
                             PAJAK</a></td>
                 </tr>
             </table>
         </div>
-        {{-- <form action="{{route('rekap.invoice-belanja')}}" method="get" class="col-md-6">
-            <div class="row mt-2">
-                <div class="col-md-4 mb-3">
-                    <select class="form-select" name="bulan" id="bulan">
-                        <option value="1" {{$bulan=='01' ? 'selected' : '' }}>Januari</option>
-                        <option value="2" {{$bulan=='02' ? 'selected' : '' }}>Februari</option>
-                        <option value="3" {{$bulan=='03' ? 'selected' : '' }}>Maret</option>
-                        <option value="4" {{$bulan=='04' ? 'selected' : '' }}>April</option>
-                        <option value="5" {{$bulan=='05' ? 'selected' : '' }}>Mei</option>
-                        <option value="6" {{$bulan=='06' ? 'selected' : '' }}>Juni</option>
-                        <option value="7" {{$bulan=='07' ? 'selected' : '' }}>Juli</option>
-                        <option value="8" {{$bulan=='08' ? 'selected' : '' }}>Agustus</option>
-                        <option value="9" {{$bulan=='09' ? 'selected' : '' }}>September</option>
-                        <option value="10" {{$bulan=='10' ? 'selected' : '' }}>Oktober</option>
-                        <option value="11" {{$bulan=='11' ? 'selected' : '' }}>November</option>
-                        <option value="12" {{$bulan=='12' ? 'selected' : '' }}>Desember</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <select class="form-select" name="tahun" id="tahun">
-                        @foreach ($dataTahun as $d)
-                        <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
-                </div>
-            </div>
-        </form> --}}
+
     </div>
 </div>
-<div class="container table-responsive ml-3">
+
+@include('pajak.ppn-masukan.faktur-modal')
+@include('pajak.ppn-masukan.show-faktur')
+
+<div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
@@ -69,7 +45,7 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">
-                      {{$d->invoiceBelanja->tanggal}}
+                        {{$d->invoiceBelanja->tanggal}}
                     </td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceBelanja)
@@ -80,28 +56,41 @@
                     </td>
                     <td class="text-center align-middle">
                         {{$d->invoiceBelanja->supplier->nama}}
-                      </td>
+                    </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
                     </td>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-end align-middle">
+                        @if ($d->is_faktur == 0)
                         {{$d->nf_nominal}}
-                    </td>
-                    <td class="text-end align-middle">
+                        @else
                         0
+                        @endif
+
                     </td>
                     <td class="text-end align-middle">
+                        @if ($d->is_faktur == 1)
+                        <a href="#" onclick="showFaktur({{$d->id}})" data-bs-toggle="modal" data-bs-target="#showModal">{{$d->nf_nominal}}</a>
 
+                        @else
+                        0
+                        @endif
+                    </td>
+                    <td class="text-center align-middle">
+                        <button type="button" class="btn btn-{{$d->is_faktur == 1 ? 'warning' : 'primary'}} btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#modalFaktur" onclick="faktur({{$d->id}})">
+                            {{$d->is_faktur == 1 ? 'Ubah' : ''}} Faktur
+                        </button>
                     </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="5">Saldo PPn Masukan</th>
-                    <th class="text-end align-middle">{{number_format($saldo, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">0</th>
+                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle">{{number_format($total_blm_faktur, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($total_faktur, 0, ',','.')}}</th>
                     <th></th>
                 </tr>
             </tfoot>
@@ -115,6 +104,28 @@
 @push('js')
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+    function getDataById(id) {
+        const data = @json($data);
+        return data.find(x => x.id == id);
+    }
+
+    function showFaktur(id) {
+        const d = getDataById(id);
+
+        $('#no_faktur_show').val(d.is_faktur == 1 ? d.no_faktur : 'Faktur Belum Terisi');
+    }
+
+    function faktur(id) {
+        const form = document.getElementById('fakturForm');
+        form.action = `/pajak/ppn-masukan/store-faktur/${id}`;
+        form.reset();
+
+        const d = getDataById(id);
+
+        $('#nota').val(d.invoice_belanja_id != null ? d.invoice_belanja.kode : 'Nota Belum Terisi');
+        $('#nominal').val(d.nf_nominal);
+        $('#no_faktur').val(d.is_faktur == 1 ? d.no_faktur : '');
+    }
 
     $(document).ready(function() {
         $('#rekapTable').DataTable({
