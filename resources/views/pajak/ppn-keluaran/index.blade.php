@@ -34,7 +34,7 @@
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
-                    <th class="text-center align-middle">Tanggal Bayar</th>
+                    {{-- <th class="text-center align-middle">Tanggal Bayar</th> --}}
                     <th class="text-center align-middle">Sebelum<br>Terbit<br>Faktur</th>
                     <th class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
                     <th class="text-center align-middle">ACT</th>
@@ -58,7 +58,7 @@
                     <td class="text-start align-middle">
                         {{$d->uraian}}
                     </td>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    {{-- <td class="text-center align-middle">{{$d->tanggal}}</td> --}}
                     <td class="text-end align-middle">
                         @if ($d->is_faktur == 0)
                         {{$d->nf_nominal}}
