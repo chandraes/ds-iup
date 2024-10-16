@@ -87,7 +87,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle" colspan="4">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($total_blm_faktur, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($total_faktur, 0, ',','.')}}</th>
                     <th></th>
