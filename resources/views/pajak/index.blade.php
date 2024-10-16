@@ -36,7 +36,7 @@
     <div class="row justify-content-left">
         <h4 class="mt-3">REKAP</h4>
         <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('pajak.rekap-ppn')}}" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">PPN</h4>
             </a>

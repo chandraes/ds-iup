@@ -93,21 +93,22 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::prefix('pajak')->group(function(){
 
-    Route::get('/', [App\Http\Controllers\PajakController::class, 'index'])->name('pajak.index');
+        Route::get('/', [App\Http\Controllers\PajakController::class, 'index'])->name('pajak.index');
+        Route::get('/rekap-ppn', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
 
-    Route::prefix('ppn-masukan')->group(function(){
-        Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
-        Route::patch('/store-faktur/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
-        Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_store'])->name('pajak.ppn-masukan.keranjang-store');
-        Route::post('/keranjang-destroy/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_destroy'])->name('pajak.ppn-masukan.keranjang-destroy');
+        Route::prefix('ppn-masukan')->group(function(){
+            Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
+            Route::patch('/store-faktur/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
+            Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_store'])->name('pajak.ppn-masukan.keranjang-store');
+            Route::post('/keranjang-destroy/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_destroy'])->name('pajak.ppn-masukan.keranjang-destroy');
+        });
+
+        Route::prefix('ppn-keluaran')->group(function(){
+            Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
+            Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
+        });
+
     });
-
-    Route::prefix('ppn-keluaran')->group(function(){
-        Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
-        Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
-    });
-
-});
 
     Route::prefix('laporan-keuangan')->group(function(){
         Route::view('/laporan-keuangan', 'laporan-keuangan.index')->name('laporan-keuangan.index');

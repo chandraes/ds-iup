@@ -124,4 +124,9 @@ class PajakController extends Controller
 
         return redirect()->back()->with('success', 'Berhasil menyimpan data');
     }
+
+    public function rekap_ppn()
+    {
+        return view('pajak.rekap-ppn');
+    }
 }
