@@ -45,13 +45,23 @@
                         </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <th class="text-end align-middle" colspan="3">Grand Total</th>
+                            <th class="text-end align-middle">{{number_format($keranjangData->sum('nominal'), 0, ',','.')}}</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     Tutup
                 </button>
-                <button type="button" class="btn btn-primary">Lanjutkan</button>
+                <form action="{{route('pajak.ppn-masukan.keranjang-lanjut')}}" method="post" id="lanjutForm">
+                    @csrf
+                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                </form>
             </div>
         </div>
     </div>

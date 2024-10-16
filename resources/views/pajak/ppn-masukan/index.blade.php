@@ -225,6 +225,23 @@
             })
         });
 
+        $('#lanjutForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
+
 
 
     });

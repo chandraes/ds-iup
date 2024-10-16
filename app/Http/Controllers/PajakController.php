@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PajakController extends Controller
@@ -86,6 +88,16 @@ class PajakController extends Controller
         return redirect()->back()->with('success', 'Berhasil menghapus data dari keranjang!');
     }
 
+    public function ppn_masukan_keranjang_lanjut()
+    {
+        $db = new RekapPpn();
+
+        $res = $db->keranjang_masukan_lanjut();
+
+        return redirect()->back()->with($res['status'], $res['message']);
+
+    }
+
     public function ppn_keluaran(Request $request)
     {
         $db = new PpnKeluaran();
@@ -125,8 +137,34 @@ class PajakController extends Controller
         return redirect()->back()->with('success', 'Berhasil menyimpan data');
     }
 
-    public function rekap_ppn()
+    public function rekap_ppn(Request $request)
     {
-        return view('pajak.rekap-ppn');
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        $db = new RekapPpn();
+
+        $data = $db->rekapByMonth($bulan, $tahun);
+        $dataTahun = $db->dataTahun();
+
+        $bulanSebelumnya = $bulan - 1;
+        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
+        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        $dataSebelumnya = $db->rekapByMonthSebelumnya($bulanSebelumnya, $tahunSebelumnya);
+
+        return view('pajak.rekap-ppn.index', [
+            'data' => $data,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'dataTahun' => $dataTahun,
+            'dataSebelumnya' => $dataSebelumnya,
+            'stringBulan' => $stringBulan,
+            'stringBulanNow' => $stringBulanNow,
+            'bulanSebelumnya' => $bulanSebelumnya,
+            'tahunSebelumnya' => $tahunSebelumnya
+        ]);
     }
 }
