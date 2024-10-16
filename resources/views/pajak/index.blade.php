@@ -41,6 +41,12 @@
                 <h4 class="mt-3">PPN</h4>
             </a>
         </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-3">PPN EXPIRED</h4>
+            </a>
+        </div>
         <div class="col-md-3 text-center mt-3">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
