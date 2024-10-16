@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pajak\RekapMasukanDetail;
 use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
@@ -165,6 +166,19 @@ class PajakController extends Controller
             'stringBulanNow' => $stringBulanNow,
             'bulanSebelumnya' => $bulanSebelumnya,
             'tahunSebelumnya' => $tahunSebelumnya
+        ]);
+    }
+
+    public function rekap_ppn_masukan_detail(RekapPpn $rekapPpn)
+    {
+        $masukan_id = $rekapPpn->masukan_id;
+        $dataMasukan = RekapMasukanDetail::where('masukan_id', $masukan_id)->pluck('ppn_masukan_id');
+        // dd($dataMasukan);
+        $db = new PpnMasukan();
+        $data = $db->with(['invoiceBelanja.supplier'])->whereIn('id', $dataMasukan)->get();
+
+        return view('pajak.rekap-ppn.masukan-detail', [
+            'data' => $data
         ]);
     }
 }

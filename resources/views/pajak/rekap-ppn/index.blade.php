@@ -49,7 +49,8 @@
                 </div>
                 {{-- <div class="col-md-3 mb-3">
                     <label for="showPrint" class="form-label">&nbsp;</label>
-                    <a href="{{route('rekap.kas-besar.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank" class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
+                    <a href="{{route('rekap.kas-besar.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}"
+                        target="_blank" class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
                 </div> --}}
             </div>
         </form>
@@ -73,38 +74,47 @@
                 </tr>
             </thead>
             @php
-                $masuk = 0;
-                $keluar = 0;
-                $saldoSebelumnya = $dataSebelumnya ? $dataSebelumnya->saldo : 0;
+            $masuk = 0;
+            $keluar = 0;
+            $saldoSebelumnya = $dataSebelumnya ? $dataSebelumnya->saldo : 0;
             @endphp
             <tbody>
                 @foreach ($data as $d)
-                    <tr>
-                        <td class="text-center align-middle">{{$d->tanggal}}</td>
-                        <td class="text-start align-middle">
-                            {{$d->uraian}}
-                        </td>
-                        <td class="text-end align-middle">
-                            @if ($d->masukan_id)
+                <tr>
+                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-start align-middle">
+                        @if ($d->masukan_id)
 
-                                {{$d->nf_nominal}}
-                                @php
-                                    $masuk += $d->nominal;
-                                @endphp
-                                @else
-                                0
-                            @endif
-                        </td>
-                        <td class="text-end align-middle">
-                            @if ($d->keluaran_id)
-                                {{$d->nf_nominal}}
-                                $keluar += $d->nominal;
-                                @else
-                                0
-                            @endif
-                        </td>
-                        <td class="text-end align-middle">{{$d->nf_saldo}}</td>
-                    </tr>
+                        <a href="{{route('pajak.rekap-ppn.masukan', ['rekapPpn' => $d->id])}}">
+                            {{$d->uraian}}
+                        </a>
+                        @else
+                        {{$d->uraian}}
+                        @endif
+
+
+                    </td>
+                    <td class="text-end align-middle">
+                        @if ($d->masukan_id)
+
+                        {{$d->nf_nominal}}
+                        @php
+                        $masuk += $d->nominal;
+                        @endphp
+                        @else
+                        0
+                        @endif
+                    </td>
+                    <td class="text-end align-middle">
+                        @if ($d->keluaran_id)
+                        {{$d->nf_nominal}}
+                        $keluar += $d->nominal;
+                        @else
+                        0
+                        @endif
+                    </td>
+                    <td class="text-end align-middle">{{$d->nf_saldo}}</td>
+                </tr>
                 @endforeach
             </tbody>
             <tfoot>
@@ -112,7 +122,8 @@
                     <th class="text-end align-middle" colspan="2">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($masuk, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($keluar, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($saldoSebelumnya + $masuk - $keluar, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($saldoSebelumnya + $masuk - $keluar, 0, ',','.')}}
+                    </th>
                 </tr>
             </tfoot>
         </table>
