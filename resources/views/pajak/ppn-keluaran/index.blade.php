@@ -29,6 +29,7 @@
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
+
                     <th class="text-center align-middle">Tanggal Input</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Konsumen</th>
@@ -42,6 +43,7 @@
             <tbody>
                 @foreach ($data as $d)
                 <tr>
+
                     <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal : '-'}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceJual)
