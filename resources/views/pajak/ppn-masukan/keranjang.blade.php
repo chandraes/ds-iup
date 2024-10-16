@@ -20,24 +20,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($keranjangData as $d)
+                        @foreach ($keranjangData as $k)
                         <tr>
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
                             <td class="text-center align-middle">
-                                @if ($d->invoiceBelanja)
-                                <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d->invoice_belanja_id])}}">
-                                    {{$d->invoiceBelanja->kode}}
+                                @if ($k->invoiceBelanja)
+                                <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $k->invoice_belanja_id])}}">
+                                    {{$k->invoiceBelanja->kode}}
                                 </a>
                                 @endif
                             </td>
                             <td class="text-center align-middle">
-                                {{$d->no_faktur}}
+                                {{$k->no_faktur}}
                             </td>
                             <td class="text-end align-middle">
-                                {{$d->nf_nominal}}
+                                {{$k->nf_nominal}}
                             </td>
                             <td class="text-center align-middle">
+                                <form action="{{route('pajak.ppn-masukan.keranjang-destroy', ['ppnMasukan' => $k->id])}}" method="post">
+                                    @csrf
                                 <button class="btn btn-danger"><i class="fa fa-trash"></i>Hapus</button>
+                            </form>
                             </td>
                         </tr>
                         @endforeach

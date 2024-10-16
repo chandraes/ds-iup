@@ -257,13 +257,17 @@ class InvoiceBelanja extends Model
         $uraian = ($jenis == 1 ? "Void " : "Pelunasan ") . $store->uraian;
         $saldo = $ppn->saldoTerakhir() + ($jenis == 1 ? -$store->dp_ppn : $store->sisa_ppn);
 
-        if ($nominal > 0) {
-            $ppn->create([
-                'invoice_belanja_id' => $store->id,
-                'nominal' => $nominal,
-                'saldo' => $saldo,
-                'uraian' => $uraian,
-            ]);
+        if ($jenis == 1) {
+            $ppn->where('invoice_belanja_id', $store->id)->delete();
+        } else {
+            if ($nominal > 0) {
+                $ppn->create([
+                    'invoice_belanja_id' => $store->id,
+                    'nominal' => $nominal,
+                    'saldo' => $saldo,
+                    'uraian' => $uraian,
+                ]);
+            }
         }
 
         return true;

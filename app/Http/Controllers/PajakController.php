@@ -77,6 +77,15 @@ class PajakController extends Controller
 
     }
 
+    public function ppn_masukan_keranjang_destroy(PPnMasukan $ppnMasukan)
+    {
+        $ppnMasukan->update([
+            'is_keranjang' => 0
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil menghapus data dari keranjang!');
+    }
+
     public function ppn_keluaran(Request $request)
     {
         $db = new PpnKeluaran();
