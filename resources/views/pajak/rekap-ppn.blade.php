@@ -28,8 +28,9 @@
             <thead class=" table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
-                    <th class="text-center align-middle">Ppn Masukan</th>
-                    <th class="text-center align-middle">Ppn Keluaran</th>
+                    <th class="text-center align-middle">Uraian</th>
+                    <th class="text-center align-middle">Masuk</th>
+                    <th class="text-center align-middle">Keluar</th>
                     <th class="text-center align-middle">Saldo</th>
                 </tr>
             </thead>
