@@ -88,7 +88,7 @@
                     </td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceBelanja)
-                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
+                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d->invoice_belanja_id])}}">
                             {{$d->invoiceBelanja->kode}}
                         </a>
                         @endif
