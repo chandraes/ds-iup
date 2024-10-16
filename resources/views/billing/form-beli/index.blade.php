@@ -180,7 +180,7 @@
             if (apa_ppn === 1) {
 
                 var gt = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
-                var vPpn = Math.round(gt * ppnRate);
+                var vPpn = Math.floor(gt * ppnRate);
                 // vPpn = vPpn.toFixed(0);
                 // Include add_fee in the total calculation
                 var totalap = gt + vPpn + addFee;
