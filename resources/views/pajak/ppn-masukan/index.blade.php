@@ -196,13 +196,16 @@
             "scrollY": "400px",
             // default order column 1
             "order": [
-                [2, 'asc']
+                [1, 'asc']
             ],
             // "rowCallback": function(row, data, index) {
             //     // Update the row number
             //     $('td:eq(0)', row).html(index + 1);
             // }
 
+        });
+        $('#keranjangModal').on('shown.bs.modal', function() {
+            $('#keranjangTable').DataTable().columns.adjust().draw();
         });
 
         $('#keranjangForm').submit(function(e){
@@ -221,6 +224,8 @@
                 }
             })
         });
+
+
 
     });
 

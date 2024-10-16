@@ -16,6 +16,7 @@
                             <th class="text-center align-middle">Nota</th>
                             <th class="text-center align-middle">Faktur</th>
                             <th class="text-center align-middle">Nominal</th>
+                            <th class="text-center align-middle">Act</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -24,7 +25,7 @@
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
                             <td class="text-center align-middle">
                                 @if ($d->invoiceBelanja)
-                                <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
+                                <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d->invoice_belanja_id])}}">
                                     {{$d->invoiceBelanja->kode}}
                                 </a>
                                 @endif
@@ -34,6 +35,9 @@
                             </td>
                             <td class="text-end align-middle">
                                 {{$d->nf_nominal}}
+                            </td>
+                            <td class="text-center align-middle">
+                                <button class="btn btn-danger"><i class="fa fa-trash"></i>Hapus</button>
                             </td>
                         </tr>
                         @endforeach

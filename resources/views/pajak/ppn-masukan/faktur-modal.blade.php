@@ -20,7 +20,7 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
+                            <div class="mb-4">
                                 <label for="nominal" class="form-label">Nominal</label>
                                 <input type="text" class="form-control" name="nominal" id="nominal" disabled />
                             </div>
@@ -28,8 +28,8 @@
 
                         <div class="col-md-12">
                             <div class="mb-3">
-                                <label for="no_faktur" class="form-label">Nomor Faktur</label>
-                                <input type="text" class="form-control" name="no_faktur" id="no_faktur" required />
+                                <label for="no_faktur" class="form-label h3">Nomor Faktur</label>
+                                <input type="text" class="form-control h3" name="no_faktur" id="no_faktur" required style="font-size: 2rem; padding: 10px;"/>
                             </div>
                         </div>
                     </div>
