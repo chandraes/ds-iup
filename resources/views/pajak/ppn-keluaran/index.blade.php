@@ -24,23 +24,32 @@
 </div>
 @include('pajak.ppn-keluaran.faktur-modal')
 @include('pajak.ppn-keluaran.show-faktur')
-<div class="container table-responsive ml-3">
+
+<div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
-
-                    <th class="text-center align-middle">Tanggal Input</th>
-                    <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">Konsumen</th>
-                    <th class="text-center align-middle">Uraian</th>
+                    <th rowspan="2" class="text-center align-middle">Tanggal Input</th>
+                    <th rowspan="2" class="text-center align-middle">Nota</th>
+                    <th rowspan="2" class="text-center align-middle">Konsumen</th>
+                    <th rowspan="2" class="text-center align-middle">Uraian</th>
                     {{-- <th class="text-center align-middle">Tanggal Bayar</th> --}}
-                    <th class="text-center align-middle">Sebelum<br>Terbit<br>Faktur</th>
-                    <th class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
-                    <th class="text-center align-middle">ACT</th>
+                    <th colspan="2" class="text-center align-middle">Sebelum Terbit<br>Faktur</th>
+                    <th rowspan="2" class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
+                    <th rowspan="2" class="text-center align-middle">ACT</th>
+                </tr>
+                <tr>
+                    <th class="text-center align-middle">Non NPWP</th>
+                    <th class="text-center align-middle">NPWP</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $totalNonNpwp = 0;
+                    $totalNpwp = 0;
+                    $totalFaktur = 0;
+                @endphp
                 @foreach ($data as $d)
                 <tr>
 
@@ -60,18 +69,32 @@
                     </td>
                     {{-- <td class="text-center align-middle">{{$d->tanggal}}</td> --}}
                     <td class="text-end align-middle">
-                        @if ($d->is_faktur == 0)
+                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp : $d->invoiceJual->konsumen_temp->npwp) < 10))
                         {{$d->nf_nominal}}
+                        @php
+                            $totalNonNpwp += $d->nominal;
+                        @endphp
                         @else
                         0
                         @endif
-
+                    </td>
+                    <td class="text-end align-middle">
+                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp : $d->invoiceJual->konsumen_temp->npwp) > 10 ))
+                        {{$d->nf_nominal}}
+                        @php
+                            $totalNpwp += $d->nominal;
+                        @endphp
+                        @else
+                        0
+                        @endif
                     </td>
                     <td class="text-end align-middle">
                         @if ($d->is_faktur == 1)
                         <a href="#" onclick="showFaktur({{$d->id}})" data-bs-toggle="modal"
                             data-bs-target="#showModal">{{$d->nf_nominal}}</a>
-
+                            @php
+                                $totalFaktur += $d->nominal;
+                            @endphp
                         @else
                         0
                         @endif
@@ -88,8 +111,9 @@
             <tfoot>
                 <tr>
                     <th class="text-end align-middle" colspan="4">Grand Total</th>
-                    <th class="text-end align-middle">{{number_format($total_blm_faktur, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($total_faktur, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($totalNonNpwp, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($totalNpwp, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($totalFaktur, 0, ',','.')}}</th>
                     <th></th>
                 </tr>
             </tfoot>
