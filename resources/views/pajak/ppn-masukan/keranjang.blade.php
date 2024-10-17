@@ -25,7 +25,8 @@
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
                             <td class="text-center align-middle">
                                 @if ($k->invoiceBelanja)
-                                <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $k->invoice_belanja_id])}}">
+                                <a
+                                    href="{{route('billing.invoice-supplier.detail', ['invoice' => $k->invoice_belanja_id])}}">
                                     {{$k->invoiceBelanja->kode}}
                                 </a>
                                 @endif
@@ -37,10 +38,12 @@
                                 {{$k->nf_nominal}}
                             </td>
                             <td class="text-center align-middle">
-                                <form action="{{route('pajak.ppn-masukan.keranjang-destroy', ['ppnMasukan' => $k->id])}}" method="post">
+                                <form
+                                    action="{{route('pajak.ppn-masukan.keranjang-destroy', ['ppnMasukan' => $k->id])}}"
+                                    method="post">
                                     @csrf
-                                <button class="btn btn-danger"><i class="fa fa-trash"></i>Hapus</button>
-                            </form>
+                                    <button class="btn btn-danger"><i class="fa fa-trash"></i>Hapus</button>
+                                </form>
                             </td>
                         </tr>
                         @endforeach
@@ -48,7 +51,8 @@
                     <tfoot>
                         <tr>
                             <th class="text-end align-middle" colspan="3">Grand Total</th>
-                            <th class="text-end align-middle">{{number_format($keranjangData->sum('nominal'), 0, ',','.')}}</th>
+                            <th class="text-end align-middle">{{number_format($keranjangData->sum('nominal'), 0,
+                                ',','.')}}</th>
                             <th></th>
                         </tr>
                     </tfoot>
@@ -60,10 +64,9 @@
                 </button>
                 <form action="{{route('pajak.ppn-masukan.keranjang-lanjut')}}" method="post" id="lanjutForm">
                     @csrf
-                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                    <button type="submit" class="btn btn-primary">Lanjutkan</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-

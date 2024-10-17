@@ -111,6 +111,10 @@ Route::group(['middleware' => ['auth']], function() {
         Route::prefix('ppn-keluaran')->group(function(){
             Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
             Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
+            Route::get('/keranjang', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang'])->name('pajak.ppn-keluaran.keranjang');
+            Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_store'])->name('pajak.ppn-keluaran.keranjang-store');
+            Route::post('/keranjang-destroy/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_destroy'])->name('pajak.ppn-keluaran.keranjang-destroy');
+            Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
         });
 
     });

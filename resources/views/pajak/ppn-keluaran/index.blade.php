@@ -16,6 +16,8 @@
                     <td><a href="{{route('pajak.index')}}"><img src="{{asset('images/pajak.svg')}}" alt="dokumen"
                                 width="30">
                             PAJAK</a></td>
+                    <td><a href="@if($keranjang > 0) {{route('pajak.ppn-keluaran.keranjang')}} @else # @endif"><i class="fa fa-shopping-cart h3 me-2"></i>
+                        Keranjang {!! $keranjang > 0 ? "<span class='text-danger'>($keranjang)</span>" : '' !!}</a></td>
                 </tr>
             </table>
         </div>
@@ -27,15 +29,46 @@
 
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
+        <form action="{{route('pajak.ppn-keluaran.keranjang-store')}}" method="post" id="keranjangForm">
+            @csrf
+            <div class="row">
+                <div class="col-md-2 text-end">
+                    <div class="mb-3 pt-2">
+                        <label for="total_tagihan" >Nominal Dipilih :</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="total_tagihan" id="total_tagihan" value="0"
+                            hidden />
+                        <input type="hidden" name="selectedData" required>
+                        <input type="text" class="form-control" name="total_tagihan_display" id="total_tagihan_display"
+                            value="0" disabled />
+
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="row">
+                        <button class="btn btn-success">Masukan Keranjang</button>
+                    </div>
+                </div>
+            </div>
+
+        </form>
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
+                    <th class="text-center align-middle" rowspan="2">
+
+                        {{-- select all --}}
+                        <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
+                    </th>
                     <th rowspan="2" class="text-center align-middle">Tanggal Input</th>
                     <th rowspan="2" class="text-center align-middle">Nota</th>
                     <th rowspan="2" class="text-center align-middle">Konsumen</th>
                     <th rowspan="2" class="text-center align-middle">Uraian</th>
                     {{-- <th class="text-center align-middle">Tanggal Bayar</th> --}}
-                    <th colspan="2" class="text-center align-middle">Sebelum Terbit<br>Faktur</th>
+                    <th colspan="2" class="text-center align-middle">Sebelum Terbit Faktur</th>
                     <th rowspan="2" class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
                     <th rowspan="2" class="text-center align-middle">ACT</th>
                 </tr>
@@ -52,7 +85,12 @@
                 @endphp
                 @foreach ($data as $d)
                 <tr>
-
+                    <td class="text-center align-middle">
+                        {{-- checklist on check push $d->id to $selectedData --}}
+                        <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}"
+                            data-tagihan="{{$d->nominal}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}"
+                            {{$d->is_faktur == 0 ? 'disabled' : ''}}>
+                    </td>
                     <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal : '-'}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceJual)
@@ -110,7 +148,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="4">Grand Total</th>
+                    <th class="text-end align-middle" colspan="5">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($totalNonNpwp, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($totalNpwp, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($totalFaktur, 0, ',','.')}}</th>
@@ -171,6 +209,82 @@
         });
 
     });
+
+    function check(checkbox, id) {
+        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
+        var tagihan = parseFloat($(checkbox).data('tagihan'));
+
+        if (checkbox.checked) {
+            totalTagihan += tagihan;
+            $('input[name="selectedData"]').val(function(i, v) {
+                // if end of string, remove comma
+                return v + id + ',';
+
+            });
+        } else {
+            totalTagihan -= tagihan;
+
+            $('input[name="selectedData"]').val(function(i, v) {
+                // remove id from string
+                return v.replace(id + ',', '');
+            });
+        }
+
+        $('#total_tagihan').val(totalTagihan);
+        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
+
+        value = $('input[name="selectedData"]').val();
+
+        if(value.slice(-1) == ','){
+            // remove comma from last number
+            value = value.slice(0, -1);
+        }
+        console.log(value);
+    }
+
+    // check all checkbox and push all id to $selectedData and check all checkbox
+    function checkAll(checkbox, id) {
+        $('#total_tagihan').val(0);
+        $('#total_tagihan_display').val(0);
+        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
+
+        if (checkbox.checked) {
+            $('input[name="selectedData"]').val(function(i, v) {
+                // if end of string, remove comma
+                @foreach ($data as $d)
+                if({{$d->is_faktur}} == 1) {
+                var tagihan = parseFloat($('#idSelect-{{$d->id}}').data('tagihan'));
+                totalTagihan += tagihan;
+
+                    v = v + {{$d->id}} + ',';
+                    $('#idSelect-{{$d->id}}').prop('checked', true);
+                }
+                @endforeach
+                return v;
+            });
+        } else {
+            $('input[name="selectedData"]').val(function(i, v) {
+                // remove id from string
+                @foreach ($data as $d)
+                    v = v.replace({{$d->id}} + ',', '');
+                    $('#idSelect-{{$d->id}}').prop('checked', false);
+                @endforeach
+                return v;
+            });
+            totalTagihan = 0;
+        }
+
+        $('#total_tagihan').val(totalTagihan);
+        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
+
+        value = $('input[name="selectedData"]').val();
+
+        if(value.slice(-1) == ','){
+            // remove comma from last number
+            value = value.slice(0, -1);
+        }
+        console.log(value);
+    }
 
 
 </script>

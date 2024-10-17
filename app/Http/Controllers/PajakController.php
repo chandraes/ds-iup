@@ -104,22 +104,14 @@ class PajakController extends Controller
         $db = new PpnKeluaran();
 
         $data = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 0)->where('is_finish', 0)->get();
+        $keranjang = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->count();
+        $keranjangData = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->get();
 
-        $total_faktur = 0;
-        $total_blm_faktur = 0;
-
-        foreach ($data as $item) {
-            if ($item->is_faktur == 1) {
-                $total_faktur += $item->nominal;
-            } elseif ($item->is_faktur == 0) {
-                $total_blm_faktur += $item->nominal;
-            }
-        }
 
         return view('pajak.ppn-keluaran.index', [
             'data' => $data,
-            'total_faktur' => $total_faktur,
-            'total_blm_faktur' => $total_blm_faktur
+            'keranjang' => $keranjang,
+            'keranjangData' => $keranjangData
         ]);
 
     }
@@ -136,6 +128,63 @@ class PajakController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Berhasil menyimpan data');
+    }
+
+    public function ppn_keluaran_keranjang_store(Request $request)
+    {
+        $data = $request->validate([
+            'selectedData' => 'required',
+        ]);
+
+        $data['selectedData'] = trim($data['selectedData'], ',');
+        $data['selectedData'] = explode(',', $data['selectedData']);
+
+        $db = new PpnKeluaran();
+
+        $db->whereIn('id', $data['selectedData'])->update([
+            'is_keranjang' => 1
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil menyimpan data');
+    }
+
+    public function ppn_keluaran_keranjang_destroy(PpnKeluaran $ppnKeluaran)
+    {
+        $ppnKeluaran->update([
+            'is_keranjang' => 0
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil menghapus data dari keranjang!');
+    }
+
+    public function ppn_keluaran_keranjang()
+    {
+        $db = new PpnKeluaran();
+        $data = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->get();
+        $dbRekap = new RekapPpn();
+        $saldoMasukan = $dbRekap->saldoTerakhir();
+
+        $dariKas = 0;
+
+        if (($saldoMasukan - $data->sum('nominal')) < 0) {
+            $dariKas = abs($saldoMasukan - $data->sum('nominal'));
+        }
+
+        $dariKas = number_format($dariKas, 0, ',', '.');
+        return view('pajak.ppn-keluaran.keranjang', [
+            'data' => $data,
+            'saldoMasukan' => $saldoMasukan,
+            'dariKas' => $dariKas
+        ]);
+    }
+
+    public function ppn_keluaran_keranjang_lanjut()
+    {
+        $db = new RekapPpn();
+
+        $res = $db->keranjang_keluaran_lanjut();
+
+        return redirect()->back()->with($res['status'], $res['message']);
     }
 
     public function rekap_ppn(Request $request)
