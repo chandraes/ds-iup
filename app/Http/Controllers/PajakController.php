@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pajak\RekapKeluaranDetail;
 use App\Models\Pajak\RekapMasukanDetail;
 use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
@@ -184,7 +185,7 @@ class PajakController extends Controller
 
         $res = $db->keranjang_keluaran_lanjut();
 
-        return redirect()->back()->with($res['status'], $res['message']);
+        return redirect()->route('pajak.ppn-keluaran')->with($res['status'], $res['message']);
     }
 
     public function rekap_ppn(Request $request)
@@ -227,6 +228,19 @@ class PajakController extends Controller
         $data = $db->with(['invoiceBelanja.supplier'])->whereIn('id', $dataMasukan)->get();
 
         return view('pajak.rekap-ppn.masukan-detail', [
+            'data' => $data
+        ]);
+    }
+
+    public function rekap_ppn_keluaran_Detail(RekapPpn $rekapPpn)
+    {
+        $keluaran_id = $rekapPpn->keluaran_id;
+        $dataKeluaran = RekapKeluaranDetail::where('keluaran_id', $keluaran_id)->pluck('ppn_keluaran_id');
+
+        $db = new PpnKeluaran();
+        $data = $db->with(['invoiceJual.konsumen', 'invoiceJual.konsumen_temp'])->whereIn('id', $dataKeluaran)->get();
+
+        return view('pajak.rekap-ppn.keluaran-detail', [
             'data' => $data
         ]);
     }

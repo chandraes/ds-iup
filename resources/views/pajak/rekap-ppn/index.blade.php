@@ -88,11 +88,13 @@
                         <a href="{{route('pajak.rekap-ppn.masukan', ['rekapPpn' => $d->id])}}">
                             {{$d->uraian}}
                         </a>
+                        @elseif($d->keluaran_id)
+                        <a href="{{route('pajak.rekap-ppn.keluaran', ['rekapPpn' => $d->id])}}">
+                            {{$d->uraian}}
+                        </a>
                         @else
                         {{$d->uraian}}
                         @endif
-
-
                     </td>
                     <td class="text-end align-middle">
                         @if ($d->masukan_id)
@@ -108,7 +110,9 @@
                     <td class="text-end align-middle">
                         @if ($d->keluaran_id)
                         {{$d->nf_nominal}}
-                        $keluar += $d->nominal;
+                        @php
+                             $keluar += $d->nominal;
+                        @endphp
                         @else
                         0
                         @endif
@@ -139,7 +143,7 @@
     $(document).ready(function() {
         $('#rekapTable').DataTable({
             "paging": false,
-            "ordering": true,
+            "ordering": false,
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",

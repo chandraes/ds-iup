@@ -97,6 +97,7 @@ Route::group(['middleware' => ['auth']], function() {
         Route::prefix('rekap-ppn')->group(function(){
             Route::get('/', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
             Route::get('/masukan/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_masukan_detail'])->name('pajak.rekap-ppn.masukan');
+            Route::get('/keluaran/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_keluaran_detail'])->name('pajak.rekap-ppn.keluaran');
         });
         // Route::get('/rekap-ppn', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
 

@@ -16,7 +16,7 @@
                     <td><a href="{{route('pajak.index')}}"><img src="{{asset('images/pajak.svg')}}" alt="dokumen"
                                 width="30">
                             PAJAK</a></td>
-                    <td><a href="{{route('pajak.ppn-keluaran')}}"><img src="{{asset('images/back.svg')}}" alt="dokumen"
+                    <td><a href="{{route('pajak.rekap-ppn')}}"><img src="{{asset('images/back.svg')}}" alt="dokumen"
                                 width="30"> Back</a></td>
                 </tr>
             </table>
@@ -36,7 +36,7 @@
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Faktur</th>
                     <th class="text-center align-middle">Nominal</th>
-                    <th class="text-center align-middle">ACT</th>
+
                 </tr>
             </thead>
             <tbody>
@@ -62,13 +62,7 @@
                     <td class="text-end align-middle">
                         {{$d->nf_nominal}}
                     </td>
-                    <td class="text-center align-middle">
-                        <form action="{{route('pajak.ppn-keluaran.keranjang-destroy', ['ppnKeluaran' => $d->id])}}"
-                            method="post">
-                            @csrf
-                            <button class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                        </form>
-                    </td>
+
                 </tr>
                 @endforeach
             </tbody>
@@ -76,14 +70,14 @@
                 <tr>
                     <th class="text-end align-middle" colspan="5">Total</th>
                     <th class="text-end align-middle">{{number_format($data->sum('nominal'), 0, ',', '.')}}</th>
-                    <th></th>
+
                 </tr>
             </tfoot>
         </table>
     </div>
     <hr>
     <div class="row justify-content-end">
-        <div class="col-md-6">
+        {{-- <div class="col-md-6">
             <div class="row">
                 <div class="col-md-7 pt-2 text-end">
                     <label for="ppn_keluaran" class="form-label">Saldo PPN Masukan :</label>
@@ -129,7 +123,7 @@
                 </form>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
     </div>
 </div>
