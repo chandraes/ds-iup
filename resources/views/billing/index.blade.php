@@ -208,7 +208,14 @@
         }
     }
 
-
+    function funKecil(){
+        var selectKecil = document.getElementById('selectKecil').value;
+        if(selectKecil == 'masuk'){
+            window.location.href = "{{route('form-kas-kecil.masuk')}}";
+        }else if(selectKecil == 'keluar'){
+            window.location.href = "{{route('form-kas-kecil.keluar')}}";
+        }
+    }
 
 </script>
 @endpush

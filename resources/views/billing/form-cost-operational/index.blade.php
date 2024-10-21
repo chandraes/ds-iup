@@ -5,7 +5,7 @@
 </div>
 <div class="container mt-5">
     <div class="row justify-content-left">
-        
+
         <div class="col-lg-3 col-md-3 mb-3 mt-3 text-center">
             <a href="{{route('billing')}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="70">
@@ -35,13 +35,6 @@
         });
 
 
-    function funKecil(){
-        var selectKecil = document.getElementById('selectKecil').value;
-        if(selectKecil == 'masuk'){
-            window.location.href = "{{route('form-kas-kecil.masuk')}}";
-        }else if(selectKecil == 'keluar'){
-            window.location.href = "{{route('form-kas-kecil.keluar')}}";
-        }
-    }
+   
 </script>
 @endpush
