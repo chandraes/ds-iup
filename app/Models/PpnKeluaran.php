@@ -10,6 +10,7 @@ class PpnKeluaran extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+    protected $appends = ['tanggal', 'nf_nominal', 'nf_saldo'];
 
     public function saldoTerakhir()
     {
