@@ -321,10 +321,10 @@ class KasBesar extends Model
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
         $data['nominal'] = 1000000;
         $data['nomor_kode_kas_kecil'] = $this->max('nomor_kode_kas_kecil') + 1;
+        $data['ppn_kas'] = 1;
         $data['saldo'] = $this->saldoTerakhir($data['ppn_kas']) - $data['nominal'];
         $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir($data['ppn_kas']);
         $data['jenis'] = 0;
-        $data['ppn_kas'] = 1;
         $data['no_rek'] = $rekening->no_rek;
         $data['bank'] = $rekening->bank;
         $data['nama_rek'] = $rekening->nama_rek;
