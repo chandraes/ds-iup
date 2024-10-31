@@ -324,7 +324,7 @@ class KeranjangJual extends Model
                                 "Total Modal Investor PPN: \n".
                                 "Rp. ".number_format($dbKas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
                  } else {
-                     $addPesan .= "Sisa Saldo Kas Besar Non PPPN: \n".
+                     $addPesan .= "Sisa Saldo Kas Besar Non PPN: \n".
                                  "Rp. ".number_format($dbKas->saldoTerakhir(0), 0, ',', '.')."\n\n".
                                  "Total Modal Investor Non PPN: \n".
                                  "Rp. ".number_format($dbKas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n";
