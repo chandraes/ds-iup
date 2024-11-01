@@ -35,7 +35,8 @@
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Faktur</th>
-                    <th class="text-center align-middle">Nominal</th>
+                    <th class="text-center align-middle">Dipungut </th>
+                    <th class="text-center align-middle">Tidak<br>Dipungut </th>
                     <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>
@@ -60,7 +61,20 @@
                     <td class="text-center align-middle">{{$d->no_faktur}}</td>
 
                     <td class="text-end align-middle">
+                        @if ($d->dipungut == 1)
                         {{$d->nf_nominal}}
+                        @else
+                        0
+                        @endif
+
+                    </td>
+                    <td class="text-end align-middle">
+                        @if ($d->dipungut == 0)
+                        {{$d->nf_nominal}}
+                        @else
+                        0
+                        @endif
+
                     </td>
                     <td class="text-center align-middle">
                         <form action="{{route('pajak.ppn-keluaran.keranjang-destroy', ['ppnKeluaran' => $d->id])}}"
@@ -75,7 +89,8 @@
             <tfoot>
                 <tr>
                     <th class="text-end align-middle" colspan="5">Total</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('nominal'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 0)->sum('nominal'), 0, ',', '.')}}</th>
                     <th></th>
                 </tr>
             </tfoot>
@@ -97,7 +112,7 @@
                     <label for="ppn_keluaran" class="form-label">PPN Keluaran : </label>
                 </div>
                 <div class="col-md-5">
-                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($data->sum('nominal'), 0, ',', '.')}}" disabled/>
+                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}" disabled/>
                 </div>
             </div>
             <div class="row">
@@ -105,7 +120,7 @@
                     <label for="ppn_keluaran" class="form-label">Saldo Setelah Pengurangan : </label>
                 </div>
                 <div class="col-md-5">
-                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($saldoMasukan-$data->sum('nominal'), 0, ',', '.')}}" disabled/>
+                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($saldoMasukan-$data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}" disabled/>
                 </div>
             </div>
             <div class="row">

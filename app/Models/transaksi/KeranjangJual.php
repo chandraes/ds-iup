@@ -54,6 +54,7 @@ class KeranjangJual extends Model
         try {
             DB::beginTransaction();
 
+            // dd($data);
             $keranjang = $this->where('user_id', auth()->user()->id)->get();
 
 
@@ -64,15 +65,20 @@ class KeranjangJual extends Model
                 ];
             }
 
+            $dipungut = isset($data['dipungut']) ? $data['dipungut'] : 1;
+
             $barang_ppn = $keranjang->first()->barang_ppn;
 
             $dbPajak = new Pajak();
             $dbInvoice = new InvoiceJual();
+
             $data['total'] = $keranjang->sum('total');
             $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
             $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
+
             $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
             $dppSetelahDiskon = $data['total'] - $data['diskon'];
+
             $data['ppn'] = $keranjang->where('barang_ppn', 1)->first() ? ($dppSetelahDiskon * $ppnVal / 100) : 0;
 
             $data['kas_ppn'] = $barang_ppn;
@@ -84,7 +90,13 @@ class KeranjangJual extends Model
 
             $data['dp_ppn'] = $data['dp'] > 0 && $barang_ppn == 1 ? $data['dp'] * $ppnVal / 100 : 0;
 
-            $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
+            if ($dipungut == 1) {
+                $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
+            } else {
+                $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
+            }
+
+            $data['ppn_dipungut'] = $dipungut;
 
             if ($data['konsumen_id'] == '*') {
                 $konsumen = KonsumenTemp::create([
@@ -145,11 +157,11 @@ class KeranjangJual extends Model
             }
 
             if ($data['ppn'] > 0 && $stateBayar == 1) {
-                $this->ppn_keluaran($invoice->id, $data['ppn']);
+                $this->ppn_keluaran($invoice->id, $data['ppn'], $dipungut);
             }
 
             if ($data['dp_ppn'] > 0) {
-                $this->ppn_keluaran($invoice->id, $data['dp_ppn']);
+                $this->ppn_keluaran($invoice->id, $data['dp_ppn'], $dipungut);
             }
 
             if ($invoice->lunas == 0 && $invoice->dp > 0) {
@@ -168,20 +180,39 @@ class KeranjangJual extends Model
                 $sisaTerakhirKonsumen = $dbKasKonsumen->sisaTerakhir($konsumen->id);
                 $isPembayaranTunai = $konsumen->pembayaran == 1;
 
-                $sisaTerakhirKonsumen = $isPembayaranTunai
+                if($dipungut == 1) {
+                    $sisaTerakhirKonsumen = $isPembayaranTunai
                     ? $sisaTerakhirKonsumen - $data['grand_total']
                     : $sisaTerakhirKonsumen + $data['grand_total']-($data['dp']+$data['dp_ppn']);
+                } else {
+                    $sisaTerakhirKonsumen = $isPembayaranTunai
+                    ? $sisaTerakhirKonsumen - $data['grand_total']
+                    : $sisaTerakhirKonsumen + $data['grand_total']-$data['dp'];
+                }
+
 
                 $sisa = $isPembayaranTunai && $sisaTerakhirKonsumen < 0
                     ? 0
                     : $sisaTerakhirKonsumen;
 
-                $dbKasKonsumen->create([
-                    'konsumen_id' => $konsumen->id,
-                    'uraian' => $invoice->kode,
-                    $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total']-($data['dp']+$data['dp_ppn']),
-                    'sisa' => $sisa,
-                ]);
+                if($dipungut == 1) {
+                    $dbKasKonsumen->create([
+                        'konsumen_id' => $konsumen->id,
+                        'uraian' => $invoice->kode,
+                        $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total']-($data['dp']+$data['dp_ppn']),
+                        'sisa' => $sisa,
+                    ]);
+                } else {
+                    $dbKasKonsumen->create([
+                        'konsumen_id' => $konsumen->id,
+                        'uraian' => $invoice->kode,
+                        $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total']-$data['dp'],
+                        'sisa' => $sisa,
+                    ]);
+                }
+
+
+
             }
 
             $waState = 0;
@@ -212,7 +243,13 @@ class KeranjangJual extends Model
 
             if ($stateDP == 1) {
                 $ppn_kas = $data['ppn'] > 0 ? 1 : 0;
-                $totalDP = $data['dp'] + $data['dp_ppn'];
+
+                if ($dipungut == 1) {
+                    $totalDP = $data['dp'] + $data['dp_ppn'];
+                } else {
+                    $totalDP = $data['dp'];
+                }
+
                 $untukRekening = $ppn_kas == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
                 $rekening = Rekening::where('untuk', $untukRekening)->first();
                 $uraian = 'DP';
@@ -413,7 +450,7 @@ class KeranjangJual extends Model
         return true;
     }
 
-    private function ppn_keluaran($invoice_id, $ppn)
+    private function ppn_keluaran($invoice_id, $ppn, $dipungut)
     {
         $db = new PpnKeluaran();
 
@@ -425,7 +462,8 @@ class KeranjangJual extends Model
             'invoice_jual_id' => $invoice_id,
             'uraian' => $uraianPrefix . $invoice->kode,
             'nominal' => $ppn,
-            'saldo' => $saldo + $ppn
+            'saldo' => $saldo + $ppn,
+            'dipungut' => $dipungut
         ]);
 
 

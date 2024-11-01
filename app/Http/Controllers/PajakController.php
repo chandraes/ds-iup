@@ -167,8 +167,8 @@ class PajakController extends Controller
 
         $dariKas = 0;
 
-        if (($saldoMasukan - $data->sum('nominal')) < 0) {
-            $dariKas = abs($saldoMasukan - $data->sum('nominal'));
+        if (($saldoMasukan - $data->where('dipungut', 1)->sum('nominal')) < 0) {
+            $dariKas = abs($saldoMasukan - $data->where('dipungut', 1)->sum('nominal'));
         }
 
         $dariKas = number_format($dariKas, 0, ',', '.');

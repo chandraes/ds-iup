@@ -35,7 +35,8 @@
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Faktur</th>
-                    <th class="text-center align-middle">Nominal</th>
+                    <th class="text-center align-middle">Dipungut</th>
+                    <th class="text-center align-middle">Tidak<br>Dipungut</th>
 
                 </tr>
             </thead>
@@ -60,16 +61,29 @@
                     <td class="text-center align-middle">{{$d->no_faktur}}</td>
 
                     <td class="text-end align-middle">
-                        {{$d->nf_nominal}}
-                    </td>
+                        @if ($d->dipungut == 1)
+                        {{$d->nominal}}
+                        @else
+                        0
+                        @endif
 
+                    </td>
+                    <td class="text-end align-middle">
+                        @if ($d->dipungut == 0)
+                        {{$d->nominal}}
+                        @else
+                        0
+                        @endif
+
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="5">Total</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('nominal'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 0)->sum('nominal'), 0, ',', '.')}}</th>
 
                 </tr>
             </tfoot>

@@ -116,7 +116,7 @@
                         0
                         @endif
                     </td>
-                    <td class="text-end align-middle">
+                    <td class="text-end align-middle @if ($d->dipungut == 0 && $d->is_faktur == 0) table-danger @endif ">
                         @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp : $d->invoiceJual->konsumen_temp->npwp) > 10 ))
                         {{$d->nf_nominal}}
                         @php
@@ -126,7 +126,7 @@
                         0
                         @endif
                     </td>
-                    <td class="text-end align-middle">
+                    <td class="text-end align-middle  @if ($d->dipungut == 0 && $d->is_faktur == 1) table-danger @endif ">
                         @if ($d->is_faktur == 1)
                         <a href="#" onclick="showFaktur({{$d->id}})" data-bs-toggle="modal"
                             data-bs-target="#showModal">{{$d->nf_nominal}}</a>

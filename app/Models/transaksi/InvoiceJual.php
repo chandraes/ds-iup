@@ -232,6 +232,7 @@ class InvoiceJual extends Model
             'nominal' => $ppn,
             'saldo' => $saldo,
             'uraian' => 'Pelunasan '. $inv->kode,
+            'dipungut' => $inv->ppn_dipungut,
         ]);
 
 

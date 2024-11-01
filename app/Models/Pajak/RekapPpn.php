@@ -142,7 +142,7 @@ class RekapPpn extends Model
 
         $data = $db->where('is_keranjang', 1)->where('is_finish', 0)->get();
 
-        $total = $data->sum('nominal');
+        $total = $data->where('dipungut', 1)->sum('nominal');
 
         $saldo = $this->saldoTerakhir() - $total;
 
