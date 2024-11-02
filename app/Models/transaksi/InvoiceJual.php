@@ -177,7 +177,9 @@ class InvoiceJual extends Model
             $getKas = $kas->getKas();
 
             $dbPpnKeluaran = new PpnKeluaran();
-            $ppnKeluaran = $dbPpnKeluaran->saldoTerakhir();
+            $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
+            // $ppnNonNpwp = $dbPpnKeluaran->where('')
+            // ganti ppn keluaran jadi non npwp, npwp, setelah terbit faktur
 
             if ($kas_ppn == 1) {
                 $addPesan = "Sisa Saldo Kas Besar: \n".
