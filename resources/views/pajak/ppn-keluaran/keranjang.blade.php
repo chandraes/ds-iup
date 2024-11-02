@@ -35,8 +35,8 @@
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">Faktur</th>
-                    <th class="text-center align-middle">Dipungut </th>
-                    <th class="text-center align-middle">Tidak<br>Dipungut </th>
+                    <th class="text-center align-middle">Disetor<br>Sendiri </th>
+                    <th class="text-center align-middle">Disetor<br>Konsumen </th>
                     <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>

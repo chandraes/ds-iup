@@ -76,19 +76,7 @@
                                                         disabled>
                                                 </td>
                                             </tr>
-                                            @if ($ppnStore == 1)
-                                            <tr>
-                                                <td class="text-start align-middle">PPn Dipungut</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <select class="form-select" name="dipungut" id="dipungut" required
-                                                    onchange="ppnPungut()">
-                                                        <option value="1" selected>Ya</option>
-                                                        <option value="0">Tidak</option>
-                                                </select>
-                                                </td>
-                                            </tr>
-                                            @endif
+
                                             <tr>
                                                 <td class="text-start align-middle">Alamat</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
@@ -136,6 +124,20 @@
                                                             disabled>
                                                     </td>
                                                 </tr>
+                                                @if ($ppnStore == 1)
+                                                <tr>
+                                                    <td class="text-start align-middle">PPn Disetor Oleh</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <select class="form-select" name="dipungut" id="dipungut" required
+                                                        onchange="ppnPungut()">
+                                                            <option value="" selected>-- Pilih Salah Satu --</option>
+                                                            <option value="1">Sendiri</option>
+                                                            <option value="0">Konsumen</option>
+                                                    </select>
+                                                    </td>
+                                                </tr>
+                                                @endif
                                             </table>
                                         </div>
 
