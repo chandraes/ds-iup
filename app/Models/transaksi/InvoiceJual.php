@@ -7,7 +7,9 @@ use App\Models\db\Konsumen;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KonsumenTemp;
+use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
+use App\Models\PpnMasukan;
 use App\Models\Rekening;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -176,6 +178,10 @@ class InvoiceJual extends Model
 
             $getKas = $kas->getKas();
 
+            $dbPPn = new PpnMasukan();
+            $dbRekapPpn = new RekapPpn();
+            $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+            $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
             $dbPpnKeluaran = new PpnKeluaran();
             $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
             // $ppnNonNpwp = $dbPpnKeluaran->where('')
@@ -204,6 +210,8 @@ class InvoiceJual extends Model
                         "No. Rek : ".$store->no_rek."\n\n".
                         "==========================\n".
                         $addPesan.
+                        "Total PPn Masukan : \n".
+                        "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                         "Total PPn Keluaran : \n".
                         "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";

@@ -8,6 +8,8 @@ use App\Models\db\Konsumen;
 use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
+use App\Models\Pajak\RekapPpn;
+use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
 use App\Models\Rekening;
 use Carbon\Carbon;
@@ -203,7 +205,11 @@ class InvoiceBelanja extends Model
             if ($inv->dp_ppn > 0) {
 
                 $dbPPn = new PpnMasukan();
-                $ppnMasukan = $dbPPn->saldoTerakhir();
+                $dbRekapPpn = new RekapPpn();
+                $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+                $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $dbPpnKeluaran = new PpnKeluaran();
+                $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
 
                 $getKas = $kas->getKas();
 
@@ -225,6 +231,8 @@ class InvoiceBelanja extends Model
                             "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                             "Total PPn Masukan : \n".
                             "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                             "Total PPn Keluaran : \n".
+                            "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
                 $groupName = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
@@ -320,7 +328,11 @@ class InvoiceBelanja extends Model
             DB::commit();
 
             $dbPPn = new PpnMasukan();
-            $ppnMasukan = $dbPPn->saldoTerakhir();
+            $dbRekapPpn = new RekapPpn();
+            $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+            $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+            $dbPpnKeluaran = new PpnKeluaran();
+            $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
 
             $getKas = $kas->getKas();
 
@@ -342,6 +354,8 @@ class InvoiceBelanja extends Model
                         "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                         "Total PPn Masukan : \n".
                         "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                        "Total PPn Keluaran : \n".
+                        "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             $group = GroupWa::where('untuk', $kasMana)->first()->nama_group;
