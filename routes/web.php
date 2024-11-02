@@ -101,6 +101,11 @@ Route::group(['middleware' => ['auth']], function() {
         });
         // Route::get('/rekap-ppn', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
 
+        Route::prefix('ppn-expired')->group(function(){
+            Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_expired'])->name('pajak.ppn-expired');
+            Route::post('/back/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_expired_back'])->name('pajak.ppn-expired.back');
+        });
+
         Route::prefix('ppn-masukan')->group(function(){
             Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
             Route::patch('/store-faktur/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
@@ -111,6 +116,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('ppn-keluaran')->group(function(){
             Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
+            Route::post('/expired/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_expired'])->name('pajak.ppn-keluaran.expired');
             Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
             Route::get('/keranjang', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang'])->name('pajak.ppn-keluaran.keranjang');
             Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_store'])->name('pajak.ppn-keluaran.keranjang-store');

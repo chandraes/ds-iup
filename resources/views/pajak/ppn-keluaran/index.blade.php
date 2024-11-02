@@ -16,8 +16,10 @@
                     <td><a href="{{route('pajak.index')}}"><img src="{{asset('images/pajak.svg')}}" alt="dokumen"
                                 width="30">
                             PAJAK</a></td>
-                    <td><a href="@if($keranjang > 0) {{route('pajak.ppn-keluaran.keranjang')}} @else # @endif"><i class="fa fa-shopping-cart h3 me-2"></i>
-                        Keranjang {!! $keranjang > 0 ? "<span class='text-danger'>($keranjang)</span>" : '' !!}</a></td>
+                    <td><a href="@if($keranjang > 0) {{route('pajak.ppn-keluaran.keranjang')}} @else # @endif"><i
+                                class="fa fa-shopping-cart h3 me-2"></i>
+                            Keranjang {!! $keranjang > 0 ? "<span class='text-danger'>($keranjang)</span>" : '' !!}</a>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -34,7 +36,7 @@
             <div class="row">
                 <div class="col-md-2 text-end">
                     <div class="mb-3 pt-2">
-                        <label for="total_tagihan" >Nominal Dipilih :</label>
+                        <label for="total_tagihan">Nominal Dipilih :</label>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -79,9 +81,9 @@
             </thead>
             <tbody>
                 @php
-                    $totalNonNpwp = 0;
-                    $totalNpwp = 0;
-                    $totalFaktur = 0;
+                $totalNonNpwp = 0;
+                $totalNpwp = 0;
+                $totalFaktur = 0;
                 @endphp
                 @foreach ($data as $d)
                 <tr>
@@ -107,41 +109,54 @@
                     </td>
                     {{-- <td class="text-center align-middle">{{$d->tanggal}}</td> --}}
                     <td class="text-end align-middle">
-                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp : $d->invoiceJual->konsumen_temp->npwp) < 10))
-                        {{$d->nf_nominal}}
-                        @php
+                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp :
+                        $d->invoiceJual->konsumen_temp->npwp) < 10)) {{$d->nf_nominal}}
+                            @php
                             $totalNonNpwp += $d->nominal;
-                        @endphp
-                        @else
-                        0
-                        @endif
+                            @endphp
+                            @else
+                            0
+                            @endif
                     </td>
-                    <td class="text-end align-middle @if ($d->dipungut == 0 && $d->is_faktur == 0) table-danger @endif ">
-                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp : $d->invoiceJual->konsumen_temp->npwp) > 10 ))
+                    <td
+                        class="text-end align-middle @if ($d->dipungut == 0 && $d->is_faktur == 0) table-danger @endif ">
+                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp :
+                        $d->invoiceJual->konsumen_temp->npwp) > 10 ))
                         {{$d->nf_nominal}}
                         @php
-                            $totalNpwp += $d->nominal;
+                        $totalNpwp += $d->nominal;
                         @endphp
                         @else
                         0
                         @endif
                     </td>
-                    <td class="text-end align-middle  @if ($d->dipungut == 0 && $d->is_faktur == 1) table-danger @endif ">
+                    <td
+                        class="text-end align-middle  @if ($d->dipungut == 0 && $d->is_faktur == 1) table-danger @endif ">
                         @if ($d->is_faktur == 1)
                         <a href="#" onclick="showFaktur({{$d->id}})" data-bs-toggle="modal"
                             data-bs-target="#showModal">{{$d->nf_nominal}}</a>
-                            @php
-                                $totalFaktur += $d->nominal;
-                            @endphp
+                        @php
+                        $totalFaktur += $d->nominal;
+                        @endphp
                         @else
                         0
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        <button type="button" class="btn btn-{{$d->is_faktur == 1 ? 'warning' : 'primary'}} btn-sm"
-                            data-bs-toggle="modal" data-bs-target="#modalFaktur" onclick="faktur({{$d->id}})">
-                            {{$d->is_faktur == 1 ? 'Ubah' : ''}} Faktur
-                        </button>
+                        @if ($d->is_faktur == 0 && (strlen($d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->npwp : $d->invoiceJual->konsumen_temp->npwp) < 10)) {{-- form to expired button --}}
+                        <form
+                            action="{{route('pajak.ppn-keluaran.expired', ['ppnKeluaran' => $d->id])}}" method="post" class="d-inline expired-form" id="expiredForm{{ $d->id }}" data-id="{{ $d->id }}">
+                            @csrf
+
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                Expired
+                            </button>
+                            </form>
+                            @endif
+                            <button type="button" class="btn btn-{{$d->is_faktur == 1 ? 'warning' : 'primary'}} btn-sm"
+                                data-bs-toggle="modal" data-bs-target="#modalFaktur" onclick="faktur({{$d->id}})">
+                                {{$d->is_faktur == 1 ? 'Ubah' : ''}} Faktur
+                            </button>
                     </td>
                 </tr>
                 @endforeach
@@ -190,7 +205,23 @@
 
     $(document).ready(function() {
 
-
+    $('.expired-form').submit(function(e){
+        e.preventDefault();
+        var formId = $(this).data('id');
+        Swal.fire({
+            title: 'Apakah Anda Yakin?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, simpan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $(`#expiredForm${formId}`).unbind('submit').submit();
+                $('#spinner').show();
+            }
+        });
+    });
         $('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,

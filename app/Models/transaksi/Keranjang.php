@@ -226,7 +226,7 @@ class Keranjang extends Model
                 $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
                 $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
                 $dbPpnKeluaran = new PpnKeluaran();
-                $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
+                $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
                 $getKas = $kas->getKas();
 

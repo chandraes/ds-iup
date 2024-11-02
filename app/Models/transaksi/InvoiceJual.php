@@ -183,7 +183,7 @@ class InvoiceJual extends Model
             $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
             $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
             $dbPpnKeluaran = new PpnKeluaran();
-            $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
+            $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
             if ($kas_ppn == 1) {
                 $addPesan = "Sisa Saldo Kas Besar: \n".

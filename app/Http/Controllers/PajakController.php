@@ -104,7 +104,7 @@ class PajakController extends Controller
     {
         $db = new PpnKeluaran();
 
-        $data = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 0)->where('is_finish', 0)->get();
+        $data = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 0)->where('is_expired', 0)->where('is_finish', 0)->get();
         $keranjang = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->count();
         $keranjangData = $db->with('invoiceJual.konsumen', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->get();
 
@@ -188,6 +188,15 @@ class PajakController extends Controller
         return redirect()->route('pajak.ppn-keluaran')->with($res['status'], $res['message']);
     }
 
+    public function ppn_keluaran_expired(PpnKeluaran $ppnKeluaran)
+    {
+        $ppnKeluaran->update([
+            'is_expired' => 1
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil mengubah status menjadi expired!');
+    }
+
     public function rekap_ppn(Request $request)
     {
         $bulan = $request->bulan ?? date('m');
@@ -243,5 +252,24 @@ class PajakController extends Controller
         return view('pajak.rekap-ppn.keluaran-detail', [
             'data' => $data
         ]);
+    }
+
+    public function ppn_expired()
+    {
+        $db = new PpnKeluaran();
+        $data = $db->with(['invoiceJual.konsumen', 'invoiceJual.konsumen_temp'])->where('is_expired', 1)->get();
+
+        return view('pajak.ppn-expired.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function ppn_expired_back(PpnKeluaran $ppnKeluaran)
+    {
+        $ppnKeluaran->update([
+            'is_expired' => 0
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil mengubah status menjadi tidak expired!');
     }
 }
