@@ -94,7 +94,7 @@
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->invoiceBelanja->supplier->nama}}
+                        {{$d->invoiceBelanja ? $d->invoiceBelanja->supplier->nama : '-'}}
                     </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
