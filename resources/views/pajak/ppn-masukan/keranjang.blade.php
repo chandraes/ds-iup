@@ -29,6 +29,8 @@
                                     href="{{route('billing.invoice-supplier.detail', ['invoice' => $k->invoice_belanja_id])}}">
                                     {{$k->invoiceBelanja->kode}}
                                 </a>
+                                @else
+                                -
                                 @endif
                             </td>
                             <td class="text-center align-middle">
