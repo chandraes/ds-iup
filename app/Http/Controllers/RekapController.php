@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Config;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -559,6 +560,26 @@ class RekapController extends Controller
             'jam' => $jam,
             'tanggal' => $tanggal,
         ]);
+    }
+
+    public function invoice_penjualan_detail_download(InvoiceJual $invoice)
+    {
+        $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+        $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
+
+        $pt = Config::where('untuk', $invoice->kas_ppn == 1 ? 'resmi' : 'non-resmi')->first();
+
+        $pdf = PDF::loadview('rekap.invoice-penjualan.detail-pdf', [
+            'data' => $data,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
+            'pt' => $pt,
+        ])->setPaper('a4', 'portrait');
+
+        $name = str_replace("/", "-", $invoice->kode);
+
+        return $pdf->stream($name.'.pdf');
     }
 
     public function invoice_pembelian(Request $request)

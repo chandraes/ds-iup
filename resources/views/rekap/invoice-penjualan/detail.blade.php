@@ -13,6 +13,8 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    <td><a href="{{route('rekap.invoice-penjualan.detail.download', ['invoice' => $data])}}" target="_blank"><img src="{{asset('images/print.svg')}}" alt="print"
+                        width="30"> PDF</a></td>
                     <td><a href="{{url()->previous()}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30">
                         KEMBALI</a></td>
                 </tr>
@@ -183,7 +185,7 @@
                     <th style="text-align: right" colspan="9">Grand Total : </th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
-                @if ($data->konsumen && $data->konsumen->pembayaran == 2)
+                {{-- @if ($data->konsumen && $data->konsumen->pembayaran == 2)
                 <tr>
                     <th style="text-align: right" colspan="9">DP : </th>
                     <th style="text-align: right">{{$data->nf_dp}}</th>
@@ -202,7 +204,7 @@
                     <th style="text-align: right" colspan="9">Sisa Tagihan : </th>
                     <th style="text-align: right">{{$data->sisa_tagihan}}</th>
                 </tr>
-                @endif
+                @endif --}}
             </tfoot>
         </table>
 
