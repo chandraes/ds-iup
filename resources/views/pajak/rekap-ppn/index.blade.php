@@ -97,7 +97,7 @@
                         @endif
                     </td>
                     <td class="text-end align-middle">
-                        @if ($d->masukan_id)
+                        @if ($d->masukan_id || $d->jenis == 1)
 
                         {{$d->nf_nominal}}
                         @php
