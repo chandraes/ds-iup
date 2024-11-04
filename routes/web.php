@@ -513,6 +513,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier'])->name('billing.invoice-supplier');
                 Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_non_ppn'])->name('billing.invoice-supplier.non-ppn');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail'])->name('billing.invoice-supplier.detail');
+                Route::get('/detail/{invoice}/download', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail_download'])->name('billing.invoice-supplier.detail.download');
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_bayar'])->name('billing.invoice-supplier.bayar');
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });

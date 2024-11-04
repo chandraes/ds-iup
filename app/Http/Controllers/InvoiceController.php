@@ -6,6 +6,7 @@ use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
@@ -74,6 +75,17 @@ class InvoiceController extends Controller
         return view('billing.invoice-supplier.detail', [
             'data' => $invoice->load(['items.barang.type.unit', 'items.barang.kategori']),
         ]);
+    }
+
+    public function invoice_supplier_detail_download(InvoiceBelanja $invoice)
+    {
+        $data = $invoice->load(['items.barang.type.unit', 'items.barang.kategori']);
+
+        $pdf = PDF::loadView('billing.invoice-supplier.detail-pdf', [
+            'data' => $data
+        ]);
+
+        return $pdf->stream('invoice-' . $invoice->kode . '.pdf');
     }
 
     public function invoice_konsumen(Request $request)

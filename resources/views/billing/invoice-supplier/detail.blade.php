@@ -12,6 +12,8 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    <td><a href="{{route('billing.invoice-supplier.detail.download', ['invoice' => $data])}}" target="_blank"><img src="{{asset('images/print.svg')}}" alt="dashboard"
+                        width="30"> PDF</a></td>
                     <td><a href="{{url()->previous()}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30">
                         KEMBALI</a></td>
                 </tr>
