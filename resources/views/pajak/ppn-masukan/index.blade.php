@@ -84,7 +84,7 @@
                             {{$d->is_faktur == 0 ? 'disabled' : ''}}>
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->invoiceBelanja->tanggal}}
+                        {{$d->invoiceBelanja ? $d->invoiceBelanja->tanggal : $d->tanggal}}
                     </td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceBelanja)
