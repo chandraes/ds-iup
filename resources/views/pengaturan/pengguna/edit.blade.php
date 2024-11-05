@@ -46,7 +46,7 @@
                         <label class="col-md-3 form-label">Password</label>
                         <div class="col-md-9">
                             <div class="input-group">
-                                <input type="password" class="form-control" id="password-{{ $d->id }}" placeholder="Password">
+                                <input type="password" class="form-control" id="password-{{ $d->id }}" placeholder="Password" name="password">
                                 <button class="btn btn-outline-secondary" type="button" onclick="toggleEditPassword({{ $d->id }})">
                                     <i class="fa fa-eye" id="toggleIcon-{{ $d->id }}"></i>
                                 </button>
