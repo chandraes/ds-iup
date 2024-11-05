@@ -13,16 +13,16 @@ class BarangUnit extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
-    // protected $attributes = [
-    //     'unitRowspan' => 0, // default value
-    //     // add other default attributes here
-    // ];
+    protected $attributes = [
+        'unitRowspan' => 0, // default value
+        // add other default attributes here
+    ];
 
-    // // Optional: You can also use an accessor if needed
-    // public function getUnitRowspanAttribute()
-    // {
-    //     return $this->attributes['unitRowspan'] ?? 0;
-    // } // Variable to store rowspan for the unit
+    // Optional: You can also use an accessor if needed
+    public function getUnitRowspanAttribute()
+    {
+        return $this->attributes['unitRowspan'] ?? 0;
+    } // Variable to store rowspan for the unit
 
     protected $appends = ['unitRowspan'];
 

@@ -169,7 +169,7 @@ class FormJualController extends Controller
         $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
         $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
         $konsumen = Konsumen::where('active', 1)->get();
-
+        $ppnStore = $nominalPpn > 0 ? 1 : 0;
         Carbon::setLocale('id');
 
         // Format the date
@@ -191,6 +191,7 @@ class FormJualController extends Controller
             'tanggal' => $tanggal,
             'jam' => $jam,
             'kode' => $kode,
+            'ppnStore' => $ppnStore,
         ]);
     }
 
@@ -205,6 +206,7 @@ class FormJualController extends Controller
             'npwp' => 'nullable',
             'alamat' => 'nullable',
             'dp' => 'nullable',
+            'dipungut' => 'nullable',
         ]);
 
         ini_set('max_execution_time', 300);

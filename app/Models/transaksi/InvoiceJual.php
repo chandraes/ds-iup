@@ -7,7 +7,9 @@ use App\Models\db\Konsumen;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KonsumenTemp;
+use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
+use App\Models\PpnMasukan;
 use App\Models\Rekening;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +20,7 @@ class InvoiceJual extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_pph', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
 
     public function dataTahun()
     {
@@ -59,7 +61,7 @@ class InvoiceJual extends Model
         return number_format($this->total, 0, ',', '.');
     }
 
-    public function getDppSetelahDiskon()
+    public function getDppSetelahDiskonAttribute()
     {
         return number_format($this->total - $this->diskon, 0, ',', '.') ?? 0;
     }
@@ -176,8 +178,12 @@ class InvoiceJual extends Model
 
             $getKas = $kas->getKas();
 
+            $dbPPn = new PpnMasukan();
+            $dbRekapPpn = new RekapPpn();
+            $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+            $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
             $dbPpnKeluaran = new PpnKeluaran();
-            $ppnKeluaran = $dbPpnKeluaran->saldoTerakhir();
+            $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
             if ($kas_ppn == 1) {
                 $addPesan = "Sisa Saldo Kas Besar: \n".
@@ -202,6 +208,8 @@ class InvoiceJual extends Model
                         "No. Rek : ".$store->no_rek."\n\n".
                         "==========================\n".
                         $addPesan.
+                        "Total PPn Masukan : \n".
+                        "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                         "Total PPn Keluaran : \n".
                         "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
@@ -232,6 +240,7 @@ class InvoiceJual extends Model
             'nominal' => $ppn,
             'saldo' => $saldo,
             'uraian' => 'Pelunasan '. $inv->kode,
+            'dipungut' => $inv->ppn_dipungut,
         ]);
 
 

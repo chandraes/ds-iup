@@ -9,6 +9,8 @@ use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
+use App\Models\Pajak\RekapPpn;
+use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,7 +61,7 @@ class Keranjang extends Model
 
         $data['dp_ppn'] = isset($data['dp_ppn']) && $data['dp_ppn'] == 1 ? $data['dp'] * $ppnRate/100 : 0;
 
-        $data['ppn'] = $data['kas_ppn'] == 1 ? ($total-$data['diskon']) * $ppnRate / 100 : 0;
+        $data['ppn'] = $data['kas_ppn'] == 1 ? floor(($total-$data['diskon']) * $ppnRate / 100) : 0;
 
         $data['total'] = $total + $data['add_fee'] + $data['ppn'] - $data['diskon'];
 
@@ -161,7 +163,11 @@ class Keranjang extends Model
 
             if ($state == 1) {
                 $dbPPn = new PpnMasukan();
-                $ppnMasukan = $dbPPn->saldoTerakhir();
+                $dbRekapPpn = new RekapPpn();
+                $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+                $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $dbPpnKeluaran = new PpnKeluaran();
+                $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
 
                 $getKas = $kas->getKas();
 
@@ -180,7 +186,9 @@ class Keranjang extends Model
 
                 if ($data['kas_ppn'] == 1) {
                     $addPesan .= "Total PPn Masukan : \n".
-                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n";
+                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                                "Total PPn Keluaran : \n".
+                                "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n";
                 }
 
                 $addPesan .= "Total Invoice Supplier: \n".
@@ -214,7 +222,11 @@ class Keranjang extends Model
             if($data['tempo'] == 1 && $data['dp'] == 0)
             {
                 $dbPPn = new PpnMasukan();
-                $ppnMasukan = $dbPPn->saldoTerakhir();
+                $dbRekapPpn = new RekapPpn();
+                $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+                $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $dbPpnKeluaran = new PpnKeluaran();
+                $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
                 $getKas = $kas->getKas();
 
@@ -225,7 +237,9 @@ class Keranjang extends Model
 
                 if ($data['kas_ppn'] == 1) {
                     $addPesan .= "Total PPn Masukan : \n".
-                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n";
+                                "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                                "Total PPn Keluaran : \n".
+                                "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n";
                 }
 
                 $addPesan .= "Total Invoice Supplier: \n".

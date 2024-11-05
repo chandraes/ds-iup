@@ -123,6 +123,20 @@
                                                             disabled>
                                                     </td>
                                                 </tr>
+                                                @if ($ppnStore == 1)
+                                                <tr>
+                                                    <td class="text-start align-middle">PPn Disetor Oleh</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <select class="form-select" name="dipungut" id="dipungut" required
+                                                        onchange="ppnPungut()">
+                                                            <option value="" selected>-- Pilih Salah Satu --</option>
+                                                            <option value="1">Sendiri</option>
+                                                            <option value="0">Konsumen</option>
+                                                    </select>
+                                                    </td>
+                                                </tr>
+                                                @endif
                                             </table>
                                         </div>
 
@@ -277,18 +291,37 @@
         delimiter: '.'
     });
 
+    function ppnPungut() {
+        var dipungut = document.getElementById('dipungut').value ?? 0;
+
+        console.log(dipungut);
+        calculatePpn();
+        // checkSisa();
+
+
+    }
+
     function checkSisa() {
         var dp = document.getElementById('dp').value;
         var gt = document.getElementById('totalTagihanTh').innerText;
         var dp_ppn = document.getElementById('thDpPpn').innerText;
+
         dp_ppn = dp_ppn.replace(/\./g, '');
+
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
 
         var dpNumber = parseFloat(dp);
         var gtNumber = parseFloat(gt);
         var dpPpnNumber = parseFloat(dp_ppn);
-        var sisa = gtNumber - dpNumber - dpPpnNumber;
+        var dipungut = document.getElementById('dipungut').value ?? 0;
+
+        if (dipungut == 0)  {
+            var sisa = gtNumber - dpNumber;
+        } else {
+            var sisa = gtNumber - dpNumber - dpPpnNumber;
+        }
+
         var sisaNf = sisa.toLocaleString('id-ID');
 
         document.getElementById('thSisa').innerText = sisaNf;
@@ -319,8 +352,15 @@
         var dppNumber = parseFloat(dpp);
 
         var ppnVal = Math.round(dppNumber * ppn / 100);
+        var dipungut = document.getElementById('dipungut').value ?? 0;
 
-        var grandTotal = dppNumber + ppnVal;
+        var grandTotal = 0;
+
+        if(dipungut == 0) {
+            grandTotal = dppNumber;
+        } else {
+            grandTotal = dppNumber + ppnVal;
+        }
         // console.log(ppnVal);
         var ppnValNf = ppnVal.toLocaleString('id-ID');
         var grandTotalNf = grandTotal.toLocaleString('id-ID');
