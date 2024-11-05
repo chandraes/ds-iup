@@ -99,7 +99,7 @@
                 },
                 success: function (data) {
                     let select = document.getElementById('barang_type_id');
-                    let detail_type = document.getElementById('detail_type');
+                    // let detail_type = document.getElementById('detail_type');
                     if (data.status == 0) {
                         // swal error
                         console.log(data);
@@ -110,16 +110,16 @@
 
                         // clear select
                         select.innerHTML = '';
-                        detail_type.innerHTML = '';
+                        // detail_type.innerHTML = '';
                     } else { // Corrected syntax error here
 
                         select.innerHTML = '';
-                        detail_type.innerHTML = '';
+                        // detail_type.innerHTML = '';
                         data.data.forEach(element => {
                             let option = new Option(element.nama, element.id);
                             let optionDetail = new Option(element.nama, element.id);// Simplified option creation
                             select.add(option);
-                            detail_type.add(optionDetail);
+                            // detail_type.add(optionDetail);
                         });
                     }
                 }
