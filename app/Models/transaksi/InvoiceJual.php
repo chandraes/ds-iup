@@ -6,6 +6,7 @@ use App\Models\Config;
 use App\Models\db\Konsumen;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
+use App\Models\KasKonsumen;
 use App\Models\KonsumenTemp;
 use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
@@ -104,7 +105,8 @@ class InvoiceJual extends Model
 
     public function getSisaTagihanAttribute()
     {
-        return number_format($this->grand_total - $this->dp - $this->dp_ppn, 0, ',', '.');
+        $sisa = $this->ppn_dipungut == 1 ? $this->grand_total - $this->dp - $this->dp_ppn : $this->grand_total - $this->dp;
+        return number_format($sisa, 0, ',', '.');
     }
 
     public function generateNomor($barang_ppn)
@@ -168,6 +170,19 @@ class InvoiceJual extends Model
                 'no_rek' => $rekening->no_rek,
                 'bank' => $rekening->bank,
                 'modal_investor_terakhir' => $kas->modalInvestorTerakhir($kas_ppn),
+            ]);
+
+            // update kas konsumen
+            $kas_konsumen = new KasKonsumen();
+            $sisaKasKonsumen = $kas_konsumen->sisaTerakhir($inv->konsumen_id);
+            $sisaAkhirKonsumen = $sisaKasKonsumen - $sisa_tagihan;
+
+            $kas_konsumen->create([
+                'konsumen_id' => $inv->konsumen_id,
+                'invoice_jual_id' => $inv->id,
+                'uraian' => 'Pelunasan ' . $inv->kode,
+                'bayar' => $sisa_tagihan,
+                'sisa' => $sisaAkhirKonsumen < 0 ? 0 : $sisaAkhirKonsumen,
             ]);
 
             $inv->update([

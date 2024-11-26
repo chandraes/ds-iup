@@ -17,7 +17,9 @@
                 </tr>
             </table>
         </div>
-
+        <div class="col-md-6">
+            @include('wa-status')
+        </div>
     </div>
     <div class="row">
         <div class="col-md-6">

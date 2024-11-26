@@ -69,12 +69,29 @@
             <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
+                <th class="text-center align-middle">Uraian</th>
+                <th class="text-center align-middle">Cash</th>
+                <th class="text-center align-middle">Bayar</th>
+                <th class="text-center align-middle">Hutang</th>
+                <th class="text-center align-middle">Sisa Plafon</th>
             </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-start align-middle">
+                        @if ($d->invoice_jual_id)
+                        <a href="{{route('rekap.invoice-penjualan.detail', $d->invoice_jual_id)}}" target="_blank">{{$d->uraian}}</a>
+                        @else
+                        {{$d->uraian}}
+                        @endif
+
+                    </td>
+                    <td class="text-end align-middle">{{$d->nf_cash}}</td>
+                    <td class="text-end align-middle">{{$d->nf_bayar}}</td>
+                    <td class="text-end align-middle">{{$d->nf_hutang}}</td>
+                    <td class="text-end align-middle">{{$d->nf_sisa}}</td>
                 </tr>
                 @endforeach
             </tbody>
