@@ -14,10 +14,13 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
                             Billing</a></td>
+                    <td></td>
                 </tr>
             </table>
         </div>
-
+        <div class="col-md-6">
+            @include('wa-status')
+        </div>
     </div>
     <div class="row">
         <div class="col-md-6">
@@ -38,6 +41,7 @@
     </div>
 
 </div>
+
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">

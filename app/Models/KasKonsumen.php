@@ -13,7 +13,27 @@ class KasKonsumen extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
-    protected $appends = ['tanggal'];
+    protected $appends = ['tanggal', 'nf_bayar', 'nf_sisa', 'nf_hutang', 'nf_cash'];
+
+    public function getNfBayarAttribute()
+    {
+        return number_format($this->bayar, 0, ',', '.');
+    }
+
+    public function getNfCashAttribute()
+    {
+        return number_format($this->cash, 0, ',', '.');
+    }
+
+    public function getNfSisaAttribute()
+    {
+        return number_format($this->sisa, 0, ',', '.');
+    }
+
+    public function getNfHutangAttribute()
+    {
+        return number_format($this->hutang, 0, ',', '.');
+    }
 
     public function konsumen()
     {
@@ -54,7 +74,7 @@ class KasKonsumen extends Model
             ->first();
 
         if (!$data) {
-            
+
         $data = $this->where('konsumen_id', $konsumen_id)
                 ->where('created_at', '<', Carbon::create($year, $month, 1))
                 ->orderBy('id', 'desc')

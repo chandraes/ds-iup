@@ -23,6 +23,7 @@ Auth::routes([
 
 Route::group(['middleware' => ['auth']], function() {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
 
     Route::prefix('inventaris')->group(function(){
         Route::get('/', [App\Http\Controllers\InventarisController::class, 'index'])->name('inventaris.index');

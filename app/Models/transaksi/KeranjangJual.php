@@ -184,31 +184,37 @@ class KeranjangJual extends Model
 
                 if($dipungut == 1) {
                     $sisaTerakhirKonsumen = $isPembayaranTunai
-                    ? $sisaTerakhirKonsumen - $data['grand_total']
+                    ? $sisaTerakhirKonsumen
                     : $sisaTerakhirKonsumen + $data['grand_total']-($data['dp']+$data['dp_ppn']);
                 } else {
                     $sisaTerakhirKonsumen = $isPembayaranTunai
-                    ? $sisaTerakhirKonsumen - $data['grand_total']
+                    ? $sisaTerakhirKonsumen
                     : $sisaTerakhirKonsumen + $data['grand_total']-$data['dp'];
                 }
 
 
-                $sisa = $isPembayaranTunai && $sisaTerakhirKonsumen < 0
+                $sisa = $sisaTerakhirKonsumen < 0
                     ? 0
                     : $sisaTerakhirKonsumen;
+
+                $uraianKasKonsumen = $isPembayaranTunai
+                    ? 'Cash '.$invoice->kode
+                    : 'Tempo '.$invoice->kode;
 
                 if($dipungut == 1) {
                     $dbKasKonsumen->create([
                         'konsumen_id' => $konsumen->id,
-                        'uraian' => $invoice->kode,
-                        $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total']-($data['dp']+$data['dp_ppn']),
+                        'invoice_jual_id' => $invoice->id,
+                        'uraian' => $uraianKasKonsumen,
+                        $isPembayaranTunai ? 'cash' : 'hutang' => $data['grand_total']-($data['dp']+$data['dp_ppn']),
                         'sisa' => $sisa,
                     ]);
                 } else {
                     $dbKasKonsumen->create([
                         'konsumen_id' => $konsumen->id,
-                        'uraian' => $invoice->kode,
-                        $isPembayaranTunai ? 'bayar' : 'hutang' => $data['grand_total']-$data['dp'],
+                        'invoice_jual_id' => $invoice->id,
+                        'uraian' => $uraianKasKonsumen,
+                        $isPembayaranTunai ? 'cash' : 'hutang' => $data['grand_total']-$data['dp'],
                         'sisa' => $sisa,
                     ]);
                 }

@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Http;
 class WaStatus
 {
     private $apikey;
+    private $deviceId;
 
     function __construct()
     {
-        $this->apikey = env('STARSENDER_KEY');
+        $this->apikey = env('STARSENDER_API_KEY');
+        $this->deviceId = env('STARSENDER_DEVICE_ID');
     }
 
     public function getStatusWa()
@@ -19,8 +21,10 @@ class WaStatus
 
         $curl = curl_init();
 
+        $idDevice = $this->deviceId;
+
         curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api.starsender.online/api/whatsapp/groups',
+            CURLOPT_URL => 'https://api.starsender.online/api/devices/'.$idDevice,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -29,21 +33,35 @@ class WaStatus
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
             CURLOPT_HTTPHEADER => array(
-                'Content-Type:application/json',
-                'Authorization: '.$apikey
+              'Content-Type:application/json',
+              'Authorization: '.$apikey
             ),
-        ));
+          ));
+
 
         $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            // Handle curl error
+            $error_message = curl_error($curl);
+            curl_close($curl);
+            return [
+                'success' => false,
+                'message' => 'Tidak dapat terhubung ke server Whatsapp, Silahkan hubungi administrator! Error: '.$error_message
+            ];
+        }
 
         curl_close($curl);
 
         $result = json_decode($response, true);
 
-        if ($result['status'] == true) {
+        if (isset($result['success']) && $result['success'] == true) {
             return $result;
         } else {
-            return false;
+            return [
+                'success' => false,
+                'message' => 'Server Whatsapp sedang mengalami gangguan, silahkan coba beberapa saat lagi!'
+            ];
         }
 
     }
