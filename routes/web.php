@@ -525,6 +525,8 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_bayar'])->name('billing.invoice-konsumen.bayar');
 
+                Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_void'])->name('billing.invoice-konsumen.void');
+
                 Route::get('/invoice/{invoice}', [App\Http\Controllers\FormJualController::class, 'invoice_image'])->name('billing.invoice-konsumen.invoice-jpeg');
             });
 

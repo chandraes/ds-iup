@@ -302,6 +302,10 @@
             </div>
 
             <div class="modal-footer">
+                <div class="row">
+                    @include('wa-status')
+                </div>
+
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 <button type="button" class="btn btn-primary" onclick="submitBeli()">Beli Barang</button>
 

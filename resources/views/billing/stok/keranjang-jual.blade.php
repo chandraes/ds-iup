@@ -250,7 +250,10 @@
                         </table>
                     </div>
                     <div class="row ">
-                        <div class="col-md-12 text-end">
+                        <div class="col-md-6 text-end">
+                            @include('wa-status')
+                        </div>
+                        <div class="col-md-6 text-end">
                             <button type="submit" class="btn btn-success"><i class="fa fa-credit-card"></i>
                                 Lanjutkan Pembayaran</button>
                             {{-- <button type="button" class="btn btn-info text-white"
