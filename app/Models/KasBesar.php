@@ -442,6 +442,53 @@ class KasBesar extends Model
 
     }
 
+    public function generateMessage($isIn, $title, $kasPpn, $uraian, $nominal, $rekening, $additionalMessage = null)
+    {
+
+        $lineHeading = $isIn == 1 ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n" : "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n";
+
+        $kasPpn = [
+            'saldo' => $this->saldoTerakhir(1),
+            'modal_investor' => $this->modalInvestorTerakhir(1),
+        ];
+
+        $kasNonPpn = [
+            'saldo' => $this->saldoTerakhir(0),
+            'modal_investor' => $this->modalInvestorTerakhir(0),
+        ];
+
+        $sisaSaldo = '';
+
+        if ($kasPpn == 1) {
+            $sisaSaldo .= "Sisa Saldo Kas Besar PPN: \n".
+                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                    "Total Modal Investor PPN: \n".
+                    "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
+        } else {
+            $sisaSaldo .= "Sisa Saldo Kas Besar Non PPN: \n".
+                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Total Modal Investor Non PPN: \n".
+                        "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
+        }
+
+        $pesan =   $lineHeading.
+                    "*".$title."*\n".
+                    $lineHeading.'\n'.
+                    "Uraian : ".$uraian."\n".
+                    "Nilai :  *Rp. ".number_format($nominal, 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank      : ".$rekening['bank']."\n".
+                    "Nama    : ".$rekening['nama_rek']."\n".
+                    "No. Rek : ".$rekening['no_rek']."\n\n".
+                    "==========================\n".
+                    $sisaSaldo.
+                    $additionalMessage.
+                    "Terima kasih 🙏🙏🙏\n";
+
+        return $pesan;
+
+    }
+
     private function tambahModal($nominal, $investor_id)
     {
         $investor = InvestorModal::find($investor_id);

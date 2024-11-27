@@ -3,6 +3,7 @@
 namespace App\Models\transaksi;
 
 use App\Models\Config;
+use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Konsumen;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
@@ -258,6 +259,133 @@ class InvoiceJual extends Model
             'dipungut' => $inv->ppn_dipungut,
         ]);
 
+
+        return true;
+
+    }
+
+    public function void($id)
+    {
+        $data = $this->find($id);
+
+        $detail = $data->invoice_detail;
+
+
+        if ($data->void == 1) {
+            return [
+                'status' => 'error',
+                'message' => 'Invoice sudah di-void!!'
+            ];
+        }
+
+        $dp = $data->ppn_dipungut == 1 ? $data->dp + $data->dp_ppn : $data->dp;
+
+        try {
+            DB::beginTransaction();
+
+            if ($dp > 0) {
+                $dbKas = new KasBesar();
+                $saldoKasBesar = $dbKas->saldoTerakhir($data->kas_ppn);
+
+                if ($saldoKasBesar < $dp) {
+                    return [
+                        'status' => 'error',
+                        'message' => 'Saldo kas besar tidak mencukupi!!. Saldo saat ini: Rp. '.number_format($saldoKasBesar, 0, ',', '.')
+                    ];
+                }
+
+                $this->pengembalianDp($id);
+            }
+
+            // update stok
+            foreach ($detail as $d) {
+                $stok = BarangStokHarga::find($d->barang_stok_harga_id);
+                $stok->update([
+                    'stok' => $stok->stok + $d->jumlah,
+                ]);
+            }
+
+            // update kas konsumen
+            if($data->konsumen_id)
+            {
+                $kas_konsumen = new KasKonsumen();
+                $sisaKasKonsumen = $kas_konsumen->sisaTerakhir($data->konsumen_id);
+                $sisaAkhirKonsumen = $sisaKasKonsumen - $data->grand_total;
+
+                if ($sisaAkhirKonsumen < 0) {
+                    $sisaAkhirKonsumen = 0;
+                }
+
+                $kas_konsumen->create([
+                    'konsumen_id' => $data->konsumen_id,
+                    'invoice_jual_id' => $data->id,
+                    'uraian' => 'Void ' . $data->kode,
+                    'bayar' => $data->grand_total,
+                    'sisa' => $sisaAkhirKonsumen,
+                ]);
+            }
+
+
+            $data->update([
+                'void' => 1,
+            ]);
+
+            DB::commit();
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil void invoice!!'
+            ];
+
+
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => 'Terjadi Kesalahan! '.$th->getMessage()
+            ];
+        }
+
+
+    }
+
+    private function pengembalianDp($id)
+    {
+        $data = $this->find($id);
+
+        $totalDp = $data->ppn_dipungut == 1 ? $data->dp + $data->dp_ppn : $data->dp;
+
+        $kas = new KasBesar();
+        $rekening = Rekening::where('untuk', $data->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first();
+
+        $rek = [
+            'nama_rek' => $rekening->nama_rek,
+            'no_rek' => $rekening->no_rek,
+            'bank' => $rekening->bank,
+        ];
+
+        $store = $kas->create([
+                    'ppn_kas' => $data->kas_ppn,
+                    'invoice_jual_id' => $data->id,
+                    'uraian' => 'Void '.$data->kode,
+                    'jenis' => 0,
+                    'nominal' => $totalDp,
+                    'saldo' => $kas->saldoTerakhir($data->kas_ppn) - $totalDp,
+                    'nama_rek' => $rekening->nama_rek,
+                    'no_rek' => $rekening->no_rek,
+                    'bank' => $rekening->bank,
+                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir($data->kas_ppn),
+                ]);
+
+        $deletePpn = PpnKeluaran::where('invoice_jual_id', $data->id)->delete();
+
+        $pesan = $kas->generateMessage(0, 'Void Penjualan', $data->kas_ppn, $store->uraian, $store->nominal, $rek);
+
+        $group = GroupWa::where('untuk', $data->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first()->nama_group;
+
+        $kas->sendWa($group, $pesan);
 
         return true;
 

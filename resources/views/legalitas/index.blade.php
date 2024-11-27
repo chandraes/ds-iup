@@ -33,6 +33,7 @@
                 </tr>
             </table>
         </div>
+        @include('wa-status')
     </div>
 </div>
 

@@ -115,4 +115,14 @@ class InvoiceController extends Controller
 
         return redirect()->back()->with($res['status'], $res['message']);
     }
+
+
+    public function invoice_konsumen_void(InvoiceJual $invoice)
+    {
+        $db = new InvoiceJual();
+
+        $res = $db->void($invoice->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
 }

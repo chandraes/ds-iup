@@ -90,6 +90,15 @@
                                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
                             </div>
                         </form>
+                        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
+                        <form action="{{route('billing.invoice-konsumen.void', ['invoice' => $d])}}" method="post" id="voidForm{{ $d->id }}"
+                            class="void-form" data-id="{{ $d->id }}">
+                            @csrf
+                            <div class="row p-3">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
+                            </div>
+                        </form>
+                        @endif
                         {{-- <a href="{{route('billing.invoice-konsumen.invoice-jpeg', ['invoice', $d->id])}}" class="btn btn-sm btn-primary">Invoice</a> --}}
                     </td>
                 </tr>
