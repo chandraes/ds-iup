@@ -137,6 +137,7 @@
     $('#data').DataTable({
         paging: false,
         scrollCollapse: true,
+        stateSave: true,
         scrollY: "550px",
     });
 
