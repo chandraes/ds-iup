@@ -55,9 +55,12 @@
                 <td class="text-center align-middle">{{$d->full_kode}}</td>
                 <td class="text-center align-middle">{{$d->nama}}</td>
                 <td class="text-start align-middle">
+                    @php
+                        $hasSpace = strpos($d->no_hp, ' ') !== false;
+                    @endphp
                     <ul>
                         <li>CP : {{$d->cp}}</li>
-                        <li class="{{ $isDuplicate ? 'text-danger' : '' }}">No. HP : {{$d->no_hp}}</li>
+                        <li class="{{ $isDuplicate || $hasSpace ? 'text-danger' : '' }}">No. HP : {{$d->no_hp}}</li>
                         <li>No. Kantor : {{$d->no_kantor}}</li>
                     </ul>
                 </td>
