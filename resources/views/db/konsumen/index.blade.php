@@ -41,9 +41,16 @@
                 <th class="text-center align-middle">ACT</th>
             </tr>
         </thead>
+        @php
+        $noHpCounts = $data->pluck('no_hp')->countBy();
+        @endphp
+
         <tbody>
             @foreach ($data as $d)
-            <tr>
+            @php
+            $isDuplicate = $noHpCounts[$d->no_hp] > 1;
+            @endphp
+            <tr class="{{ $isDuplicate ? 'table-danger' : '' }}">
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->full_kode}}</td>
                 <td class="text-center align-middle">{{$d->nama}}</td>
@@ -76,26 +83,25 @@
                             <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
                         </form>
                     </div>
-
                 </td>
             </tr>
             <script>
                 $('#deleteForm-{{$d->id}}').submit(function(e){
-                       e.preventDefault();
-                       Swal.fire({
-                           title: 'Apakah data yakin untuk menghapus data ini?',
-                           icon: 'warning',
-                           showCancelButton: true,
-                           confirmButtonColor: '#3085d6',
-                           cancelButtonColor: '#6c757d',
-                           confirmButtonText: 'Ya, hapus!'
-                           }).then((result) => {
-                           if (result.isConfirmed) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Apakah data yakin untuk menghapus data ini?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, hapus!'
+                        }).then((result) => {
+                        if (result.isConfirmed) {
                             $('#spinner').show();
-                               this.submit();
-                           }
-                       })
-                   });
+                            this.submit();
+                        }
+                    })
+                });
             </script>
             @endforeach
         </tbody>
