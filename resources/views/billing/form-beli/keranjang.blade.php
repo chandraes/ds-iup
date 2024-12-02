@@ -260,27 +260,28 @@
                         </tr>
                         @if ($req['tempo'] == 1)
                         <tr>
-                            <td class="text-end align-middle" colspan="10">DP</td>
-                            <td class="text-end align-middle" id="dpTd">
+                            <td class="text-end align-middle text-danger" colspan="10">DP</td>
+                            <td class="text-end align-middle text-danger" id="dpTd">
                                 {{number_format($dp, 0, ',','.')}}
                             </td>
                             <td class="text-center align-middle"></td>
                         </tr>
                         @if ($req['kas_ppn'] == 1)
                         <tr>
-                            <td class="text-end align-middle" colspan="10">DP PPN</td>
-                            <td class="text-end align-middle" id="dpPPNtd">
+                            <td class="text-end align-middle text-danger" colspan="10">DP PPN</td>
+                            <td class="text-end align-middle text-danger" id="dpPPNtd">
                                 {{number_format($dpPPN, 0, ',','.')}}
                             </td>
                             <td class="text-center align-middle"></td>
                         </tr>
                         <tr>
-                            <td class="text-end align-middle" colspan="10">Total DP</td>
-                            <td class="text-end align-middle" id="totalDpTd">
+                            <td class="text-end align-middle text-danger" colspan="10">Total DP</td>
+                            <td class="text-end align-middle text-danger" id="totalDpTd">
                                 {{number_format($totalDp, 0, ',','.')}}
                             </td>
                             <td class="text-center align-middle"></td>
                         </tr>
+
                         <tr>
                             <td class="text-end align-middle" colspan="10">Sisa PPN</td>
                             <td class="text-end align-middle" id="sisaPPN">
@@ -289,6 +290,7 @@
                             <td class="text-center align-middle"></td>
                         </tr>
                         @endif
+
                         <tr>
                             <td class="text-end align-middle" colspan="10">Sisa Tagihan</td>
                             <td class="text-end align-middle" id="sisa">
@@ -302,7 +304,7 @@
             </div>
 
             <div class="modal-footer">
-                
+
                 @include('wa-status')
 
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>

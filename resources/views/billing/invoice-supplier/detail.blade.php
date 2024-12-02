@@ -157,17 +157,17 @@
                 </tr>
                 @if ($data->tempo == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="10">DP</th>
-                    <th class="text-end align-middle">{{$data->nf_dp}}</th>
+                    <th class="text-end align-middle text-danger" colspan="10">DP</th>
+                    <th class="text-end align-middle text-danger">{{$data->nf_dp}}</th>
                 </tr>
                 @if ($data->kas_ppn == 1)
                 <tr>
-                    <th class="text-end align-middle" colspan="10">DP PPN</th>
-                    <th class="text-end align-middle">{{$data->nf_dp_ppn}}</th>
+                    <th class="text-end align-middle text-danger" colspan="10">DP PPN</th>
+                    <th class="text-end align-middle text-danger">{{$data->nf_dp_ppn}}</th>
                 </tr>
                 <tr>
-                    <th class="text-end align-middle" colspan="10">Sisa PPN</th>
-                    <th class="text-end align-middle">{{$data->nf_sisa_ppn}}</th>
+                    <th class="text-end align-middle text-danger" colspan="10">Sisa PPN</th>
+                    <th class="text-end align-middle text-danger">{{$data->nf_sisa_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
