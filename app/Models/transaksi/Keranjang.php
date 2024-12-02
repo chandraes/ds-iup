@@ -59,7 +59,7 @@ class Keranjang extends Model
 
         $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
 
-        $data['dp_ppn'] = isset($data['dp_ppn']) && $data['dp_ppn'] == 1 ? $data['dp'] * $ppnRate/100 : 0;
+        $data['dp_ppn'] = isset($data['dp_ppn']) && $data['dp_ppn'] == 1 ? floor($data['dp'] * $ppnRate/100) : 0;
 
         $data['ppn'] = $data['kas_ppn'] == 1 ? floor(($total-$data['diskon']) * $ppnRate / 100) : 0;
 

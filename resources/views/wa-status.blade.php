@@ -1,4 +1,4 @@
-<div class="col-md-5 mb-3">
+<div class="col-md-12 mb-3">
     <div class="card shadow-sm" style="max-width: 300px;">
         <div class="card-body d-flex align-items-center p-2">
             <!-- Bulatan Status -->

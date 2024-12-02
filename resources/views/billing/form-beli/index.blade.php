@@ -180,7 +180,7 @@
             if (apa_ppn === 1) {
 
                 var gt = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
-                var vPpn = Math.round(gt * ppnRate);
+                var vPpn = Math.floor(gt * ppnRate);
                 // vPpn = vPpn.toFixed(0);
                 // Include add_fee in the total calculation
                 var totalap = gt + vPpn + addFee;
@@ -224,7 +224,7 @@
                 var dp_ppn = dp_ppn.replace(/\./g, '');
                 var ppn = {!! $ppnRate !!} / 100;
 
-                var ppn_dp_num = dp_ppn * ppn;
+                var ppn_dp_num = Math.floor(dp_ppn * ppn);
 
                 ppn_dp = ppn_dp_num.toLocaleString('id-ID');
 
@@ -280,7 +280,7 @@
 
             var sisaPPN = tdPPN - dpPPNtd;
             console.log(sisaPPN);
-            sisaPPN = sisaPPN.toFixed(0);
+            sisaPPN = Number(sisaPPN.toFixed(0));
             document.getElementById('sisa').textContent = sisaF;
 
             if (sisaPPN == 0) {
@@ -293,7 +293,7 @@
             }
 
             var totalDp = dp + dpPPNtd;
-            totalDp = totalDp.toFixed(0);
+            totalDp = Number(totalDp.toFixed(0));
 
             if (document.getElementById('totalDpTd'))
             document.getElementById('totalDpTd').textContent = totalDp.toLocaleString('id-ID');
