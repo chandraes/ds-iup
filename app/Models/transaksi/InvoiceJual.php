@@ -279,6 +279,7 @@ class InvoiceJual extends Model
         }
 
         $dp = $data->ppn_dipungut == 1 ? $data->dp + $data->dp_ppn : $data->dp;
+        $stateWa = 0;
 
         try {
             DB::beginTransaction();
@@ -295,6 +296,8 @@ class InvoiceJual extends Model
                 }
 
                 $this->pengembalianDp($id);
+            } else {
+                $stateWa = 1;
             }
 
             // update stok
@@ -331,6 +334,23 @@ class InvoiceJual extends Model
             ]);
 
             DB::commit();
+
+            if ($stateWa == 1) {
+                $gw = new GroupWa();
+                $uraian = 'Void '.$data->kode;
+                $rek = [
+                    'nama_rek' => '-',
+                    'no_rek' => '-',
+                    'bank' => '-',
+                ];
+                $nominal = 0;
+
+                $pesan = $gw->generateMessage(0, 'Void Penjualan', $data->kas_ppn, $uraian, $nominal, $rek);
+
+                $group = $gw->where('untuk', $data->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first()->nama_group;
+
+                $gw->sendWa($group, $pesan);
+            }
 
             return [
                 'status' => 'success',
