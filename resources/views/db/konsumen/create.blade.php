@@ -103,7 +103,7 @@
 </div>
 @push('js')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+  $('#createInvestor').on('shown.bs.modal', function () {
         var selectElement = document.getElementById('provinsi_id');
         if (selectElement.value) {
             getKabKota();

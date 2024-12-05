@@ -182,7 +182,7 @@
 
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    $('#editInvestor').on('shown.bs.modal', function () {
         var selectElement = document.getElementById('edit_provinsi_id');
         if (selectElement.value) {
             getEditKabKota();
@@ -191,7 +191,7 @@
 
     function getEditKabKota(selectedKabupatenKotaId, selectedKecamatanId) {
         var provinsi = document.getElementById('edit_provinsi_id').value;
-        console.log(provinsi);
+        // console.log(provinsi);
         $('#edit_kabupaten_kota_id').empty();
         $('#edit_kabupaten_kota_id').append('<option value="" selected> -- Pilih Kabupaten / Kota -- </option>');
         $('#edit_kecamatan_id').empty();
