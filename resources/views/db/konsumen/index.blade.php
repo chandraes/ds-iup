@@ -45,17 +45,19 @@
         </thead>
         @php
         $noHpCounts = $data->pluck('no_hp')->countBy();
+        $namaCounts = $data->pluck('nama')->countBy();
         @endphp
 
         <tbody>
             @foreach ($data as $d)
             @php
             $isDuplicate = $noHpCounts[$d->no_hp] > 1;
+            $isDuplicateNama = $namaCounts[$d->nama] > 1;
             @endphp
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->full_kode}}</td>
-                <td class="text-center align-middle">{{$d->nama}}</td>
+                <td class="text-center align-middle {{$isDuplicateNama ? 'text-danger' : ''}}">{{$d->nama}}</td>
                 <td class="text-start align-middle">
                     @php
                         $hasSpace = strpos($d->no_hp, ' ') !== false;
@@ -162,7 +164,7 @@
 
         if (data.provinsi_id) {
             getEditKabKota(data.kabupaten_kota_id, data.kecamatan_id);
-        }
+        } else
 
         document.getElementById('editForm').action = '/db/konsumen/' + id + '/update';
 
