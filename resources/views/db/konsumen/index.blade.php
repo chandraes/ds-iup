@@ -132,6 +132,9 @@
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+
+</script>
+<script>
      $('#provinsi_id').select2({
             theme: 'bootstrap-5',
             width: '100%',
@@ -160,11 +163,14 @@
         document.getElementById('edit_plafon').value = data.nf_plafon;
         document.getElementById('edit_tempo_hari').value = data.tempo_hari;
         document.getElementById('edit_alamat').value = data.alamat;
-        document.getElementById('edit_provinsi_id').value = data.provinsi_id;
 
-        if (data.provinsi_id) {
+
+        if (data.provinsi_id !== null) {
+            document.getElementById('edit_provinsi_id').value = data.provinsi_id;
             getEditKabKota(data.kabupaten_kota_id, data.kecamatan_id);
-        } else
+        } else {
+            getEditKabKota();
+        }
 
         document.getElementById('editForm').action = '/db/konsumen/' + id + '/update';
 
@@ -174,11 +180,18 @@
             dropdownParent: $('#editInvestor'),
         });
 
-        console.log('Edit form populated with data:', data);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var selectElement = document.getElementById('edit_provinsi_id');
+        if (selectElement.value) {
+            getEditKabKota();
+        }
+    });
 
     function getEditKabKota(selectedKabupatenKotaId, selectedKecamatanId) {
         var provinsi = document.getElementById('edit_provinsi_id').value;
+        console.log(provinsi);
         $('#edit_kabupaten_kota_id').empty();
         $('#edit_kabupaten_kota_id').append('<option value="" selected> -- Pilih Kabupaten / Kota -- </option>');
         $('#edit_kecamatan_id').empty();
@@ -193,7 +206,8 @@
             success: function(data) {
                 if (data.status === 'success') {
                     $.each(data.data, function(index, value){
-                        $('#edit_kabupaten_kota_id').append('<option value="'+value.id+'">'+value.nama_wilayah+'</option>');
+                        var isSelected = value.id_wilayah == '116000' ? 'selected' : '';
+                        $('#edit_kabupaten_kota_id').append('<option value="'+value.id+'" '+isSelected+'>'+value.nama_wilayah+'</option>');
                     });
 
                     $('#edit_kabupaten_kota_id').select2({
@@ -201,6 +215,10 @@
                         width: '100%',
                         dropdownParent: $('#editInvestor'),
                     });
+
+                    if ($('#edit_kabupaten_kota_id').val()) {
+                        getEditKecamatan();
+                    }
 
                     if (selectedKabupatenKotaId) {
                         $('#edit_kabupaten_kota_id').val(selectedKabupatenKotaId).trigger('change');
@@ -218,7 +236,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: textStatus
+                    text: textStatus+' '+errorThrown
                 });
             }
         });

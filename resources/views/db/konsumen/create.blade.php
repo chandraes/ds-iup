@@ -66,7 +66,7 @@
                             <select name="provinsi_id" id="provinsi_id" class="form-select" onchange="getKabKota()" required>
                                 <option value="">-- Pilih Provinsi --</option>
                                 @foreach ($provinsi as $p)
-                                <option value="{{$p->id}}">{{$p->nama_wilayah}}</option>
+                                <option value="{{$p->id}}" {{$p->id_wilayah == '110000' ? 'selected' : ''}}>{{$p->nama_wilayah}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -103,6 +103,14 @@
 </div>
 @push('js')
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var selectElement = document.getElementById('provinsi_id');
+        if (selectElement.value) {
+            getKabKota();
+        }
+    });
+</script>
+<script>
     function pembayaranFun() {
         var pembayaran = document.getElementById('pembayaran').value;
         if (pembayaran == 1) {
@@ -135,8 +143,13 @@
                     $('#kabupaten_kota_id').append('<option value=""> -- Pilih Kabupaten / Kota -- </option>');
                     // append to option with select id kabupaten_kota_id
                     $.each(data.data, function(index, value){
-                        $('#kabupaten_kota_id').append('<option value="'+value.id+'">'+value.nama_wilayah+'</option>');
+                        var isSelected = value.id_wilayah == '116000' ? 'selected' : '';
+                        $('#kabupaten_kota_id').append('<option value="'+value.id+'" '+isSelected+'>'+value.nama_wilayah+'</option>');
                     });
+
+                    if ($('#kabupaten_kota_id').val()) {
+                        getKecamatan();
+                    }
 
                 } else {
                     // swal show error message\

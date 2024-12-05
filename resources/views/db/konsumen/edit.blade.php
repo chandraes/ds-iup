@@ -74,7 +74,7 @@
                             <select name="provinsi_id" id="edit_provinsi_id" class="form-select" onchange="getEditKabKota()" required>
                                 <option value="">-- Pilih Provinsi --</option>
                                 @foreach ($provinsi as $p)
-                                <option value="{{$p->id}}">{{$p->nama_wilayah}}</option>
+                                <option value="{{$p->id}}" {{$p->id_wilayah == '110000' ? 'selected' : ''}}>{{$p->nama_wilayah}}</option>
                                 @endforeach
                             </select>
                         </div>
