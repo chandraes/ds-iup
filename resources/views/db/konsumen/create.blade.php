@@ -58,11 +58,35 @@
                               </div>
                         </div>
 
+                    </div>
+                    <hr>
+                    <div class="row">
                         <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Provinsi</label>
+                            <select name="provinsi_id" id="provinsi_id" class="form-select" onchange="getKabKota()" required>
+                                <option value="">-- Pilih Provinsi --</option>
+                                @foreach ($provinsi as $p)
+                                <option value="{{$p->id}}">{{$p->nama_wilayah}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Kabupaten / Kota</label>
+                            <select name="kabupaten_kota_id" id="kabupaten_kota_id" class="form-select" onchange="getKecamatan()" required>
+                                <option value="">-- Pilih Kabupaten / Kota --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Kecamatan</label>
+                            <select name="kecamatan_id" id="kecamatan_id" class="form-select">
+                                <option value="">-- Pilih Kecamatan --</option>
+                            </select>
+                        </div>
+                        {{-- <div class="col-md-4 col-sm-6 mb-3">
                             <label for="kota" class="form-label">Kota</label>
                             <input type="text" class="form-control" name="kota" id="kota" aria-describedby="helpId" value="{{old('kota')}}"
                                 placeholder="" required>
-                        </div>
+                        </div> --}}
                         <div class="col-md-12 col-sm-12 mb-3">
                             <label for="alamat" class="form-label">Alamat</label>
                             <textarea name="alamat" id="alamat" cols="30" rows="5" class="form-control">{{old('alamat')}}</textarea>
@@ -90,6 +114,86 @@
             document.getElementById('divPlafon').style.display = 'block';
             document.getElementById('divTempo').style.display = 'block';
         }
+    }
+
+    function getKabKota(){
+        var provinsi = document.getElementById('provinsi_id').value;
+        $('#kabupaten_kota_id').empty();
+        $('#kabupaten_kota_id').append('<option value="" selected> -- Pilih Kabupaten / Kota -- </option>');
+        $('#kecamatan_id').empty();
+        $('#kecamatan_id').append('<option value="" selected> -- Pilih Kecamatan -- </option>');
+        // ajax request to get-kab-kota
+        $.ajax({
+            url: '{{route('get-kab-kota')}}',
+            type: 'GET',
+            data: {
+                provinsi: provinsi
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    $('#kabupaten_kota_id').empty();
+                    $('#kabupaten_kota_id').append('<option value=""> -- Pilih Kabupaten / Kota -- </option>');
+                    // append to option with select id kabupaten_kota_id
+                    $.each(data.data, function(index, value){
+                        $('#kabupaten_kota_id').append('<option value="'+value.id+'">'+value.nama_wilayah+'</option>');
+                    });
+
+                } else {
+                    // swal show error message\
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: textStatus
+                    });
+            }
+        });
+    }
+
+    function getKecamatan(){
+        var kab = document.getElementById('kabupaten_kota_id').value;
+        $('#kecamatan_id').empty();
+        $('#kecamatan_id').append('<option value="" selected> -- Pilih Kecamatan -- </option>');
+        // ajax request to get-kab-kota
+        $.ajax({
+            url: '{{route('get-kecamatan')}}',
+            type: 'GET',
+            data: {
+                kab: kab
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    $('#kecamatan_id').empty();
+                    $('#kecamatan_id').append('<option value=""> -- Pilih Kecamatan -- </option>');
+                    // append to option with select id kabupaten_kota_id
+                    $.each(data.data, function(index, value){
+                        $('#kecamatan_id').append('<option value="'+value.id+'">'+value.nama_wilayah+'</option>');
+                    });
+
+                } else {
+                    // swal show error message\
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: textStatus
+                    });
+            }
+        });
     }
 </script>
 @endpush

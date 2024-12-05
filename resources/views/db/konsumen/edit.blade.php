@@ -58,7 +58,7 @@
                                 <option value="2">Tempo</option>
                             </select>
                         </div>
-                        <div class="col-md-4 col-sm-6 mb-3">
+                        {{-- <div class="col-md-4 col-sm-6 mb-3">
                             <label for="kota" class="form-label">Kota</label>
                             <input type="text" class="form-control" name="kota" id="edit_kota" aria-describedby="helpId"
                                 placeholder="" required>
@@ -66,6 +66,38 @@
                         <div class="col-md-12 col-sm-12 mb-3">
                             <label for="alamat" class="form-label">Alamat</label>
                             <textarea name="alamat" id="edit_alamat" cols="30" rows="5" class="form-control"></textarea>
+                        </div> --}}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Provinsi</label>
+                            <select name="provinsi_id" id="edit_provinsi_id" class="form-select" onchange="getEditKabKota()" required>
+                                <option value="">-- Pilih Provinsi --</option>
+                                @foreach ($provinsi as $p)
+                                <option value="{{$p->id}}">{{$p->nama_wilayah}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Kabupaten / Kota</label>
+                            <select name="kabupaten_kota_id" id="edit_kabupaten_kota_id" class="form-select" onchange="getEditKecamatan()" required>
+                                <option value="">-- Pilih Kabupaten / Kota --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Kecamatan</label>
+                            <select name="kecamatan_id" id="edit_kecamatan_id" class="form-select">
+                                <option value="">-- Pilih Kecamatan --</option>
+                            </select>
+                        </div>
+                        {{-- <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="kota" class="form-label">Kota</label>
+                            <input type="text" class="form-control" name="kota" id="kota" aria-describedby="helpId" value="{{old('kota')}}"
+                                placeholder="" required>
+                        </div> --}}
+                        <div class="col-md-12 col-sm-12 mb-3">
+                            <label for="alamat" class="form-label">Alamat</label>
+                            <textarea name="alamat" id="edit_alamat" cols="30" rows="5" class="form-control">{{old('alamat')}}</textarea>
                         </div>
                     </div>
                 </div>

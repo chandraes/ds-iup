@@ -12,6 +12,7 @@ use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
 use App\Models\Pengelola;
+use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
@@ -393,10 +394,12 @@ class DatabaseController extends Controller
 
     public function konsumen()
     {
-        $data = Konsumen::all();
+        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan'])->get();
+        $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
 
         return view('db.konsumen.index', [
-            'data' => $data
+            'data' => $data,
+            'provinsi' => $provinsi
         ]);
     }
 
@@ -408,7 +411,9 @@ class DatabaseController extends Controller
             'no_hp' => 'required',
             'no_kantor' => 'nullable',
             'npwp' => 'required',
-            'kota' => 'required',
+            'provinsi_id' => 'required',
+            'kabupaten_kota_id' => 'required',
+            'kecamatan_id' => 'nullable',
             'alamat' => 'required',
             'pembayaran' => 'required',
             'plafon' => 'required_if:pembayaran,1',
@@ -434,7 +439,9 @@ class DatabaseController extends Controller
             'no_hp' => 'required',
             'no_kantor' => 'nullable',
             'npwp' => 'required',
-            'kota' => 'required',
+            'provinsi_id' => 'required',
+            'kabupaten_kota_id' => 'required',
+            'kecamatan_id' => 'nullable',
             'alamat' => 'required',
             'pembayaran' => 'required',
             'plafon' => 'required',

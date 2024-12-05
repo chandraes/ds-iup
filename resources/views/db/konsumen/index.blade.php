@@ -35,7 +35,9 @@
                 <th class="text-center align-middle">NAMA</th>
                 <th class="text-center align-middle">CP</th>
                 <th class="text-center align-middle">NPWP</th>
-                <th class="text-center align-middle">KOTA</th>
+                <th class="text-center align-middle">Provinsi</th>
+                <th class="text-center align-middle">Kab/Kota</th>
+                <th class="text-center align-middle">Kecamatan</th>
                 <th class="text-center align-middle">Sistem<br>Pembayaran</th>
                 <th class="text-center align-middle">Limit<br>Plafon</th>
                 <th class="text-center align-middle">ACT</th>
@@ -65,8 +67,14 @@
                     </ul>
                 </td>
                 <td class="text-center align-middle">{{$d->npwp}}</td>
-                <td class="text-center align-middle">
-                    {{$d->kota}}
+                <td class="text-start align-middle">
+                    {{$d->provinsi ? $d->provinsi->nama_wilayah : ''}}
+                </td>
+                <td class="text-start align-middle">
+                    {{$d->kabupaten_kota ? $d->kabupaten_kota->nama_wilayah : ''}}
+                </td>
+                <td class="text-start align-middle">
+                    {{$d->kecamatan ? $d->kecamatan->nama_wilayah : ''}}
                 </td>
                 <td class="text-center align-middle">
                     {{$d->sistem_pembayaran}} <br>
@@ -113,25 +121,149 @@
 
 @endsection
 @push('css')
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
+<script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-    function editInvestor(data, id) {
+     $('#provinsi_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#createInvestor'),
+        });
+        $('#kabupaten_kota_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#createInvestor'),
+        });
+
+        $('#kecamatan_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#createInvestor'),
+        });
+   function editInvestor(data, id) {
+        $('#edit_kabupaten_kota_id').empty();
+        $('#edit_kecamatan_id').empty();
         document.getElementById('edit_nama').value = data.nama;
         document.getElementById('edit_no_hp').value = data.no_hp;
         document.getElementById('edit_no_kantor').value = data.no_kantor;
         document.getElementById('edit_cp').value = data.cp;
-        document.getElementById('edit_kota').value = data.kota;
         document.getElementById('edit_npwp').value = data.npwp;
         document.getElementById('edit_pembayaran').value = data.pembayaran;
         document.getElementById('edit_plafon').value = data.nf_plafon;
         document.getElementById('edit_tempo_hari').value = data.tempo_hari;
         document.getElementById('edit_alamat').value = data.alamat;
+        document.getElementById('edit_provinsi_id').value = data.provinsi_id;
+
+        if (data.provinsi_id) {
+            getEditKabKota(data.kabupaten_kota_id, data.kecamatan_id);
+        }
 
         document.getElementById('editForm').action = '/db/konsumen/' + id + '/update';
+
+        $('#edit_provinsi_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#editInvestor'),
+        });
+
+        console.log('Edit form populated with data:', data);
+    }
+
+    function getEditKabKota(selectedKabupatenKotaId, selectedKecamatanId) {
+        var provinsi = document.getElementById('edit_provinsi_id').value;
+        $('#edit_kabupaten_kota_id').empty();
+        $('#edit_kabupaten_kota_id').append('<option value="" selected> -- Pilih Kabupaten / Kota -- </option>');
+        $('#edit_kecamatan_id').empty();
+        $('#edit_kecamatan_id').append('<option value="" selected> -- Pilih Kecamatan -- </option>');
+        // ajax request to get-kab-kota
+        $.ajax({
+            url: '{{route('get-kab-kota')}}',
+            type: 'GET',
+            data: {
+                provinsi: provinsi
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    $.each(data.data, function(index, value){
+                        $('#edit_kabupaten_kota_id').append('<option value="'+value.id+'">'+value.nama_wilayah+'</option>');
+                    });
+
+                    $('#edit_kabupaten_kota_id').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        dropdownParent: $('#editInvestor'),
+                    });
+
+                    if (selectedKabupatenKotaId) {
+                        $('#edit_kabupaten_kota_id').val(selectedKabupatenKotaId).trigger('change');
+                        getEditKecamatan(selectedKecamatanId);
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: textStatus
+                });
+            }
+        });
+    }
+
+    function getEditKecamatan(selectedKecamatanId) {
+        var kab = document.getElementById('edit_kabupaten_kota_id').value;
+        $('#edit_kecamatan_id').empty();
+        $('#edit_kecamatan_id').append('<option value="" selected> -- Pilih Kecamatan -- </option>');
+        // ajax request to get-kab-kota
+        $.ajax({
+            url: '{{route('get-kecamatan')}}',
+            type: 'GET',
+            data: {
+                kab: kab
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    $.each(data.data, function(index, value){
+                        $('#edit_kecamatan_id').append('<option value="'+value.id+'">'+value.nama_wilayah+'</option>');
+                    });
+
+                    $('#edit_kecamatan_id').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        dropdownParent: $('#editInvestor'),
+                    });
+
+                    if (selectedKecamatanId) {
+                        $('#edit_kecamatan_id').val(selectedKecamatanId).trigger('change');
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: textStatus
+                });
+            }
+        });
     }
 
     $('#data').DataTable({
@@ -139,6 +271,7 @@
         scrollCollapse: true,
         stateSave: true,
         scrollY: "550px",
+        scrollX: true,
     });
 
     var no_hp = new Cleave('#no_hp', {
@@ -222,6 +355,8 @@
                 }
             })
         });
+
+
 
 </script>
 @endpush

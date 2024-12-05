@@ -3,6 +3,7 @@
 namespace App\Models\db;
 
 use App\Models\KasKonsumen;
+use App\Models\Wilayah;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,6 +17,21 @@ class Konsumen extends Model
     protected $guarded = ['id'];
 
     protected $appends = ['sistem_pembayaran', 'nf_plafon', 'full_kode'];
+
+    public function provinsi()
+    {
+        return $this->belongsTo(Wilayah::class, 'provinsi_id', 'id');
+    }
+
+    public function kabupaten_kota()
+    {
+        return $this->belongsTo(Wilayah::class, 'kabupaten_kota_id', 'id');
+    }
+
+    public function kecamatan()
+    {
+        return $this->belongsTo(Wilayah::class, 'kecamatan_id', 'id');
+    }
 
     public function generateKode()
     {
@@ -43,6 +59,6 @@ class Konsumen extends Model
         return $this->hasMany(KasKonsumen::class, 'konsumen_id');
     }
 
-    
+
 
 }
