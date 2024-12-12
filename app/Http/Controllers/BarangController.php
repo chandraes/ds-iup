@@ -501,9 +501,9 @@ class BarangController extends Controller
 
         $data['harga'] = str_replace('.', '', $data['harga']);
 
-        if ($data['harga'] < $barang->harga_beli) {
-            return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
-        }
+        // if ($data['harga'] < $barang->harga_beli) {
+        //     return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
+        // }
 
         $barang->update($data);
 
