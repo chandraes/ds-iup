@@ -52,11 +52,27 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th class="text-end align-middle" colspan="3">Grand Total</th>
+                            <th class="text-end align-middle" colspan="3">Total</th>
                             <th class="text-end align-middle">{{number_format($keranjangData->sum('nominal'), 0,
                                 ',','.')}}</th>
                             <th></th>
                         </tr>
+
+                            <tr>
+                                <th class="text-end align-middle" colspan="3">Penyesuaian</th>
+                                <th class="text-end align-middle">
+                                    <input type="text" class="form-control text-end" name="penyesuaianInput" id="penyesuaianInput"
+                                        required value="0" onkeyup="checkPenyesuaian()">
+                                </th>
+                                <th></th>
+                            </tr>
+                            <tr>
+                                <th class="text-end align-middle" colspan="3">Grand Total</th>
+                                <th class="text-end align-middle" id="grandTotal">
+                                    {{number_format($keranjangData->sum('nominal'), 0,',','.')}}
+                                </th>
+                                <th></th>
+                            </tr>
                     </tfoot>
                 </table>
             </div>
@@ -66,9 +82,30 @@
                 </button>
                 <form action="{{route('pajak.ppn-masukan.keranjang-lanjut')}}" method="post" id="lanjutForm">
                     @csrf
-                    <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                    <input type="hidden" name="penyesuaian" id="penyesuaianHidden" value="0">
+                <button type="submit" class="btn btn-primary">Lanjutkan</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+@push('js')
+<script>
+    var nominal = new Cleave('#penyesuaianInput', {
+            numeral: true,
+            negative: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: '.'
+        });
+
+        function checkPenyesuaian() {
+            var penyesuaian = document.getElementById('penyesuaianInput').value ?? 0;
+            penyesuaian = parseInt(penyesuaian.replace(/\./g, ''));
+            var grandTotal = {{$keranjangData->sum('nominal')}};
+            var total = penyesuaian + grandTotal;
+            $('#penyesuaianHidden').val(penyesuaian);
+            $('#grandTotal').text(total.toLocaleString('id-ID'));
+        }
+</script>
+@endpush
