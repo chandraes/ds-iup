@@ -21,6 +21,11 @@
     <script src="{{asset('assets/js/sweetalert.js')}}"></script>
     <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
     <link href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}" rel="stylesheet">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.1.1/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.1.1/js/bootstrap5-toggle.jquery.min.js"></script>
+
+
     @stack('css')
     <style>
         .centered {

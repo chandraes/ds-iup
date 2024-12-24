@@ -19,6 +19,12 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
+            <a href="{{route('pengaturan.holding')}}" class="text-decoration-none">
+                <img src="{{asset('images/holding.svg')}}" alt="" width="70">
+                <h5 class="mt-3">HOLDING</h5>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#passwordKonfirmasi">
                 <img src="{{asset('images/password.svg')}}" alt="" width="70">
                 <h5 class="mt-3">PASSWORD KONFIRMASI</h5>
@@ -54,35 +60,36 @@
                 </div>
             </div>
         </div>
+
     </div>
-    <hr>
-    <br>
-    <div class="row justify-content-left">
-        <h2 class="mt-2">OTHERS</h2>
-        <div class="col-md-3 text-center mt-5">
-            <a href="{{route('pengaturan.aplikasi')}}" class="text-decoration-none">
-                <img src="{{asset('images/aplikasi.svg')}}" alt="" width="70">
-                <h5 class="mt-3">APLIKASI</h5>
-            </a>
-        </div>
-       <div class="col-md-3 text-center mt-5">
-            <a href="{{route('pengaturan.batasan')}}" class="text-decoration-none">
-                <img src="{{asset('images/limitasi.svg')}}" alt="" width="70">
-                <h5 class="mt-3">BATASAN</h5>
-            </a>
-        </div>
-       <div class="col-md-3 text-center mt-5">
-            <a href="{{route('histori-pesan')}}" class="text-decoration-none">
-                <img src="{{asset('images/histori.svg')}}" alt="" width="70">
-                <h5 class="mt-3">HISTORI PESAN WHATSAPP</h5>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mt-5">
-            <a href="{{route('home')}}" class="text-decoration-none">
-                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
-                <h5 class="mt-3">DASHBOARD</h5>
-            </a>
-        </div>
+</div>
+<hr>
+<br>
+<div class="row justify-content-left">
+    <h2 class="mt-2">OTHERS</h2>
+    <div class="col-md-3 text-center mt-5">
+        <a href="{{route('pengaturan.aplikasi')}}" class="text-decoration-none">
+            <img src="{{asset('images/aplikasi.svg')}}" alt="" width="70">
+            <h5 class="mt-3">APLIKASI</h5>
+        </a>
+    </div>
+    <div class="col-md-3 text-center mt-5">
+        <a href="{{route('pengaturan.batasan')}}" class="text-decoration-none">
+            <img src="{{asset('images/limitasi.svg')}}" alt="" width="70">
+            <h5 class="mt-3">BATASAN</h5>
+        </a>
+    </div>
+    <div class="col-md-3 text-center mt-5">
+        <a href="{{route('histori-pesan')}}" class="text-decoration-none">
+            <img src="{{asset('images/histori.svg')}}" alt="" width="70">
+            <h5 class="mt-3">HISTORI PESAN WHATSAPP</h5>
+        </a>
+    </div>
+    <div class="col-md-3 text-center mt-5">
+        <a href="{{route('home')}}" class="text-decoration-none">
+            <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
+            <h5 class="mt-3">DASHBOARD</h5>
+        </a>
     </div>
 </div>
 @endsection

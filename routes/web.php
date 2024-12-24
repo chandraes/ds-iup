@@ -25,6 +25,10 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
 
+    Route::prefix('holding')->group(function(){
+        Route::get('/check-connection', [App\Http\Controllers\HoldingController::class, 'check_connection'])->name('holding.check_connection');
+    });
+
     Route::prefix('inventaris')->group(function(){
         Route::get('/', [App\Http\Controllers\InventarisController::class, 'index'])->name('inventaris.index');
         Route::get('/invoice', [App\Http\Controllers\InventarisController::class, 'invoice'])->name('inventaris.invoice');
@@ -141,6 +145,9 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/edit/{config}', [App\Http\Controllers\PengaturanController::class, 'aplikasi_edit'])->name('pengaturan.aplikasi.edit');
                 Route::patch('/update/{config}', [App\Http\Controllers\PengaturanController::class, 'aplikasi_update'])->name('pengaturan.aplikasi.update');
             });
+
+            Route::get('/holding', [App\Http\Controllers\PengaturanController::class, 'holding'])->name('pengaturan.holding');
+            Route::post('/holding', [App\Http\Controllers\PengaturanController::class, 'holding_store'])->name('pengaturan.holding.store');
 
             Route::get('/', [App\Http\Controllers\PengaturanController::class, 'index_view'])->name('pengaturan');
             Route::get('/wa', [App\Http\Controllers\WaController::class, 'index'])->name('pengaturan.wa');
