@@ -254,6 +254,8 @@ class PengaturanController extends Controller
 
         if (isset($data['status']) && $data['status'] == 'on') {
             $data['status'] = 1;
+        } else {
+            $data['status'] = 0;
         }
 
         if ($holding) {
