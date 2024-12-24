@@ -172,7 +172,7 @@ class RekapPpn extends Model
 
         $saldo = $this->saldoTerakhir() - $total;
 
-
+        $holding = Holding::first();
 
         try {
             DB::beginTransaction();
@@ -188,6 +188,27 @@ class RekapPpn extends Model
                 'jenis' => 0,
                 'uraian' => 'PPN Keluaran',
             ]);
+
+            if ($holding && $holding->status == 1) {
+                // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $holding->token,
+                    'Referer' => env('APP_URL'),
+                ])->asForm()->post($holding->holding_url.'/api/1.0/ppn-keluaran', [
+                    'keluaran_id' => $create->keluaran_id,
+                    'uraian' => $create->uraian,
+                    'nominal' => $create->nominal,
+                ]);
+
+
+                if ($response->status() != 200) {
+
+                    return [
+                        'status' => 'error',
+                        'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                    ];
+                }
+            }
 
             if ($saldo < 0) {
 
