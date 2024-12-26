@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 Use App\Http\Controllers\Hash;
 use App\Models\Config;
+use App\Models\Holding;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Pengaturan;
 use Illuminate\Http\Request;
@@ -228,6 +229,42 @@ class PengaturanController extends Controller
         $config->update($data);
 
         return redirect()->route('pengaturan.aplikasi')->with('success', 'Data berhasil diubah!');
+    }
+
+    public function holding()
+    {
+        $data = Holding::first();
+
+        return view('pengaturan.holding.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function holding_store(Request $request)
+    {
+
+        // dd($request->all());
+        $data = $request->validate([
+            'status' => 'nullable',
+            'holding_url' => 'requiredif:status,on',
+            'token' => 'required_if:status,on',
+        ]);
+
+        $holding = Holding::first();
+
+        if (isset($data['status']) && $data['status'] == 'on') {
+            $data['status'] = 1;
+        } else {
+            $data['status'] = 0;
+        }
+
+        if ($holding) {
+            $holding->update($data);
+        } else {
+            Holding::create($data);
+        }
+
+        return redirect()->route('pengaturan.holding')->with('success', 'Data berhasil diubah!');
     }
 
 }

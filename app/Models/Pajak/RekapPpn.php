@@ -3,6 +3,7 @@
 namespace App\Models\Pajak;
 
 use App\Models\GroupWa;
+use App\Models\Holding;
 use App\Models\KasBesar;
 use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
@@ -10,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class RekapPpn extends Model
 {
@@ -94,6 +96,8 @@ class RekapPpn extends Model
 
         $total = $data->sum('nominal') + $penyesuaian;
 
+        $holding = Holding::first();
+
         try {
             DB::beginTransaction();
 
@@ -105,6 +109,27 @@ class RekapPpn extends Model
                 'jenis' => 1,
                 'uraian' => 'PPN Masukan',
             ]);
+
+            if ($holding && $holding->status == 1) {
+                // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $holding->token,
+                    'Referer' => env('APP_URL'),
+                ])->asForm()->post($holding->holding_url.'/api/1.0/ppn-masukan', [
+                    'masukan_id' => $create->masukan_id,
+                    'uraian' => $create->uraian,
+                    'nominal' => $create->nominal,
+                ]);
+
+
+                if ($response->status() != 200) {
+
+                    return [
+                        'status' => 'error',
+                        'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                    ];
+                }
+            }
 
             foreach ($data as $item) {
 
@@ -147,7 +172,7 @@ class RekapPpn extends Model
 
         $saldo = $this->saldoTerakhir() - $total;
 
-
+        $holding = Holding::first();
 
         try {
             DB::beginTransaction();
@@ -164,6 +189,27 @@ class RekapPpn extends Model
                 'uraian' => 'PPN Keluaran',
             ]);
 
+            if ($holding && $holding->status == 1) {
+                // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $holding->token,
+                    'Referer' => env('APP_URL'),
+                ])->asForm()->post($holding->holding_url.'/api/1.0/ppn-keluaran', [
+                    'keluaran_id' => $create->keluaran_id,
+                    'uraian' => $create->uraian,
+                    'nominal' => $create->nominal,
+                ]);
+
+
+                if ($response->status() != 200) {
+
+                    return [
+                        'status' => 'error',
+                        'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                    ];
+                }
+            }
+
             if ($saldo < 0) {
 
                 $nominalKasBesar = abs($saldo);
@@ -177,17 +223,61 @@ class RekapPpn extends Model
                     ];
                 }
 
+                if ($holding && $holding->status == 1) {
+                    // HTTP GET request to holding URL /get-rekening
+                    $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $holding->token,
+                        'Referer' => env('APP_URL'),
+                    ])->get($holding->holding_url.'/api/1.0/get-rekening');
+
+                    if ($response->status() != 200) {
+                        return [
+                            'status' => 'error',
+                            'message' => 'Gagal mengambil data rekening dari Holding. ' . $response['message'],
+                        ];
+                    }
+
+                    $rekening = $response->json();
+                } else {
+                    $rekening = [
+                        'no_rek' => 'Pajak',
+                        'nama_rek' => 'Pajak',
+                        'bank' => 'Pajak',
+                    ];
+                }
+
                 $store = $dbKasBesar->create([
                     'ppn_kas' => 1,
                     'uraian' => 'Pembayaran PPN',
                     'jenis' => 0,
                     'nominal' => $nominalKasBesar,
                     'saldo' => $dbKasBesar->saldoTerakhir(1) - $nominalKasBesar,
-                    'no_rek' => 'Pajak',
-                    'nama_rek' => 'Pajak',
-                    'bank' => 'Pajak',
+                    'no_rek' => $rekening['no_rek'],
+                    'nama_rek' => $rekening['nama_rek'],
+                    'bank' => $rekening['bank'],
                     'modal_investor_terakhir' => $dbKasBesar->modalInvestorTerakhir(1),
                 ]);
+
+
+                if ($holding && $holding->status == 1) {
+                    // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
+                    $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $holding->token,
+                        'Referer' => env('APP_URL'),
+                    ])->asForm()->post($holding->holding_url.'/api/1.0/kas-besar-masuk', [
+                        'uraian' => $store->uraian,
+                        'nominal' => $store->nominal,
+                    ]);
+
+
+                    if ($response->status() != 200) {
+
+                        return [
+                            'status' => 'error',
+                            'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                        ];
+                    }
+                }
 
                 $this->create([
                     'nominal' => $nominalKasBesar,

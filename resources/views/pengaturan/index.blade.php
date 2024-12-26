@@ -19,6 +19,12 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
+            <a href="{{route('pengaturan.holding')}}" class="text-decoration-none">
+                <img src="{{asset('images/holding.svg')}}" alt="" width="70">
+                <h5 class="mt-3">HOLDING</h5>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#passwordKonfirmasi">
                 <img src="{{asset('images/password.svg')}}" alt="" width="70">
                 <h5 class="mt-3">PASSWORD KONFIRMASI</h5>
