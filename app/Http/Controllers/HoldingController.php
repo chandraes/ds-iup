@@ -16,10 +16,11 @@ class HoldingController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Holding belum diatur']);
         }
 
-        // http request to holding_url
-        $response = Http::get($holding->holding_url.'/api/1.0/check-connection', [
-            'token' => $holding->token
-        ]);
+         // http request to holding_url
+         $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $holding->token,
+            'Referer' => env('APP_URL'),
+        ])->get($holding->holding_url.'/api/1.0/check-connection');
 
         // dd($response);
 
