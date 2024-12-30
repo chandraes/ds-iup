@@ -189,7 +189,7 @@
         var penyesuaian = $('#penyesuaian').val() ?? 0;
         var ppnKeluaran = {{$data->where('dipungut', 1)->sum('nominal')}};
 
-        var dariKas = {{$dariKas}};
+        // var dariKas = {{$dariKas}};
 
         // hilangkan '.' dari penyesuaian dan convert ke integer
         penyesuaian = parseInt(penyesuaian.replace(/\./g, ''));
