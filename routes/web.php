@@ -180,6 +180,13 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::group(['middleware' => ['role:su,admin']], function() {
 
+            Route::prefix('kreditor')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kreditor'])->name('db.kreditor');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kreditor_store'])->name('db.kreditor.store');
+                Route::patch('/update/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_update'])->name('db.kreditor.update');
+                Route::delete('/destroy/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_destroy'])->name('db.kreditor.destroy');
+             });
+
             Route::prefix('kategori-inventaris')->group(function(){
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kategori_inventaris'])->name('db.kategori-inventaris');
 
@@ -322,6 +329,10 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('rekap', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function() {
 
+            Route::prefix('bunga-investor')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
+            });
+
             Route::prefix('kas-besar/{ppn_kas}')->group(function(){
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
                 Route::get('/print/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'kas_besar_print'])->name('rekap.kas-besar.print');
@@ -416,6 +427,12 @@ Route::group(['middleware' => ['auth']], function() {
         });
 
         Route::prefix('billing')->group(function() {
+            Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');
+
+            Route::prefix('bunga-investor')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
+                Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
+            });
 
             Route::prefix('ganti-rugi')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'ganti_rugi'])->name('billing.ganti-rugi');
@@ -425,7 +442,6 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::get('/lihat-stok', [App\Http\Controllers\BillingController::class, 'lihat_stok'])->name('billing.lihat-stok');
 
-            Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');
             Route::prefix('form-inventaris')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'form_inventaris'])->name('billing.form-inventaris');
                 Route::get('/get-jenis', [App\Http\Controllers\FormInventaris::class, 'getJenis'])->name('billing.form-inventaris.get-jenis');
