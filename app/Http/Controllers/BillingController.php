@@ -9,6 +9,7 @@ use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\Karyawan;
+use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
 use App\Models\GantiRugi;
 use App\Models\GroupWa;
@@ -382,5 +383,49 @@ class BillingController extends Controller
         $res = $db->bayar($rugi->id, $data);
 
         return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function bunga_investor(Request $request)
+    {
+        $data = $request->validate([
+            'kas_ppn' => 'required|boolean'
+        ]);
+
+        $kreditor = Kreditor::where('is_active', 1)->get();
+
+        if($kreditor->isEmpty()) {
+            return redirect()->route('db.kreditor')->with('error', 'Data kreditor kosong, silahkan tambahkan data kreditor terlebih dahulu');
+        }
+        $db = new KasBesar();
+        $modal = $db->modalInvestorTerakhir($data['kas_ppn']) < 0 ? $db->modalInvestorTerakhir($data['kas_ppn']) * -1 : 0;
+
+        $pph_val = Pajak::where('untuk', 'pph-investor')->first()->persen / 100;
+
+
+        return view('billing.form-bunga-investor.index', [
+            'kreditor' => $kreditor,
+            'modal' => $modal,
+            'pph_val' => $pph_val,
+            'kas_ppn' => $data['kas_ppn'],
+        ]);
+    }
+
+    public function bunga_investor_store(Request $request)
+    {
+        $data = $request->validate([
+            'kas_ppn' => 'required|boolean',
+            'kreditor_id' => 'required|exists:kreditors,id',
+            'nominal_transaksi' => 'required',
+            'transfer_ke' => 'required',
+            'no_rekening' => 'required',
+            'bank' => 'required',
+        ]);
+
+        $db = new KasBesar();
+
+        $res = $db->bunga_investor($data);
+
+        return redirect()->route('billing')->with($res['status'], $res['message']);
+
     }
 }

@@ -83,6 +83,12 @@
                 <h5 class="mt-2">PERSENTASE<br>PAJAK</h5>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-3 mb-3">
+            <a href="{{route('db.kreditor')}}" class="text-decoration-none">
+                <img src="{{asset('images/kreditor.svg')}}" alt="" width="70">
+                <h4 class="mt-3">BIODATA KREDITUR</h4>
+            </a>
+        </div>
     </div>
     <hr>
     <div class="row justify-content-left mt-4">
