@@ -14,7 +14,7 @@ class BarangUnit extends Model
     protected $guarded = ['id'];
 
     protected $attributes = [
-        'unitRowspan' => 0, // default value
+        // 'unitRowspan' => 0, // default value
         // add other default attributes here
     ];
 
