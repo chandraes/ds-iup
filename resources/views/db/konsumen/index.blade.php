@@ -182,12 +182,12 @@
 
     }
 
-    $('#editInvestor').on('shown.bs.modal', function () {
-        var selectElement = document.getElementById('edit_provinsi_id');
-        if (selectElement.value) {
-            getEditKabKota();
-        }
-    });
+    // $('#editInvestor').on('shown.bs.modal', function () {
+    //     var selectElement = document.getElementById('edit_provinsi_id');
+    //     if (selectElement.value) {
+    //         getEditKabKota();
+    //     }
+    // });
 
     function getEditKabKota(selectedKabupatenKotaId, selectedKecamatanId) {
         var provinsi = document.getElementById('edit_provinsi_id').value;
