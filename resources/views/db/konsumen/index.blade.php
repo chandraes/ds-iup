@@ -38,6 +38,7 @@
                 <th class="text-center align-middle">Provinsi</th>
                 <th class="text-center align-middle">Kab/Kota</th>
                 <th class="text-center align-middle">Kecamatan</th>
+                <th class="text-center align-middle">Alamat</th>
                 <th class="text-center align-middle">Sistem<br>Pembayaran</th>
                 <th class="text-center align-middle">Limit<br>Plafon</th>
                 <th class="text-center align-middle">ACT</th>
@@ -55,17 +56,17 @@
             $isDuplicateNama = $namaCounts[$d->nama] > 1;
             @endphp
             <tr>
-                <td class="text-center align-middle">{{$loop->iteration}}</td>
+                <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">{{$d->full_kode}}</td>
                 <td class="text-center align-middle {{$isDuplicateNama ? 'text-danger' : ''}}">{{$d->nama}}</td>
                 <td class="text-start align-middle">
                     @php
-                        $hasSpace = strpos($d->no_hp, ' ') !== false;
+                    $hasSpace = strpos($d->no_hp, ' ') !== false;
                     @endphp
                     <ul>
-                        <li>CP : {{$d->cp}}</li>
-                        <li class="{{ $isDuplicate || $hasSpace ? 'text-danger' : '' }}">No. HP : {{$d->no_hp}}</li>
-                        <li>No. Kantor : {{$d->no_kantor}}</li>
+                        <li>CP : {{$d->cp}} <br></li>
+                        <li class="{{ $isDuplicate || $hasSpace ? 'text-danger' : '' }}">No.HP : {{$d->no_hp}} <br></li>
+                        <li>No.Kantor : {{$d->no_kantor}} <br></li>
                     </ul>
                 </td>
                 <td class="text-center align-middle">{{$d->npwp}}</td>
@@ -77,6 +78,9 @@
                 </td>
                 <td class="text-start align-middle">
                     {{$d->kecamatan ? $d->kecamatan->nama_wilayah : ''}}
+                </td>
+                <td class="text-start align-middle">
+                    {{$d->alamat}}
                 </td>
                 <td class="text-center align-middle">
                     {{$d->sistem_pembayaran}} <br>
@@ -131,11 +135,17 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+{{-- <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script> --}}
 <script>
 
 </script>
 <script>
-     $('#provinsi_id').select2({
+    $('#provinsi_id').select2({
             theme: 'bootstrap-5',
             width: '100%',
             dropdownParent: $('#createInvestor'),
@@ -292,7 +302,60 @@
         stateSave: true,
         scrollY: "550px",
         scrollX: true,
+        // dom: 'Bfrtip', // Tambahkan ini untuk menampilkan tombol
+        // buttons: [
+        //     {
+        //         extend: 'pdfHtml5',
+        //         orientation: 'landscape',
+        //         pageSize: 'A4',
+        //         exportOptions: {
+        //             columns: ':not(:last-child)' // Mengecualikan kolom terakhir
+        //         },
+        //         customize: function (doc) {
+        //             var rowCount = doc.content[1].table.body.length;
+        //             for (var i = 1; i < rowCount; i++) {
+        //                 doc.content[1].table.body[i][0].text = i.toString();
+        //                 doc.content[1].table.body[i][0].alignment = 'center'; // Center align for first column
+        //                 doc.content[1].table.body[i][1].alignment = 'center'; // Center align for second column
+        //                 doc.content[1].table.body[i][4].alignment = 'center'; // Center align for fourth column
+
+        //                 // Convert HTML list to plain text for the fourth column
+
+        //             }
+
+        //             // Add border to the table
+        //             var objLayout = {};
+        //             objLayout['hLineWidth'] = function(i) { return 0.5; };
+        //             objLayout['vLineWidth'] = function(i) { return 0.5; };
+        //             objLayout['hLineColor'] = function(i) { return '#aaa'; };
+        //             objLayout['vLineColor'] = function(i) { return '#aaa'; };
+        //             objLayout['paddingLeft'] = function(i) { return 4; };
+        //             objLayout['paddingRight'] = function(i) { return 4; };
+        //             objLayout['paddingTop'] = function(i) { return 2; };
+        //             objLayout['paddingBottom'] = function(i) { return 2; };
+        //             doc.content[1].layout = objLayout;
+        //         }
+        //     }
+        // ],
+        columnDefs: [
+            {
+                targets: 0,
+                searchable: false,
+                orderable: false,
+                className: 'dt-body-center',
+                render: function (data, type, full, meta) {
+                    return meta.row + 1; // Menambahkan nomor urut
+                }
+            }
+        ],
+        drawCallback: function(settings) {
+            var api = this.api();
+            api.column(0, { search: 'applied', order: 'applied' }).nodes().each(function(cell, i) {
+                cell.innerHTML = i + 1;
+            });
+        }
     });
+
 
     var no_hp = new Cleave('#no_hp', {
         delimiter: '-',
