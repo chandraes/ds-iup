@@ -78,19 +78,40 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
+        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
 
         return view('billing.invoice-konsumen.index', [
             'data' => $data
         ]);
     }
 
+    public function invoice_konsumen_titipan(Request $request)
+    {
+        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 1)->get();
+        $titipan = 1;
+
+        return view('billing.invoice-konsumen.index', [
+            'data' => $data,
+            'titipan' => $titipan
+        ]);
+    }
+
     public function invoice_konsumen_non_ppn(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('lunas', 0)->where('kas_ppn', 0)->get();
+        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 0)->get();
 
         return view('billing.invoice-konsumen.index-non-ppn', [
             'data' => $data
+        ]);
+    }
+
+    public function invoice_konsumen_titipan_non_ppn(Request $request)
+    {
+        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 0)->get();
+        $titipan = 1;
+        return view('billing.invoice-konsumen.index-non-ppn', [
+            'data' => $data,
+            'titipan' => $titipan
         ]);
     }
 

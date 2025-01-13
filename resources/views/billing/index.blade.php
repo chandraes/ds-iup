@@ -173,7 +173,9 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.invoice-konsumen')}}" class="text-decoration-none">
+           @include('billing.modal-invoice-konsumen-ppn')
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
+            data-bs-target="#modalKonsumenPpn">
                 <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE KONSUMEN<br>PPN
                     @if ($ik > 0)
@@ -183,7 +185,11 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.invoice-konsumen.non-ppn')}}" class="text-decoration-none">
+
+            @include('billing.modal-invoice-konsumen-non-ppn') 
+
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
+            data-bs-target="#modalKonsumenNonPpn">
                 <img src="{{asset('images/invoice-konsumen-non.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE KONSUMEN<br>NON PPN
                     @if ($ikn > 0)

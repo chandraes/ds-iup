@@ -98,16 +98,26 @@ class BillingController extends Controller
 
         $is = InvoiceBelanja::where('tempo', 1)->where('void', 0)->where('kas_ppn', 1)->count();
         $isn = InvoiceBelanja::where('tempo', 1)->where('void', 0)->where('kas_ppn', 0)->count();
-        $ik = InvoiceJual::where('lunas', 0)->where('void', 0)->where('kas_ppn', 1)->count();
-        $ikn = InvoiceJual::where('lunas', 0)->where('void', 0)->where('kas_ppn', 0)->count();
+
+        $invoiceJualCounts = InvoiceJual::select(
+            DB::raw('COUNT(CASE WHEN kas_ppn = 1 THEN 1 END) as ik'),
+            DB::raw('COUNT(CASE WHEN kas_ppn = 1 AND titipan = 1 THEN 1 END) as ikt'),
+            DB::raw('COUNT(CASE WHEN kas_ppn = 0 THEN 1 END) as ikn'),
+            DB::raw('COUNT(CASE WHEN kas_ppn = 0 AND titipan = 1 THEN 1 END) as iktn')
+        )->where('lunas', 0)
+        ->where('void', 0)
+        ->first();
+
         $gr = GantiRugi::where('lunas', 0)->count();
 
         return view('billing.index', [
             'is' => $is,
-            'ik' => $ik,
+            'ik' => $invoiceJualCounts->ik,
             'isn' => $isn,
-            'ikn' => $ikn,
+            'ikn' => $invoiceJualCounts->ikn,
             'gr' => $gr,
+            'ikt' => $invoiceJualCounts->ikt,
+            'iktn' => $invoiceJualCounts->iktn,
         ]);
     }
 

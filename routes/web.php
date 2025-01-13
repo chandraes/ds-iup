@@ -544,7 +544,9 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('invoice-konsumen')->group(function(){
                 Route::get('/ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen'])->name('billing.invoice-konsumen');
+                Route::get('/ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan'])->name('billing.invoice-konsumen.titipan');
                 Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_non_ppn'])->name('billing.invoice-konsumen.non-ppn');
+                Route::get('/non-ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan_non_ppn'])->name('billing.invoice-konsumen.non-ppn.titipan');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_bayar'])->name('billing.invoice-konsumen.bayar');
 

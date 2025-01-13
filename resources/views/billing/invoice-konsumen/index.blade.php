@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE KONSUMEN<br>PPN</u></h1>
+            <h1><u>INVOICE KONSUMEN<br>PPN {{isset($titipan) && $titipan==1 ? 'TITIPAN' : 'TEMPO'}}</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
