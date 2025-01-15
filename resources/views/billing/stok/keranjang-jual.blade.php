@@ -202,11 +202,14 @@
                                     <th class="text-end align-middle" id="thDppDiskon">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
                                 </tr>
+                                @if ($ppnStore == 1)
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0,
                                         ',','.')}}</th>
                                 </tr>
+                                @endif
+
                                 {{-- <tr>
                                     <th colspan="9" class="text-end align-middle">Pph :</th>
                                     <th class="text-end align-middle" id="pphTh">0</th>
@@ -235,12 +238,15 @@
                                             onkeyup="addDp()" />
                                     </th>
                                 </tr>
+                                @if ($ppnStore == 1)
                                 <tr id="trDpPpn" hidden>
                                     <th colspan="9" class="text-end align-middle">DP PPn :</th>
                                     <th class="text-end align-middle" id="thDpPpn">
                                         0
                                     </th>
                                 </tr>
+                                @endif
+
                                 <tr id="trSisa" hidden>
                                     <th colspan="9" class="text-end align-middle">Sisa Tagihan :</th>
                                     <th class="text-end align-middle" id="thSisa">
@@ -309,9 +315,12 @@
     function checkSisa() {
         var dp = document.getElementById('dp').value;
         var gt = document.getElementById('totalTagihanTh').innerText;
-        var dp_ppn = document.getElementById('thDpPpn').innerText;
+        var dp_ppnElement = document.getElementById('thDpPpn');
+        var dp_ppn = dp_ppnElement ? dp_ppnElement.innerText : 0;
 
-        dp_ppn = dp_ppn.replace(/\./g, '');
+        if (dp_ppnElement) {
+            dp_ppn = dp_ppn.replace(/\./g, '');
+        }
 
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
@@ -319,7 +328,8 @@
         var dpNumber = parseFloat(dp);
         var gtNumber = parseFloat(gt);
         var dpPpnNumber = parseFloat(dp_ppn);
-        var dipungut = document.getElementById('dipungut').value ?? 0;
+        var dipungutElement = document.getElementById('dipungut');
+        var dipungut = dipungutElement ? dipungutElement.value : 0;
 
         if (dipungut == 0)  {
             var sisa = gtNumber - dpNumber;
@@ -357,7 +367,8 @@
         var dppNumber = parseFloat(dpp);
 
         var ppnVal = Math.round(dppNumber * ppn / 100);
-        var dipungut = document.getElementById('dipungut').value ?? 0;
+        var dipungutElement = document.getElementById('dipungut');
+        var dipungut = dipungutElement ? dipungutElement.value : 0;
 
         var grandTotal = 0;
 
@@ -370,7 +381,9 @@
         var ppnValNf = ppnVal.toLocaleString('id-ID');
         var grandTotalNf = grandTotal.toLocaleString('id-ID');
 
-        document.getElementById('thPpn').innerText = ppnValNf;
+        if (document.getElementById('thPpn')) {
+            document.getElementById('thPpn').innerText = ppnValNf;
+        }
         document.getElementById('grandTotalTh').innerText = grandTotalNf;
 
         checkSisa();
@@ -442,7 +455,8 @@
             return;
         }
 
-        var thPpn = document.getElementById('thPpn').innerText;
+        var thPpnElement = document.getElementById('thPpn');
+        var thPpn = thPpnElement ? thPpnElement.innerText : 0;
                         // remove . in ppnVal
         if (thPpn != '0') {
             var ppn = {{$ppn}};
@@ -469,7 +483,9 @@
                 numeralDecimalMark: ',',
                 delimiter: '.'
             });
-            var ppnVal = document.getElementById('thPpn').innerText;
+
+            var ppnValElement = document.getElementById('thPpn');
+            var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
             // remove . in ppnVal
             if (ppnVal != '0') {
                 document.getElementById('trDpPpn').hidden = false;
@@ -481,7 +497,11 @@
         } else {
             document.getElementById('tempo_hari').value = '-';
             document.getElementById('trDp').hidden = true;
-            document.getElementById('trDpPpn').hidden = true;
+            var tdDpPpnElement = document.getElementById('trDpPpn');
+            if (tdDpPpnElement) {
+                document.getElementById('trDpPpn').hidden = true;
+            }
+            // document.getElementById('trDpPpn').hidden = true;
             document.getElementById('trSisa').hidden = true;
         }
     }
@@ -533,7 +553,8 @@
                             numeralDecimalMark: ',',
                             delimiter: '.'
                         });
-                        var ppnVal = document.getElementById('thPpn').innerText;
+                        var ppnValElement = document.getElementById('thPpn');
+                        var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
                         // remove . in ppnVal
                         if (ppnVal != '0') {
                             document.getElementById('trDpPpn').hidden = false;
@@ -546,7 +567,11 @@
 
                         document.getElementById('tempo_hari').value = '-';
                         document.getElementById('trDp').hidden = true;
-                        document.getElementById('trDpPpn').hidden = true;
+                        var tdDpPpnElement = document.getElementById('trDpPpn');
+                        if (tdDpPpnElement) {
+                            document.getElementById('trDpPpn').hidden = true;
+                        }
+                        // document.getElementById('trDpPpn').hidden = true;
                         document.getElementById('trSisa').hidden = true;
                     }
                 }

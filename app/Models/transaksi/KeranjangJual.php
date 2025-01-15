@@ -179,6 +179,7 @@ class KeranjangJual extends Model
             }
 
             $stateTempoWa = 0;
+
             if ($invoice->lunas == 0 && $invoice->dp == 0) {
                 $stateTempoWa = 1;
             }
@@ -422,10 +423,11 @@ class KeranjangJual extends Model
                 $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
                 $dbPpnKeluaran = new PpnKeluaran();
                 $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+                $header = $data['pembayaran'] == 3 ? "🟢🟢🟢🟢🟢🟢🟢🟢🟢\n" : "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n";
 
-                 $pesan =    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                 $pesan =    $header.
                                 "*FORM PENJUALAN*\n".
-                                "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                                $header."\n".
                                 "No Invoice:\n".
                                 "*".$invoice->kode."*\n\n".
                                 "Uraian : *Tanpa DP*\n".
