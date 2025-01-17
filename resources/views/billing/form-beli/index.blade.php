@@ -166,6 +166,7 @@
             document.getElementById('grand_total').textContent = gF;
 
             // Call add_ppn at the end to recalculate PPN based on the new total after discount
+
             add_ppn();
             check_sisa();
         }
@@ -190,13 +191,16 @@
                 var vF = vPpn.toLocaleString('id-ID');
                 document.getElementById('grand_total').textContent = tF;
                 document.getElementById('tdPpn').textContent = vF;
+                // console.log(tF);
             } else {
                 // Since PPN is not applied, directly update grand_total with tdTotalSetelahDiskon and add_fee
                 var gtWithoutPpn = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
                 var totalWithoutPpn = gtWithoutPpn + addFee;
                 totalWithoutPpn = totalWithoutPpn.toFixed(0);
+                totalWithoutPpn = parseInt(totalWithoutPpn);
                 var totalFormatted = totalWithoutPpn.toLocaleString('id-ID');
                 document.getElementById('grand_total').textContent = totalFormatted;
+
             }
 
             check_sisa();
@@ -258,7 +262,8 @@
         function check_sisa(){
             var grand_total = document.getElementById('grand_total').textContent;
             grand_total = parseInt(grand_total.replace(/\./g, ''), 10);
-            var dp = document.getElementById('dpTd').textContent;
+            var dpElement = document.getElementById('dpTd');
+            var dp = dpElement ? dpElement.textContent : '0';
             dp = parseInt(dp.replace(/\./g, ''), 10);
             var dpPPNtd = document.getElementById('dpPPNtd') ? document.getElementById('dpPPNtd').textContent : '0';
             dpPPNtd = parseInt(dpPPNtd.replace(/\./g, ''), 10);
@@ -281,7 +286,11 @@
             var sisaPPN = tdPPN - dpPPNtd;
             console.log(sisaPPN);
             sisaPPN = Number(sisaPPN.toFixed(0));
-            document.getElementById('sisa').textContent = sisaF;
+
+            var sisaElement = document.getElementById('sisa');
+            if (sisaElement) {
+                sisaElement.textContent = sisaF;
+            }
 
             if (sisaPPN == 0) {
                 if (document.getElementById('sisaPPN'))
