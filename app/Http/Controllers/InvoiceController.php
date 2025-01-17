@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
@@ -13,7 +14,7 @@ class InvoiceController extends Controller
 {
     public function invoice_supplier(Request $request)
     {
-        $data = InvoiceBelanja::with(['supplier'])->where('kas_ppn', 1)->where('tempo', 1)->where('void', 0);
+        $data = InvoiceBelanja::with(['supplier', 'invoice_belanja_cicil'])->where('kas_ppn', 1)->where('tempo', 1)->where('void', 0);
         // get unique supplier_id from $data
         if ($request->has('supplier_id')) {
             $data->where('supplier_id', $request->supplier_id);
@@ -24,16 +25,18 @@ class InvoiceController extends Controller
         $supplierIds = $data->pluck('supplier_id')->unique();
 
         $supplier = Supplier::where('status', 1)->whereIn('id', $supplierIds)->get();
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('billing.invoice-supplier.index', [
             'data' => $data,
-            'supplier' => $supplier
+            'supplier' => $supplier,
+            'ppn' => $ppn
         ]);
     }
 
     public function invoice_supplier_non_ppn(Request $request)
     {
-        $data = InvoiceBelanja::with(['supplier'])->where('kas_ppn', 0)->where('tempo', 1)->where('void', 0);
+        $data = InvoiceBelanja::with(['supplier', 'invoice_belanja_cicil'])->where('kas_ppn', 0)->where('tempo', 1)->where('void', 0);
 
         if ($request->has('supplier_id')) {
             $data->where('supplier_id', $request->supplier_id);
@@ -44,11 +47,32 @@ class InvoiceController extends Controller
         $supplierIds = $data->pluck('supplier_id')->unique();
 
         $supplier = Supplier::where('status', 1)->whereIn('id', $supplierIds)->get();
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('billing.invoice-supplier.index-non-ppn', [
             'data' => $data,
-            'supplier' => $supplier
+            'supplier' => $supplier,
+            'ppn' => $ppn
         ]);
+    }
+
+    public function invoice_supplier_cicil(InvoiceBelanja $invoice, Request $request)
+    {
+        $data = $request->validate([
+            'nominal' => 'required',
+            'ppn' => 'required',
+            'apa_ppn' => 'required|boolean',
+        ]);
+
+        $data['invoice_belanja_id'] = $invoice->id;
+
+        $db = new InvoiceBelanja();
+
+        $res = $db->cicil($data);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+
+
     }
 
     public function invoice_supplier_void(InvoiceBelanja $invoice)

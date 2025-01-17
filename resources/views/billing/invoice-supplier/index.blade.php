@@ -12,12 +12,12 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
+                    <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
+                                width="30">
                             Billing</a></td>
                 </tr>
             </table>
         </div>
-
     </div>
     <div class="row">
         <div class="col-md-6">
@@ -27,7 +27,8 @@
                     <select name="supplier_id" id="supplier_id" class="form-control">
                         <option value="" disabled selected>Pilih Supplier</option>
                         @foreach($supplier as $sup)
-                            <option value="{{ $sup->id }}" {{ request('supplier_id') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
+                        <option value="{{ $sup->id }}" {{ request('supplier_id')==$sup->id ? 'selected' : '' }}>{{
+                            $sup->nama }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -36,8 +37,8 @@
             </form>
         </div>
     </div>
-
 </div>
+@include('billing.invoice-supplier.cicil')
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">
@@ -54,6 +55,7 @@
                     <th class="text-center align-middle">Total<br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
                     <th class="text-center align-middle">DP<br>PPN</th>
+                    <th class="text-center align-middle">Cicilan</th>
                     <th class="text-center align-middle">Sisa<br>PPN</th>
                     <th class="text-center align-middle">Sisa<br>Tagihan</th>
                     <th class="text-center align-middle">Jatuh<br>Tempo</th>
@@ -61,6 +63,9 @@
                 </tr>
             </thead>
             <tbody>
+                @php
+                $sumCicilan = 0;
+                @endphp
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
@@ -93,6 +98,19 @@
                         {{$d->nf_dp_ppn}}
                     </td>
                     <td class="text-end align-middle">
+                        @if ($d->invoice_belanja_cicil && $d->invoice_belanja_cicil->count() > 0)
+                        <a href="#" data-bs-toggle="modal"
+                            data-bs-target="#modalHistoriCicilan{{$d->id}}">{{number_format($d->invoice_belanja_cicil->sum('nominal')+$d->invoice_belanja_cicil->sum('ppn'),
+                            0, ',', '.')}}</a>
+                        @include('billing.invoice-supplier.histori-cicil')
+                        @php
+                        $sumCicilan += $d->invoice_belanja_cicil->sum('nominal')+$d->invoice_belanja_cicil->sum('ppn');
+                        @endphp
+                        @else
+                        0
+                        @endif
+                    </td>
+                    <td class="text-end align-middle">
                         {{$d->nf_sisa_ppn}}
                     </td>
                     <td class="text-end align-middle">
@@ -102,16 +120,27 @@
                         {{$d->id_jatuh_tempo}}
                     </td>
                     <td class="text-center align-middle">
-                        <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
-                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa}}">
+                        <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post"
+                            id="bayarForm{{ $d->id }}" class="bayar-form" data-id="{{ $d->id }}"
+                            data-nominal="{{$d->nf_sisa}}">
                             @csrf
-                                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
+                            <div class="row px-3 py-2">
+                                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i>
+                                    Bayar</button>
+                            </div>
+
                         </form>
-                        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-                        <form action="{{route('billing.invoice-supplier.void', ['invoice' => $d])}}" method="post" id="voidForm{{ $d->id }}"
-                            class="void-form m-3" data-id="{{ $d->id }}">
+                        <div class="row px-3 py-2">
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#cicilanModal"
+                                onclick="cicilan({{$d}})">Cicil</button>
+                        </div @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
+                        <form action="{{route('billing.invoice-supplier.void', ['invoice' => $d])}}" method="post"
+                            id="voidForm{{ $d->id }}" class="void-form" data-id="{{ $d->id }}">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
+                            <div class="row px-3 py-2">
+                                <button type="submit" class="btn btn-sm btn-danger"><i
+                                        class="fa fa-exclamation-circle"></i> Void</button>
+                            </div>
                         </form>
                         @endif
                     </td>
@@ -121,13 +150,15 @@
             <tfoot>
                 <tr>
                     <th class="text-end align-middle" colspan="4">Grand Toal</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('total')-$data->sum('ppn')+$data->sum('diskon'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->sum('total')-$data->sum('ppn')+$data->sum('diskon'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp_ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($sumCicilan, 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('sisa_ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('sisa'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle"></th>
@@ -149,6 +180,17 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+    function cicilan(data) {
+
+        document.getElementById('edit_supplier_nama').value = data.supplier.nama;
+        document.getElementById('edit_sisa_dpp').value = (data.sisa - data.sisa_ppn).toLocaleString('id-ID');
+        document.getElementById('edit_nota').value = data.kode;
+        document.getElementById('edit_sisa_tagihan').value = data.nf_sisa;
+        document.getElementById('edit_sisa_ppn').value = data.nf_sisa_ppn;
+        document.getElementById('edit_apa_ppn').value = 1;
+        document.getElementById('cicilForm').action = '/billing/invoice-supplier/cicil/' + data.id;
+
+    }
 
     $(document).ready(function() {
         $('#rekapTable').DataTable({
@@ -156,6 +198,7 @@
             "ordering": true,
             "searching": false,
             "scrollCollapse": true,
+            "scrollX": true,
             "scrollY": "550px",
         });
 
@@ -183,7 +226,7 @@
             });
         });
 
-
+        confirmAndSubmit('#cicilForm', "Apakah anda yakin?");
 
         $('.void-form').submit(function(e){
             e.preventDefault();

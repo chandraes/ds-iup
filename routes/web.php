@@ -539,6 +539,9 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_non_ppn'])->name('billing.invoice-supplier.non-ppn');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail'])->name('billing.invoice-supplier.detail');
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_bayar'])->name('billing.invoice-supplier.bayar');
+
+                Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_cicil'])->name('billing.invoice-supplier.cicil');
+                
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });
 

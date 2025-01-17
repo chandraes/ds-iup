@@ -4,7 +4,6 @@ namespace App\Models\transaksi;
 
 use App\Models\db\Barang\BarangHistory;
 use App\Models\db\Barang\BarangStokHarga;
-use App\Models\db\Konsumen;
 use App\Models\db\Supplier;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
@@ -39,6 +38,11 @@ class InvoiceBelanja extends Model
         'raw_dpp',
         'dpp_setelah_diskon'
     ];
+
+    public function invoice_belanja_cicil()
+    {
+        return $this->hasMany(InvoiceBelanjaCicil::class);
+    }
 
     public function getDppAttribute()
     {
@@ -399,6 +403,119 @@ class InvoiceBelanja extends Model
         }
 
         return true;
+    }
+
+    public function cicil($data)
+    {
+        $apa_ppn = $data['apa_ppn'];
+
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $data['ppn'] = str_replace('.', '', $data['ppn']);
+
+        unset($data['apa_ppn']);
+        $inv = $this->find($data['invoice_belanja_id']);
+
+        $kas = new KasBesar();
+
+        $saldo = $kas->saldoTerakhir($inv->kas_ppn);
+
+        if ($saldo < $data['nominal'] + $data['ppn']) {
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas tidak mencukupi!!. Saldo saat ini Rp. '.number_format($saldo, 0, ',', '.')
+            ];
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $total = $data['nominal'] + $data['ppn'];
+
+            $inv->update([
+                'sisa' => $inv->sisa - $total,
+                'sisa_ppn' => $inv->sisa_ppn - $data['ppn']
+            ]);
+
+            InvoiceBelanjaCicil::create($data);
+
+            $rekening = Supplier::find($inv->supplier_id);
+
+            $store = $kas->create([
+                'invoice_belanja_id' => $inv->id,
+                'ppn_kas' => $inv->kas_ppn,
+                'uraian' => 'Cicilan ' . $inv->uraian,
+                'jenis' => '0',
+                'nominal' => $total,
+                'saldo' => $kas->saldoTerakhir($inv->kas_ppn) - $total,
+                'nama_rek' => $rekening->nama_rek,
+                'no_rek' => $rekening->no_rek,
+                'bank' => $rekening->bank,
+                'modal_investor_terakhir' => $kas->modalInvestorTerakhir($inv->kas_ppn),
+            ]);
+
+            if ($apa_ppn == 1 && $data['ppn'] > 0) {
+                $dbPPn = new PpnMasukan();
+                $dbPPn->create([
+                    'invoice_belanja_id' => $data['invoice_belanja_id'],
+                    'nominal' => $data['ppn'],
+                    'uraian' => 'Cicilan ' . $inv->uraian,
+                    'saldo' => $dbPPn->saldoTerakhir() + $data['ppn']
+                ]);
+            }
+
+            DB::commit();
+
+            $dbPPn = new PpnMasukan();
+            $dbRekapPpn = new RekapPpn();
+            $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+            $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+            $dbPpnKeluaran = new PpnKeluaran();
+            $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+
+            $getKas = $kas->getKas();
+
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*CICILAN BELI BARANG*\n".
+                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                        "Uraian :  *".$store->uraian."*\n\n".
+                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank      : ".$store->bank."\n".
+                        "Nama    : ".$store->nama_rek."\n".
+                        "No. Rek : ".$store->no_rek."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar PPN: \n".
+                        "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                        "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                        "Total PPn Masukan : \n".
+                        "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                        "Total PPn Keluaran : \n".
+                        "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+            $group = GroupWa::where('untuk', $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first()->nama_group;
+
+            $kas->sendWa($group, $pesan);
+
+
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => 'Gagal menyimpan cicilan. '.$th->getMessage()
+            ];
+
+        }
+
+        return [
+            'status' => 'success',
+            'message' => 'Berhasil menyimpan cicilan'
+        ];
     }
 
 

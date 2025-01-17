@@ -24,6 +24,11 @@ class InvoiceJual extends Model
     protected $guarded = ['id'];
     protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
 
+    public function invoice_jual_cicil()
+    {
+        return $this->hasMany(InvoiceJualCicil::class);
+    }
+    
     public function dataTahun()
     {
         return $this->selectRaw('YEAR(created_at) as tahun')
