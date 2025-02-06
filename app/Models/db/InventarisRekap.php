@@ -81,6 +81,7 @@ class InventarisRekap extends Model
                 $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
 
                 $store = $kas->create([
+                    'ppn_kas' => 1,
                     'uraian' => $data['uraian'],
                     'jenis' => 1,
                     'nominal' => $data['total'],
@@ -90,8 +91,9 @@ class InventarisRekap extends Model
                     'bank' => $rekening->bank,
                     'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1)
                 ]);
+                // dd($rekap, $data);
+                $inv = InventarisJenis::find($rekap->inventaris_jenis_id);
 
-                $inv = InventarisJenis::find($data[$rekap->inventaris_jenis_id]);
                 $inv_tot = InventarisRekap::sum('total');
 
                 $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
