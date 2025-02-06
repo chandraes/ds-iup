@@ -78,7 +78,7 @@ class InventarisRekap extends Model
             if ($data['total'] > 0) {
                 $kas = new KasBesar();
 
-                $rekening = Rekening::where('untuk', 'kas-besar')->first();
+                $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
 
                 $store = $kas->create([
                     'uraian' => $data['uraian'],
