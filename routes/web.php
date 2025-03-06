@@ -311,6 +311,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('stok-ppn')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
+                Route::get('/history', [App\Http\Controllers\BarangController::class, 'stok_history'])->name('db.stok-ppn.history');
                 Route::get('/download', [App\Http\Controllers\BarangController::class, 'stok_ppn_download'])->name('db.stok-ppn.download');
                 Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
             });
@@ -541,7 +542,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_bayar'])->name('billing.invoice-supplier.bayar');
 
                 Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_cicil'])->name('billing.invoice-supplier.cicil');
-                
+
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });
 

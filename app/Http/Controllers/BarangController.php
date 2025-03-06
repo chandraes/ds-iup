@@ -472,7 +472,7 @@ class BarangController extends Controller
 
         $jenis = 1;
 
-        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
@@ -545,7 +545,7 @@ class BarangController extends Controller
 
         $jenis = 2;
 
-        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $data = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter);
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
@@ -714,5 +714,22 @@ class BarangController extends Controller
 
     }
 
+    public function stok_history(Request $request)
+    {
+        $barang = Barang::find($request->barang);
 
+        $data = BarangStokHarga::where('barang_id', $barang->id)->orderBy('created_at', 'desc')->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Data stok tidak ditemukan!'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 1,
+            'data' => $data
+        ]);
+    }
 }
