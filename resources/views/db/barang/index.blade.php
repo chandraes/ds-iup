@@ -264,6 +264,12 @@
         width: '100%',
     });
 
+    $('#barang_nama_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        dropdownParent: $('#createModal')
+    });
+
     $('#edit_detail_type').select2({
             theme: 'classic',
             width: '100%',
