@@ -22,13 +22,13 @@ class InvoiceJual extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'nf_sisa_ppn', 'sisa_tagihan', 'nf_sisa_tagihan',  'dpp_setelah_diskon'];
 
     public function invoice_jual_cicil()
     {
         return $this->hasMany(InvoiceJualCicil::class);
     }
-    
+
     public function dataTahun()
     {
         return $this->selectRaw('YEAR(created_at) as tahun')
@@ -88,7 +88,6 @@ class InvoiceJual extends Model
         return number_format($this->diskon, 0, ',', '.');
     }
 
-
     public function getNfGrandTotalAttribute()
     {
         return number_format($this->grand_total, 0, ',', '.');
@@ -106,13 +105,23 @@ class InvoiceJual extends Model
 
     public function getSisaPpnAttribute()
     {
-        return number_format($this->ppn - $this->dp_ppn, 0, ',', '.');
+        return $this->ppn - $this->dp_ppn;
+    }
+
+    public function getNfSisaPpnAttribute()
+    {
+        return number_format($this->sisa_ppn, 0, ',', '.');
     }
 
     public function getSisaTagihanAttribute()
     {
         $sisa = $this->ppn_dipungut == 1 ? $this->grand_total - $this->dp - $this->dp_ppn : $this->grand_total - $this->dp;
-        return number_format($sisa, 0, ',', '.');
+        return $sisa;
+    }
+
+    public function getNfSisaTagihanAttribute()
+    {
+        return number_format($this->sisa_tagihan, 0, ',', '.');
     }
 
     public function generateNomor($barang_ppn)
@@ -414,5 +423,116 @@ class InvoiceJual extends Model
 
         return true;
 
+    }
+
+    public function cicil($data)
+    {
+        $apa_ppn = $data['apa_ppn'];
+
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $data['ppn'] = str_replace('.', '', $data['ppn']);
+
+        unset($data['apa_ppn']);
+        $inv = $this->find($data['invoice_jual_id']);
+
+        if ($inv->konsumen_id == null) {
+            return [
+                'status' => 'error',
+                'message' => 'Invoice ini tidak memiliki konsumen!!'
+            ];
+        }
+
+        $kas = new KasBesar();
+
+        try {
+            DB::beginTransaction();
+
+            $total = $data['nominal'] + $data['ppn'];
+
+            $inv->update([
+                'sisa' => $inv->sisa - $total,
+                'sisa_ppn' => $inv->sisa_ppn - $data['ppn']
+            ]);
+
+            InvoiceJualCicil::create($data);
+
+            $rekening = Rekening::where('untuk', $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first();
+
+            $store = $kas->create([
+                'invoice_jual_id' => $inv->id,
+                'ppn_kas' => $inv->kas_ppn,
+                'uraian' => 'Cicilan ' . $inv->uraian,
+                'jenis' => '1',
+                'nominal' => $total,
+                'saldo' => $kas->saldoTerakhir($inv->kas_ppn) + $total,
+                'nama_rek' => $rekening->nama_rek,
+                'no_rek' => $rekening->no_rek,
+                'bank' => $rekening->bank,
+                'modal_investor_terakhir' => $kas->modalInvestorTerakhir($inv->kas_ppn),
+            ]);
+
+            if ($apa_ppn == 1 && $data['ppn'] > 0) {
+                $dbPPn = new PpnKeluaran();
+                $dbPPn->create([
+                    'invoice_jual_id' => $data['invoice_jual_id'],
+                    'nominal' => $data['ppn'],
+                    'uraian' => 'Cicilan ' . $inv->uraian,
+                    'saldo' => $dbPPn->saldoTerakhir() + $data['ppn']
+                ]);
+            }
+
+            DB::commit();
+
+            $dbPPn = new PpnMasukan();
+            $dbRekapPpn = new RekapPpn();
+            $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+            $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+            $dbPpnKeluaran = new PpnKeluaran();
+            $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+
+            $getKas = $kas->getKas();
+
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*CICILAN BELI BARANG*\n".
+                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                        "Uraian :  *".$store->uraian."*\n\n".
+                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank      : ".$store->bank."\n".
+                        "Nama    : ".$store->nama_rek."\n".
+                        "No. Rek : ".$store->no_rek."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar PPN: \n".
+                        "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                        "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                        "Total PPn Masukan : \n".
+                        "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                        "Total PPn Keluaran : \n".
+                        "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+            $group = GroupWa::where('untuk', $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first()->nama_group;
+
+            $kas->sendWa($group, $pesan);
+
+
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => 'Gagal menyimpan cicilan. '.$th->getMessage()
+            ];
+
+        }
+
+        return [
+            'status' => 'success',
+            'message' => 'Berhasil menyimpan cicilan'
+        ];
     }
 }

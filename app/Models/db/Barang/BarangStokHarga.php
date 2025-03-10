@@ -66,7 +66,16 @@ class BarangStokHarga extends Model
         $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
             ->whereHas('barang', function ($query) use ($jenis) {
                 $query->where('jenis', $jenis);
-            })->where('stok', '>', 0)
+            })
+            // ->where('stok', '>', 0)
+            ->where(function($query) {
+                $query->where('stok', '>', 0)
+                ->orWhere(function ($query) {
+                    $query->where('stok', '=', 0)
+                          ->orderBy('id', 'desc')
+                          ->limit(1);
+                });
+            })
             ->orderBy('barang_unit_id')
             ->orderBy('barang_type_id')
             ->orderBy('barang_kategori_id')

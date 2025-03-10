@@ -102,10 +102,12 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
-
+        $data = InvoiceJual::with(['konsumen', 'invoice_jual_cicil'])
+                ->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         return view('billing.invoice-konsumen.index', [
-            'data' => $data
+            'data' => $data,
+            'ppn' => $ppn
         ]);
     }
 
@@ -113,10 +115,11 @@ class InvoiceController extends Controller
     {
         $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 1)->get();
         $titipan = 1;
-
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         return view('billing.invoice-konsumen.index', [
             'data' => $data,
-            'titipan' => $titipan
+            'titipan' => $titipan,
+            'ppn' => $ppn
         ]);
     }
 
@@ -167,6 +170,23 @@ class InvoiceController extends Controller
         $db = new InvoiceJual();
 
         $res = $db->void($invoice->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function invoice_konsumen_cicil(InvoiceJual $invoice, Request $request)
+    {
+        $data = $request->validate([
+            'nominal' => 'required',
+            'ppn' => 'required',
+            'apa_ppn' => 'required|boolean',
+        ]);
+
+        $db = new InvoiceJual();
+
+        $data['invoice_jual_id'] = $invoice->id;
+
+        $res = $db->cicil($data);
 
         return redirect()->back()->with($res['status'], $res['message']);
     }

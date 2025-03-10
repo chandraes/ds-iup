@@ -557,6 +557,8 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_void'])->name('billing.invoice-konsumen.void');
 
                 Route::get('/invoice/{invoice}', [App\Http\Controllers\FormJualController::class, 'invoice_image'])->name('billing.invoice-konsumen.invoice-jpeg');
+
+                Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_cicil'])->name('billing.invoice-konsumen.cicil');
             });
 
             Route::prefix('nota-ppn-masukan')->group(function(){
