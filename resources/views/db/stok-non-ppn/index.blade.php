@@ -113,7 +113,7 @@
 
     </form>
     <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable">
+        <table class="table table-bordered">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -126,114 +126,115 @@
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
-                    <th class="text-center align-middle">Harga<br>Jual Barang</th>
+                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Jual Barang</th>
                     <th class="text-center align-middle">Margin<br>Profit</th>
-
-
                 </tr>
             </thead>
             @php
             $number = 1;
             $sumTotalHargaBeli = 0;
             $sumTotalHargaJual = 0;
-
             @endphp
+
             <tbody>
-                @php $no = 1; @endphp
-                @foreach ($data as $unit)
+                @foreach ($data as $unitId => $types)
+                @php $unitDisplayed = false; @endphp
+                @foreach ($types as $typeId => $categories)
+                @php $typeDisplayed = false; @endphp
+                @foreach ($categories as $kategoriId => $barangs)
+                @php $kategoriDisplayed = false; @endphp
+                @foreach ($barangs as $namaId => $items)
+                @php $namaDisplayed = false; @endphp
+                @foreach ($items as $barangId => $stokHargas)
+                @php $barangDisplayed = false; @endphp
+                @foreach ($stokHargas as $stokHarga)
+                {{-- @if ($stokHarga->stok > 0) --}}
                 <tr>
-                    <td class="text-center align-middle" rowspan="{{ $unit['unitRowspan'] }}">{{ $no++ }}</td>
-                    <td class="align-middle" rowspan="{{ $unit['unitRowspan'] }}">{{ $unit['unit'] }}</td>
-
-                    @foreach ($unit['types'] as $type)
-                    @if (isset($type['kategori']))
-                    <td class="align-middle" rowspan="{{ $type['typeRowspan'] }}">{{ $type['nama_tipe'] }}</td>
-                    @foreach ($type['kategori'] as $kategori)
-                    <td class="align-middle" rowspan="{{ $kategori['kategoriRowspan'] }}">{{ $kategori['nama_kategori']
-                        }}</td>
-
-                    @foreach ($kategori['barang_nama'] as $barang_nama)
-                    <td class="align-middle" rowspan="{{ $barang_nama['barangNamaRowspan'] }}">{{ $barang_nama['nama']
-                        }}</td>
-
-                    @foreach ($barang_nama['barang'] as $barang)
-                    <td class="align-middle" rowspan="{{ $barang['barangRowspan'] }}">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori" onclick="getHistori({{$barang['id']}})"> {{ $barang['kode'] }} </a>
-                     </td>
-                     <td class="align-middle" rowspan="{{ $barang['barangRowspan'] }}">
-                         <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori" onclick="getHistori({{$barang['id']}})"> {{ $barang['merk'] }}</a>
-                     </td>
-
-                    @foreach ($barang['stokHarga'] as $stokHarga)
+                    @if (!$unitDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->unitRowspan }}">{{ $number++ }}</td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->unitRowspan }}">{{
+                        $stokHarga->unit->nama }}</td>
+                    @php $unitDisplayed = true; @endphp
+                    @endif
+                    @if (!$typeDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->typeRowspan }}">{{
+                        $stokHarga->type->nama }}</td>
+                    @php $typeDisplayed = true; @endphp
+                    @endif
+                    @if (!$kategoriDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->kategoriRowspan }}">{{
+                        $stokHarga->kategori->nama }}</td>
+                    @php $kategoriDisplayed = true; @endphp
+                    @endif
+                    @if (!$namaDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">{{
+                        $stokHarga->barang_nama->nama }}</td>
+                    @php $namaDisplayed = true; @endphp
+                    @endif
+                    @if (!$barangDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori" onclick="getHistori({{$stokHarga->barang->id}})">
+                            {{ $stokHarga->barang->kode }}
+                        </a>
+                    </td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori" onclick="getHistori({{$stokHarga->barang->id}})">
+                            {{ $stokHarga->barang->merk }}
+                        </a>
+                    </td>
+                    @php $barangDisplayed = true; @endphp
+                    @endif
                     <td class="text-center align-middle">
-                        @if ($stokHarga['stok'] != '-' && $stokHarga['stok'] != 0)
-                        <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{json_encode($stokHarga)}})">{{  number_format($stokHarga['stok'], 0, ',','.') }}</a>
+                        @if ($stokHarga->stok > 0)
+                        <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a>
                         @else
-                        {{$stokHarga['stok']}}
+                        {{ $stokHarga->nf_stok }}
                         @endif
                     </td>
+                    <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
+                        $stokHarga->barang->satuan->nama : '-' }}</td>
                     @php
-                    $totalHargaJual = 0;
-                    $totalHargaBeli = 0;
-                    $margin =   '-';
-                    if ( $stokHarga['stok'] != '-') {
-                        $totalHargaBeli = $stokHarga['harga_beli'] *
-                        $stokHarga['stok'];
-                        $totalHargaJual = $stokHarga['harga'] * $stokHarga['stok'];
-                        $sumTotalHargaJual += $totalHargaJual;
-                        $sumTotalHargaBeli += $totalHargaBeli;
-                        if ($stokHarga['harga_beli'] == 0) {
-                            $margin = '-';
-                        } else {
-                            $margin = ($stokHarga['harga'] - $stokHarga['harga_beli']) / $stokHarga['harga_beli'] * 100;
-
-                        }
-                    }
-
-
+                    $totalHargaBeli = ($stokHarga->harga_beli) *
+                    $stokHarga->stok;
+                    $totalHargaJual = ($stokHarga->harga) * $stokHarga->stok;
+                    $sumTotalHargaJual += $totalHargaJual;
+                    $sumTotalHargaBeli += $totalHargaBeli;
+                    $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
                     @endphp
-                    <td class="text-center align-middle">{{ $barang['satuan'] }}</td>
-                    {{-- <td class="text-end align-middle">{{ $stokHarga['harga_beli'] }}</td> --}}
-                    <td class="text-end align-middle">{{ $stokHarga['stok'] != '-' ?
-                        number_format($stokHarga['harga_beli'], 0, ',','.') : $stokHarga['harga_beli'] }}</td>
+                    <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
                     <td class="text-end align-middle">
-                        @if ( $stokHarga['stok'] != '-' && $stokHarga['stok'] != 0)
-                        <div class="row">
+                        @if ($stokHarga->stok > 0)
                             <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
-                                onclick="editFun({{json_encode($stokHarga)}})">{{ number_format($stokHarga['harga'], 0,',','.') }}</a>
-                        </div>
+                                onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
                         @else
+                        {{ $stokHarga->nf_harga }}
+                        @endif
 
-                        {{ $stokHarga['stok'] == '-' ? $stokHarga['harga'] : number_format($stokHarga['harga'], 0,',','.') }}
-                        @endif
-                    </td> {{-- Harga Jual DPP --}}
-                    <td class="text-end align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
-                    <td class="text-end align-middle">{{number_format($totalHargaJual, 0, ',','.') }}</td> {{-- Total Harga Jual --}}
-                    <td class="text-end align-middle @if ($margin == '-')
-                    table-warning
-                    @else
-                    @if ($margin < 10.01) table-danger @endif
-                    @endif">
-                        @if ($margin == '-')
-                        {{$margin}}
-                        @else
-                        {{number_format($margin, 2, '.',',')}}%
-                        @endif
                     </td>
 
-                </tr>
-                @endforeach
-                @endforeach
-                @endforeach
-                @endforeach
-                @endif
 
-                @endforeach
-                <tr>
-                    <td colspan="13" class="text-center align-middle bg-white" style="height: 16px">&nbsp;</td>
+                    <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
+                    <td class="text-center align-middle">{{ number_format($totalHargaJual, 0, ',','.') }}</td>
+                    <td class="text-end align-middle @if ($margin < 10)
+                                    table-danger
+                                @endif">
+                        {{ number_format($margin, 2) }}%
+                    </td>
                 </tr>
+                {{-- @endif --}}
+                @endforeach
+                @endforeach
+                @endforeach
+                @endforeach
+                @endforeach
+                @if (!$loop->last)
+                <tr>
+                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent">
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
             <tfoot>
@@ -263,40 +264,33 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-    $('#filter_barang_nama').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
 
-    $('#karyawan_id').select2({
+$('#filter_barang_nama').select2({
         theme: 'bootstrap-5',
         width: '100%',
-        dropdownParent: $('#actionModal')
     });
 
     function editFun(data)
     {
-        var harga_id = parseInt(data.harga).toLocaleString('id-ID');
-        document.getElementById('harga').value = harga_id;
+
+        document.getElementById('harga').value = data.nf_harga;
 
         // document.getElementById('harga').value = data.stok_ppn.nf_harga;
-        document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.stok_id);
+        document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.id);
     }
 
     function actionFun(data)
     {
-        var harga_beli_ppn = data.harga_beli;
-        // make harga_beli_ppn to number format
-        var formatted_harga_beli_ppn = harga_beli_ppn.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-        document.getElementById('harga_beli_dpp_act').value = formatted_harga_beli_ppn;
-        document.getElementById('stok_act').value = data.stok;
-        document.getElementById('stok_satuan').innerHTML = data.satuan;
-        document.getElementById('hilang_satuan').innerHTML = data.satuan;
+        document.getElementById('harga_beli_dpp_act').value = data.nf_harga_beli;
+        document.getElementById('stok_act').value = data.nf_stok;
+        document.getElementById('stok_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
+        document.getElementById('hilang_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
 
         document.getElementById('actionForm').action = `{{route('db.stok-hilang', ':id')}}`.replace(':id', data.id);
     }
     confirmAndSubmit("#actionForm", "Apakah anda yakin?");
+
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
 
     function toggleNamaJabatan(id) {

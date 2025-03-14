@@ -6,6 +6,7 @@ use App\Models\db\Pajak;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class BarangStokHarga extends Model
 {
@@ -181,6 +182,110 @@ class BarangStokHarga extends Model
         $data = $query->get();
 
         return $data;
+    }
+
+    public function barangStokV3($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
+    {
+        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
+            ->whereHas('barang', function ($query) use ($jenis) {
+                $query->where('jenis', $jenis);
+            })
+            ->where(function($query) {
+                $query->where('stok', '>', 0)
+                      ->orWhere(function ($query) {
+                          $query->where('stok', '=', 0)
+                                ->whereNotExists(function ($subQuery) {
+                                    $subQuery->select(DB::raw(1))
+                                             ->from('barang_stok_hargas as bsh')
+                                             ->whereColumn('bsh.barang_id', 'barang_stok_hargas.barang_id')
+                                             ->where('bsh.stok', '>', 0);
+                                })
+                                ->orderBy('id', 'desc')
+                                ->limit(1);
+                      });
+            })
+            ->orderBy('barang_unit_id')
+            ->orderBy('barang_type_id')
+            ->orderBy('barang_kategori_id')
+            ->orderBy('barang_nama_id')
+            ->orderBy('barang_id')
+            ->orderBy('created_at', 'asc');
+
+        if (!is_null($unitFilter)) {
+            $query->where('barang_unit_id', $unitFilter);
+        }
+
+        if (!is_null($typeFilter)) {
+            $query->where('barang_type_id', $typeFilter);
+        }
+
+        if (!is_null($kategoriFilter)) {
+            $query->where('barang_kategori_id', $kategoriFilter);
+        }
+        // dd($barangNamaFilter);
+        if (!is_null($barangNamaFilter)) {
+            $query->where('barang_nama_id', $barangNamaFilter);
+        }
+
+        $data = $query->get()
+            ->groupBy([
+                'barang_unit_id',
+                'barang_type_id',
+                'barang_kategori_id',
+                'barang_nama_id',
+                'barang_id'
+            ]);
+
+        foreach ($data as $unitId => $types) {
+            $unitRowspan = $types->sum(function ($type) {
+                return $type->sum(function ($kategori) {
+                    return $kategori->sum(function ($barangNama) {
+                        return $barangNama->sum(function ($barang) {
+                            return $barang->count();
+                        });
+                    });
+                });
+            });
+
+            foreach ($types as $typeId => $categories) {
+                $typeRowspan = $categories->sum(function ($kategori) {
+                    return $kategori->sum(function ($barangNama) {
+                        return $barangNama->sum(function ($barang) {
+                            return $barang->count();
+                        });
+                    });
+                });
+
+                foreach ($categories as $kategoriId => $barangs) {
+                    $kategoriRowspan = $barangs->sum(function ($barangNama) {
+                        return $barangNama->sum(function ($barang) {
+                            return $barang->count();
+                        });
+                    });
+
+                    foreach ($barangs as $namaId => $items) {
+                        $namaRowspan = $items->sum(function ($barang) {
+                            return $barang->count();
+                        });
+
+                        foreach ($items as $barangId => $stokHargas) {
+                            $barangRowspan = $stokHargas->count();
+
+                            foreach ($stokHargas as $stokHarga) {
+                                $stokHarga->unitRowspan = $unitRowspan;
+                                $stokHarga->typeRowspan = $typeRowspan;
+                                $stokHarga->kategoriRowspan = $kategoriRowspan;
+                                $stokHarga->namaRowspan = $namaRowspan;
+                                $stokHarga->barangRowspan = $barangRowspan;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // dd($data);
+            return $data;
+
     }
 
     public function barangStokV2($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)

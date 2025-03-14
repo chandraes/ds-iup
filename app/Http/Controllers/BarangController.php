@@ -472,7 +472,7 @@ class BarangController extends Controller
 
         $jenis = 1;
 
-        $data = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStokV3($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
@@ -545,7 +545,7 @@ class BarangController extends Controller
 
         $jenis = 2;
 
-        $data = $db->barangStokV2($jenis, $unitFilter, $typeFilter, $kategoriFilter);
+        $data = $db->barangStokV3($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
