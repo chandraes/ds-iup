@@ -190,20 +190,7 @@ class BarangStokHarga extends Model
             ->whereHas('barang', function ($query) use ($jenis) {
                 $query->where('jenis', $jenis);
             })
-            ->where(function($query) {
-                $query->where('stok', '>', 0)
-                      ->orWhere(function ($query) {
-                          $query->where('stok', '=', 0)
-                                ->whereNotExists(function ($subQuery) {
-                                    $subQuery->select(DB::raw(1))
-                                             ->from('barang_stok_hargas as bsh')
-                                             ->whereColumn('bsh.barang_id', 'barang_stok_hargas.barang_id')
-                                             ->where('bsh.stok', '>', 0);
-                                })
-                                ->orderBy('id', 'desc')
-                                ->limit(1);
-                      });
-            })
+            ->where('hide', 0)
             ->orderBy('barang_unit_id')
             ->orderBy('barang_type_id')
             ->orderBy('barang_kategori_id')

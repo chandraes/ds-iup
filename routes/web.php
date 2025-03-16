@@ -24,6 +24,8 @@ Auth::routes([
 Route::group(['middleware' => ['auth']], function() {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
+    Route::get('/get-kab-kota', [App\Http\Controllers\HomeController::class, 'getKabKota'])->name('get-kab-kota');
+    Route::get('/get-kecamatan', [App\Http\Controllers\HomeController::class, 'getKecamatan'])->name('get-kecamatan');
 
     Route::prefix('holding')->group(function(){
         Route::get('/check-connection', [App\Http\Controllers\HoldingController::class, 'check_connection'])->name('holding.check_connection');
@@ -307,6 +309,8 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
+            Route::post('/hide/{barang}', [App\Http\Controllers\BarangController::class, 'hide_stok'])->name('db.hide');
+
             Route::prefix('stok-ppn')->group(function(){
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
                 Route::get('/history', [App\Http\Controllers\BarangController::class, 'stok_history'])->name('db.stok-ppn.history');
@@ -368,7 +372,6 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
                 Route::get('/pdf', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_download'])->name('rekap.invoice-penjualan.pdf');
                 Route::get('/{invoice}/detail', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
-                Route::get('/{invoice}/detail/download', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_detail_download'])->name('rekap.invoice-penjualan.detail.download');
             });
 
             Route::prefix('pph-masa')->group(function(){
@@ -538,20 +541,26 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier'])->name('billing.invoice-supplier');
                 Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_non_ppn'])->name('billing.invoice-supplier.non-ppn');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail'])->name('billing.invoice-supplier.detail');
-                Route::get('/detail/{invoice}/download', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail_download'])->name('billing.invoice-supplier.detail.download');
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_bayar'])->name('billing.invoice-supplier.bayar');
+
+                Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_cicil'])->name('billing.invoice-supplier.cicil');
+
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });
 
             Route::prefix('invoice-konsumen')->group(function(){
                 Route::get('/ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen'])->name('billing.invoice-konsumen');
+                Route::get('/ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan'])->name('billing.invoice-konsumen.titipan');
                 Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_non_ppn'])->name('billing.invoice-konsumen.non-ppn');
+                Route::get('/non-ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan_non_ppn'])->name('billing.invoice-konsumen.non-ppn.titipan');
                 Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_bayar'])->name('billing.invoice-konsumen.bayar');
 
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_void'])->name('billing.invoice-konsumen.void');
 
                 Route::get('/invoice/{invoice}', [App\Http\Controllers\FormJualController::class, 'invoice_image'])->name('billing.invoice-konsumen.invoice-jpeg');
+
+                Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_cicil'])->name('billing.invoice-konsumen.cicil');
             });
 
             Route::prefix('nota-ppn-masukan')->group(function(){

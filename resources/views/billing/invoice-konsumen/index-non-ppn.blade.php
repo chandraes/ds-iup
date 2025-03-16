@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('content')
+@include('billing.invoice-konsumen.cicilan-non-ppn')
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE KONSUMEN<br>NON PPN</u></h1>
+            <h1><u>INVOICE KONSUMEN<br>NON PPN {{isset($titipan) && $titipan==1 ? 'TITIPAN' : 'TEMPO'}}</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -53,12 +54,16 @@
                     <th class="text-center align-middle">Penyesuaian</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
+                    <th class="text-center align-middle">Cicilan</th>
                     <th class="text-center align-middle">Sisa<br>Tagihan</th>
                     <th class="text-center align-middle">Jatuh<br>Tempo</th>
                     <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                $sumCicilan = 0;
+                @endphp
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
@@ -74,21 +79,38 @@
                     <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                     <td class="text-end align-middle">{{$d->nf_dp}}</td>
-                    <td class="text-end align-middle">{{$d->sisa_tagihan}}</td>
+                    <td class="text-end align-middle">
+                        @if ($d->invoice_jual_cicil && $d->invoice_jual_cicil->count() > 0)
+                        <a href="#" data-bs-toggle="modal"
+                            data-bs-target="#modalHistoriCicilan{{$d->id}}">{{number_format($d->invoice_jual_cicil->sum('nominal')+$d->invoice_jual_cicil->sum('ppn'),
+                            0, ',', '.')}}</a>
+                        @include('billing.invoice-konsumen.histori-cicil')
+                        @php
+                        $sumCicilan += $d->invoice_jual_cicil->sum('nominal')+$d->invoice_jual_cicil->sum('ppn');
+                        @endphp
+                        @else
+                        0
+                        @endif
+                    </td>
+                    <td class="text-end align-middle">{{$d->nf_sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
                     <td class="text-end align-middle">
                         <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
-                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->sisa_tagihan}}">
+                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa_tagihan}}">
                             @csrf
-                            <div class="row p-3">
+                            <div class="row px-3 pb-2">
                                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
                             </div>
                         </form>
+                        <div class="row px-3 pb-2">
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#cicilanModal"
+                             onclick="cicilan({{$d}})">Cicil</button>
+                        </div>
                         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
                         <form action="{{route('billing.invoice-konsumen.void', ['invoice' => $d])}}" method="post" id="voidForm{{ $d->id }}"
                             class="void-form" data-id="{{ $d->id }}">
                             @csrf
-                            <div class="row p-3">
+                            <div class="row px-3">
                             <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
                             </div>
                         </form>
@@ -106,6 +128,7 @@
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($sumCicilan, 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total')-$data->sum('dp')-$data->sum('dp_ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle" colspan="2"></th>
                 </tr>
@@ -219,6 +242,17 @@
 
     });
 
+    function cicilan(data) {
+
+        document.getElementById('edit_konsumen_nama').value = data.konsumen.nama;
+        document.getElementById('edit_nota').value = data.kode;
+        document.getElementById('edit_sisa_tagihan').value = data.nf_sisa_tagihan;
+        document.getElementById('edit_apa_ppn').value = 0;
+        document.getElementById('edit_nominal').value = '';
+        document.getElementById('edit_total').value = '';
+        document.getElementById('cicilForm').action = '/billing/invoice-konsumen/cicil/' + data.id;
+
+    }
 
 </script>
 @endpush

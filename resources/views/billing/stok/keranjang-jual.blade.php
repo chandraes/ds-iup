@@ -27,7 +27,7 @@
                                 <div class="row invoice-info">
                                     <div class="col-md-6 invoice-col">
                                         <table style="width: 90%">
-                                            <tr>
+                                            <tr style="height:50px">
                                                 <td class="text-start align-middle">Konsumen</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
@@ -41,7 +41,7 @@
                                                     </select>
                                                 </td>
                                             </tr>
-                                            <tr id="namaTr" hidden>
+                                            <tr id="namaTr" hidden style="height:50px">
                                                 <td class="text-start align-middle">Nama</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
@@ -49,15 +49,17 @@
                                                         class="form-control">
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <tr style="height:50px">
                                                 <td class="text-start align-middle">Sistem Pembayaran</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <input type="text" name="pembayaran" id="pembayaran"
-                                                        class="form-control" disabled>
+                                                    <select type="text" name="pembayaran" id="pembayaran" onchange="checkPembayaran()"
+                                                        class="form-select" required>
+
+                                                    </select>
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <tr style="height:50px">
                                                 <td class="text-start align-middle">Tempo</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
@@ -68,7 +70,7 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <tr style="height:50px">
                                                 <td class="text-start align-middle">NPWP</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
@@ -76,8 +78,7 @@
                                                         disabled>
                                                 </td>
                                             </tr>
-
-                                            <tr>
+                                            <tr style="height:50px">
                                                 <td class="text-start align-middle">Alamat</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
@@ -92,7 +93,7 @@
                                     <div class="col-md-6 invoice-col" >
                                         <div class="row d-flex justify-content-end">
                                             <table style="width: 90%">
-                                                <tr>
+                                                <tr style="height:50px">
                                                     <td class="text-start align-middle">Invoice</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
@@ -100,7 +101,7 @@
                                                             disabled value="{{$kode}}">
                                                     </td>
                                                 </tr>
-                                                <tr>
+                                                <tr style="height:50px">
                                                     <td class="text-start align-middle">Tanggal</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
@@ -108,7 +109,7 @@
                                                             value="{{$tanggal}}" disabled>
                                                     </td>
                                                 </tr>
-                                                <tr>
+                                                <tr style="height:50px">
                                                     <td class="text-start align-middle">Jam</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
@@ -116,7 +117,7 @@
                                                             value="{{$jam}}" disabled>
                                                     </td>
                                                 </tr>
-                                                <tr>
+                                                <tr style="height:50px">
                                                     <td class="text-start align-middle">No WA</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
@@ -125,7 +126,7 @@
                                                     </td>
                                                 </tr>
                                                 @if ($ppnStore == 1)
-                                                <tr>
+                                                <tr style="height:50px">
                                                     <td class="text-start align-middle">PPn Disetor Oleh</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
@@ -201,11 +202,14 @@
                                     <th class="text-end align-middle" id="thDppDiskon">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
                                 </tr>
+                                @if ($ppnStore == 1)
                                 <tr>
                                     <th colspan="9" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0,
                                         ',','.')}}</th>
                                 </tr>
+                                @endif
+
                                 {{-- <tr>
                                     <th colspan="9" class="text-end align-middle">Pph :</th>
                                     <th class="text-end align-middle" id="pphTh">0</th>
@@ -234,12 +238,15 @@
                                             onkeyup="addDp()" />
                                     </th>
                                 </tr>
+                                @if ($ppnStore == 1)
                                 <tr id="trDpPpn" hidden>
                                     <th colspan="9" class="text-end align-middle">DP PPn :</th>
                                     <th class="text-end align-middle" id="thDpPpn">
                                         0
                                     </th>
                                 </tr>
+                                @endif
+
                                 <tr id="trSisa" hidden>
                                     <th colspan="9" class="text-end align-middle">Sisa Tagihan :</th>
                                     <th class="text-end align-middle" id="thSisa">
@@ -308,9 +315,12 @@
     function checkSisa() {
         var dp = document.getElementById('dp').value;
         var gt = document.getElementById('totalTagihanTh').innerText;
-        var dp_ppn = document.getElementById('thDpPpn').innerText;
+        var dp_ppnElement = document.getElementById('thDpPpn');
+        var dp_ppn = dp_ppnElement ? dp_ppnElement.innerText : 0;
 
-        dp_ppn = dp_ppn.replace(/\./g, '');
+        if (dp_ppnElement) {
+            dp_ppn = dp_ppn.replace(/\./g, '');
+        }
 
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
@@ -318,7 +328,8 @@
         var dpNumber = parseFloat(dp);
         var gtNumber = parseFloat(gt);
         var dpPpnNumber = parseFloat(dp_ppn);
-        var dipungut = document.getElementById('dipungut').value ?? 0;
+        var dipungutElement = document.getElementById('dipungut');
+        var dipungut = dipungutElement ? dipungutElement.value : 0;
 
         if (dipungut == 0)  {
             var sisa = gtNumber - dpNumber;
@@ -356,7 +367,8 @@
         var dppNumber = parseFloat(dpp);
 
         var ppnVal = Math.round(dppNumber * ppn / 100);
-        var dipungut = document.getElementById('dipungut').value ?? 0;
+        var dipungutElement = document.getElementById('dipungut');
+        var dipungut = dipungutElement ? dipungutElement.value : 0;
 
         var grandTotal = 0;
 
@@ -369,7 +381,9 @@
         var ppnValNf = ppnVal.toLocaleString('id-ID');
         var grandTotalNf = grandTotal.toLocaleString('id-ID');
 
-        document.getElementById('thPpn').innerText = ppnValNf;
+        if (document.getElementById('thPpn')) {
+            document.getElementById('thPpn').innerText = ppnValNf;
+        }
         document.getElementById('grandTotalTh').innerText = grandTotalNf;
 
         checkSisa();
@@ -441,7 +455,8 @@
             return;
         }
 
-        var thPpn = document.getElementById('thPpn').innerText;
+        var thPpnElement = document.getElementById('thPpn');
+        var thPpn = thPpnElement ? thPpnElement.innerText : 0;
                         // remove . in ppnVal
         if (thPpn != '0') {
             var ppn = {{$ppn}};
@@ -455,6 +470,40 @@
 
         checkSisa();
 
+    }
+
+    function checkPembayaran()
+    {
+        var pembayaran = document.getElementById('pembayaran').value;
+        if (pembayaran == 2) {
+            document.getElementById('trDp').hidden = false;
+            var dp = new Cleave('#dp', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
+
+            var ppnValElement = document.getElementById('thPpn');
+            var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
+            // remove . in ppnVal
+            if (ppnVal != '0') {
+                document.getElementById('trDpPpn').hidden = false;
+            }
+
+            var sisa = document.getElementById('grandTotalTh').innerText;
+            document.getElementById('trSisa').hidden = false;
+            document.getElementById('thSisa').innerText = sisa;
+        } else {
+            document.getElementById('tempo_hari').value = '-';
+            document.getElementById('trDp').hidden = true;
+            var tdDpPpnElement = document.getElementById('trDpPpn');
+            if (tdDpPpnElement) {
+                document.getElementById('trDpPpn').hidden = true;
+            }
+            // document.getElementById('trDpPpn').hidden = true;
+            document.getElementById('trSisa').hidden = true;
+        }
     }
 
 
@@ -481,6 +530,21 @@
                     document.getElementById('npwp').value = data.npwp;
                     document.getElementById('no_hp').value = data.no_hp;
                     if (data.pembayaran == 2) {
+                        // empty pembayaran option
+                        document.getElementById('pembayaran').innerHTML = '';
+                        // add option dengan value 1 cash, 2 tempo, 3 titipan menggunakan array atau json lalu buat selected ke 2
+                        var pembayaranText = ['Cash', 'Tempo', 'Titipan'];
+                        var pembayaranValue = [1, 2, 3];
+
+                        for (var i = 0; i < pembayaranText.length; i++) {
+                            var option = document.createElement('option');
+                            option.value = pembayaranValue[i];
+                            option.text = pembayaranText[i];
+                            document.getElementById('pembayaran').add(option);
+                        }
+
+                        document.getElementById('pembayaran').value = 2;
+
                         document.getElementById('tempo_hari').value = data.tempo_hari;
                         document.getElementById('trDp').hidden = false;
                         var dp = new Cleave('#dp', {
@@ -489,7 +553,8 @@
                             numeralDecimalMark: ',',
                             delimiter: '.'
                         });
-                        var ppnVal = document.getElementById('thPpn').innerText;
+                        var ppnValElement = document.getElementById('thPpn');
+                        var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
                         // remove . in ppnVal
                         if (ppnVal != '0') {
                             document.getElementById('trDpPpn').hidden = false;
@@ -499,15 +564,36 @@
                         document.getElementById('trSisa').hidden = false;
                         document.getElementById('thSisa').innerText = sisa;
                     } else {
+
                         document.getElementById('tempo_hari').value = '-';
                         document.getElementById('trDp').hidden = true;
-                        document.getElementById('trDpPpn').hidden = true;
+                        var tdDpPpnElement = document.getElementById('trDpPpn');
+                        if (tdDpPpnElement) {
+                            document.getElementById('trDpPpn').hidden = true;
+                        }
+                        // document.getElementById('trDpPpn').hidden = true;
                         document.getElementById('trSisa').hidden = true;
                     }
                 }
             });
             return;
         }
+
+        document.getElementById('pembayaran').innerHTML = '';
+        // add option dengan value 1 cash selected
+        var pembayaranText = ['Cash'];
+        var pembayaranValue = [1];
+
+        for (var i = 0; i < pembayaranText.length; i++) {
+            var option = document.createElement('option');
+            option.value = pembayaranValue[i];
+            option.text = pembayaranText[i];
+            if (pembayaranValue[i] == 1) { // Jika value adalah 1, maka set sebagai selected
+                option.selected = true;
+            }
+            document.getElementById('pembayaran').add(option);
+        }
+
 
         document.getElementById('trDp').hidden = true;
         document.getElementById('trDpPpn').hidden = true;

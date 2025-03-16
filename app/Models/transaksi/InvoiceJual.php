@@ -22,7 +22,12 @@ class InvoiceJual extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'nf_sisa_ppn', 'nf_sisa_tagihan',  'dpp_setelah_diskon'];
+
+    public function invoice_jual_cicil()
+    {
+        return $this->hasMany(InvoiceJualCicil::class);
+    }
 
     public function dataTahun()
     {
@@ -83,7 +88,6 @@ class InvoiceJual extends Model
         return number_format($this->diskon, 0, ',', '.');
     }
 
-
     public function getNfGrandTotalAttribute()
     {
         return number_format($this->grand_total, 0, ',', '.');
@@ -99,15 +103,15 @@ class InvoiceJual extends Model
         return number_format($this->dp_ppn, 0, ',', '.') ?? 0;
     }
 
-    public function getSisaPpnAttribute()
+
+    public function getNfSisaPpnAttribute()
     {
-        return number_format($this->ppn - $this->dp_ppn, 0, ',', '.');
+        return number_format($this->sisa_ppn, 0, ',', '.');
     }
 
-    public function getSisaTagihanAttribute()
+    public function getNfSisaTagihanAttribute()
     {
-        $sisa = $this->ppn_dipungut == 1 ? $this->grand_total - $this->dp - $this->dp_ppn : $this->grand_total - $this->dp;
-        return number_format($sisa, 0, ',', '.');
+        return number_format($this->sisa_tagihan, 0, ',', '.');
     }
 
     public function generateNomor($barang_ppn)
@@ -154,7 +158,7 @@ class InvoiceJual extends Model
             DB::beginTransaction();
 
             if ($kas_ppn == 1) {
-                $this->store_ppn($id, $inv->ppn-$inv->dp_ppn);
+                $this->store_ppn($id, $inv->sisa_ppn);
             }
 
             $sisa_tagihan = str_replace('.', '', $inv->sisa_tagihan);
@@ -257,6 +261,24 @@ class InvoiceJual extends Model
             'saldo' => $saldo,
             'uraian' => 'Pelunasan '. $inv->kode,
             'dipungut' => $inv->ppn_dipungut,
+        ]);
+
+
+        return true;
+
+    }
+
+    public function store_ppn_cicil($inv_id, $kode, $nominal, $dipungut)
+    {
+        $db = new PpnKeluaran();
+        $saldo = $db->saldoTerakhir() + $nominal;
+
+        $db->create([
+            'invoice_jual_id' => $inv_id,
+            'nominal' => $nominal,
+            'saldo' => $saldo,
+            'uraian' => 'Cicilan '. $kode,
+            'dipungut' => $dipungut,
         ]);
 
 
@@ -409,5 +431,108 @@ class InvoiceJual extends Model
 
         return true;
 
+    }
+
+    public function cicil($data)
+    {
+        $apa_ppn = $data['apa_ppn'];
+
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $data['ppn'] = isset($data['ppn']) ? str_replace('.', '', $data['ppn']) : 0;
+
+        $totalCicil = $data['nominal'] + $data['ppn'];
+
+        unset($data['apa_ppn']);
+        $inv = $this->find($data['invoice_jual_id']);
+
+        if ($inv->konsumen_id == null) {
+            return [
+                'status' => 'error',
+                'message' => 'Invoice ini tidak memiliki konsumen!!'
+            ];
+        }
+
+        $kas = new KasBesar();
+
+        $kas_ppn = $inv->ppn > 0 ? 1 : 0;
+        $kasMana = $kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+        try {
+            DB::beginTransaction();
+
+            if ($kas_ppn == 1) {
+                $this->store_ppn_cicil($inv->id, $inv->kode, $data['ppn'], $inv->ppn_dipungut);
+            }
+
+            $rekening = Rekening::where('untuk', $kasMana)->first();
+
+            $store = $kas->create([
+                'invoice_jual_id' => $inv->id,
+                'ppn_kas' => $kas_ppn,
+                'uraian' => 'Cicilan ' . $inv->kode,
+                'jenis' => '1',
+                'nominal' => $totalCicil,
+                'saldo' => $kas->saldoTerakhir($kas_ppn) + $totalCicil,
+                'nama_rek' => $rekening->nama_rek,
+                'no_rek' => $rekening->no_rek,
+                'bank' => $rekening->bank,
+                'modal_investor_terakhir' => $kas->modalInvestorTerakhir($kas_ppn),
+            ]);
+
+            // update kas konsumen
+            $kas_konsumen = new KasKonsumen();
+            $sisaKasKonsumen = $kas_konsumen->sisaTerakhir($inv->konsumen_id);
+            $sisaAkhirKonsumen = $sisaKasKonsumen - $totalCicil;
+
+            $kas_konsumen->create([
+                'konsumen_id' => $inv->konsumen_id,
+                'invoice_jual_id' => $inv->id,
+                'uraian' => 'Cicilan ' . $inv->kode,
+                'bayar' => $totalCicil,
+                'sisa' => $sisaAkhirKonsumen < 0 ? 0 : $sisaAkhirKonsumen,
+            ]);
+
+            $inv->update([
+                'sisa_tagihan' => $inv->sisa_tagihan - $totalCicil,
+                'sisa_ppn' => $inv->sisa_ppn - $data['ppn'],
+            ]);
+
+            InvoiceJualCicil::create([
+                'invoice_jual_id' => $inv->id,
+                'nominal' => $data['nominal'],
+                'ppn' => $data['ppn'],
+            ]);
+
+            DB::commit();
+
+            $dbPPn = new PpnMasukan();
+            $dbRekapPpn = new RekapPpn();
+            $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+            $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+            $dbPpnKeluaran = new PpnKeluaran();
+            $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+
+            $addMessage =   "Total PPn Masukan : \n".
+                            "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                            "Total PPn Keluaran : \n".
+                            "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n";
+
+            $dbWa = new GroupWa();
+
+            $pesan = $dbWa->generateMessage(1, 'CICILAN JUAL BARANG', $kas_ppn, $store->uraian, $store->nominal, $rekening, $addMessage);
+
+            $group = $dbWa->where('untuk', $kasMana)->first()->nama_group;
+            //  dd($group);
+            $dbWa->sendWa($group, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil melakukan cicilan invoice!!'
+            ];
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return ['status' => 'error', 'message' => $th->getMessage()];
+        }
     }
 }

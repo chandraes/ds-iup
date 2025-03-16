@@ -199,6 +199,7 @@ class FormJualController extends Controller
     {
         $data = $request->validate([
             'konsumen_id' => 'required',
+            'pembayaran' => 'required',
             'diskon' => 'required',
             'add_fee' => 'required',
             'nama' => 'required_if:konsumen_id,*',
@@ -211,6 +212,10 @@ class FormJualController extends Controller
 
         ini_set('max_execution_time', 300);
         ini_set('memory_limit', '512M');
+
+        if ($data['konsumen_id'] == '*' && $data['pembayaran'] != 1) {
+            return redirect()->back()->with('error', 'Konsumen cash tidak bisa memilih sistem pembayaran lain selain cash');
+        }
 
         $db = new KeranjangJual();
 
@@ -291,9 +296,12 @@ class FormJualController extends Controller
         $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
         if ($invoice->konsumen_id) {
-            if ($konsumen->pembayaran == 1) {
+            if ($konsumen->pembayaran == 1 || $invoice->lunas == 1) {
                 $uraian = '*Cash*';
                 $pembayaran = 'Lunas';
+            } elseif($konsumen->pembayaran == 2 && $invoice->titipan == 1) {
+                $uraian = '*Titipan*';
+                $pembayaran = 'Titipan';
             } else {
                 if ($konsumen->pembayaran == 2 && $invoice->dp > 0) {
                     $uraian = '*DP*';
@@ -320,7 +328,7 @@ class FormJualController extends Controller
                     "Uraian : ".$uraian."\n".
                     "Pembayaran : ".$pembayaran."\n";
 
-            if ($invoice->konsumen_id && $konsumen->pembayaran == 2) {
+            if ($invoice->konsumen_id && $invoice->lunas == 0 && $invoice->titipan == 0) {
                 $jatuhTempo = Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d-m-Y');
                 $pesan .= "Tgl Jatuh Tempo : ".$jatuhTempo."\n\n";
 
@@ -356,6 +364,7 @@ class FormJualController extends Controller
                 $pesan .= "==========================\n";
 
                 $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                            ->where('titipan', 0)
                             ->where('lunas', 0)
                             ->where('void', 0)
                             ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])

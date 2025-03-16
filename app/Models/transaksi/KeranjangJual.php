@@ -78,6 +78,8 @@ class KeranjangJual extends Model
             $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
             $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
 
+            $data['titipan'] = $data['pembayaran'] == 3 ? 1 : 0;
+
             $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
             $dppSetelahDiskon = $data['total'] - $data['diskon'];
 
@@ -113,9 +115,11 @@ class KeranjangJual extends Model
             } else {
                 $konsumen = Konsumen::find($data['konsumen_id']);
 
-                $data['lunas'] = $konsumen->pembayaran == 1 ? 1 : 0;
+                $data['lunas'] = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
 
-                if($konsumen->pembayaran == 2) {
+                // kalau sistem pembayaran konsumen adalah tempo dan sistem pembayaran invoice bukan tunai
+                // maka cek sisa plafon konsumen
+                if($konsumen->pembayaran == 2 && $data['pembayaran'] != 1) {
                     $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
                     if ($sisaTerakhir + $data['grand_total'] > $konsumen->plafon) {
                         return [
@@ -124,17 +128,21 @@ class KeranjangJual extends Model
                         ];
                     }
 
-                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
-                        ->where('lunas', 0)
-                        ->where('void', 0)
-                        ->where('jatuh_tempo', '<', today())
-                        ->exists();
+                    // jika invoice pembayaran adalah tempo, cek apakah konsumen memiliki tagihan yang jatuh tempo
+                    if ($data['pembayaran'] == 2) {
+                        $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                                    ->where('titipan', 0)
+                                    ->where('lunas', 0)
+                                    ->where('void', 0)
+                                    ->where('jatuh_tempo', '<', today())
+                                    ->exists();
 
-                    if ($checkInvoice) {
-                        return [
-                            'status' => 'error',
-                            'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.'
-                        ];
+                        if ($checkInvoice) {
+                            return [
+                                'status' => 'error',
+                                'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.'
+                            ];
+                        }
                     }
 
                     $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
@@ -146,6 +154,12 @@ class KeranjangJual extends Model
             $stateBayar = $data['lunas'] == 1 ? 1 : 0;
             $stateDP = 0;
 
+            // Update sisa tagihan dan sisa ppn
+            if ($data['lunas'] != 1) {
+                $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
+                $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
+            }
+            // Create Invoice
             $invoice = $dbInvoice->create($data);
 
             foreach ($keranjang as $item) {
@@ -171,16 +185,18 @@ class KeranjangJual extends Model
             }
 
             $stateTempoWa = 0;
+
             if ($invoice->lunas == 0 && $invoice->dp == 0) {
                 $stateTempoWa = 1;
             }
 
             $this->update_stok($keranjang);
 
+            // kalau konsumen adalah konsumen tetap, maka update kas konsumen
             if (isset($data['konsumen_id'])) {
                 $dbKasKonsumen = new KasKonsumen();
                 $sisaTerakhirKonsumen = $dbKasKonsumen->sisaTerakhir($konsumen->id);
-                $isPembayaranTunai = $konsumen->pembayaran == 1;
+                $isPembayaranTunai = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
 
                 if($dipungut == 1) {
                     $sisaTerakhirKonsumen = $isPembayaranTunai
@@ -192,34 +208,26 @@ class KeranjangJual extends Model
                     : $sisaTerakhirKonsumen + $data['grand_total']-$data['dp'];
                 }
 
-
                 $sisa = $sisaTerakhirKonsumen < 0
                     ? 0
                     : $sisaTerakhirKonsumen;
 
-                $uraianKasKonsumen = $isPembayaranTunai
-                    ? 'Cash '.$invoice->kode
-                    : 'Tempo '.$invoice->kode;
 
-                if($dipungut == 1) {
+                    $uraianKasKonsumen = ($data['pembayaran'] == 1) ? 'Cash ' : (($data['pembayaran'] == 2) ? 'Tempo ' : 'Titipan ');
+                    $uraianKasKonsumen .= $invoice->kode;
+
+                    $variabel = ($data['pembayaran'] == 1) ? 'cash' : (($data['pembayaran'] == 2) ? 'hutang' : 'titipan');
+
+                    $grandTotalMinusDp = $data['grand_total'] - $data['dp'];
+                    $grandTotalMinusDpPpn = $data['grand_total'] - ($data['dp'] + $data['dp_ppn']);
+
                     $dbKasKonsumen->create([
                         'konsumen_id' => $konsumen->id,
                         'invoice_jual_id' => $invoice->id,
                         'uraian' => $uraianKasKonsumen,
-                        $isPembayaranTunai ? 'cash' : 'hutang' => $data['grand_total']-($data['dp']+$data['dp_ppn']),
+                        $variabel => $dipungut == 1 ? $grandTotalMinusDpPpn : $grandTotalMinusDp,
                         'sisa' => $sisa,
                     ]);
-                } else {
-                    $dbKasKonsumen->create([
-                        'konsumen_id' => $konsumen->id,
-                        'invoice_jual_id' => $invoice->id,
-                        'uraian' => $uraianKasKonsumen,
-                        $isPembayaranTunai ? 'cash' : 'hutang' => $data['grand_total']-$data['dp'],
-                        'sisa' => $sisa,
-                    ]);
-                }
-
-
 
             }
 
@@ -362,10 +370,13 @@ class KeranjangJual extends Model
             if ($stateTempoWa == 1) {
                 $addPesan = '';
 
-                if ($konsumen->pembayaran == 2) {
+                if ($konsumen->pembayaran == 2 && $data['pembayaran'] != 1) {
                     $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
                     $plafon = $konsumen->plafon;
-                    $pembayaran = $konsumen->sistem_pembayaran. ' '. $konsumen->tempo_hari. ' Hari';
+
+                    $pembayaran = $data['pembayaran'] == 2 ?  $konsumen->sistem_pembayaran. ' '. $konsumen->tempo_hari. ' Hari' : 'Titipan';
+                    // $pembayaran = $konsumen->sistem_pembayaran. ' '. $konsumen->tempo_hari. ' Hari';
+
                     $addPesan .= "Total Tagihan Konsumen: \n".
                                 "Rp. ".number_format($sisaTerakhir, 0, ',', '.')."\n\n".
                                 "Plafon Konsumen: \n".
@@ -388,6 +399,7 @@ class KeranjangJual extends Model
 
                  if ($invoice->konsumen_id) {
                     $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                                ->where('titipan', 0)
                                 ->where('lunas', 0)
                                 ->where('void', 0)
                                 ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
@@ -417,16 +429,17 @@ class KeranjangJual extends Model
                 $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
                 $dbPpnKeluaran = new PpnKeluaran();
                 $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+                $header = $data['pembayaran'] == 3 ? "🟢🟢🟢🟢🟢🟢🟢🟢🟢\n" : "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n";
 
-                 $pesan =    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                 $pesan =    $header.
                                 "*FORM PENJUALAN*\n".
-                                "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                                $header."\n".
                                 "No Invoice:\n".
                                 "*".$invoice->kode."*\n\n".
                                 "Uraian : *Tanpa DP*\n".
                                 "Pembayaran : *".$pembayaran."*\n\n".
                                 "Konsumen : *".$konsumen->nama."*\n".
-                                "Nilai :  *Rp. ".$invoice->sisa_tagihan."*\n\n".
+                                "Nilai :  *Rp. ".$invoice->nf_sisa_tagihan."*\n\n".
                                 // "Ditransfer ke rek:\n\n".
                                 // "Bank      : ".$rekening->bank."\n".
                                 // "Nama    : ".$rekening->nama_rek."\n".
