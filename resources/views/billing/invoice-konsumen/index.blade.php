@@ -89,7 +89,7 @@
                         <a href="#" data-bs-toggle="modal"
                             data-bs-target="#modalHistoriCicilan{{$d->id}}">{{number_format($d->invoice_jual_cicil->sum('nominal')+$d->invoice_jual_cicil->sum('ppn'),
                             0, ',', '.')}}</a>
-                        @include('billing.invoice-supplier.histori-cicil')
+                        @include('billing.invoice-konsumen.histori-cicil')
                         @php
                         $sumCicilan += $d->invoice_jual_cicil->sum('nominal')+$d->invoice_jual_cicil->sum('ppn');
                         @endphp
@@ -97,13 +97,13 @@
                         0
                         @endif
                     </td>
-                    <td class="text-end align-middle">{{$d->nf_sisa_ppn}}</td>
+                    <td class="text-end align-middle {{$d->ppn_dipungut ? '' : 'table-danger'}}">{{$d->nf_sisa_ppn}}</td>
                     <td class="text-end align-middle">{{$d->nf_sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
                     <td class="text-end align-middle">
 
                         <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
-                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->sisa_tagihan}}">
+                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa_tagihan}}">
                             @csrf
                             <div class="row p-3">
                                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
@@ -261,6 +261,10 @@
         document.getElementById('edit_sisa_tagihan').value = data.nf_sisa_tagihan;
         document.getElementById('edit_sisa_ppn').value = data.nf_sisa_ppn;
         document.getElementById('edit_apa_ppn').value = 1;
+        document.getElementById('edit_ppn_dipungut').value = data.ppn_dipungut;
+        document.getElementById('edit_nominal').value = '';
+        document.getElementById('edit_ppn').value = '';
+        document.getElementById('edit_total').value = '';
         document.getElementById('cicilForm').action = '/billing/invoice-konsumen/cicil/' + data.id;
 
     }

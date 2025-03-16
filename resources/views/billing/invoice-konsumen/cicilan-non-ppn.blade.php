@@ -1,6 +1,6 @@
 <div class="modal fade" id="cicilanModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
     aria-labelledby="cicilanModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="cicilanModalTitle">
@@ -12,7 +12,6 @@
                 @csrf
 
                 <input type="hidden" name="apa_ppn" id="edit_apa_ppn">
-                <input type="hidden" name="ppn_dipungut" id="edit_ppn_dipungut">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-6">
@@ -30,29 +29,10 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-lg-4">
+
+                        <div class="col-lg-6">
                             <div class="mb-3">
-                                <label for="edit_sisa_dpp" class="form-label">Sisa DPP</label>
-                                <div class="input-group mb-3">
-                                    <span class="input-group-text" id="basic-addon1">Rp</span>
-                                    <input type="text" class="form-control text-end" name="edit_sisa_dpp"
-                                        id="edit_sisa_dpp" disabled>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="mb-3">
-                                <label for="edit_sisa_ppn" class="form-label">Sisa PPN</label>
-                                <div class="input-group mb-3">
-                                    <span class="input-group-text" id="basic-addon1">Rp</span>
-                                    <input type="text" class="form-control text-end" name="edit_sisa_ppn"
-                                        id="edit_sisa_ppn" disabled>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="mb-3">
-                                <label for="edit_sisa_tagihan" class="form-label">Sisa Tagihan</label>
+                                <label for="edit_sisa_tagihan" class="form-label">Total Tagihan</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1">Rp</span>
                                     <input type="text" class="form-control text-end" name="edit_sisa_tagihan"
@@ -63,28 +43,20 @@
                     </div>
                     <hr>
                     <div class="row">
-                        <div class="col-lg-4">
+                        <div class="col-lg-6">
                             <div class="mb-3">
-                                <label for="edit_sisa_tagihan" class="form-label">Cicilan DPP</label>
+                                <label for="edit_sisa_tagihan" class="form-label">Cicilan </label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1">Rp</span>
                                     <input type="text" class="form-control text-end" name="nominal" id="edit_nominal"
-                                        required onkeyup="cekPpn()">
+                                        required onkeyup="cekSisa()">
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
+
+                        <div class="col-lg-6">
                             <div class="mb-3">
-                                <label for="edit_sisa_tagihan" class="form-label">Cicilan PPn</label>
-                                <div class="input-group mb-3">
-                                    <span class="input-group-text" id="basic-addon1">Rp</span>
-                                    <input type="text" class="form-control text-end" name="ppn" id="edit_ppn" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="mb-3">
-                                <label for="edit_total" class="form-label">Total Cicilan</label>
+                                <label for="edit_total" class="form-label">Sisa Tagihan</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1">Rp</span>
                                     <input type="text" class="form-control text-end" name="total" id="edit_total" disabled>
@@ -115,32 +87,20 @@
 
     confirmAndSubmit('#cicilForm', "Apakah anda yakin?");
 
-    function cekPpn() {
-        var ppn_dipungut = parseInt($('#edit_ppn_dipungut').val().replace(/\./g, '')) || 0;
+    function cekSisa(){
+        var sisa = parseInt($('#edit_sisa_tagihan').val().replace(/\./g, '').replace(/\,/g, '.')) ?? 0;
+        var nominal = parseInt($('#edit_nominal').val().replace(/\./g, '').replace(/\,/g, '.'));
 
-        if(ppn_dipungut == 1) {
-            var sisaPpn = parseInt($('#edit_sisa_ppn').val().replace(/\./g, '')) || 0;
-            var sisaDpp = parseInt($('#edit_sisa_dpp').val().replace(/\./g, '')) || 0;
-            var sisaTagihan = parseInt($('#edit_sisa_tagihan').val().replace(/\./g, '')) || 0;
-            var nominal = parseInt($('#edit_nominal').val().replace(/\./g, '')) || 0;
+        if (nominal > sisa) {
+            alert('Nominal cicilan tidak boleh melebihi sisa tagihan');
+            $('#edit_nominal').val('');
+            $('#edit_total').val('');
+            return;
 
-            console.log(sisaPpn, sisaTagihan, nominal, sisaDpp);
-
-            if (nominal > sisaDpp) {
-                alert('Nominal cicilan tidak boleh melebihi sisa dpp tagihan');
-                $('#edit_nominal').val(sisaDpp.toLocaleString('id-ID'));
-                nominal = sisaDpp; // Update nominal to sisaTagihan
-            }
-
-            var ppnRate = {{$ppn}} / 100;
-            var ppnVal = (document.getElementById('edit_ppn') && sisaPpn > 0) ? Math.floor(nominal * ppnRate) : 0;
-
-            document.getElementById('edit_ppn').value = ppnVal.toLocaleString('id-ID');
-            document.getElementById('edit_total').value = (nominal + ppnVal).toLocaleString('id-ID');
-        } else {
-            document.getElementById('edit_ppn').value = 0;
         }
 
+        var total = sisa - nominal;
+        $('#edit_total').val(total.toLocaleString('id-ID'));
     }
 </script>
 @endpush

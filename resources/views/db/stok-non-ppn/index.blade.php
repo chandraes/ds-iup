@@ -130,6 +130,7 @@
                     <th class="text-center align-middle">Total Harga<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga<br>Jual Barang</th>
                     <th class="text-center align-middle">Margin<br>Profit</th>
+                    <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>
             @php
@@ -222,6 +223,17 @@
                                 @endif">
                         {{ number_format($margin, 2) }}%
                     </td>
+                    <td class="text-center align-middle">
+                        @if ($stokHarga->stok == 0)
+                        <form action="{{route('db.hide', ['barang' => $stokHarga->id])}}" method="post" id="deleteForm{{ $stokHarga->id }}" data-id="{{ $stokHarga->id }}" class="d-inline delete-form">
+                            @csrf
+                            <div class="row px-3">
+                                <button type="submit" class="btn btn-sm btn-danger"><i
+                                        class="fa fa-eye-slash"></i></button>
+                            </div>
+                        </form>
+                        @endif
+                    </td>
                 </tr>
                 {{-- @endif --}}
                 @endforeach
@@ -242,13 +254,13 @@
                     <th colspan="11" class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
-                    <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle" colspan="2"></th>
                 </tr>
                 <tr>
                     <th colspan="11" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
                         0 ,',','.')}}</th>
-                    <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle" colspan="2"></th>
                 </tr>
             </tfoot>
         </table>

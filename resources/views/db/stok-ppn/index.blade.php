@@ -114,7 +114,7 @@
 
     </form>
     <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable" >
+        <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
@@ -133,7 +133,7 @@
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Margin<br>Profit</th>
-                    {{-- <th class="text-center align-middle">ACT</th> --}}
+                    <th class="text-center align-middle">ACT</th>
 
                 </tr>
             </thead>
@@ -176,26 +176,30 @@
                     @if (!$namaDisplayed)
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
                         {{$stokHarga->barang_nama->nama }}</a>
-                        </td>
+                    </td>
                     @php $namaDisplayed = true; @endphp
                     @endif
                     @if (!$barangDisplayed)
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori" onclick="getHistori({{$stokHarga->barang->id}})">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
+                            onclick="getHistori({{$stokHarga->barang->id}})">
                             {{ $stokHarga->barang->kode }}
                         </a>
                     </td>
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori" onclick="getHistori({{$stokHarga->barang->id}})">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
+                            onclick="getHistori({{$stokHarga->barang->id}})">
                             {{ $stokHarga->barang->merk }}
                         </a>
                     </td>
                     @php $barangDisplayed = true; @endphp
                     @endif
                     <td class="text-center align-middle">
-                        {{-- <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a> --}}
+                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a> --}}
                         @if ($stokHarga->stok > 0)
-                        <a href="#"data-bs-toggle="modal" data-bs-target="#actionModal" onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a>
                         @else
                         {{ $stokHarga->nf_stok }}
                         @endif
@@ -221,8 +225,8 @@
                         ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') }}</td>
                     <td class="text-end align-middle">
                         @if ($stokHarga->stok > 0)
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
-                                onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
+                            onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
                         @else
                         {{ $stokHarga->nf_harga }}
                         @endif
@@ -245,9 +249,17 @@
                         {{number_format($margin, 2, '.',',')}}%
                         @endif
                     </td>
-                    {{-- <td class="text-center align-middle">
-                        <button class="btn btn-sm btn-warning">Hilang</button>
-                    </td> --}}
+                    <td class="text-center align-middle">
+                        @if ($stokHarga->stok == 0)
+                        <form action="{{route('db.hide', ['barang' => $stokHarga->id])}}" method="post" id="deleteForm{{ $stokHarga->id }}" data-id="{{ $stokHarga->id }}" class="d-inline delete-form">
+                            @csrf
+                            <div class="row px-3">
+                                <button type="submit" class="btn btn-sm btn-danger"><i
+                                        class="fa fa-eye-slash"></i></button>
+                            </div>
+                        </form>
+                        @endif
+                    </td>
                 </tr>
                 {{-- @endif --}}
                 @endforeach
@@ -268,13 +280,13 @@
                     <th colspan="13" class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
-                    <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle" colspan="2"></th>
                 </tr>
                 <tr>
                     <th colspan="13" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
                         0 ,',','.')}}</th>
-                    <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle" colspan="2"></th>
                 </tr>
             </tfoot>
         </table>
@@ -362,7 +374,6 @@
 
     function getHistori(data)
     {
-        console.log(data);
 
         // ajax request
         $.ajax({

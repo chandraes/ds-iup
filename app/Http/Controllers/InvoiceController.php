@@ -178,7 +178,7 @@ class InvoiceController extends Controller
     {
         $data = $request->validate([
             'nominal' => 'required',
-            'ppn' => 'required',
+            'ppn' => 'nullable',
             'apa_ppn' => 'required|boolean',
         ]);
 

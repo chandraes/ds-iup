@@ -732,4 +732,24 @@ class BarangController extends Controller
             'data' => $data
         ]);
     }
+
+    public function hide_stok(BarangStokHarga $barang)
+    {
+        // check if there is minimum 1 barang->barang_id that hide = 0
+        $barangCheck = BarangStokHarga::where('barang_id', $barang->barang_id)->where('hide', 0)->count();
+
+        if ($barangCheck == 1) {
+            return redirect()->back()->with('error', 'Data stok tidak bisa disembunyikan karena minimal harus ada 1 data stok yang tidak disembunyikan!');
+        }
+
+        if ($barang->stok > 0) {
+            return redirect()->back()->with('error', 'Data stok tidak bisa disembunyikan karena masih memiliki stok!');
+        }
+
+        $barang->update([
+            'hide' => 1,
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil menyembunyikan data stok!');
+    }
 }

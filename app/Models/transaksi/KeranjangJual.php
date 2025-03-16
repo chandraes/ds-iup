@@ -154,6 +154,12 @@ class KeranjangJual extends Model
             $stateBayar = $data['lunas'] == 1 ? 1 : 0;
             $stateDP = 0;
 
+            // Update sisa tagihan dan sisa ppn
+            if ($data['lunas'] != 1) {
+                $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
+                $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
+            }
+            // Create Invoice
             $invoice = $dbInvoice->create($data);
 
             foreach ($keranjang as $item) {
@@ -433,7 +439,7 @@ class KeranjangJual extends Model
                                 "Uraian : *Tanpa DP*\n".
                                 "Pembayaran : *".$pembayaran."*\n\n".
                                 "Konsumen : *".$konsumen->nama."*\n".
-                                "Nilai :  *Rp. ".$invoice->sisa_tagihan."*\n\n".
+                                "Nilai :  *Rp. ".$invoice->nf_sisa_tagihan."*\n\n".
                                 // "Ditransfer ke rek:\n\n".
                                 // "Bank      : ".$rekening->bank."\n".
                                 // "Nama    : ".$rekening->nama_rek."\n".

@@ -157,20 +157,13 @@ class BarangStokHarga extends Model
             ->whereHas('barang', function ($query) use ($jenis) {
                 $query->where('jenis', $jenis);
             })
-            // ->where('stok', '>', 0)
-            ->where(function($query) {
-                $query->where('stok', '>', 0)
-                ->orWhere(function ($query) {
-                    $query->where('stok', '=', 0)
-                          ->orderBy('id', 'desc')
-                          ->limit(1);
-                });
-            })
+            ->where('hide', 0)
             ->orderBy('barang_unit_id')
             ->orderBy('barang_type_id')
             ->orderBy('barang_kategori_id')
             ->orderBy('barang_nama_id')
-            ->orderBy('barang_id');
+            ->orderBy('barang_id')
+            ->orderBy('created_at', 'asc');
 
         if (!is_null($unitFilter)) {
             $query->where('barang_unit_id', $unitFilter);
@@ -187,6 +180,7 @@ class BarangStokHarga extends Model
         if (!is_null($barangNamaFilter)) {
             $query->where('barang_nama_id', $barangNamaFilter);
         }
+
 
         $data = $query->get()
             ->groupBy([
