@@ -62,6 +62,11 @@
                             </select>
                         </div>
                         <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                            <label for="keterangan" class="form-label">KETERANGAN</label>
+                            <input type="text" class="form-control" name="keterangan" id="keterangan" aria-describedby="helpId"
+                                placeholder="">
+                        </div>
+                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>

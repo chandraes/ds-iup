@@ -54,6 +54,7 @@
                             <input type="text" class="form-control" name="merk" id="edit_merk" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
+
                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
                             <label for="satuan_id" class="form-label">SATUAN BARANG</label>
                             <select class="form-select" name="satuan_id" id="edit_satuan_id" required>
@@ -62,6 +63,11 @@
                                 <option value="{{$s->id}}">{{$s->nama}}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                            <label for="keterangan" class="form-label">KETERANGAN</label>
+                            <input type="text" class="form-control" name="keterangan" id="edit_keterangan" aria-describedby="helpId"
+                                placeholder="">
                         </div>
                         <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>

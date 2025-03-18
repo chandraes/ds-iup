@@ -10,6 +10,7 @@
     @include('swal')
     @include('db.barang.create')
     @include('db.barang.edit')
+    @include('db.barang.keterangan')
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
@@ -167,7 +168,12 @@
 
                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                     <td class="text-center align-middle">{{ $barang->merk }}</td>
-                    <td class="text-center align-middle">{{ $barang->satuan ? $barang->satuan->nama : '' }}</td>
+                    <td class="text-center align-middle">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#keteranganModal" onclick="showKeterangan({{ $barang }})">
+                            {{ $barang->satuan ? $barang->satuan->nama : '' }}
+                        </a>
+
+                    </td>
                     {{-- <td class="text-start align-middle">
 
                         @if ($barang->detail_types)
@@ -286,6 +292,7 @@
         document.getElementById('edit_barang_kategori_id').value = data.barang_kategori_id;
         document.getElementById('edit_kode').value = data.kode;
         document.getElementById('edit_merk').value = data.merk;
+        document.getElementById('edit_keterangan').value = data.keterangan;
         document.getElementById('edit_satuan_id').value = data.satuan_id;
 
         let kategoriSelect = document.getElementById('edit_barang_kategori_id');
@@ -314,6 +321,14 @@
 
 
         document.getElementById('editForm').action = `{{route('db.barang.update', ':id')}}`.replace(':id', data.id);
+    }
+
+    function showKeterangan(data) {
+        document.getElementById('text_keterangan').value = "";
+        if (data.keterangan != null) {
+            document.getElementById('text_keterangan').value = data.keterangan;
+        }
+
     }
 
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
