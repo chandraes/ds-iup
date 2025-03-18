@@ -183,6 +183,7 @@
                     <th style="text-align: right" colspan="9">Grand Total : </th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
+                @if ($data->lunas == 0)
                 @if ($data->konsumen && $data->konsumen->pembayaran == 2)
                 <tr>
                     <th style="text-align: right" colspan="9">DP : </th>
@@ -195,14 +196,16 @@
                 </tr>
                 <tr>
                     <th style="text-align: right" colspan="9">Sisa PPN : </th>
-                    <th style="text-align: right">{{$data->sisa_ppn}}</th>
+                    <th style="text-align: right">{{$data->nf_sisa_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
                     <th style="text-align: right" colspan="9">Sisa Tagihan : </th>
-                    <th style="text-align: right">{{$data->sisa_tagihan}}</th>
+                    <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
                 </tr>
                 @endif
+                @endif
+
             </tfoot>
         </table>
 

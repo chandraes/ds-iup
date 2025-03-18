@@ -183,26 +183,29 @@
                     <th style="text-align: right" colspan="9">Grand Total : </th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
-                @if ($data->konsumen && $data->konsumen->pembayaran == 2)
-                <tr>
-                    <th style="text-align: right" colspan="9">DP : </th>
-                    <th style="text-align: right">{{$data->nf_dp}}</th>
-                </tr>
-                @if ($data->ppn > 0)
-                <tr>
-                    <th style="text-align: right" colspan="9">DP PPn : </th>
-                    <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="9">Sisa PPN : </th>
-                    <th style="text-align: right">{{$data->sisa_ppn}}</th>
-                </tr>
+                @if ($data->lunas == 0)
+                    @if ($data->konsumen && $data->konsumen->pembayaran == 2)
+                    <tr>
+                        <th style="text-align: right" colspan="9">DP : </th>
+                        <th style="text-align: right">{{$data->nf_dp}}</th>
+                    </tr>
+                    @if ($data->ppn > 0)
+                    <tr>
+                        <th style="text-align: right" colspan="9">DP PPn : </th>
+                        <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: right" colspan="9">Sisa PPN : </th>
+                        <th style="text-align: right">{{$data->sisa_ppn}}</th>
+                    </tr>
+                    @endif
+                    <tr>
+                        <th style="text-align: right" colspan="9">Sisa Tagihan : </th>
+                        <th style="text-align: right">{{$data->sisa_tagihan}}</th>
+                    </tr>
+                    @endif
                 @endif
-                <tr>
-                    <th style="text-align: right" colspan="9">Sisa Tagihan : </th>
-                    <th style="text-align: right">{{$data->sisa_tagihan}}</th>
-                </tr>
-                @endif
+
             </tfoot>
         </table>
 
