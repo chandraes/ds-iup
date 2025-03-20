@@ -11,7 +11,6 @@
     @include('db.barang.create')
     @include('db.barang.edit')
     @include('db.barang.keterangan')
-
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">

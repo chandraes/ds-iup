@@ -12,8 +12,17 @@
                     <div class="row">
                         <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="harga" class="form-label">HARGA</label>
-                            <input type="text" class="form-control" name="harga" id="harga" aria-describedby="helpId"
-                                placeholder="" required>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1">Rp</span>
+                                <input type="text" class="form-control" name="harga" id="harga" required data-thousands="." >
+                            </div>
+                        </div>
+                        <div class="col-lg-12 col-md-12 mb-3">
+                            <label for="stok" class="form-label">Minimum Kelipatan Jual</label>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control text-end" name="min_jual" id="min_jual" required data-thousands="." >
+                                <span class="input-group-text" id="satuan_edit"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -32,6 +41,14 @@
     new Cleave('#harga', {
         numeral: true,
         numeralThousandsGroupStyle: 'thousand',
+        numeralDecimalMark: ',',
+        delimiter: '.'
+    });
+
+    new Cleave('#min_jual', {
+        numeral: true,
+        numeralThousandsGroupStyle: 'thousand',
+        negative: false,
         numeralDecimalMark: ',',
         delimiter: '.'
     });

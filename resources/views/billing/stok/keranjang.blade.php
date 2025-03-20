@@ -19,10 +19,13 @@
                         <input type="text" class="form-control text-end" name="jumlah" id="jumlah" required data-thousands=".">
                         <span class="input-group-text" id="jumlah_satuan"></span>
                     </div>
-                    {{-- <div class="col-md-12 mb-3">
-                        <input type="text" class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId"
-                            placeholder="" />
-                    </div> --}}
+                </div>
+                <div class="row">
+                    <label for="">Minimum Kelipatan Satuan Jual</label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control text-end" name="minJual" id="minJual" disabled>
+                        <span class="input-group-text" id="minJualSatuan"></span>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

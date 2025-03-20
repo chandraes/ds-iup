@@ -205,7 +205,7 @@
                     $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
                     @endphp
                     <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
-                    <td class="text-end align-middle">
+                    <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif">
                         @if ($stokHarga->stok > 0)
                             <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
                                 onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
@@ -284,7 +284,8 @@
     {
 
         document.getElementById('harga').value = data.nf_harga;
-
+        document.getElementById('min_jual').value = data.min_jual ?? '';
+        document.getElementById('satuan_edit').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
         // document.getElementById('harga').value = data.stok_ppn.nf_harga;
         document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.id);
     }

@@ -42,6 +42,16 @@ class FormJualController extends Controller
 
         $product = BarangStokHarga::find($data['barang_stok_harga_id']);
 
+        if ($product->min_jual == null) {
+            return redirect()->back()->with('error', 'Barang tidak memiliki aturan minimal jual! Silahkan hubungi admin');
+        }
+
+        $minJual = $product->min_jual;
+
+        if ($data['jumlah'] % $minJual != 0) {
+            return redirect()->back()->with('error', 'Jumlah barang harus kelipatan dari ' . $minJual . '!');
+        }
+
         if ($data['jumlah'] == 0 || $data['jumlah'] > $product->stok || $product->harga == 0) {
             $errorMessage = $data['jumlah'] == 0 || $data['jumlah'] > $product->stok
                 ? 'Jumlah stok tidak mencukupi!'

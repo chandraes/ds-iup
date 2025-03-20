@@ -178,7 +178,7 @@
                     @if (!$namaDisplayed)
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
                         {{$stokHarga->barang_nama->nama }}</a>
-                        </td>
+                    </td>
                     @php $namaDisplayed = true; @endphp
                     @endif
                     @if (!$barangDisplayed)
@@ -214,13 +214,12 @@
                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
                         <div class="input-group">
                             <button class="btn btn-danger"
-                                onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stok}})">-</button>
-                            <input type="number" class="form-control text-center"
+                                onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
+                            <input type="text" class="form-control text-center"
                                 value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
-                                min="1" max="{{$stokHarga->stok}}"
-                                onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stok}})">
+                                max="{{$stokHarga->stok}}" disabled>
                             <button class="btn btn-success"
-                                onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stok}})">+</button>
+                                onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
                         </div>
                         @else
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
@@ -344,17 +343,18 @@
                         </ul>
                         @endif
                     </td>
+
                     <td class="text-center align-middle">
                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
                         <div class="input-group">
                             <button class="btn btn-danger"
-                                onclick="updateCart({{$stokHarga->id}}, -1, {{$stokHarga->stok}})">-</button>
-                            <input type="number" class="form-control text-center"
+                                onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
+                            <input type="text" class="form-control text-center"
                                 value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
-                                min="1" max="{{$stokHarga->stok}}"
-                                onchange="changeQuantity({{$stokHarga->id}}, this.value, {{$stokHarga->stok}})">
+                                max="{{$stokHarga->stok}}" disabled>
+
                             <button class="btn btn-success"
-                                onclick="updateCart({{$stokHarga->id}}, 1, {{$stokHarga->stok}})">+</button>
+                                onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
                         </div>
                         @else
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
@@ -412,6 +412,8 @@
         console.log(data);
         document.getElementById('titleJumlah').innerText = data.barang_nama.nama;
         document.getElementById('jumlah_satuan').innerText = data.barang.satuan ? data.barang.satuan.nama : '';
+        document.getElementById('minJualSatuan').innerText = data.barang.satuan ? data.barang.satuan.nama : '';
+        document.getElementById('minJual').value = data.nf_min_jual;
         document.getElementById('barang_stok_harga_id').value = id;
 
         if (data.barang.jenis == 1) {
@@ -422,7 +424,7 @@
     }
 
     function updateCart(productId, quantity, maxStock) {
-        let currentQuantity = parseInt($(`button[onclick="updateCart(${productId}, 1, ${maxStock})"]`).siblings('input').val());
+        let currentQuantity = parseInt($(`button[onclick="updateCart(${productId}, 2, ${maxStock})"]`).siblings('input').val());
 
         if (currentQuantity + quantity > maxStock) {
             alert('Jumlah item tidak boleh melebihi stok yang tersedia.');

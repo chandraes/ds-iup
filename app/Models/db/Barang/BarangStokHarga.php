@@ -13,7 +13,7 @@ class BarangStokHarga extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['nf_harga', 'nf_stok', 'nf_harga_beli', 'tanggal'];
+    protected $appends = ['nf_harga', 'nf_stok', 'nf_harga_beli', 'tanggal', 'nf_min_jual'];
 
     public function barang()
     {
@@ -49,6 +49,11 @@ class BarangStokHarga extends Model
     public function getNfHargaAttribute()
     {
         return number_format($this->harga, 0, ',', '.');
+    }
+
+    public function getNfMinJualAttribute()
+    {
+        return $this->min_jual ? number_format($this->min_jual, 0, ',', '.') : '';
     }
 
     public function getNfStokAttribute()
