@@ -28,7 +28,7 @@ class GroupWa extends Model
 
     }
 
-    public function generateMessage($isIn, $title, $kasPpn, $uraian, $nominal, $rekening, $additionalMessage = null)
+    public function generateMessage($isIn, $title, $kasPpn, $uraian, $nominal, $rekening, $additionalMessageDown = null, $additionalMessageUp = null)
     {
 
         $lineHeading = $isIn == 1 ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n" : "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n";
@@ -69,8 +69,9 @@ class GroupWa extends Model
                     "Nama    : ".$rekening['nama_rek']."\n".
                     "No. Rek : ".$rekening['no_rek']."\n\n".
                     "==========================\n".
+                    $additionalMessageUp.
                     $sisaSaldo.
-                    $additionalMessage.
+                    $additionalMessageDown.
                     "Terima kasih 🙏🙏🙏\n";
 
         return $pesan;

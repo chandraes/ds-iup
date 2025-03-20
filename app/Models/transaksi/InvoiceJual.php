@@ -439,7 +439,7 @@ class InvoiceJual extends Model
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $data['ppn'] = isset($data['ppn']) ? str_replace('.', '', $data['ppn']) : 0;
-        
+
         $totalCicil = $data['nominal'] + $data['ppn'];
 
         unset($data['apa_ppn']);
@@ -512,6 +512,9 @@ class InvoiceJual extends Model
             $dbPpnKeluaran = new PpnKeluaran();
             $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
+            $addMessageUp = "Sisa Cicilan konsumen : \n".
+                            "Rp. ".number_format($inv->sisa_tagihan, 0, ',', '.')."\n\n";
+
             $addMessage =   "Total PPn Masukan : \n".
                             "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
                             "Total PPn Keluaran : \n".
@@ -519,7 +522,7 @@ class InvoiceJual extends Model
 
             $dbWa = new GroupWa();
 
-            $pesan = $dbWa->generateMessage(1, 'CICILAN JUAL BARANG', $kas_ppn, $store->uraian, $store->nominal, $rekening, $addMessage);
+            $pesan = $dbWa->generateMessage(1, 'CICILAN JUAL BARANG', $kas_ppn, $store->uraian, $store->nominal, $rekening, $addMessage, $addMessageUp);
 
             $group = $dbWa->where('untuk', $kasMana)->first()->nama_group;
             //  dd($group);
