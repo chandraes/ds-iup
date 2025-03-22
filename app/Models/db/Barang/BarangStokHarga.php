@@ -3,6 +3,7 @@
 namespace App\Models\db\Barang;
 
 use App\Models\db\Pajak;
+use App\Models\db\Satuan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ class BarangStokHarga extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['nf_harga', 'nf_stok', 'nf_harga_beli', 'tanggal', 'nf_min_jual'];
+    protected $appends = ['nf_harga', 'nf_stok', 'nf_harga_beli', 'tanggal', 'nf_min_jual', 'nf_stok_awal'];
 
     public function barang()
     {
@@ -59,6 +60,11 @@ class BarangStokHarga extends Model
     public function getNfStokAttribute()
     {
         return number_format($this->stok, 0, ',', '.');
+    }
+
+    public function getNfStokAwalAttribute()
+    {
+        return number_format($this->stok_awal, 0, ',', '.');
     }
 
     public function getNfHargaBeliAttribute()

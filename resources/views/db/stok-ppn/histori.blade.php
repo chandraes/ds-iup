@@ -17,6 +17,8 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="historiTitle">
                         Histori Stok Barang
+                        <br>
+                        Keterangan : <span id="historiKeterangan"></span>
                     </h5>
                     <button
                         type="button"
@@ -31,6 +33,8 @@
                             <tr>
                                 <th>No</th>
                                 <th>Tanggal</th>
+                                <th>Qty</th>
+                                <th>Satuan</th>
                                 <th>Harga Beli</th>
                                 <th>Harga Jual</th>
                             </tr>

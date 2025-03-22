@@ -726,7 +726,7 @@ class BarangController extends Controller
     {
         $barang = Barang::find($request->barang);
 
-        $data = BarangStokHarga::where('barang_id', $barang->id)->orderBy('created_at', 'desc')->get();
+        $data = BarangStokHarga::with(['barang.satuan'])->where('barang_id', $barang->id)->orderBy('created_at', 'desc')->get();
 
         if ($data->isEmpty()) {
             return response()->json([
@@ -737,7 +737,8 @@ class BarangController extends Controller
 
         return response()->json([
             'status' => 1,
-            'data' => $data
+            'data' => $data,
+            'keterangan' => $barang->keterangan,
         ]);
     }
 

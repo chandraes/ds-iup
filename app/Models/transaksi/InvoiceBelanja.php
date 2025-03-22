@@ -184,6 +184,8 @@ class InvoiceBelanja extends Model
             // delete detail
             $inv->detail()->delete();
 
+            BarangHistory::where('invoice_belanja_id', $inv->id)->delete();
+
             $kas = new KasBesar();
 
             if ($inv->dp > 0) {

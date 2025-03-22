@@ -378,6 +378,7 @@ class Keranjang extends Model
                 'barang_kategori_id' => $barang->barang_kategori_id,
                 'barang_nama_id' => $barang->barang_nama_id,
                 'barang_id' => $item->barang_id,
+                'stok_awal' => $item->jumlah,
                 'stok' => $item->jumlah,
                 'harga_beli' => $item->harga,
             ]);

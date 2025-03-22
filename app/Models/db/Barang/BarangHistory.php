@@ -2,6 +2,7 @@
 
 namespace App\Models\db\Barang;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -36,5 +37,10 @@ class BarangHistory extends Model
     public function getNfTotalAttribute()
     {
         return number_format($this->total, 0, ',', '.');
+    }
+
+    public function getTanggalAttribute()
+    {
+        return Carbon::parse($this->created_at)->format('d-m-Y');
     }
 }

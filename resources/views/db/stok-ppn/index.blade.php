@@ -124,6 +124,7 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
+                    <th class="text-center align-middle">Stok<br>Awal</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
@@ -194,6 +195,9 @@
                     </td>
                     @php $barangDisplayed = true; @endphp
                     @endif
+                    <td class="text-center align-middle">
+                        {{ $stokHarga->nf_stok_awal }}
+                    </td>
                     <td class="text-center align-middle">
                         {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
                             onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a> --}}
@@ -277,13 +281,13 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="13" class="text-end align-middle">Grand Total</th>
+                    <th colspan="14" class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
                     <th class="text-end align-middle" colspan="2"></th>
                 </tr>
                 <tr>
-                    <th colspan="13" class="text-end align-middle">Estimasi Profit</th>
+                    <th colspan="14" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
                         0 ,',','.')}}</th>
                     <th class="text-end align-middle" colspan="2"></th>
@@ -397,13 +401,17 @@
                     return;
                 }
 
+                document.getElementById('historiKeterangan').innerHTML = response.keterangan ?? '-';
+
                 response.data.forEach((item, index) => {
                     $('#historiTable tbody').append(`
                         <tr>
-                            <td>${index+1}</td>
+                            <td class="text-center align-middle">${index+1}</td>
                             <td>${item.tanggal}</td>
-                            <td>${item.nf_harga_beli}</td>
-                            <td>${item.nf_harga}</td>
+                            <td>${item.nf_stok_awal}</td>
+                            <td>${item.barang.satuan.nama}</td>
+                            <td class="text-end align-middle">${item.nf_harga_beli}</td>
+                            <td class="text-end align-middle">${item.nf_harga}</td>
                         </tr>
                     `);
                 });
