@@ -334,6 +334,7 @@ class BarangController extends Controller
                     unset($data['detail_type']);
                 }
 
+                $data['barang_unit_id'] = BarangType::find($data['barang_type_id'])->barang_unit_id;
 
                 $store = $barang->update($data);
 
@@ -346,6 +347,13 @@ class BarangController extends Controller
                         ]);
                     }
                 }
+
+                BarangStokHarga::where('barang_id', $barang->id)->update([
+                    'barang_unit_id' => $data['barang_unit_id'],
+                    'barang_type_id' => $data['barang_type_id'],
+                    'barang_kategori_id' => $data['barang_kategori_id'],
+                    'barang_nama_id' => $data['barang_nama_id'],
+                ]);
 
                 DB::commit();
 
