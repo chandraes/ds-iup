@@ -153,7 +153,6 @@
         $('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,
-            "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
         });
