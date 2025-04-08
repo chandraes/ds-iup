@@ -57,7 +57,15 @@
                                 <span class="input-group-text" id="basic-addon1">Hari</span>
                               </div>
                         </div>
-
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="npwp" class="form-label">Sales Area</label>
+                            <select name="sales_area_id" id="sales_area_id" required class="form-select">
+                                <option value="" disabled selected>-- Pilih Salah Satu --</option>
+                                @foreach ($sales_area as $s)
+                                <option value="{{$s->id}}">{{$s->nama}}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <hr>
                     <div class="row">

@@ -154,7 +154,8 @@
             "paging": false,
             "ordering": true,
             "scrollCollapse": true,
-            "scrollY": "550px",
+            "scrollY": "60vh", // Set scrollY to 50% of the viewport height
+            "scrollX": true,
         });
 
         $('#supplier_id').select2({

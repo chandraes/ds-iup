@@ -33,6 +33,11 @@ class Konsumen extends Model
         return $this->belongsTo(Wilayah::class, 'kecamatan_id', 'id');
     }
 
+    public function sales_area()
+    {
+        return $this->belongsTo(SalesArea::class);
+    }
+
     public function generateKode()
     {
         $kode = $this->max('kode');

@@ -212,6 +212,13 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::delete('/{konsumen}/delete', [App\Http\Controllers\DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');
             });
 
+            Route::prefix('sales-area')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'sales_area'])->name('db.sales-area');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'sales_area_store'])->name('db.sales-area.store');
+                Route::patch('/update/{sales}', [App\Http\Controllers\DatabaseController::class, 'sales_area_update'])->name('db.sales-area.update');
+                Route::delete('/delete/{sales}', [App\Http\Controllers\DatabaseController::class, 'sales_area_delete'])->name('db.sales-area.delete');
+            });
+
             Route::get('/investor', [App\Http\Controllers\InvestorController::class, 'index'])->name('db.investor');
             Route::patch('/investor/{investor}/update', [App\Http\Controllers\InvestorController::class, 'update'])->name('db.investor.update');
 

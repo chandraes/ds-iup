@@ -7,13 +7,17 @@
         </div>
     </div>
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-12">
             <table class="table" id="data-table">
                 <tr>
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('db')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
+                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalSalesArea"><img
+                        src="{{asset('images/area.svg')}}" width="30"> Sales Area</a>
+
+                    </td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#createInvestor"><img
                                 src="{{asset('images/customer.svg')}}" width="30"> Tambah Konsumen</a>
 
@@ -26,7 +30,35 @@
 @include('swal')
 @include('db.konsumen.create')
 @include('db.konsumen.edit')
+@include('db.konsumen.sales-area')
+
 <div class="container-fluid mt-5 table-responsive">
+    <div class="row mb-3">
+        {{-- buat filter untuk sales area --}}
+        <div class="col-md-4">
+            <label for="filterSalesArea" class="form-label">Filter Sales Area</label>
+            <form method="GET" action="{{ url()->current() }}">
+                <select id="filterSalesArea" name="area" class="form-select" onchange="this.form.submit()">
+                    <option value="" disabled>-- Semua Sales Area --</option>
+                    @foreach ($sales_area as $salesArea)
+                        <option value="{{ $salesArea->id }}" {{ request('area') == $salesArea->id ? 'selected' : '' }}>
+                            {{ $salesArea->nama }}
+                        </option>
+                    @endforeach
+                </select>
+
+            </form>
+        </div>
+        <div class="col-md-2 mt-4">
+            <div class="row">
+                <a href="{{ url()->current() }}" class="btn btn-secondary mt-2">Reset</a>
+            </div>
+
+        </div>
+    </div>
+
+
+
     <table class="table table-bordered table-hover" id="data">
         <thead class="table-warning bg-gradient">
             <tr>
@@ -35,6 +67,7 @@
                 <th class="text-center align-middle">NAMA</th>
                 <th class="text-center align-middle">CP</th>
                 <th class="text-center align-middle">NPWP</th>
+                <th class="text-center align-middle">Sales Area</th>
                 <th class="text-center align-middle">Provinsi</th>
                 <th class="text-center align-middle">Kab/Kota</th>
                 <th class="text-center align-middle">Kecamatan</th>
@@ -70,6 +103,7 @@
                     </ul>
                 </td>
                 <td class="text-center align-middle">{{$d->npwp}}</td>
+                <td class="text-center align-middle">{{$d->sales_area ? $d->sales_area->nama : ''}}</td>
                 <td class="text-start align-middle">
                     {{$d->provinsi ? $d->provinsi->nama_wilayah : ''}}
                 </td>
@@ -161,6 +195,18 @@
             width: '100%',
             dropdownParent: $('#createInvestor'),
         });
+
+        $('#edit_sales_area_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#editInvestor'),
+        });
+
+        $('#filterSalesArea').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+        });
+
    function editInvestor(data, id) {
         $('#edit_kabupaten_kota_id').empty();
         $('#edit_kecamatan_id').empty();
@@ -189,6 +235,8 @@
             width: '100%',
             dropdownParent: $('#editInvestor'),
         });
+
+
 
     }
 
@@ -439,7 +487,18 @@
             })
         });
 
+        $('#modalSalesArea').on('shown.bs.modal', function () {
+            table.columns.adjust().draw();
+        });
 
+        $('#modalSalesArea').on('hidden.bs.modal', function () {
+            if ($.fn.DataTable.isDataTable('#salesAreaTable')) {
+                table.destroy();
+                $('#salesAreaTable tbody').empty(); // bersihkan isi table
+            }
 
+            // 🔄 Refresh halaman
+            location.reload();
+        });
 </script>
 @endpush

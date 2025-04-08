@@ -11,6 +11,7 @@ use App\Models\db\Supplier;
 use App\Models\db\Konsumen;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
+use App\Models\db\SalesArea;
 use App\Models\db\Satuan;
 use App\Models\Pengelola;
 use App\Models\Wilayah;
@@ -393,14 +394,63 @@ class DatabaseController extends Controller
         return redirect()->route('db.pengelola')->with('success', 'Data berhasil dihapus');
     }
 
-    public function konsumen()
+    public function sales_area(Request $request)
     {
-        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan'])->get();
+        return response()->json([
+            'data' => SalesArea::select('id', 'nama')->get()
+        ]);
+    }
+
+    public function sales_area_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required'
+        ]);
+
+        SalesArea::create($data);
+
+        return response()->json(['message' => 'Data berhasil disimpan']);
+    }
+
+    public function sales_area_update(SalesArea $sales, Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required'
+        ]);
+
+        $sales->update($data);
+
+        return response()->json(['message' => 'Data berhasil diubah']);
+    }
+
+    public function sales_area_delete(SalesArea $sales)
+    {
+        try {
+            DB::beginTransaction();
+            $sales->delete();
+            DB::commit();
+
+            return response()->json(['message' => 'Data berhasil dihapus']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+    }
+
+    public function konsumen(Request $request)
+    {
+        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area'])
+            ->when($request->has('area'), function ($query) use ($request) {
+                $query->where('sales_area_id', $request->area);
+            })
+            ->get();
+
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
 
         return view('db.konsumen.index', [
             'data' => $data,
-            'provinsi' => $provinsi
+            'provinsi' => $provinsi,
+            'sales_area' => SalesArea::select('id', 'nama')->get()
         ]);
     }
 
@@ -419,6 +469,7 @@ class DatabaseController extends Controller
             'pembayaran' => 'required',
             'plafon' => 'required_if:pembayaran,1',
             'tempo_hari' => 'required_if:pembayaran,1',
+            'sales_area_id' => 'required|exists:sales_areas,id',
         ]);
 
         $db = new Konsumen();
@@ -446,7 +497,8 @@ class DatabaseController extends Controller
             'alamat' => 'required',
             'pembayaran' => 'required',
             'plafon' => 'required',
-            'tempo_hari' => 'required'
+            'tempo_hari' => 'required',
+            'sales_area_id' => 'required|exists:sales_areas,id',
         ]);
 
         $data['plafon'] = str_replace('.', '', $data['plafon']);
