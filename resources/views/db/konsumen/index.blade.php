@@ -62,7 +62,6 @@
     <table class="table table-bordered table-hover" id="data">
         <thead class="table-warning bg-gradient">
             <tr>
-                <th class="text-center align-middle" style="width: 5%">NO</th>
                 <th class="text-center align-middle">KODE</th>
                 <th class="text-center align-middle">NAMA</th>
                 <th class="text-center align-middle">CP</th>
@@ -89,7 +88,7 @@
             $isDuplicateNama = $namaCounts[$d->nama] > 1;
             @endphp
             <tr>
-                <td class="text-center align-middle"></td>
+
                 <td class="text-center align-middle">{{$d->full_kode}}</td>
                 <td class="text-center align-middle {{$isDuplicateNama ? 'text-danger' : ''}}">{{$d->nama}}</td>
                 <td class="text-start align-middle">
@@ -350,58 +349,6 @@
         stateSave: true,
         scrollY: "550px",
         scrollX: true,
-        // dom: 'Bfrtip', // Tambahkan ini untuk menampilkan tombol
-        // buttons: [
-        //     {
-        //         extend: 'pdfHtml5',
-        //         orientation: 'landscape',
-        //         pageSize: 'A4',
-        //         exportOptions: {
-        //             columns: ':not(:last-child)' // Mengecualikan kolom terakhir
-        //         },
-        //         customize: function (doc) {
-        //             var rowCount = doc.content[1].table.body.length;
-        //             for (var i = 1; i < rowCount; i++) {
-        //                 doc.content[1].table.body[i][0].text = i.toString();
-        //                 doc.content[1].table.body[i][0].alignment = 'center'; // Center align for first column
-        //                 doc.content[1].table.body[i][1].alignment = 'center'; // Center align for second column
-        //                 doc.content[1].table.body[i][4].alignment = 'center'; // Center align for fourth column
-
-        //                 // Convert HTML list to plain text for the fourth column
-
-        //             }
-
-        //             // Add border to the table
-        //             var objLayout = {};
-        //             objLayout['hLineWidth'] = function(i) { return 0.5; };
-        //             objLayout['vLineWidth'] = function(i) { return 0.5; };
-        //             objLayout['hLineColor'] = function(i) { return '#aaa'; };
-        //             objLayout['vLineColor'] = function(i) { return '#aaa'; };
-        //             objLayout['paddingLeft'] = function(i) { return 4; };
-        //             objLayout['paddingRight'] = function(i) { return 4; };
-        //             objLayout['paddingTop'] = function(i) { return 2; };
-        //             objLayout['paddingBottom'] = function(i) { return 2; };
-        //             doc.content[1].layout = objLayout;
-        //         }
-        //     }
-        // ],
-        columnDefs: [
-            {
-                targets: 0,
-                searchable: false,
-                orderable: false,
-                className: 'dt-body-center',
-                render: function (data, type, full, meta) {
-                    return meta.row + 1; // Menambahkan nomor urut
-                }
-            }
-        ],
-        drawCallback: function(settings) {
-            var api = this.api();
-            api.column(0, { search: 'applied', order: 'applied' }).nodes().each(function(cell, i) {
-                cell.innerHTML = i + 1;
-            });
-        }
     });
 
 
