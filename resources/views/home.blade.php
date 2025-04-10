@@ -104,6 +104,9 @@
         @endif
     </div>
     @endif
+    @if (auth()->user()->role == 'sales')
+    @include('dashboard-sales')
+    @endif
 </div>
 @endsection
 

@@ -24,6 +24,12 @@ Auth::routes([
 Route::group(['middleware' => ['auth']], function() {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
+    Route::group(['middleware' => ['role:sales']], function(){
+        Route::prefix('sales')->group(function(){
+            Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
+        });
+    });
+
     Route::group(['middleware' => ['role:su,admin,user']], function() {
         Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
         Route::get('/get-kab-kota', [App\Http\Controllers\HomeController::class, 'getKabKota'])->name('get-kab-kota');
