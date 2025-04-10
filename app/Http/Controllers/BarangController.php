@@ -35,12 +35,25 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Data berhasil ditambahkan');
     }
 
-    public function barang_kategori()
+    public function barang_kategori(Request $request)
     {
-        $data = BarangKategori::with(['barang_nama'])->withCount('barang_nama')->orderBy('urut')->get();
+        $data = BarangKategori::with(['barang_nama' => function ($query) use ($request) {
+                    if ($request->input('filter_barang_nama')) {
+                        $query->where('id', $request->input('filter_barang_nama'));
+                    }
+                }])
+                ->withCount(['barang_nama' => function ($query) use ($request) {
+                    if ($request->input('filter_barang_nama')) {
+                        $query->where('id', $request->input('filter_barang_nama'));
+                    }
+                }])
+                ->orderBy('urut')->get();
+
+        $barangNama = BarangNama::select('id', 'nama')->get();
 
         return view('db.kategori-barang.index', [
-            'data' => $data
+            'data' => $data,
+            'barangNama' => $barangNama,
         ]);
     }
 

@@ -62,10 +62,10 @@
                         <label for="" class="col-md-3 form-label">Role</label>
                         <div class="col-md-9">
                             <select class="form-select" name="role" id="role" required>
-                                <option value="">-- Pilih Role --</option>
-                                <option value="admin" @if($d->role == 'admin') selected @endif>Admin</option>
-                                <option value="user" @if($d->role == 'user') selected @endif>User</option>
-                                <option value="investor" @if($d->role == 'investor') selected @endif>Investor</option>
+                                <option value="" disabled>-- Pilih Role --</option>
+                                @foreach ($roles as $role)
+                                <option value="{{ $role }}" @if ($role == $d->role) selected @endif>{{ Str::upper($role) }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>

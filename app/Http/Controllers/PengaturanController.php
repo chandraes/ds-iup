@@ -63,10 +63,14 @@ class PengaturanController extends Controller
      */
     public function index()
     {
+        $db = new User();
+        $users = $db->get();
 
-        $users = User::all();
+        $roles = $db->getRoles();
+
         return view('pengaturan.pengguna.index', [
             'data' => $users,
+            'roles' => $roles,
         ]);
     }
 

@@ -21,13 +21,15 @@
                     <td><a href="{{route('db')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
                     <td>
-                        <td class="text-center align-middle"><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img
-                            src="{{asset('images/kategori.svg')}}" alt="dokumen" width="30"> Tambah Kelompok</a>
-                </td>
+                    <td class="text-center align-middle"><a href="#" data-bs-toggle="modal"
+                            data-bs-target="#create-category"><img src="{{asset('images/kategori.svg')}}" alt="dokumen"
+                                width="30"> Tambah Kelompok</a>
+                    </td>
                     <td>
                         <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#createModal">
-                            <img src=" {{asset('images/kelompok-barang.svg')}}" alt="dokumen" width="30"> Tambah Nama Barang</a>
+                            <img src=" {{asset('images/kelompok-barang.svg')}}" alt="dokumen" width="30"> Tambah Nama
+                            Barang</a>
                     </td>
                 </tr>
             </table>
@@ -39,6 +41,7 @@
         max-height: 500px;
         overflow-y: auto;
     }
+
     thead th {
         position: sticky;
         top: 0;
@@ -46,7 +49,26 @@
         z-index: 1;
     }
 </style>
+
 <div class="container mt-5 table-responsive ">
+    <div class="filter">
+        <form action="{{route('db.barang-kategori')}}" method="get">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <select class="form-select" name="filter_barang_nama" id="filter_barang_nama" onchange="this.form.submit()">
+                        <option value="" disabled selected>-- Pilih Nama Barang --</option>
+                        @foreach ($barangNama as $b)
+                        <option value="{{ $b->id }}" {{ request('filter_barang_nama') == $b->id ? 'selected' : '' }}>
+                            {{ $b->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a type="submit" class="btn btn-primary" href="{{url()->current()}}">Reset Filter</a>
+                </div>
+            </div>
+        </form>
+    </div>
     {{-- <input type="text" id="searchInput" placeholder="Search for names.." title="Type in a name"> --}}
     <div class="table-container">
         <table class="table table-bordered" id="dataTable">
@@ -61,28 +83,30 @@
             <tbody>
                 @php $counter = 1; @endphp
                 @foreach ($data as $d)
-                    @if ($d->barang_nama)
-                        @php $isFirst = true; @endphp
-                        @foreach ($d->barang_nama as $t)
-                            <tr>
-                                @if ($isFirst)
-                                    <td class="text-center align-middle" rowspan="{{ $d->barang_nama_count }}">{{ $counter }}</td>
-                                    <td class="text-center align-middle" rowspan="{{ $d->barang_nama_count }}">{{ $d->nama }}</td>
-                                    @php $isFirst = false; @endphp
-                                @endif
-                                <td class="text-start align-middle">{{ $t->nama }}</td>
-                                <td class="text-center align-middle">
-                                    <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal" onclick="editFun({{ $t }})"><i class="fa fa-edit"></i></a>
-                                    <form action="{{ route('db.barang-kategori.delete', $t->id) }}" method="post" class="d-inline delete-form" id="deleteForm{{ $t->id }}" data-id="{{ $t->id }}">
-                                        @csrf
-                                        @method('delete')
-                                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                        @php $counter++; @endphp
+                @if ($d->barang_nama)
+                @php $isFirst = true; @endphp
+                @foreach ($d->barang_nama as $t)
+                <tr>
+                    @if ($isFirst)
+                    <td class="text-center align-middle" rowspan="{{ $d->barang_nama_count }}">{{ $counter }}</td>
+                    <td class="text-center align-middle" rowspan="{{ $d->barang_nama_count }}">{{ $d->nama }}</td>
+                    @php $isFirst = false; @endphp
                     @endif
+                    <td class="text-start align-middle">{{ $t->nama }}</td>
+                    <td class="text-center align-middle">
+                        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
+                            onclick="editFun({{ $t }})"><i class="fa fa-edit"></i></a>
+                        <form action="{{ route('db.barang-kategori.delete', $t->id) }}" method="post"
+                            class="d-inline delete-form" id="deleteForm{{ $t->id }}" data-id="{{ $t->id }}">
+                            @csrf
+                            @method('delete')
+                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                @endforeach
+                @php $counter++; @endphp
+                @endif
                 @endforeach
             </tbody>
 
@@ -94,11 +118,18 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+    $('#filter_barang_nama').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
+    
     function editFun(data)
     {
         document.getElementById('edit_nama').value = data.nama;

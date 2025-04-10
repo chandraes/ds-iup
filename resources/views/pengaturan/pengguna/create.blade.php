@@ -62,10 +62,11 @@
                         <label for="" class="col-md-3 form-label">Role</label>
                         <div class="col-md-9">
                             <select class="form-select" name="role" id="role" required onchange="checkRole()">
-                                <option value="">-- Pilih Role --</option>
-                                <option value="admin">Admin</option>
-                                <option value="user">User</option>
-                                <option value="investor">Investor</option>
+                                <option value="" disabled>-- Pilih Role --</option>
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role }}">{{ Str::upper($role) }}</option>
+
+                                @endforeach
                             </select>
                         </div>
                     </div>

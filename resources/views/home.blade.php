@@ -4,7 +4,9 @@
     <h1><u>DASHBOARD</u></h1>
 </div>
 <div class="container mt-3">
+    @if (auth()->user()->role != 'sales')
     <div class="row justify-content-left">
+
         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('db')}}" class="text-decoration-none">
@@ -101,6 +103,7 @@
         </div>
         @endif
     </div>
+    @endif
 </div>
 @endsection
 

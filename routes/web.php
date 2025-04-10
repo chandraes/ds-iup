@@ -23,43 +23,45 @@ Auth::routes([
 
 Route::group(['middleware' => ['auth']], function() {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-    Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
-    Route::get('/get-kab-kota', [App\Http\Controllers\HomeController::class, 'getKabKota'])->name('get-kab-kota');
-    Route::get('/get-kecamatan', [App\Http\Controllers\HomeController::class, 'getKecamatan'])->name('get-kecamatan');
 
-    Route::prefix('holding')->group(function(){
-        Route::get('/check-connection', [App\Http\Controllers\HoldingController::class, 'check_connection'])->name('holding.check_connection');
-    });
+    Route::group(['middleware' => ['role:su,admin,user']], function() {
+        Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
+        Route::get('/get-kab-kota', [App\Http\Controllers\HomeController::class, 'getKabKota'])->name('get-kab-kota');
+        Route::get('/get-kecamatan', [App\Http\Controllers\HomeController::class, 'getKecamatan'])->name('get-kecamatan');
 
-    Route::prefix('inventaris')->group(function(){
-        Route::get('/', [App\Http\Controllers\InventarisController::class, 'index'])->name('inventaris.index');
-        Route::get('/invoice', [App\Http\Controllers\InventarisController::class, 'invoice'])->name('inventaris.invoice');
-
-        Route::prefix('/{kategori}')->group(function(){
-            Route::get('/', [App\Http\Controllers\InventarisController::class, 'detail'])->name('inventaris.detail');
-            Route::get('/{jenis}', [App\Http\Controllers\InventarisController::class, 'detail_jenis'])->name('inventaris.detail.jenis');
-            Route::post('/{jenis}/{inventaris}', [App\Http\Controllers\InventarisController::class, 'aksi'])->name('inventaris.aksi');
-        });
-    });
-
-    Route::prefix('legalitas')->group(function(){
-
-        Route::prefix('kategori')->group(function(){
-            Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'kategori_store'])->name('legalitas.kategori-store');
-            Route::patch('/update/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_update'])->name('legalitas.kategori-update');
-            Route::delete('/destroy/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_destroy'])->name('legalitas.kategori-destroy');
+        Route::prefix('holding')->group(function(){
+            Route::get('/check-connection', [App\Http\Controllers\HoldingController::class, 'check_connection'])->name('holding.check_connection');
         });
 
-        Route::get('/', [App\Http\Controllers\LegalitasController::class, 'index'])->name('legalitas');
-        Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'store'])->name('legalitas.store');
-        Route::patch('/update/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'update'])->name('legalitas.update');
-        Route::delete('/destroy/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'destroy'])->name('legalitas.destroy');
+        Route::prefix('inventaris')->group(function(){
+            Route::get('/', [App\Http\Controllers\InventarisController::class, 'index'])->name('inventaris.index');
+            Route::get('/invoice', [App\Http\Controllers\InventarisController::class, 'invoice'])->name('inventaris.invoice');
 
-        Route::post('/kirim-wa/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'kirim_wa'])->name('legalitas.kirim-wa');
+            Route::prefix('/{kategori}')->group(function(){
+                Route::get('/', [App\Http\Controllers\InventarisController::class, 'detail'])->name('inventaris.detail');
+                Route::get('/{jenis}', [App\Http\Controllers\InventarisController::class, 'detail_jenis'])->name('inventaris.detail.jenis');
+                Route::post('/{jenis}/{inventaris}', [App\Http\Controllers\InventarisController::class, 'aksi'])->name('inventaris.aksi');
+            });
+        });
 
-    });
+        Route::prefix('legalitas')->group(function(){
 
-    Route::prefix('dokumen')->group(function(){
+            Route::prefix('kategori')->group(function(){
+                Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'kategori_store'])->name('legalitas.kategori-store');
+                Route::patch('/update/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_update'])->name('legalitas.kategori-update');
+                Route::delete('/destroy/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_destroy'])->name('legalitas.kategori-destroy');
+            });
+
+            Route::get('/', [App\Http\Controllers\LegalitasController::class, 'index'])->name('legalitas');
+            Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'store'])->name('legalitas.store');
+            Route::patch('/update/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'update'])->name('legalitas.update');
+            Route::delete('/destroy/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'destroy'])->name('legalitas.destroy');
+
+            Route::post('/kirim-wa/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'kirim_wa'])->name('legalitas.kirim-wa');
+
+        });
+
+        Route::prefix('dokumen')->group(function(){
             Route::get('/', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
 
             Route::prefix('mutasi-rekening')->group(function(){
@@ -91,51 +93,54 @@ Route::group(['middleware' => ['auth']], function() {
             });
         });
 
-    Route::prefix('company-profile')->group(function(){
-        Route::get('/', [App\Http\Controllers\DokumenController::class, 'company_profile'])->name('company-profile');
-        Route::post('/store', [App\Http\Controllers\DokumenController::class, 'company_profile_store'])->name('company-profile.store');
-        Route::delete('/destroy/{company_profile}', [App\Http\Controllers\DokumenController::class, 'company_profile_destroy'])->name('company-profile.destroy');
-        Route::post('/kirim-wa/{company_profile}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_cp'])->name('company-profile.kirim-wa');
+        Route::prefix('company-profile')->group(function(){
+            Route::get('/', [App\Http\Controllers\DokumenController::class, 'company_profile'])->name('company-profile');
+            Route::post('/store', [App\Http\Controllers\DokumenController::class, 'company_profile_store'])->name('company-profile.store');
+            Route::delete('/destroy/{company_profile}', [App\Http\Controllers\DokumenController::class, 'company_profile_destroy'])->name('company-profile.destroy');
+            Route::post('/kirim-wa/{company_profile}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_cp'])->name('company-profile.kirim-wa');
+        });
+
+        Route::prefix('pajak')->group(function(){
+
+            Route::get('/', [App\Http\Controllers\PajakController::class, 'index'])->name('pajak.index');
+            Route::prefix('rekap-ppn')->group(function(){
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
+                Route::get('/masukan/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_masukan_detail'])->name('pajak.rekap-ppn.masukan');
+                Route::get('/keluaran/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_keluaran_detail'])->name('pajak.rekap-ppn.keluaran');
+            });
+            // Route::get('/rekap-ppn', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
+
+            Route::prefix('ppn-expired')->group(function(){
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_expired'])->name('pajak.ppn-expired');
+                Route::post('/back/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_expired_back'])->name('pajak.ppn-expired.back');
+            });
+
+            Route::prefix('ppn-masukan')->group(function(){
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
+                Route::patch('/store-faktur/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
+                Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_store'])->name('pajak.ppn-masukan.keranjang-store');
+                Route::post('/keranjang-destroy/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_destroy'])->name('pajak.ppn-masukan.keranjang-destroy');
+                Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_lanjut'])->name('pajak.ppn-masukan.keranjang-lanjut');
+            });
+
+            Route::prefix('ppn-keluaran')->group(function(){
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
+                Route::post('/expired/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_expired'])->name('pajak.ppn-keluaran.expired');
+                Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
+                Route::get('/keranjang', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang'])->name('pajak.ppn-keluaran.keranjang');
+                Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_store'])->name('pajak.ppn-keluaran.keranjang-store');
+                Route::post('/keranjang-destroy/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_destroy'])->name('pajak.ppn-keluaran.keranjang-destroy');
+                Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
+            });
+
+        });
+
+        Route::prefix('laporan-keuangan')->group(function(){
+            Route::view('/laporan-keuangan', 'laporan-keuangan.index')->name('laporan-keuangan.index');
+        });
     });
 
-    Route::prefix('pajak')->group(function(){
 
-        Route::get('/', [App\Http\Controllers\PajakController::class, 'index'])->name('pajak.index');
-        Route::prefix('rekap-ppn')->group(function(){
-            Route::get('/', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
-            Route::get('/masukan/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_masukan_detail'])->name('pajak.rekap-ppn.masukan');
-            Route::get('/keluaran/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_keluaran_detail'])->name('pajak.rekap-ppn.keluaran');
-        });
-        // Route::get('/rekap-ppn', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
-
-        Route::prefix('ppn-expired')->group(function(){
-            Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_expired'])->name('pajak.ppn-expired');
-            Route::post('/back/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_expired_back'])->name('pajak.ppn-expired.back');
-        });
-
-        Route::prefix('ppn-masukan')->group(function(){
-            Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
-            Route::patch('/store-faktur/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
-            Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_store'])->name('pajak.ppn-masukan.keranjang-store');
-            Route::post('/keranjang-destroy/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_destroy'])->name('pajak.ppn-masukan.keranjang-destroy');
-            Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_lanjut'])->name('pajak.ppn-masukan.keranjang-lanjut');
-        });
-
-        Route::prefix('ppn-keluaran')->group(function(){
-            Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
-            Route::post('/expired/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_expired'])->name('pajak.ppn-keluaran.expired');
-            Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
-            Route::get('/keranjang', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang'])->name('pajak.ppn-keluaran.keranjang');
-            Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_store'])->name('pajak.ppn-keluaran.keranjang-store');
-            Route::post('/keranjang-destroy/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_destroy'])->name('pajak.ppn-keluaran.keranjang-destroy');
-            Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
-        });
-
-    });
-
-    Route::prefix('laporan-keuangan')->group(function(){
-        Route::view('/laporan-keuangan', 'laporan-keuangan.index')->name('laporan-keuangan.index');
-    });
 
     Route::group(['middleware' => ['role:su,admin']], function() {
         // ROUTE PENGATURAN

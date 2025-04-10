@@ -45,6 +45,8 @@
         z-index: 1;
     }
 </style>
+
+
 <div class="container-fluid mt-3 table-responsive ">
     <form method="GET" action="{{ route('db.barang') }}">
         <div class="row">
