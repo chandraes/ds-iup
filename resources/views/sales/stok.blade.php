@@ -61,7 +61,7 @@
                         @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-4">
 
                 <div class="btn-group form-control mt-3">
                     <button type="submit" class="btn btn-primary">Apply Filter</button>
