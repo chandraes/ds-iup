@@ -94,6 +94,7 @@
                 <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                 <th class="text-center align-middle">Stok<br>Barang</th>
                 <th class="text-center align-middle">Satuan<br>Barang</th>
+                <th class="text-center align-middle">Kelipatan<br>Order</th>
             </tr>
             </thead>
             @php
@@ -145,6 +146,7 @@
                 <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                 <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                 $stokHarga->barang->satuan->nama : '-' }}</td>
+                 <td class="text-center align-middle">{{ $stokHarga->min_jual }}</td>
             </tr>
             @endif
             @endforeach
@@ -184,6 +186,7 @@
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
+                    <th class="text-center align-middle">Kelipatan<br>Order</th>
                 </tr>
             </thead>
             @php
@@ -236,6 +239,7 @@
                     <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
+                        <td class="text-center align-middle">{{ $stokHarga->min_jual }}</td>
                 </tr>
                 @endif
                 @endforeach
