@@ -64,6 +64,17 @@ class Konsumen extends Model
         return $this->hasMany(KasKonsumen::class, 'konsumen_id');
     }
 
+    public function scopeFilter($query, $filters)
+    {
+        if (isset($filters['area']) && $filters['area']) {
+            $query->where('sales_area_id', $filters['area']);
+        }
 
+        if (isset($filters['kecamatan']) && $filters['kecamatan']) {
+            $query->where('kecamatan_id', $filters['kecamatan']);
+        }
+
+        return $query;
+    }
 
 }

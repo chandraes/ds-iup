@@ -439,18 +439,26 @@ class DatabaseController extends Controller
 
     public function konsumen(Request $request)
     {
+        $filters = $request->only(['area', 'kecamatan']); // Ambil filter dari request
+
         $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area'])
-            ->when($request->has('area'), function ($query) use ($request) {
-                $query->where('sales_area_id', $request->area);
-            })
+            ->filter($filters) // Gunakan scope filter
             ->get();
 
+        $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
+            $query->select('id_wilayah')
+            ->from('wilayahs')
+            ->where('id_induk_wilayah', '110000');
+        })->where('id_level_wilayah', 3)->get();
+
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
+
 
         return view('db.konsumen.index', [
             'data' => $data,
             'provinsi' => $provinsi,
-            'sales_area' => SalesArea::select('id', 'nama')->get()
+            'sales_area' => SalesArea::select('id', 'nama')->get(),
+            'kecamatan_filter' => $kecamatan_filter,
         ]);
     }
 

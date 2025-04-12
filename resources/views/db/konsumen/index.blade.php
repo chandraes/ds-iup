@@ -15,7 +15,7 @@
                     <td><a href="{{route('db')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalSalesArea"><img
-                        src="{{asset('images/area.svg')}}" width="30"> Sales Area</a>
+                                src="{{asset('images/area.svg')}}" width="30"> Sales Area</a>
 
                     </td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#createInvestor"><img
@@ -33,29 +33,43 @@
 @include('db.konsumen.sales-area')
 
 <div class="container-fluid mt-5 table-responsive">
-    <div class="row mb-3">
-        {{-- buat filter untuk sales area --}}
-        <div class="col-md-4">
-            <label for="filterSalesArea" class="form-label">Filter Sales Area</label>
-            <form method="GET" action="{{ url()->current() }}">
+
+    {{-- buat filter untuk sales area --}}
+    <form method="GET" action="{{ url()->current() }}">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="filterSalesArea" class="form-label">Filter Sales Area</label>
+
                 <select id="filterSalesArea" name="area" class="form-select" onchange="this.form.submit()">
-                    <option value="" disabled>-- Semua Sales Area --</option>
+                    <option value="" selected>-- Semua Sales Area --</option>
                     @foreach ($sales_area as $salesArea)
-                        <option value="{{ $salesArea->id }}" {{ request('area') == $salesArea->id ? 'selected' : '' }}>
-                            {{ $salesArea->nama }}
-                        </option>
+                    <option value="{{ $salesArea->id }}" {{ request('area')==$salesArea->id ? 'selected' : '' }}>
+                        {{ $salesArea->nama }}
+                    </option>
                     @endforeach
                 </select>
-
-            </form>
-        </div>
-        <div class="col-md-2 mt-4">
-            <div class="row">
-                <a href="{{ url()->current() }}" class="btn btn-secondary mt-2">Reset</a>
             </div>
+            <div class="col-md-3">
+                <label for="filterKecamatan" class="form-label">Filter Kecamatan</label>
+                    <select id="filterKecamatan" name="kecamatan" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Semua Kecamatan --</option>
+                        @foreach ($kecamatan_filter as $kec)
+                            <option value="{{ $kec->id }}" {{ request('kecamatan') == $kec->id ? 'selected' : '' }}>
+                                {{ $kec->nama_wilayah }}
+                            </option>
+                        @endforeach
+                    </select>
+            </div>
+            <div class="col-md-2 mt-4">
+                <div class="row">
+                    <a href="{{ url()->current() }}" class="btn btn-secondary mt-2">Reset</a>
+                </div>
 
+            </div>
         </div>
-    </div>
+    </form>
+
+
 
 
 
@@ -202,6 +216,11 @@
         });
 
         $('#filterSalesArea').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+        });
+
+        $('#filterKecamatan').select2({
             theme: 'bootstrap-5',
             width: '100%',
         });
