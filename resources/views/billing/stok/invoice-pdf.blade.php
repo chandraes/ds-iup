@@ -11,10 +11,6 @@
 <hr style="margin-bottom: 0;">
 @endpush
 @section('content')
-{{-- <div class="center-container">
-    <h4 style="margin-bottom: 0; margin-top:0;">PURCHASE ORDER (PO)</h4>
-    <p>{{$data->full_nomor}}</p>
-</div> --}}
 <div class="tujuan-div">
     <table style="font-size: 12px">
         <div class="row invoice-info">
@@ -79,8 +75,8 @@
                     </tr>
                 </table>
             </div>
-
         </div>
+    </table>
 </div>
 <div class="po-items">
     <table class="table-items">

@@ -40,7 +40,7 @@
         }
 
         .table-items {
-            margin-top: 20px;
+            margin-top: 10px;
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
@@ -53,6 +53,11 @@
         .table-items td {
             border: 1px solid black;
             padding: 3px;
+        }
+
+        th {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
         }
         /* table, th, td {
             border: 1px solid black;
