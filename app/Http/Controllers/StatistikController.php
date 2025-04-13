@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaksi;
 use App\Models\Customer;
+use App\Models\Transaksi;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class StatistikController extends Controller
 {
@@ -26,7 +26,6 @@ class StatistikController extends Controller
 
         $bulanan = $db->statistikBulanan($customer->id, $bulan, $tahun);
         $tahunan = $db->statistikTahunan($customer->id, $tahun);
-
 
         $statistics_monthly = [];
         $statistics_yearly = [];
@@ -53,7 +52,6 @@ class StatistikController extends Controller
         $yearly_total_bayar = 0;
         $yearly_total_tagihan = 0;
         $yearly_total_profit = 0;
-
 
         foreach ($tahunan as $data) {
             $month = date('n', strtotime($data->tanggal)); // get the month of the year
@@ -127,7 +125,6 @@ class StatistikController extends Controller
         $bulanan = $db->statistikBulanan($customer->id, $bulan, $tahun);
         $tahunan = $db->statistikTahunan($customer->id, $tahun);
 
-
         $statistics_monthly = [];
         $statistics_yearly = [];
 
@@ -153,7 +150,6 @@ class StatistikController extends Controller
         $yearly_total_bayar = 0;
         $yearly_total_tagihan = 0;
         $yearly_total_profit = 0;
-
 
         foreach ($tahunan as $data) {
             $month = date('n', strtotime($data->tanggal)); // get the month of the year

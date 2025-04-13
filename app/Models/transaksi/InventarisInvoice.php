@@ -17,9 +17,10 @@ use Illuminate\Support\Facades\DB;
 class InventarisInvoice extends Model
 {
     use HasFactory;
-    protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'nf_jumlah', 'nf_harga_satuan', 'nf_ppn', 'nf_total', 'nf_dp', 'id_tanggal_jatuh_tempo', 'nf_sisa_bayar', 'nf_diskon', 'nf_add_fee', 'dpp', 'nf_dpp'];
 
+    protected $guarded = ['id'];
+
+    protected $appends = ['tanggal', 'nf_jumlah', 'nf_harga_satuan', 'nf_ppn', 'nf_total', 'nf_dp', 'id_tanggal_jatuh_tempo', 'nf_sisa_bayar', 'nf_diskon', 'nf_add_fee', 'dpp', 'nf_dpp'];
 
     public function dataTahun()
     {
@@ -106,7 +107,7 @@ class InventarisInvoice extends Model
         try {
             DB::beginTransaction();
 
-            $kas = new KasBesar();
+            $kas = new KasBesar;
             $saldo = $kas->saldoTerakhir(1);
 
             $total = ($data['jumlah'] * $data['harga_satuan']) + $data['ppn'] + $data['add_fee'] - $data['diskon'];
@@ -115,7 +116,7 @@ class InventarisInvoice extends Model
 
             isset($data['dp']) ? $data['dp'] = str_replace('.', '', $data['dp']) : 0;
 
-            if($saldo < $checker){
+            if ($saldo < $checker) {
                 return [
                     'status' => 'error',
                     'message' => 'Saldo kas besar tidak mencukupi! Sisa saldo: Rp. '.number_format($saldo, 0, ',', '.'),
@@ -184,31 +185,31 @@ class InventarisInvoice extends Model
             $inv_tot = InventarisRekap::sum('total');
 
             // Construct the message dynamically
-            $uraianText = $data['pembayaran'] == 2 && $data['dp'] > 0 ? "DP ".$store->uraian : $store->uraian;
+            $uraianText = $data['pembayaran'] == 2 && $data['dp'] > 0 ? 'DP '.$store->uraian : $store->uraian;
 
             // tampilkan setiap sub total per kategori
 
             $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                      "*FORM INVENTARIS*\n".
                      "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                     "Kategori : ".$inv->kategori->nama."\n\n".
-                     "Uraian :  *".$uraianText."*\n\n".
-                     "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                     'Kategori : '.$inv->kategori->nama."\n\n".
+                     'Uraian :  *'.$uraianText."*\n\n".
+                     'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                      "Ditransfer ke rek:\n\n".
-                     "Bank      : ".$store->bank."\n".
-                     "Nama    : ".$store->nama_rek."\n".
-                     "No. Rek : ".$store->no_rek."\n\n".
+                     'Bank      : '.$store->bank."\n".
+                     'Nama    : '.$store->nama_rek."\n".
+                     'No. Rek : '.$store->no_rek."\n\n".
                      "==========================\n".
                      "Sisa Saldo Kas Besar : \n".
-                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                      "Total Modal Investor PPN: \n".
-                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                      "Grand Total Modal Investor: \n".
-                     "Rp. ".number_format($store->modal_investor_terakhir+$kas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($store->modal_investor_terakhir + $kas->modalInvestorTerakhir(0), 0, ',', '.')."\n\n".
                      "Sub total inventaris\n".$inv->kategori->nama." : \n".
-                     "Rp. ".number_format($inv->kategori->sum_total, 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($inv->kategori->sum_total, 0, ',', '.')."\n\n".
                      "Grand Total Inventaris: \n".
-                     "Rp. ".number_format($inv_tot, 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($inv_tot, 0, ',', '.')."\n\n".
                      "Terima kasih 🙏🙏🙏\n";
 
             // Retrieve the group name once, as it's the same for both conditions
@@ -225,7 +226,7 @@ class InventarisInvoice extends Model
             return $res;
 
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             $res = [
@@ -241,11 +242,11 @@ class InventarisInvoice extends Model
     {
         $invoice = $this->find($id);
 
-        $kas = new KasBesar();
+        $kas = new KasBesar;
 
         $saldo = $kas->saldoTerakhir(1);
 
-        if($saldo < $invoice->sisa_bayar){
+        if ($saldo < $invoice->sisa_bayar) {
             return [
                 'status' => 'error',
                 'message' => 'Saldo kas besar tidak mencukupi! Sisa saldo: Rp. '.number_format($saldo, 0, ',', '.'),
@@ -258,7 +259,7 @@ class InventarisInvoice extends Model
             $store = $kas->create([
                 'uraian' => 'Pelunasan '.$invoice->uraian,
                 'jenis' => 0,
-                'ppn_kas'=> 1,
+                'ppn_kas' => 1,
                 'nominal' => $invoice->sisa_bayar,
                 'saldo' => $saldo - $invoice->sisa_bayar,
                 'no_rek' => $invoice->no_rek,
@@ -281,17 +282,17 @@ class InventarisInvoice extends Model
             $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                      "*FORM INVENTARIS*\n".
                      "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                     "Uraian :  *".$store->uraian."*\n\n".
-                     "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                     'Uraian :  *'.$store->uraian."*\n\n".
+                     'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                      "Ditransfer ke rek:\n\n".
-                     "Bank      : ".$store->bank."\n".
-                     "Nama    : ".$store->nama_rek."\n".
-                     "No. Rek : ".$store->no_rek."\n\n".
+                     'Bank      : '.$store->bank."\n".
+                     'Nama    : '.$store->nama_rek."\n".
+                     'No. Rek : '.$store->no_rek."\n\n".
                      "==========================\n".
                      "Sisa Saldo Kas Besar : \n".
-                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                      "Total Modal Investor : \n".
-                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                     'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                      "Terima kasih 🙏🙏🙏\n";
 
             // Retrieve the group name once, as it's the same for both conditions
@@ -306,7 +307,7 @@ class InventarisInvoice extends Model
             ];
 
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [
@@ -319,7 +320,7 @@ class InventarisInvoice extends Model
 
     private function storePpn($data)
     {
-        $db = new PpnMasukan();
+        $db = new PpnMasukan;
 
         $db->create([
             'inventaris_invoice_id' => $data->id,
@@ -358,7 +359,7 @@ class InventarisInvoice extends Model
 
             InventarisRekap::find($invoice->inventaris_id)->delete();
 
-            $kas = new KasBesar();
+            $kas = new KasBesar;
 
             if ($invoice->dp > 0) {
                 $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
@@ -391,19 +392,19 @@ class InventarisInvoice extends Model
                 $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                         "*VOID INVENTARIS*\n".
                         "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                        "Uraian :  *".$store->uraian."*\n\n".
-                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        'Uraian :  *'.$store->uraian."*\n\n".
+                        'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
+                        'Bank      : '.$store->bank."\n".
+                        'Nama    : '.$store->nama_rek."\n".
+                        'No. Rek : '.$store->no_rek."\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Besar PPN: \n".
-                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
                         "Sisa Saldo Kas Besar  NON PPN: \n".
-                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($totalModal, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
             }
 
@@ -424,7 +425,7 @@ class InventarisInvoice extends Model
             ];
 
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [

@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
-use App\Models\db\InventarisRekap;
 use App\Models\db\Pajak;
 use App\Models\transaksi\InventarisInvoice;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class FormInventaris extends Controller
 {
@@ -16,9 +14,10 @@ class FormInventaris extends Controller
     {
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         $data = InventarisKategori::all();
+
         return view('billing.form-inventaris.beli', [
             'ppn' => $ppn,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -28,7 +27,7 @@ class FormInventaris extends Controller
         $result = [
             'status' => $data->isEmpty() ? 0 : 1,
             'message' => $data->isEmpty() ? 'Data jenis inventaris tidak ditemukan' : 'Data jenis inventaris ditemukan',
-            'data' => $data->isEmpty() ? null : $data
+            'data' => $data->isEmpty() ? null : $data,
         ];
 
         return response()->json($result);
@@ -60,7 +59,7 @@ class FormInventaris extends Controller
         $data['status'] = 'beli';
         $data['jenis'] = 1;
 
-        $db = new InventarisInvoice();
+        $db = new InventarisInvoice;
 
         $res = $db->beliInventaris($data);
 
@@ -73,13 +72,13 @@ class FormInventaris extends Controller
         $data = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->where('void', 0)->get();
 
         return view('billing.form-inventaris.hutang', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function pelunasan(InventarisInvoice $invoice)
     {
-        $db = new InventarisInvoice();
+        $db = new InventarisInvoice;
 
         $res = $db->pelunasan($invoice->id);
 
@@ -88,7 +87,7 @@ class FormInventaris extends Controller
 
     public function void(InventarisInvoice $invoice)
     {
-        $db = new InventarisInvoice();
+        $db = new InventarisInvoice;
 
         $res = $db->void($invoice->id);
 

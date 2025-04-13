@@ -21,7 +21,7 @@ class SalesController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
@@ -42,7 +42,7 @@ class SalesController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $jenis = 1;
 

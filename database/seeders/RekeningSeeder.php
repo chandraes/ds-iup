@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Rekening;
+use Illuminate\Database\Seeder;
 
 class RekeningSeeder extends Seeder
 {
@@ -18,19 +17,19 @@ class RekeningSeeder extends Seeder
                 'untuk' => 'kas-besar-ppn',
                 'bank' => 'BCA',
                 'no_rek' => '1234567890',
-                'nama_rek' => 'PT. ABC'
+                'nama_rek' => 'PT. ABC',
             ],
             [
                 'untuk' => 'kas-besar-non-ppn',
                 'bank' => 'BCA',
                 'no_rek' => '1234567890',
-                'nama_rek' => 'PT. ABC'
+                'nama_rek' => 'PT. ABC',
             ],
             [
                 'untuk' => 'kas-kecil',
                 'bank' => 'BCA',
                 'no_rek' => '1234567890',
-                'nama_rek' => 'PT. ABC'
+                'nama_rek' => 'PT. ABC',
             ],
 
         ];

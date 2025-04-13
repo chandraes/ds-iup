@@ -31,7 +31,7 @@ return new class extends Migration
             $table->dropForeign(['satuan_id']);
             $table->dropColumn('satuan_id');
         });
-        
+
         Schema::dropIfExists('satuans');
     }
 };

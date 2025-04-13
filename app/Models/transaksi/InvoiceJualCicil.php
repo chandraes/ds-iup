@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceJualCicil extends Model
 {
     use HasFactory;
+
     protected $guarded = [];
 
-    protected $appends = ['tanggal','nf_nominal', 'nf_ppn', 'total', 'nf_total'];
+    protected $appends = ['tanggal', 'nf_nominal', 'nf_ppn', 'total', 'nf_total'];
 
     public function invoice_jual()
     {

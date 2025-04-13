@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-
 class WaStatus
 {
     private $apikey;
+
     private $apiDevKey;
+
     private $deviceId;
 
-    function __construct()
+    public function __construct()
     {
         $this->apiDevKey = env('STARSENDER_API_KEY');
         $this->deviceId = env('STARSENDER_DEVICE_ID');
@@ -19,13 +19,13 @@ class WaStatus
 
     public function getStatusWa()
     {
-        $apikey=$this->apiDevKey;
+        $apikey = $this->apiDevKey;
 
         $curl = curl_init();
 
         $idDevice = $this->deviceId;
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://api.starsender.online/api/devices/'.$idDevice,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -34,12 +34,11 @@ class WaStatus
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-              'Content-Type:application/json',
-              'Authorization: '.$apikey
-            ),
-          ));
-
+            CURLOPT_HTTPHEADER => [
+                'Content-Type:application/json',
+                'Authorization: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -47,9 +46,10 @@ class WaStatus
             // Handle curl error
             $error_message = curl_error($curl);
             curl_close($curl);
+
             return [
                 'success' => false,
-                'message' => 'Tidak dapat terhubung ke server Whatsapp, Silahkan hubungi administrator! Error: '.$error_message
+                'message' => 'Tidak dapat terhubung ke server Whatsapp, Silahkan hubungi administrator! Error: '.$error_message,
             ];
         }
 
@@ -62,7 +62,7 @@ class WaStatus
         } else {
             return [
                 'success' => false,
-                'message' => 'Server Whatsapp sedang mengalami gangguan, silahkan coba beberapa saat lagi!'
+                'message' => 'Server Whatsapp sedang mengalami gangguan, silahkan coba beberapa saat lagi!',
             ];
         }
 
@@ -70,11 +70,11 @@ class WaStatus
 
     public function getRelog()
     {
-        $apikey=$this->apikey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://starsender.online/api/relogDevice',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -83,10 +83,10 @@ class WaStatus
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                'apikey: '.$apikey
-            ),
-        ));
+            CURLOPT_HTTPHEADER => [
+                'apikey: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -99,12 +99,11 @@ class WaStatus
 
     public function getGroup()
     {
-        $apikey=$this->apikey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
-
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://api.starsender.online/api/whatsapp/groups',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -113,11 +112,11 @@ class WaStatus
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
+            CURLOPT_HTTPHEADER => [
                 'Content-Type:application/json',
-                'Authorization: '.$apikey
-            ),
-        ));
+                'Authorization: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 

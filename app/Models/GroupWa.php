@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class GroupWa extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     public function sendWa($tujuan, $pesan)
@@ -33,7 +34,7 @@ class GroupWa extends Model
 
         $lineHeading = $isIn == 1 ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n" : "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n";
 
-        $kasBesar = new KasBesar();
+        $kasBesar = new KasBesar;
 
         $kasPpnP = [
             'saldo' => $kasBesar->saldoTerakhir(1),
@@ -49,25 +50,25 @@ class GroupWa extends Model
 
         if ($kasPpn == 1) {
             $sisaSaldo .= "Sisa Saldo Kas Besar PPN: \n".
-                        "Rp. ".number_format($kasPpnP['saldo'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasPpnP['saldo'], 0, ',', '.')."\n\n".
                     "Total Modal Investor PPN: \n".
-                    "Rp. ".number_format($kasPpnP['modal_investor'], 0, ',', '.')."\n\n";
+                    'Rp. '.number_format($kasPpnP['modal_investor'], 0, ',', '.')."\n\n";
         } else {
             $sisaSaldo .= "Sisa Saldo Kas Besar Non PPN: \n".
-                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                         "Total Modal Investor Non PPN: \n".
-                        "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
+                        'Rp. '.number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
         }
 
-        $pesan =   $lineHeading.
-                    "*".$title."*\n".
+        $pesan = $lineHeading.
+                    '*'.$title."*\n".
                     $lineHeading."\n".
-                    "Uraian : ".$uraian."\n".
-                    "Nilai :  *Rp. ".number_format($nominal, 0, ',', '.')."*\n\n".
+                    'Uraian : '.$uraian."\n".
+                    'Nilai :  *Rp. '.number_format($nominal, 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank      : ".$rekening['bank']."\n".
-                    "Nama    : ".$rekening['nama_rek']."\n".
-                    "No. Rek : ".$rekening['no_rek']."\n\n".
+                    'Bank      : '.$rekening['bank']."\n".
+                    'Nama    : '.$rekening['nama_rek']."\n".
+                    'No. Rek : '.$rekening['no_rek']."\n\n".
                     "==========================\n".
                     $additionalMessageUp.
                     $sisaSaldo.

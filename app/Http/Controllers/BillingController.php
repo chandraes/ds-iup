@@ -30,10 +30,9 @@ use Illuminate\Support\Facades\DB;
 
 class BillingController extends Controller
 {
-
     public function lihat_stok(Request $request)
     {
-         // $kategori = BarangKategori::with(['barang_nama'])->get();
+        // $kategori = BarangKategori::with(['barang_nama'])->get();
         // $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
@@ -42,7 +41,7 @@ class BillingController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
@@ -63,7 +62,7 @@ class BillingController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $jenis = 1;
 
@@ -105,8 +104,8 @@ class BillingController extends Controller
             DB::raw('COUNT(CASE WHEN kas_ppn = 0 THEN 1 END) as ikn'),
             DB::raw('COUNT(CASE WHEN kas_ppn = 0 AND titipan = 1 THEN 1 END) as iktn')
         )->where('lunas', 0)
-        ->where('void', 0)
-        ->first();
+            ->where('void', 0)
+            ->first();
 
         $gr = GantiRugi::where('lunas', 0)->count();
 
@@ -140,10 +139,10 @@ class BillingController extends Controller
     public function ppn_masuk_susulan_store(Request $request)
     {
         $data = $request->validate([
-                    'nominal' => 'required',
-                ]);
+            'nominal' => 'required',
+        ]);
 
-        $db = new KasBesar();
+        $db = new KasBesar;
 
         $store = $db->ppn_masuk_susulan($data['nominal']);
 
@@ -155,7 +154,7 @@ class BillingController extends Controller
     {
         $data = CostOperational::all();
 
-        if($data->isEmpty()) {
+        if ($data->isEmpty()) {
             return redirect()->route('db.cost-operational')->with('error', 'Data cost operational kosong, silahkan tambahkan data cost operational terlebih dahulu');
         }
 
@@ -167,16 +166,16 @@ class BillingController extends Controller
     public function cost_operational_store(Request $request)
     {
         $data = $request->validate([
-                    'nominal' => 'required',
-                    'cost_operational_id' => 'required|exists:cost_operationals,id',
-                    'nama_rek' => 'required',
-                    'no_rek' => 'required',
-                    'bank' => 'required',
-                ]);
+            'nominal' => 'required',
+            'cost_operational_id' => 'required|exists:cost_operationals,id',
+            'nama_rek' => 'required',
+            'no_rek' => 'required',
+            'bank' => 'required',
+        ]);
 
         $data['ppn_kas'] = 1;
 
-        $db = new KasBesar();
+        $db = new KasBesar;
 
         $res = $db->cost_operational($data);
 
@@ -206,7 +205,7 @@ class BillingController extends Controller
 
     public function gaji_store(Request $request)
     {
-        ini_set('max_execution_time', 300); //300 seconds = 5 minutes
+        ini_set('max_execution_time', 300); // 300 seconds = 5 minutes
         ini_set('memory_limit', '512M');
 
         $ds = $request->validate([
@@ -215,8 +214,7 @@ class BillingController extends Controller
 
         $data = Karyawan::where('status', 1)->get();
 
-
-        $db = new KasBesar();
+        $db = new KasBesar;
         $saldo = $db->saldoTerakhir(1);
 
         if ($saldo < $ds['total']) {
@@ -225,7 +223,7 @@ class BillingController extends Controller
         try {
             DB::beginTransaction();
             $rekap = RekapGaji::create([
-                'uraian' => "Gaji Bulan ".date('F')." Tahun ".date('Y'),
+                'uraian' => 'Gaji Bulan '.date('F').' Tahun '.date('Y'),
                 'bulan' => date('m'),
                 'tahun' => date('Y'),
                 'total' => $ds['total'],
@@ -244,7 +242,7 @@ class BillingController extends Controller
 
                 $rekapGajiDetails[] = [
                     'rekap_gaji_id' => $rekap->id,
-                    'nik' => $d->kode.sprintf("%03d", $d->nomor),
+                    'nik' => $d->kode.sprintf('%03d', $d->nomor),
                     'nama' => $d->nama,
                     'jabatan' => $d->jabatan->nama,
                     'gaji_pokok' => $d->gaji_pokok,
@@ -267,13 +265,13 @@ class BillingController extends Controller
             // Perform a bulk insert after the loop
             RekapGajiDetail::insert($rekapGajiDetails);
 
-            $arrayKasBesar['uraian'] = "Gaji Bulan ".date('F')." ".date('Y');
+            $arrayKasBesar['uraian'] = 'Gaji Bulan '.date('F').' '.date('Y');
             $arrayKasBesar['tanggal'] = date('Y-m-d');
             $arrayKasBesar['nominal'] = $ds['total'];
             $arrayKasBesar['jenis'] = 0;
             $arrayKasBesar['saldo'] = $saldo - $ds['total'];
             $arrayKasBesar['modal_investor_terakhir'] = $db->modalInvestorTerakhir(1);
-            $arrayKasBesar['nama_rek'] = "Msng2 Karyawan";
+            $arrayKasBesar['nama_rek'] = 'Msng2 Karyawan';
             $arrayKasBesar['bank'] = 'BCA';
             $arrayKasBesar['no_rek'] = '-';
             $arrayKasBesar['ppn_kas'] = 1;
@@ -282,27 +280,25 @@ class BillingController extends Controller
             DB::commit();
 
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollback();
 
             return redirect()->back()->with('error', 'Gagal Membuat Form Gaji, '.$th->getMessage());
         }
 
-
-
         $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
 
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+        $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*FORM GAJI KARYAWAN*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Nilai :  *Rp. ".number_format($ds['total'], 0, ',', '.')."*\n\n".
+                    'Nilai :  *Rp. '.number_format($ds['total'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Nama     : Masing2 Karyawan\n\n".
                     "==========================\n".
                     "Sisa Saldo Kas Besar : \n".
-                    "Rp. ".number_format($storeKasBesar->saldo, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($storeKasBesar->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
-                    "Rp. ".number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
@@ -325,7 +321,7 @@ class BillingController extends Controller
         $pengelola = Pengelola::where('persentase', '>', 0)->get();
         $investor = InvestorModal::where('persentase', '>', 0)->get();
 
-        if ($pengelola->count() == 0 || $investor->count() == 0){
+        if ($pengelola->count() == 0 || $investor->count() == 0) {
             return redirect()->back()->with('error', 'Data Pengelola/Investor Belum Di isi!!');
         }
 
@@ -343,7 +339,7 @@ class BillingController extends Controller
             'ppn_kas' => 'required',
         ]);
 
-        $db = new KasBesar();
+        $db = new KasBesar;
 
         $res = $db->dividen($data);
 
@@ -352,15 +348,14 @@ class BillingController extends Controller
 
     public function ganti_rugi(Request $request)
     {
-        $data = GantiRugi::with(['barang_stok_harga.barang.satuan','barang_stok_harga.barang.barang_nama', 'karyawan'])->where('lunas', 0)
-                ->orderBy('karyawan_id');
+        $data = GantiRugi::with(['barang_stok_harga.barang.satuan', 'barang_stok_harga.barang.barang_nama', 'karyawan'])->where('lunas', 0)
+            ->orderBy('karyawan_id');
 
         if ($request->filled('karyawan')) {
             $data->where('karyawan_id', $request->karyawan);
         }
 
         $data = $data->get();
-
 
         $karyawan = Karyawan::whereHas('ganti_rugi', function ($query) {
             $query->where('lunas', 0);
@@ -374,7 +369,7 @@ class BillingController extends Controller
 
     public function ganti_rugi_void(GantiRugi $rugi)
     {
-        $db = new GantiRugi();
+        $db = new GantiRugi;
 
         $res = $db->void($rugi->id);
 
@@ -388,7 +383,7 @@ class BillingController extends Controller
             'nominal' => 'required_if:jenis,1',
         ]);
 
-        $db = new GantiRugi();
+        $db = new GantiRugi;
 
         $res = $db->bayar($rugi->id, $data);
 
@@ -398,19 +393,18 @@ class BillingController extends Controller
     public function bunga_investor(Request $request)
     {
         $data = $request->validate([
-            'kas_ppn' => 'required|boolean'
+            'kas_ppn' => 'required|boolean',
         ]);
 
         $kreditor = Kreditor::where('is_active', 1)->get();
 
-        if($kreditor->isEmpty()) {
+        if ($kreditor->isEmpty()) {
             return redirect()->route('db.kreditor')->with('error', 'Data kreditor kosong, silahkan tambahkan data kreditor terlebih dahulu');
         }
-        $db = new KasBesar();
+        $db = new KasBesar;
         $modal = $db->modalInvestorTerakhir($data['kas_ppn']) < 0 ? $db->modalInvestorTerakhir($data['kas_ppn']) * -1 : 0;
 
         $pph_val = Pajak::where('untuk', 'pph-investor')->first()->persen / 100;
-
 
         return view('billing.form-bunga-investor.index', [
             'kreditor' => $kreditor,
@@ -431,7 +425,7 @@ class BillingController extends Controller
             'bank' => 'required',
         ]);
 
-        $db = new KasBesar();
+        $db = new KasBesar;
 
         $res = $db->bunga_investor($data);
 

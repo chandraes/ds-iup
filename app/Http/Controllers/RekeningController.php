@@ -10,8 +10,9 @@ class RekeningController extends Controller
     public function index()
     {
         $data = Rekening::all();
+
         return view('db.rekening.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 

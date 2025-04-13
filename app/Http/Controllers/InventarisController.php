@@ -15,18 +15,20 @@ class InventarisController extends Controller
     {
         $kategori = InventarisKategori::has('jenis')->get();
         $hi = InventarisInvoice::where('pembayaran', 2)->where('lunas', 0)->where('void', 0)->count();
+
         return view('inventaris.index', [
             'kategori' => $kategori,
-            'hi' => $hi
+            'hi' => $hi,
         ]);
     }
 
     public function detail(InventarisKategori $kategori)
     {
         $data = $kategori->load(['jenis.rekap']);
+
         return view('inventaris.detail.index', [
             'data' => $data,
-            'kategori' => $kategori
+            'kategori' => $kategori,
         ]);
     }
 
@@ -49,7 +51,7 @@ class InventarisController extends Controller
             'harga_satuan' => 'required',
         ]);
 
-        $db = new InventarisRekap();
+        $db = new InventarisRekap;
 
         $res = $db->createRekap($data, $inventaris->id);
 
@@ -58,7 +60,7 @@ class InventarisController extends Controller
 
     public function invoice(Request $request)
     {
-        $db = new InventarisInvoice();
+        $db = new InventarisInvoice;
 
         $dataTahun = $db->dataTahun();
 
@@ -84,6 +86,4 @@ class InventarisController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
         ]);
     }
-
-
 }

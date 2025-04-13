@@ -36,7 +36,7 @@ class InvoiceBelanja extends Model
         'tanggal',
         'dpp',
         'raw_dpp',
-        'dpp_setelah_diskon'
+        'dpp_setelah_diskon',
     ];
 
     public function invoice_belanja_cicil()
@@ -90,7 +90,7 @@ class InvoiceBelanja extends Model
 
     public function getKodeAttribute()
     {
-        return 'PO-' . str_pad($this->nomor, 2, '0', STR_PAD_LEFT);
+        return 'PO-'.str_pad($this->nomor, 2, '0', STR_PAD_LEFT);
     }
 
     public function getNfDiskonAttribute()
@@ -155,15 +155,15 @@ class InvoiceBelanja extends Model
     public function invoiceByMonth($bulan, $tahun, $kas_ppn, $supplier_id = null)
     {
         return $this->whereMonth('created_at', $bulan)
-                ->where('kas_ppn', $kas_ppn)
-                ->where('void', 0)
-                ->where('tempo', 0)
-                ->whereYear('created_at', $tahun)
-                ->when($supplier_id, function ($query, $supplier_id) {
-                    return $query->where('supplier_id', $supplier_id);
-                })
-                ->orderBy('created_at', 'desc')
-                ->get();
+            ->where('kas_ppn', $kas_ppn)
+            ->where('void', 0)
+            ->where('tempo', 0)
+            ->whereYear('created_at', $tahun)
+            ->when($supplier_id, function ($query, $supplier_id) {
+                return $query->where('supplier_id', $supplier_id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function void($id)
@@ -174,7 +174,7 @@ class InvoiceBelanja extends Model
             DB::beginTransaction();
 
             $inv->update([
-                'void' => 1
+                'void' => 1,
             ]);
             // dd($inv);
             if ($inv->dp_ppn > 0) {
@@ -186,7 +186,7 @@ class InvoiceBelanja extends Model
 
             BarangHistory::where('invoice_belanja_id', $inv->id)->delete();
 
-            $kas = new KasBesar();
+            $kas = new KasBesar;
 
             if ($inv->dp > 0) {
                 $kasMana = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
@@ -195,7 +195,7 @@ class InvoiceBelanja extends Model
                 $store = $kas->create([
                     'invoice_belanja_id' => $inv->id,
                     'ppn_kas' => $inv->kas_ppn,
-                    'uraian' => 'Void ' . $inv->uraian,
+                    'uraian' => 'Void '.$inv->uraian,
                     'jenis' => '1',
                     'nominal' => $total,
                     'saldo' => $kas->saldoTerakhir($inv->kas_ppn) + $total,
@@ -210,11 +210,11 @@ class InvoiceBelanja extends Model
 
             if ($inv->dp_ppn > 0) {
 
-                $dbPPn = new PpnMasukan();
-                $dbRekapPpn = new RekapPpn();
+                $dbPPn = new PpnMasukan;
+                $dbRekapPpn = new RekapPpn;
                 $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
                 $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
-                $dbPpnKeluaran = new PpnKeluaran();
+                $dbPpnKeluaran = new PpnKeluaran;
                 $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
                 $getKas = $kas->getKas();
@@ -222,23 +222,23 @@ class InvoiceBelanja extends Model
                 $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*VOID BELI BARANG*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                            "Uraian :  *".$store->uraian."*\n\n".
-                            "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                            'Uraian :  *'.$store->uraian."*\n\n".
+                            'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                             "Ditransfer ke rek:\n\n".
-                            "Bank      : ".$store->bank."\n".
-                            "Nama    : ".$store->nama_rek."\n".
-                            "No. Rek : ".$store->no_rek."\n\n".
+                            'Bank      : '.$store->bank."\n".
+                            'Nama    : '.$store->nama_rek."\n".
+                            'No. Rek : '.$store->no_rek."\n\n".
                             "==========================\n".
                             "Sisa Saldo Kas Besar PPN: \n".
-                            "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
                             "Sisa Saldo Kas Besar  NON PPN: \n".
-                            "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
                             "Total Modal Investor : \n".
-                            "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                             "Total PPn Masukan : \n".
-                            "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($ppnMasukan, 0, ',', '.')."\n\n".
                              "Total PPn Keluaran : \n".
-                            "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
                 $groupName = $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
@@ -249,26 +249,25 @@ class InvoiceBelanja extends Model
 
             return [
                 'status' => 'success',
-                'message' => 'Berhasil membatalkan invoice'
+                'message' => 'Berhasil membatalkan invoice',
             ];
 
-
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal membatalkan invoice. '.$th->getMessage()
+                'message' => 'Gagal membatalkan invoice. '.$th->getMessage(),
             ];
         }
     }
 
     private function store_ppn($store, $jenis)
     {
-        $ppn = new PpnMasukan();
+        $ppn = new PpnMasukan;
         $nominal = $jenis == 1 ? -$store->dp_ppn : $store->sisa_ppn;
-        $uraian = ($jenis == 1 ? "Void " : "Pelunasan ") . $store->uraian;
+        $uraian = ($jenis == 1 ? 'Void ' : 'Pelunasan ').$store->uraian;
         $saldo = $ppn->saldoTerakhir() + ($jenis == 1 ? -$store->dp_ppn : $store->sisa_ppn);
 
         if ($jenis == 1) {
@@ -289,13 +288,13 @@ class InvoiceBelanja extends Model
 
     public function bayar($id)
     {
-        $kas = new KasBesar();
+        $kas = new KasBesar;
         $inv = $this->find($id);
         // dd($inv);
         if ($kas->saldoTerakhir($inv->kas_ppn) < $inv->sisa) {
             return [
                 'status' => 'error',
-                'message' => 'Saldo kas tidak mencukupi!!'
+                'message' => 'Saldo kas tidak mencukupi!!',
             ];
         }
 
@@ -303,7 +302,7 @@ class InvoiceBelanja extends Model
             DB::beginTransaction();
 
             $inv->update([
-                'tempo' => 0
+                'tempo' => 0,
             ]);
             // dd($inv);
             if ($inv->sisa_ppn > 0) {
@@ -319,7 +318,7 @@ class InvoiceBelanja extends Model
             $store = $kas->create([
                 'invoice_belanja_id' => $inv->id,
                 'ppn_kas' => $inv->kas_ppn,
-                'uraian' => 'Pelunasan ' . $inv->uraian,
+                'uraian' => 'Pelunasan '.$inv->uraian,
                 'jenis' => '0',
                 'nominal' => $total,
                 'saldo' => $kas->saldoTerakhir($inv->kas_ppn) - $total,
@@ -333,11 +332,11 @@ class InvoiceBelanja extends Model
 
             DB::commit();
 
-            $dbPPn = new PpnMasukan();
-            $dbRekapPpn = new RekapPpn();
+            $dbPPn = new PpnMasukan;
+            $dbRekapPpn = new RekapPpn;
             $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
             $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
-            $dbPpnKeluaran = new PpnKeluaran();
+            $dbPpnKeluaran = new PpnKeluaran;
             $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
             $getKas = $kas->getKas();
@@ -345,43 +344,41 @@ class InvoiceBelanja extends Model
             $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*PELUNASAN BELI BARANG*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        "Uraian :  *".$store->uraian."*\n\n".
-                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        'Uraian :  *'.$store->uraian."*\n\n".
+                        'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
+                        'Bank      : '.$store->bank."\n".
+                        'Nama    : '.$store->nama_rek."\n".
+                        'No. Rek : '.$store->no_rek."\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Besar PPN: \n".
-                        "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
                         "Sisa Saldo Kas Besar  NON PPN: \n".
-                        "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                         "Total PPn Masukan : \n".
-                        "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($ppnMasukan, 0, ',', '.')."\n\n".
                         "Total PPn Keluaran : \n".
-                        "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             $group = GroupWa::where('untuk', $kasMana)->first()->nama_group;
 
             $kas->sendWa($group, $pesan);
 
-
             return [
                 'status' => 'success',
-                'message' => 'Berhasil melunasi invoice!!'
+                'message' => 'Berhasil melunasi invoice!!',
             ];
 
-
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal melunasi invoice. '.$th->getMessage()
+                'message' => 'Gagal melunasi invoice. '.$th->getMessage(),
             ];
         }
 
@@ -417,14 +414,14 @@ class InvoiceBelanja extends Model
         unset($data['apa_ppn']);
         $inv = $this->find($data['invoice_belanja_id']);
 
-        $kas = new KasBesar();
+        $kas = new KasBesar;
 
         $saldo = $kas->saldoTerakhir($inv->kas_ppn);
 
         if ($saldo < $data['nominal'] + $data['ppn']) {
             return [
                 'status' => 'error',
-                'message' => 'Saldo kas tidak mencukupi!!. Saldo saat ini Rp. '.number_format($saldo, 0, ',', '.')
+                'message' => 'Saldo kas tidak mencukupi!!. Saldo saat ini Rp. '.number_format($saldo, 0, ',', '.'),
             ];
         }
 
@@ -435,7 +432,7 @@ class InvoiceBelanja extends Model
 
             $inv->update([
                 'sisa' => $inv->sisa - $total,
-                'sisa_ppn' => $inv->sisa_ppn - $data['ppn']
+                'sisa_ppn' => $inv->sisa_ppn - $data['ppn'],
             ]);
 
             InvoiceBelanjaCicil::create($data);
@@ -445,7 +442,7 @@ class InvoiceBelanja extends Model
             $store = $kas->create([
                 'invoice_belanja_id' => $inv->id,
                 'ppn_kas' => $inv->kas_ppn,
-                'uraian' => 'Cicilan ' . $inv->uraian,
+                'uraian' => 'Cicilan '.$inv->uraian,
                 'jenis' => '0',
                 'nominal' => $total,
                 'saldo' => $kas->saldoTerakhir($inv->kas_ppn) - $total,
@@ -456,22 +453,22 @@ class InvoiceBelanja extends Model
             ]);
 
             if ($apa_ppn == 1 && $data['ppn'] > 0) {
-                $dbPPn = new PpnMasukan();
+                $dbPPn = new PpnMasukan;
                 $dbPPn->create([
                     'invoice_belanja_id' => $data['invoice_belanja_id'],
                     'nominal' => $data['ppn'],
-                    'uraian' => 'Cicilan ' . $inv->uraian,
-                    'saldo' => $dbPPn->saldoTerakhir() + $data['ppn']
+                    'uraian' => 'Cicilan '.$inv->uraian,
+                    'saldo' => $dbPPn->saldoTerakhir() + $data['ppn'],
                 ]);
             }
 
             DB::commit();
 
-            $dbPPn = new PpnMasukan();
-            $dbRekapPpn = new RekapPpn();
+            $dbPPn = new PpnMasukan;
+            $dbRekapPpn = new RekapPpn;
             $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
             $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
-            $dbPpnKeluaran = new PpnKeluaran();
+            $dbPpnKeluaran = new PpnKeluaran;
             $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
             $getKas = $kas->getKas();
@@ -479,29 +476,28 @@ class InvoiceBelanja extends Model
             $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*CICILAN BELI BARANG*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        "Uraian :  *".$store->uraian."*\n\n".
-                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        'Uraian :  *'.$store->uraian."*\n\n".
+                        'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
+                        'Bank      : '.$store->bank."\n".
+                        'Nama    : '.$store->nama_rek."\n".
+                        'No. Rek : '.$store->no_rek."\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Besar PPN: \n".
-                        "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
                         "Sisa Saldo Kas Besar  NON PPN: \n".
-                        "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                         "Total PPn Masukan : \n".
-                        "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($ppnMasukan, 0, ',', '.')."\n\n".
                         "Total PPn Keluaran : \n".
-                        "Rp. ".number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($ppnKeluaran, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             $group = GroupWa::where('untuk', $inv->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first()->nama_group;
 
             $kas->sendWa($group, $pesan);
-
 
         } catch (\Throwable $th) {
 
@@ -509,16 +505,14 @@ class InvoiceBelanja extends Model
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal menyimpan cicilan. '.$th->getMessage()
+                'message' => 'Gagal menyimpan cicilan. '.$th->getMessage(),
             ];
 
         }
 
         return [
             'status' => 'success',
-            'message' => 'Berhasil menyimpan cicilan'
+            'message' => 'Berhasil menyimpan cicilan',
         ];
     }
-
-
 }

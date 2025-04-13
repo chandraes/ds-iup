@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 class PasswordKonfirmasi extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     public static function updatePassword($data)
@@ -21,16 +22,16 @@ class PasswordKonfirmasi extends Model
             );
 
             DB::commit();
-            
+
             $response = [
                 'status' => 'success',
-                'message' => 'Password berhasil diubah'
+                'message' => 'Password berhasil diubah',
             ];
         } catch (\Exception $e) {
             DB::rollBack();
             $response = [
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
 

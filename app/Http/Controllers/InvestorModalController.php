@@ -10,6 +10,7 @@ class InvestorModalController extends Controller
     public function index()
     {
         $data = InvestorModal::all();
+
         return view('db.investor-modal.index', [
             'data' => $data,
         ]);

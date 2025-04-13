@@ -10,8 +10,9 @@ class InvestorController extends Controller
     public function index()
     {
         $data = Investor::all();
+
         return view('db.investor.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -31,5 +32,4 @@ class InvestorController extends Controller
 
         return redirect()->back()->with('success', 'Data berhasil diubah!');
     }
-
 }

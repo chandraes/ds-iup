@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Dokumen\DokumenData;
 use App\Models\Dokumen\MutasiRekening;
 use App\Services\StarSender;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
 class DokumenController extends Controller
@@ -47,7 +47,7 @@ class DokumenController extends Controller
             '9' => 'September',
             '10' => 'Oktober',
             '11' => 'November',
-            '12' => 'Desember'
+            '12' => 'Desember',
         ];
 
         // Fetch all records for the specified year in a single query
@@ -60,7 +60,7 @@ class DokumenController extends Controller
                 'id' => $mutasiRekening ? $mutasiRekening->id : null,
                 'tahun' => $tahun,
                 'bulan' => $bulan[$i],
-                'file' => $mutasiRekening ? $mutasiRekening->file : null
+                'file' => $mutasiRekening ? $mutasiRekening->file : null,
             ];
         }
 
@@ -68,7 +68,7 @@ class DokumenController extends Controller
             'tahun' => $tahun,
             'dataTahun' => $dataTahun,
             'data' => $data,
-            'bulan' => $bulan
+            'bulan' => $bulan,
         ]);
     }
 
@@ -77,28 +77,28 @@ class DokumenController extends Controller
         $request->validate([
             'tahun' => 'required|numeric',
             'bulan' => 'required|numeric',
-            'file' => 'required|file|mimes:pdf|max:5120'
+            'file' => 'required|file|mimes:pdf|max:5120',
         ]);
 
         $path = public_path('files/dokumen/mutasi-rekening');
 
         // Check if directory exists, if not create it
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
 
         // Store the file
         $file = $request->file('file');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $filename = time().'.'.$file->getClientOriginalExtension();
         $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = 'files/dokumen/mutasi-rekening/' . $filename;
+        $data['file'] = 'files/dokumen/mutasi-rekening/'.$filename;
 
         MutasiRekening::create([
             'tahun' => $request->tahun,
             'bulan' => $request->bulan,
-            'file' => $data['file']
+            'file' => $data['file'],
         ]);
 
         return redirect()->route('dokumen.mutasi-rekening')->with('success', 'Data berhasil disimpan');
@@ -108,7 +108,7 @@ class DokumenController extends Controller
     {
         $path = public_path($mutasi->file);
 
-        if(File::exists($path)) {
+        if (File::exists($path)) {
             File::delete($path);
         }
 
@@ -150,7 +150,7 @@ class DokumenController extends Controller
         $data = DokumenData::kontrakTambang()->get();
 
         return view('dokumen.kontrak-tambang.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -160,23 +160,23 @@ class DokumenController extends Controller
             'nama' => 'required',
             'file' => 'required|file|mimes:pdf|max:5120',
             'apa_expired' => 'nullable',
-            'tanggal_expired' => 'required_if:apa_expired,on'
+            'tanggal_expired' => 'required_if:apa_expired,on',
         ]);
 
         $path = public_path('files/dokumen/kontrak-tambang');
 
         // Check if directory exists, if not create it
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
 
         // Store the file
         $file = $request->file('file');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $filename = time().'.'.$file->getClientOriginalExtension();
         $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = 'files/dokumen/kontrak-tambang/' . $filename;
+        $data['file'] = 'files/dokumen/kontrak-tambang/'.$filename;
 
         if ($request->filled('apa_expired')) {
             unset($data['apa_expired']);
@@ -195,7 +195,7 @@ class DokumenController extends Controller
     {
         $path = public_path($kontrak_tambang->file);
 
-        if(File::exists($path)) {
+        if (File::exists($path)) {
             File::delete($path);
         }
 
@@ -231,7 +231,7 @@ class DokumenController extends Controller
         $data = DokumenData::kontrakVendor()->get();
 
         return view('dokumen.kontrak-vendor.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -241,23 +241,23 @@ class DokumenController extends Controller
             'nama' => 'required',
             'file' => 'required|file|mimes:pdf|max:5120',
             'apa_expired' => 'nullable',
-            'tanggal_expired' => 'required_if:apa_expired,on'
+            'tanggal_expired' => 'required_if:apa_expired,on',
         ]);
 
         $path = public_path('files/dokumen/kontrak-vendor');
 
         // Check if directory exists, if not create it
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
 
         // Store the file
         $file = $request->file('file');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $filename = time().'.'.$file->getClientOriginalExtension();
         $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = 'files/dokumen/kontrak-vendor/' . $filename;
+        $data['file'] = 'files/dokumen/kontrak-vendor/'.$filename;
 
         if ($request->filled('apa_expired')) {
             unset($data['apa_expired']);
@@ -276,7 +276,7 @@ class DokumenController extends Controller
     {
         $path = public_path($kontrak_vendor->file);
 
-        if(File::exists($path)) {
+        if (File::exists($path)) {
             File::delete($path);
         }
 
@@ -311,7 +311,7 @@ class DokumenController extends Controller
         $data = DokumenData::sph()->get();
 
         return view('dokumen.sph.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -326,17 +326,17 @@ class DokumenController extends Controller
         $path = public_path('files/dokumen/sph');
 
         // Check if directory exists, if not create it
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
 
         // Store the file
         $file = $request->file('file');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $filename = time().'.'.$file->getClientOriginalExtension();
         $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = 'files/dokumen/sph/' . $filename;
+        $data['file'] = 'files/dokumen/sph/'.$filename;
 
         DokumenData::create([
             'jenis_dokumen' => 3,
@@ -352,7 +352,7 @@ class DokumenController extends Controller
     {
         $path = public_path($sph->file);
 
-        if(File::exists($path)) {
+        if (File::exists($path)) {
             File::delete($path);
         }
 
@@ -387,7 +387,7 @@ class DokumenController extends Controller
         $data = DokumenData::companyProfil()->get();
 
         return view('company-profile.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -402,17 +402,17 @@ class DokumenController extends Controller
         $path = public_path('files/dokumen/company-profile');
 
         // Check if directory exists, if not create it
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
 
         // Store the file
         $file = $request->file('file');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $filename = time().'.'.$file->getClientOriginalExtension();
         $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = 'files/dokumen/company-profile/' . $filename;
+        $data['file'] = 'files/dokumen/company-profile/'.$filename;
 
         DokumenData::create([
             'jenis_dokumen' => 4,
@@ -428,7 +428,7 @@ class DokumenController extends Controller
     {
         $path = public_path($company_profile->file);
 
-        if(File::exists($path)) {
+        if (File::exists($path)) {
             File::delete($path);
         }
 
@@ -457,5 +457,4 @@ class DokumenController extends Controller
             return redirect()->back()->with('error', 'Dokumen gagal dikirim ');
         }
     }
-
 }

@@ -28,7 +28,7 @@ class InventarisJenis extends Model
 
     public function getNfSumJumlahAttribute()
     {
-        return number_format($this->sum_jumlah, 0, ',','.');
+        return number_format($this->sum_jumlah, 0, ',', '.');
     }
 
     public function getSumTotalAttribute()
@@ -38,7 +38,6 @@ class InventarisJenis extends Model
 
     public function getNfSumTotalAttribute()
     {
-        return number_format($this->sum_total, 0, ',','.');
+        return number_format($this->sum_total, 0, ',', '.');
     }
-
 }

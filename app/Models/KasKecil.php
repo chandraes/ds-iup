@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class KasKecil extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $appends = ['nf_nominal', 'tanggal', 'kode', 'nf_saldo'];
@@ -56,7 +57,7 @@ class KasKecil extends Model
             ->orderBy('id', 'desc')
             ->first();
 
-        if (!$data) {
+        if (! $data) {
             $data = $this->where('created_at', '<', Carbon::create($year, $month, 1))
                 ->orderBy('id', 'desc')
                 ->first();
@@ -67,7 +68,7 @@ class KasKecil extends Model
 
     public function masukKasKecil()
     {
-        $db = new KasBesar();
+        $db = new KasBesar;
 
         DB::beginTransaction();
 

@@ -2,8 +2,6 @@
 
 namespace App\Models\db\Barang;
 
-use App\Models\db\Pajak;
-use App\Models\db\Satuan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +22,7 @@ class BarangStokHarga extends Model
     public function getTanggalAttribute()
     {
         Carbon::setLocale('id');
+
         return Carbon::parse($this->created_at)->translatedFormat('d F Y');
     }
 
@@ -85,19 +84,19 @@ class BarangStokHarga extends Model
             ->orderBy('barang_nama_id')
             ->orderBy('barang_id');
 
-        if (!is_null($unitFilter)) {
+        if (! is_null($unitFilter)) {
             $query->where('barang_unit_id', $unitFilter);
         }
 
-        if (!is_null($typeFilter)) {
+        if (! is_null($typeFilter)) {
             $query->where('barang_type_id', $typeFilter);
         }
 
-        if (!is_null($kategoriFilter)) {
+        if (! is_null($kategoriFilter)) {
             $query->where('barang_kategori_id', $kategoriFilter);
         }
         // dd($barangNamaFilter);
-        if (!is_null($barangNamaFilter)) {
+        if (! is_null($barangNamaFilter)) {
             $query->where('barang_nama_id', $barangNamaFilter);
         }
 
@@ -107,7 +106,7 @@ class BarangStokHarga extends Model
                 'barang_type_id',
                 'barang_kategori_id',
                 'barang_nama_id',
-                'barang_id'
+                'barang_id',
             ]);
 
         foreach ($data as $unitId => $types) {
@@ -157,8 +156,9 @@ class BarangStokHarga extends Model
                 }
             }
         }
+
         // dd($data);
-            return $data;
+        return $data;
 
     }
 
@@ -176,22 +176,21 @@ class BarangStokHarga extends Model
             ->orderBy('barang_id')
             ->orderBy('created_at', 'asc');
 
-        if (!is_null($unitFilter)) {
+        if (! is_null($unitFilter)) {
             $query->where('barang_unit_id', $unitFilter);
         }
 
-        if (!is_null($typeFilter)) {
+        if (! is_null($typeFilter)) {
             $query->where('barang_type_id', $typeFilter);
         }
 
-        if (!is_null($kategoriFilter)) {
+        if (! is_null($kategoriFilter)) {
             $query->where('barang_kategori_id', $kategoriFilter);
         }
         // dd($barangNamaFilter);
-        if (!is_null($barangNamaFilter)) {
+        if (! is_null($barangNamaFilter)) {
             $query->where('barang_nama_id', $barangNamaFilter);
         }
-
 
         $data = $query->get()
             ->groupBy([
@@ -199,7 +198,7 @@ class BarangStokHarga extends Model
                 'barang_type_id',
                 'barang_kategori_id',
                 'barang_nama_id',
-                'barang_id'
+                'barang_id',
             ]);
 
         foreach ($data as $unitId => $types) {
@@ -249,8 +248,9 @@ class BarangStokHarga extends Model
                 }
             }
         }
+
         // dd($data);
-            return $data;
+        return $data;
 
     }
 
@@ -266,19 +266,19 @@ class BarangStokHarga extends Model
             ->orderBy('barang_nama_id')
             ->orderBy('barang_id');
 
-        if (!is_null($unitFilter)) {
+        if (! is_null($unitFilter)) {
             $query->where('barang_unit_id', $unitFilter);
         }
 
-        if (!is_null($typeFilter)) {
+        if (! is_null($typeFilter)) {
             $query->where('barang_type_id', $typeFilter);
         }
 
-        if (!is_null($kategoriFilter)) {
+        if (! is_null($kategoriFilter)) {
             $query->where('barang_kategori_id', $kategoriFilter);
         }
         // dd($barangNamaFilter);
-        if (!is_null($barangNamaFilter)) {
+        if (! is_null($barangNamaFilter)) {
             $query->where('barang_nama_id', $barangNamaFilter);
         }
 
@@ -293,10 +293,10 @@ class BarangStokHarga extends Model
         $data = [];
         $barang_unit = BarangUnit::with(['types'])
                         // when unitFilter is not null
-                        ->when($unitFilter, function ($query, $unitFilter) {
-                            return $query->where('id', $unitFilter);
-                        })
-                        ->get();
+            ->when($unitFilter, function ($query, $unitFilter) {
+                return $query->where('id', $unitFilter);
+            })
+            ->get();
         $no_unit = 0;
 
         foreach ($barang_unit as $u) {
@@ -312,11 +312,11 @@ class BarangStokHarga extends Model
 
                 $barang = Barang::with(['kategori', 'barang_nama', 'satuan', 'stok_harga' => function ($query) {
                     $query->where('stok', '>', 0)
-                    ->orWhere(function ($query) {
-                        $query->where('stok', '=', 0)
-                              ->orderBy('id', 'desc')
-                              ->limit(1);
-                    });
+                        ->orWhere(function ($query) {
+                            $query->where('stok', '=', 0)
+                                ->orderBy('id', 'desc')
+                                ->limit(1);
+                        });
                 }])
                     ->where('barang_unit_id', $u->id)
                     ->where('barang_type_id', $t->id)
@@ -359,11 +359,11 @@ class BarangStokHarga extends Model
 
                     $barangBanyak = Barang::with(['satuan', 'stok_harga' => function ($query) {
                         $query->where('stok', '>', 0)
-                              ->orWhere(function ($query) {
-                                  $query->where('stok', '=', 0)
-                                        ->orderBy('id', 'desc')
-                                        ->limit(1);
-                              });
+                            ->orWhere(function ($query) {
+                                $query->where('stok', '=', 0)
+                                    ->orderBy('id', 'desc')
+                                    ->limit(1);
+                            });
                     }])
                         ->where('barang_unit_id', $u->id)
                         ->where('jenis', $jenis)
@@ -389,7 +389,7 @@ class BarangStokHarga extends Model
                             $data[$no_unit]['types'][$no_type]['kategori'][$no_kategori]['barang_nama'][$no_nama]['barang'][$no_barang]['stokHarga'][$no_stok]['stok_id'] = '-';
                             $data[$no_unit]['types'][$no_type]['kategori'][$no_kategori]['barang_nama'][$no_nama]['barang'][$no_barang]['stokHarga'][$no_stok]['harga'] = '-';
                             $data[$no_unit]['types'][$no_type]['kategori'][$no_kategori]['barang_nama'][$no_nama]['barang'][$no_barang]['stokHarga'][$no_stok]['stok'] = '-';
-                            $data[$no_unit]['types'][$no_type]['kategori'][$no_kategori]['barang_nama'][$no_nama]['barang'][$no_barang]['stokHarga'][$no_stok]['harga_beli'] = "-";
+                            $data[$no_unit]['types'][$no_type]['kategori'][$no_kategori]['barang_nama'][$no_nama]['barang'][$no_barang]['stokHarga'][$no_stok]['harga_beli'] = '-';
                             $data[$no_unit]['types'][$no_type]['kategori'][$no_kategori]['barang_nama'][$no_nama]['barang'][$no_barang]['stokHarga'][$no_stok]['satuan'] = '-';
 
                             $stokHargaRowspan++;

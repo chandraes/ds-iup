@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Legalitas\LegalitasDokumen;
 use App\Models\Legalitas\LegalitasKategori;
 use App\Services\StarSender;
-use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class LegalitasController extends Controller
 {
@@ -15,17 +15,15 @@ class LegalitasController extends Controller
         $kategori = LegalitasKategori::all();
         $count = LegalitasDokumen::count();
 
-        if($count > 0)
-        {
+        if ($count > 0) {
             $dokumen = LegalitasDokumen::orderBy('legalitas_kategori_id')->get()->groupBy('legalitas_kategori_id');
         } else {
             $dokumen = LegalitasDokumen::get()->groupBy('legalitas_kategori_id');
         }
 
-
         return view('legalitas.index', [
             'kategori' => $kategori,
-            'data' => $dokumen
+            'data' => $dokumen,
         ]);
     }
 
@@ -36,7 +34,7 @@ class LegalitasController extends Controller
             'nama' => 'required',
             'file' => 'required|file|mimes:pdf|max:5120',
             'apa_expired' => 'nullable',
-            'tanggal_expired' => 'required_if:apa_expired,on'
+            'tanggal_expired' => 'required_if:apa_expired,on',
         ]);
 
         // dd($data);
@@ -45,17 +43,17 @@ class LegalitasController extends Controller
         $path = public_path('files/legalitas');
 
         // Check if directory exists, if not create it
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
 
         // Store the file
         $file = $request->file('file');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $filename = time().'.'.$file->getClientOriginalExtension();
         $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = 'files/legalitas/' . $filename;
+        $data['file'] = 'files/legalitas/'.$filename;
 
         if ($request->filled('apa_expired')) {
             unset($data['apa_expired']);
@@ -75,21 +73,21 @@ class LegalitasController extends Controller
             'nama' => 'required',
             'file' => 'nullable|file|mimes:pdf|max:5120',
             'apa_expired' => 'nullable',
-            'tanggal_expired' => 'required_if:apa_expired,on'
+            'tanggal_expired' => 'required_if:apa_expired,on',
         ]);
 
         if ($request->hasFile('file')) {
             $path = public_path($legalitas->file);
 
-            if(File::exists($path)) {
+            if (File::exists($path)) {
                 File::delete($path);
             }
 
             $file = $request->file('file');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $filename = time().'.'.$file->getClientOriginalExtension();
             $file->move(public_path('files/legalitas'), $filename);
 
-            $data['file'] = 'files/legalitas/' . $filename;
+            $data['file'] = 'files/legalitas/'.$filename;
         }
 
         if ($request->filled('apa_expired')) {
@@ -109,7 +107,7 @@ class LegalitasController extends Controller
     {
         $path = public_path($legalitas->file);
 
-        if(File::exists($path)) {
+        if (File::exists($path)) {
             File::delete($path);
         }
 
@@ -148,7 +146,7 @@ class LegalitasController extends Controller
     public function kategori_store(Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required|unique:legalitas_kategoris,nama'
+            'nama' => 'required|unique:legalitas_kategoris,nama',
         ]);
 
         LegalitasKategori::create($data);
@@ -159,7 +157,7 @@ class LegalitasController extends Controller
     public function kategori_update(Request $request, $id)
     {
         $data = $request->validate([
-            'nama' => 'required|unique:legalitas_kategoris,nama,' . $id
+            'nama' => 'required|unique:legalitas_kategoris,nama,'.$id,
         ]);
 
         LegalitasKategori::find($id)->update($data);

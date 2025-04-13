@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Rekening;
 use App\Models\InvestorModal;
 use App\Models\KasBesar;
+use App\Models\Rekening;
 use Illuminate\Http\Request;
 
 class FormDepositController extends Controller
@@ -23,10 +23,10 @@ class FormDepositController extends Controller
         $data = $request->validate([
             'nominal' => 'required',
             'investor_modal_id' => 'required|exists:investor_modals,id',
-            'ppn_kas' => 'required'
+            'ppn_kas' => 'required',
         ]);
 
-        $db = new KasBesar();
+        $db = new KasBesar;
 
         $store = $db->deposit($data);
 
@@ -50,18 +50,17 @@ class FormDepositController extends Controller
             'investor_modal_id' => 'required|exists:investor_modals,id',
         ]);
 
-        $db = new KasBesar();
+        $db = new KasBesar;
         $modal = $db->modalInvestorTerakhir($data['ppn_kas']) * -1;
         $saldo = $db->saldoTerakhir($data['ppn_kas']);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
-        if($modal < $data['nominal'] || $saldo < $data['nominal']){
+        if ($modal < $data['nominal'] || $saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Nominal Melebihi Modal Investor/Saldo !!');
         }
 
         $store = $db->withdraw($data);
-
 
         return redirect()->route('billing')->with($store['status'], $store['message']);
     }
@@ -82,12 +81,12 @@ class FormDepositController extends Controller
             'ppn_kas' => 'required', // Add this line
         ]);
 
-        $db = new KasBesar();
+        $db = new KasBesar;
         $saldo = $db->saldoTerakhir($data['ppn_kas']);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
-        if($saldo < $data['nominal']){
+        if ($saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Mencukupi !!');
         }
 
@@ -102,10 +101,10 @@ class FormDepositController extends Controller
 
         $rekening = Rekening::where('untuk', $kas)->first();
 
-        if(!$rekening){
+        if (! $rekening) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Rekening Tidak Ditemukan !!'
+                'message' => 'Rekening Tidak Ditemukan !!',
             ]);
         }
 

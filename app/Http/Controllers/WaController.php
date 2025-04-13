@@ -11,14 +11,15 @@ class WaController extends Controller
     public function index()
     {
         $data = GroupWa::whereNot('untuk', 'team')->get();
+
         return view('pengaturan.wa.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function get_group_wa()
     {
-        $wa = new WaStatus();
+        $wa = new WaStatus;
         $group = $wa->getGroup();
 
         return response()->json($group['data']['groups']);

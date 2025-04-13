@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\db\Pajak;
-use App\Models\Rekening;
-use App\Models\KasBesar;
 use App\Models\GroupWa;
+use App\Models\KasBesar;
 use App\Models\Pengaturan;
 use App\Models\PesanWa;
 use App\Models\PpnMasukan;
@@ -38,7 +37,7 @@ class FormLainController extends Controller
 
         $db = new KasBesar;
 
-        if (!in_array(auth()->user()->role, $role)){
+        if (! in_array(auth()->user()->role, $role)) {
             $batasan = Pengaturan::where('untuk', 'form-lain-lain')->first()->nilai;
 
             if ($data['nominal'] > $batasan) {
@@ -82,12 +81,11 @@ class FormLainController extends Controller
 
         $data = $request->validate($commonRules);
 
-
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         $role = ['admin', 'su'];
 
-        if (!in_array(auth()->user()->role, $role)){
+        if (! in_array(auth()->user()->role, $role)) {
             $batasan = Pengaturan::where('untuk', 'form-lain-lain')->first()->nilai;
 
             if ($data['nominal'] > $batasan) {
@@ -113,7 +111,7 @@ class FormLainController extends Controller
                 PpnMasukan::create([
                     'uraian' => $data['uraian'],
                     'nominal' => $ppnNominal,
-                    'saldo' => (new PpnMasukan())->saldoTerakhir() + $ppnNominal,
+                    'saldo' => (new PpnMasukan)->saldoTerakhir() + $ppnNominal,
                 ]);
 
                 $data['nominal'] += $ppnNominal;
@@ -136,15 +134,15 @@ class FormLainController extends Controller
 
             if ($data['ppn_kas'] == 1) {
                 $addPesan = "Sisa Saldo Kas Besar PPN: \n".
-                            "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
                             "Total Modal Investor PPN: \n".
-                            "Rp. ".number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
-             } else {
-                 $addPesan = "Sisa Saldo Kas Besar Non PPN: \n".
-                             "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
-                             "Total Modal Investor Non PPN: \n".
-                             "Rp. ".number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
-             }
+                            'Rp. '.number_format($kasPpn['modal_investor'], 0, ',', '.')."\n\n";
+            } else {
+                $addPesan = "Sisa Saldo Kas Besar Non PPN: \n".
+                            'Rp. '.number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                            "Total Modal Investor Non PPN: \n".
+                            'Rp. '.number_format($kasNonPpn['modal_investor'], 0, ',', '.')."\n\n";
+            }
 
             // sum modal investor
             $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
@@ -153,15 +151,15 @@ class FormLainController extends Controller
 
             $group = GroupWa::where('untuk', $groupName)->first();
 
-            $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Lain2 (Dana Keluar)*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Uraian :  ".$data['uraian']."\n".
-                    "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                    'Uraian :  '.$data['uraian']."\n".
+                    'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank      : ".$store->bank."\n".
-                    "Nama    : ".$store->nama_rek."\n".
-                    "No. Rek : ".$store->no_rek."\n\n".
+                    'Bank      : '.$store->bank."\n".
+                    'Nama    : '.$store->nama_rek."\n".
+                    'No. Rek : '.$store->no_rek."\n\n".
                     "==========================\n".
                     $addPesan.
                     "Terima kasih 🙏🙏🙏\n";
@@ -179,16 +177,13 @@ class FormLainController extends Controller
                 $storeWa->update(['status' => 1]);
             }
 
-
             return redirect()->route('billing')->with('success', 'Data Berhasil Ditambahkan');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollback();
 
             return redirect()->back()->with('error', 'Gagal Menambahkan Data, '.$th->getMessage());
         }
-
-
 
     }
 }

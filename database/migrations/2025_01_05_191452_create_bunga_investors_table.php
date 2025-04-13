@@ -22,9 +22,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        $data= [
+        $data = [
             'untuk' => 'pph-investor',
-            'persen' => 15
+            'persen' => 15,
         ];
 
         Pajak::create($data);

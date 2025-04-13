@@ -3,8 +3,8 @@
 use App\Models\db\Barang\BarangStokHarga;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -18,7 +18,7 @@ return new class extends Migration
         });
 
         BarangStokHarga::where('stok', '>', 0)->update([
-            'stok_awal' => DB::raw('stok')
+            'stok_awal' => DB::raw('stok'),
         ]);
     }
 

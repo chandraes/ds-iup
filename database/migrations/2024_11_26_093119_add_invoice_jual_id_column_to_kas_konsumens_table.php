@@ -19,7 +19,7 @@ return new class extends Migration
         });
 
         // fix kas konsumen (add Invoice jual id)
-        $dbkasKonsumen = new KasKonsumen();
+        $dbkasKonsumen = new KasKonsumen;
         $kasKonsumen = $dbkasKonsumen->all();
 
         foreach ($kasKonsumen as $kas) {
@@ -41,7 +41,7 @@ return new class extends Migration
                     $dbkasKonsumen->create([
                         'konsumen_id' => $invoiceJual->konsumen_id,
                         'invoice_jual_id' => $invoiceJual->id,
-                        'uraian' => 'Pelunasan ' . $invoiceJual->kode,
+                        'uraian' => 'Pelunasan '.$invoiceJual->kode,
                         'bayar' => $totalInvoice,
                         'sisa' => $sisa,
                     ]);

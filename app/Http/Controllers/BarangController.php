@@ -12,14 +12,13 @@ use App\Models\db\Karyawan;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
 use App\Models\GantiRugi;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class BarangController extends Controller
 {
-
     private function storeDb($model, $data)
     {
         try {
@@ -29,6 +28,7 @@ class BarangController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi masalah saat menambahkan data. '.$th->getMessage());
         }
 
@@ -38,16 +38,16 @@ class BarangController extends Controller
     public function barang_kategori(Request $request)
     {
         $data = BarangKategori::with(['barang_nama' => function ($query) use ($request) {
-                    if ($request->input('filter_barang_nama')) {
-                        $query->where('id', $request->input('filter_barang_nama'));
-                    }
-                }])
-                ->withCount(['barang_nama' => function ($query) use ($request) {
-                    if ($request->input('filter_barang_nama')) {
-                        $query->where('id', $request->input('filter_barang_nama'));
-                    }
-                }])
-                ->orderBy('urut')->get();
+            if ($request->input('filter_barang_nama')) {
+                $query->where('id', $request->input('filter_barang_nama'));
+            }
+        }])
+            ->withCount(['barang_nama' => function ($query) use ($request) {
+                if ($request->input('filter_barang_nama')) {
+                    $query->where('id', $request->input('filter_barang_nama'));
+                }
+            }])
+            ->orderBy('urut')->get();
 
         $barangNama = BarangNama::select('id', 'nama')->get();
 
@@ -62,13 +62,13 @@ class BarangController extends Controller
         $data = $request->validate([
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'nama' => [
-                    'required',
-                    Rule::unique('barang_namas')->where(function ($query) use ($request) {
-                        return $query->where('barang_kategori_id', $request->barang_kategori_id)
-                                    ->where('nama', $request->nama);
-                    }),
-                ],
-            ]);
+                'required',
+                Rule::unique('barang_namas')->where(function ($query) use ($request) {
+                    return $query->where('barang_kategori_id', $request->barang_kategori_id)
+                        ->where('nama', $request->nama);
+                }),
+            ],
+        ]);
 
         $this->storeDb(BarangNama::class, $data);
 
@@ -80,7 +80,7 @@ class BarangController extends Controller
     {
         $data = $request->validate([
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
-           'nama' => [
+            'nama' => [
                 'required',
                 Rule::unique('barang_namas')->where(function ($query) use ($request) {
                     return $query->where('barang_kategori_id', $request->barang_kategori_id);
@@ -95,7 +95,9 @@ class BarangController extends Controller
 
     public function barang_nama_delete(BarangNama $nama)
     {
-        if($nama->barang->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        if ($nama->barang->count() > 0) {
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        }
 
         $nama->delete();
 
@@ -107,7 +109,7 @@ class BarangController extends Controller
         $data = BarangUnit::with(['types'])->get();
 
         return view('db.unit.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -125,7 +127,7 @@ class BarangController extends Controller
     public function unit_update(Request $request, BarangUnit $unit)
     {
         $data = $request->validate([
-           'nama' => 'required|unique:barang_units,nama,' . $unit->id . ',id',
+            'nama' => 'required|unique:barang_units,nama,'.$unit->id.',id',
         ]);
 
         $unit->update($data);
@@ -135,7 +137,9 @@ class BarangController extends Controller
 
     public function unit_delete(BarangUnit $unit)
     {
-        if($unit->types->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki type terkait');
+        if ($unit->types->count() > 0) {
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki type terkait');
+        }
 
         $unit->delete();
 
@@ -150,7 +154,7 @@ class BarangController extends Controller
                 'required',
                 Rule::unique('barang_types')->where(function ($query) use ($request) {
                     return $query->where('barang_unit_id', $request->barang_unit_id)
-                                ->where('nama', $request->nama);
+                        ->where('nama', $request->nama);
                 }),
             ],
         ]);
@@ -162,6 +166,7 @@ class BarangController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menambahkan data. '.$th->getMessage());
         }
 
@@ -187,7 +192,9 @@ class BarangController extends Controller
 
     public function type_delete(BarangType $type)
     {
-        if($type->barangs->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        if ($type->barangs->count() > 0) {
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        }
 
         $type->delete();
 
@@ -196,7 +203,7 @@ class BarangController extends Controller
 
     public function barang(Request $request)
     {
-        $kategoriDb = new BarangKategori();
+        $kategoriDb = new BarangKategori;
         // $data = BarangType::with(['unit', 'barangs'])->get();
 
         $unitFilter = $request->input('unit');
@@ -205,7 +212,7 @@ class BarangController extends Controller
         $jenisFilter = $request->input('jenis');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = $kategoriDb->whereHas('barangs', function ($query) use ($unitFilter) {
@@ -226,7 +233,7 @@ class BarangController extends Controller
             $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
         }
 
-        $db = new BarangUnit();
+        $db = new BarangUnit;
 
         $units = $db->barangAll($unitFilter, $typeFilter, $kategoriFilter, $jenisFilter, $barangNamaFilter);
         $kategori = $kategoriDb->with('barang_nama')->get();
@@ -254,7 +261,7 @@ class BarangController extends Controller
         $data = BarangUnit::with(['types', 'types.barangs', 'types.barangs.detail_types', 'types.barangs.detail_types.type'])->get();
 
         return view('db.barang.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -271,12 +278,12 @@ class BarangController extends Controller
                 'required',
                 Rule::unique('barangs')->where(function ($query) use ($request) {
                     return $query->where('barang_type_id', $request->barang_type_id)
-                                ->where('barang_kategori_id', $request->barang_kategori_id)
-                                ->where('barang_nama_id', $request->barang_nama_id)
-                                ->where('satuan_id', $request->satuan_id)
-                                ->where('jenis', $request->jenis)
-                                ->where('merk', $request->merk)
-                                ->where('kode', $request->kode);
+                        ->where('barang_kategori_id', $request->barang_kategori_id)
+                        ->where('barang_nama_id', $request->barang_nama_id)
+                        ->where('satuan_id', $request->satuan_id)
+                        ->where('jenis', $request->jenis)
+                        ->where('merk', $request->merk)
+                        ->where('kode', $request->kode);
                 }),
             ],
             'keterangan' => 'nullable',
@@ -305,12 +312,11 @@ class BarangController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi masalah saat menambahkan data. '.$th->getMessage());
         }
 
-
         return redirect()->back()->with('success', 'Berhasil menambahkan data barang!');
-
 
     }
 
@@ -324,57 +330,57 @@ class BarangController extends Controller
             'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
             'merk' => [
-                    'required',
-                    Rule::unique('barangs')->where(function ($query) use ($request) {
-                        return $query->where('barang_type_id', $request->barang_type_id)
-                                    ->where('barang_kategori_id', $request->barang_kategori_id)
-                                    ->where('barang_nama_id', $request->barang_nama_id)
-                                    ->where('jenis', $request->jenis)
-                                    ->where('satuan_id', $request->satuan_id)
-                                    ->where('merk', $request->merk)
-                                    ->where('kode', $request->kode);
-                    })->ignore($barang->id, 'id'),
-                ],
+                'required',
+                Rule::unique('barangs')->where(function ($query) use ($request) {
+                    return $query->where('barang_type_id', $request->barang_type_id)
+                        ->where('barang_kategori_id', $request->barang_kategori_id)
+                        ->where('barang_nama_id', $request->barang_nama_id)
+                        ->where('jenis', $request->jenis)
+                        ->where('satuan_id', $request->satuan_id)
+                        ->where('merk', $request->merk)
+                        ->where('kode', $request->kode);
+                })->ignore($barang->id, 'id'),
+            ],
             'keterangan' => 'nullable',
             'detail_type' => 'nullable|array',
-            ]);
+        ]);
 
-            try {
-                DB::beginTransaction();
-                $detailType = null;
-                if(isset($data['detail_type'])){
-                    $detailType = $data['detail_type'];
-                    unset($data['detail_type']);
-                }
-
-                $data['barang_unit_id'] = BarangType::find($data['barang_type_id'])->barang_unit_id;
-
-                $store = $barang->update($data);
-
-                $barang->detail_types()->delete();
-
-                if ($detailType != null) {
-                    foreach ($detailType as $key => $value) {
-                        $barang->detail_types()->create([
-                            'barang_type_id' => $value,
-                        ]);
-                    }
-                }
-
-                BarangStokHarga::where('barang_id', $barang->id)->update([
-                    'barang_unit_id' => $data['barang_unit_id'],
-                    'barang_type_id' => $data['barang_type_id'],
-                    'barang_kategori_id' => $data['barang_kategori_id'],
-                    'barang_nama_id' => $data['barang_nama_id'],
-                ]);
-
-                DB::commit();
-
-            } catch (\Throwable $th) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'Terjadi masalah saat mengubah data. '.$th->getMessage());
+        try {
+            DB::beginTransaction();
+            $detailType = null;
+            if (isset($data['detail_type'])) {
+                $detailType = $data['detail_type'];
+                unset($data['detail_type']);
             }
 
+            $data['barang_unit_id'] = BarangType::find($data['barang_type_id'])->barang_unit_id;
+
+            $store = $barang->update($data);
+
+            $barang->detail_types()->delete();
+
+            if ($detailType != null) {
+                foreach ($detailType as $key => $value) {
+                    $barang->detail_types()->create([
+                        'barang_type_id' => $value,
+                    ]);
+                }
+            }
+
+            BarangStokHarga::where('barang_id', $barang->id)->update([
+                'barang_unit_id' => $data['barang_unit_id'],
+                'barang_type_id' => $data['barang_type_id'],
+                'barang_kategori_id' => $data['barang_kategori_id'],
+                'barang_nama_id' => $data['barang_nama_id'],
+            ]);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi masalah saat mengubah data. '.$th->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Berhasil mengubah data barang!');
     }
@@ -391,6 +397,7 @@ class BarangController extends Controller
         }
 
         $barang->delete();
+
         return redirect()->back()->with('success', 'Berhasil menghapus data barang!');
     }
 
@@ -418,7 +425,9 @@ class BarangController extends Controller
 
     public function kategori_barang_delete(BarangKategori $kategori)
     {
-        if($kategori->barangs->count() > 0) return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        if ($kategori->barangs->count() > 0) {
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        }
 
         $kategori->delete();
 
@@ -432,13 +441,13 @@ class BarangController extends Controller
         if ($data->isEmpty()) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Unit belum memiliki type!!'
+                'message' => 'Unit belum memiliki type!!',
             ]);
         }
 
         return response()->json([
             'status' => 1,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -449,13 +458,13 @@ class BarangController extends Controller
         if ($data->isEmpty()) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Kategori belum memiliki nama barang!!'
+                'message' => 'Kategori belum memiliki nama barang!!',
             ]);
         }
 
         return response()->json([
             'status' => 1,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -470,7 +479,7 @@ class BarangController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
@@ -491,7 +500,7 @@ class BarangController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $jenis = 1;
 
@@ -549,7 +558,7 @@ class BarangController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
@@ -570,7 +579,7 @@ class BarangController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $jenis = 2;
 
@@ -607,7 +616,7 @@ class BarangController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
@@ -628,14 +637,14 @@ class BarangController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $jenis = 1;
 
         $data = $db->barangStokPdf($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
         $pdf = PDF::loadview('db.stok-ppn.pdf', [
-           'data' => $data,
+            'data' => $data,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
@@ -645,8 +654,9 @@ class BarangController extends Controller
             'barangNamaFilter' => $barangNamaFilter,
             'selectBarangNama' => $selectBarangNama,
         ])
-        ->setPaper('a4', 'landscape');
-            $tanggal = date('d-m-Y');
+            ->setPaper('a4', 'landscape');
+        $tanggal = date('d-m-Y');
+
         return $pdf->stream('StokPpn-'.$tanggal.'.pdf');
     }
 
@@ -662,7 +672,7 @@ class BarangController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        if (!empty($unitFilter) && $unitFilter != '') {
+        if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
@@ -683,14 +693,14 @@ class BarangController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $jenis = 2;
 
         $data = $db->barangStokPdf($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
         $pdf = PDF::loadview('db.stok-non-ppn.pdf', [
-           'data' => $data,
+            'data' => $data,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
@@ -700,11 +710,11 @@ class BarangController extends Controller
             'barangNamaFilter' => $barangNamaFilter,
             'selectBarangNama' => $selectBarangNama,
         ])
-        ->setPaper('a4', 'landscape');
-            $tanggal = date('d-m-Y');
+            ->setPaper('a4', 'landscape');
+        $tanggal = date('d-m-Y');
+
         return $pdf->stream('StokNonPpn-'.$tanggal.'.pdf');
     }
-
 
     public function ganti_rugi(BarangStokHarga $stok, Request $request)
     {
@@ -721,6 +731,7 @@ class BarangController extends Controller
 
         if ($data['jumlah_hilang'] <= 0 || $data['jumlah_hilang'] > $stok->stok) {
             $errorMessage = $data['jumlah_hilang'] <= 0 ? 'Jumlah hilang tidak boleh kurang dari atau sama dengan 0!' : 'Jumlah hilang tidak boleh lebih besar dari stok!';
+
             return redirect()->back()->with('error', $errorMessage);
         }
 
@@ -735,7 +746,7 @@ class BarangController extends Controller
 
         unset($data['jumlah_hilang'], $data['harga_beli_dpp_act'], $data['aksi']);
 
-        $db = new GantiRugi();
+        $db = new GantiRugi;
 
         $res = $db->ganti_rugi($data);
 
@@ -752,7 +763,7 @@ class BarangController extends Controller
         if ($data->isEmpty()) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Data stok tidak ditemukan!'
+                'message' => 'Data stok tidak ditemukan!',
             ]);
         }
 

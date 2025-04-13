@@ -11,6 +11,7 @@ class DokumenData extends Model
     use HasFactory;
 
     protected $guarded = [];
+
     protected $appends = ['id_tanggal_expired'];
 
     // 1 kontrak-tambang, 2 kontrak-vendor, 3 sph, 4 dokumen-lainnya
@@ -49,5 +50,4 @@ class DokumenData extends Model
 
         return $tanggal;
     }
-
 }

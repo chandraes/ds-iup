@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class PurchaseOrder extends Model
 {
@@ -12,7 +12,7 @@ class PurchaseOrder extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = [ 'tanggal'];
+    protected $appends = ['tanggal'];
 
     public function dataTahun()
     {
@@ -30,7 +30,7 @@ class PurchaseOrder extends Model
 
     public function generateFullNomor()
     {
-        $db = new Config();
+        $db = new Config;
         $data = $db->where('untuk', 'resmi')->first();
         $singkatan = $data->singkatan;
         $nomor = str_pad($this->generateNomor(), 3, '0', STR_PAD_LEFT);
@@ -39,8 +39,6 @@ class PurchaseOrder extends Model
 
         return "{$nomor}/{$singkatan}-PO/{$bulan}/{$tahun}";
     }
-
-
 
     public function getTanggalAttribute()
     {

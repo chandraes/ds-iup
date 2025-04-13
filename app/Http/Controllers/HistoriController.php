@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\PesanWa;
 use App\Services\StarSender;
-use Illuminate\Http\Request;
 
 class HistoriController extends Controller
 {
@@ -18,18 +17,18 @@ class HistoriController extends Controller
             ->get();
 
         return view('histori.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function resend(PesanWa $pesanWa)
     {
-        $starSender =  new StarSender($pesanWa->tujuan, $pesanWa->pesan);
+        $starSender = new StarSender($pesanWa->tujuan, $pesanWa->pesan);
         $res = $starSender->sendGroup();
 
-        if($res == 'true'){
+        if ($res == 'true') {
             $pesanWa->update([
-                'status' => 1
+                'status' => 1,
             ]);
         } else {
             return redirect()->back()->with('error', 'Gagal mengirim ulang pesan! Silahkan hubungi admin');

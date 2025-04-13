@@ -41,17 +41,16 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-         'datetime',
-         'hashed',
+        'datetime',
+        'hashed',
     ];
 
     public function getRoles()
     {
         $roles = [
-            'admin', 'user', 'sales'
+            'admin', 'user', 'sales',
         ];
 
         return $roles;
     }
-
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $appends = ['kode_supplier'];
@@ -16,7 +17,7 @@ class Supplier extends Model
     {
         $sistem = [
             '1' => 'Cash',
-            '2' => 'Tempo'
+            '2' => 'Tempo',
         ];
 
         return $sistem[$this->pembayaran];
@@ -24,16 +25,16 @@ class Supplier extends Model
 
     public function getKodeSupplierAttribute()
     {
-        return 'S' . str_pad($this->kode, 2, '0', STR_PAD_LEFT);
+        return 'S'.str_pad($this->kode, 2, '0', STR_PAD_LEFT);
     }
 
     public function generateKode()
     {
         $kode = $this->max('kode');
         $kode = $kode + 1;
+
         return $kode;
     }
-
 
     public function createSupplier($data)
     {
@@ -44,7 +45,7 @@ class Supplier extends Model
         $result = [
             'status' => 'success',
             'message' => 'Data berhasil ditambahkan',
-            'data' => $store
+            'data' => $store,
         ];
 
         return $result;

@@ -20,11 +20,10 @@ use Spatie\Browsershot\Browsershot;
 
 class FormJualController extends Controller
 {
-
     public function get_konsumen(Request $request)
     {
         $data = $request->validate([
-            'id' => 'required|exists:konsumens,id'
+            'id' => 'required|exists:konsumens,id',
         ]);
 
         $konsumen = Konsumen::find($data['id']);
@@ -49,13 +48,14 @@ class FormJualController extends Controller
         $minJual = $product->min_jual;
 
         if ($data['jumlah'] % $minJual != 0) {
-            return redirect()->back()->with('error', 'Jumlah barang harus kelipatan dari ' . $minJual . '!');
+            return redirect()->back()->with('error', 'Jumlah barang harus kelipatan dari '.$minJual.'!');
         }
 
         if ($data['jumlah'] == 0 || $data['jumlah'] > $product->stok || $product->harga == 0) {
             $errorMessage = $data['jumlah'] == 0 || $data['jumlah'] > $product->stok
                 ? 'Jumlah stok tidak mencukupi!'
                 : 'Harga jual barang belum diatur!';
+
             return redirect()->back()->with('error', $errorMessage);
         }
 
@@ -67,10 +67,9 @@ class FormJualController extends Controller
             $errorMessage = $ppnValue == 1
                 ? 'Keranjang sudah terisi dengan barang non ppn. Silahkan hapus barang non ppn terlebih dahulu'
                 : 'Keranjang sudah terisi dengan barang ppn. Silahkan hapus barang ppn terlebih dahulu';
+
             return redirect()->back()->with('error', $errorMessage);
         }
-
-
 
         $data['user_id'] = auth()->user()->id;
         $data['jumlah'] = str_replace('.', '', $data['jumlah']);
@@ -113,7 +112,7 @@ class FormJualController extends Controller
                 'barang_stok_harga_id' => $productId,
                 'jumlah' => $quantity,
                 'harga_satuan' => $product->harga,
-                'total' => $quantity * $product->harga
+                'total' => $quantity * $product->harga,
             ]);
         }
 
@@ -148,7 +147,7 @@ class FormJualController extends Controller
                 'barang_stok_harga_id' => $productId,
                 'jumlah' => $quantity,
                 'harga_satuan' => $product->harga,
-                'total' => $quantity * $product->harga
+                'total' => $quantity * $product->harga,
             ]);
         }
 
@@ -165,7 +164,6 @@ class FormJualController extends Controller
 
         KeranjangJual::where('user_id', auth()->user()->id)->delete();
 
-
         return redirect()->back()->with('success', 'Keranjang berhasil dikosongkan');
     }
 
@@ -173,7 +171,7 @@ class FormJualController extends Controller
     {
 
         $keranjang = KeranjangJual::with('stok')->where('user_id', auth()->user()->id)->get();
-        $dbPajak = new Pajak();
+        $dbPajak = new Pajak;
         $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
         $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
@@ -186,8 +184,7 @@ class FormJualController extends Controller
         $tanggal = Carbon::now()->translatedFormat('d F Y');
         $jam = Carbon::now()->translatedFormat('H:i');
 
-
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
 
         $kode = $db->generateKode($keranjang->first()->barang_ppn);
 
@@ -227,7 +224,7 @@ class FormJualController extends Controller
             return redirect()->back()->with('error', 'Konsumen cash tidak bisa memilih sistem pembayaran lain selain cash');
         }
 
-        $db = new KeranjangJual();
+        $db = new KeranjangJual;
 
         $res = $db->checkout($data);
         // dd($res['invoice']->id);
@@ -260,7 +257,6 @@ class FormJualController extends Controller
             return redirect()->route('billing.form-jual.invoice', ['invoice' => $res['invoice']->id]);
         }
 
-
         return redirect()->route('billing.lihat-stok')->with($res['status'], $res['message']);
     }
 
@@ -280,14 +276,14 @@ class FormJualController extends Controller
         ])->setPaper('a4', 'portrait');
 
         $directory = storage_path('app/public/invoices');
-        $pdfPath = $directory . '/invoice-' . $invoice->id . '.pdf';
+        $pdfPath = $directory.'/invoice-'.$invoice->id.'.pdf';
 
         // Check if the directory exists, if not, create it
-        if (!file_exists($directory)) {
+        if (! file_exists($directory)) {
             mkdir($directory, 0755, true);
         }
 
-       // Check if the PDF file already exists
+        // Check if the PDF file already exists
         if (file_exists($pdfPath)) {
             // Delete the existing file
             unlink($pdfPath);
@@ -297,11 +293,10 @@ class FormJualController extends Controller
         $pdf->save($pdfPath);
 
         // Generate the URL for the PDF
-        $pdfUrl = asset('storage/invoices/invoice-' . $invoice->id . '.pdf');
+        $pdfUrl = asset('storage/invoices/invoice-'.$invoice->id.'.pdf');
 
         // convert it to be image
         // $pdf = new Pdf($pdfPath);
-
 
         $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
@@ -309,7 +304,7 @@ class FormJualController extends Controller
             if ($konsumen->pembayaran == 1 || $invoice->lunas == 1) {
                 $uraian = '*Cash*';
                 $pembayaran = 'Lunas';
-            } elseif($konsumen->pembayaran == 2 && $invoice->titipan == 1) {
+            } elseif ($konsumen->pembayaran == 2 && $invoice->titipan == 1) {
                 $uraian = '*Titipan*';
                 $pembayaran = 'Titipan';
             } else {
@@ -318,7 +313,7 @@ class FormJualController extends Controller
                 } else {
                     $uraian = '*Tanpa DP*';
                 }
-                $pembayaran = $konsumen->sistem_pembayaran . ' ' . $konsumen->tempo_hari . ' Hari';
+                $pembayaran = $konsumen->sistem_pembayaran.' '.$konsumen->tempo_hari.' Hari';
             }
         } else {
             $uraian = '*Cash*';
@@ -329,38 +324,38 @@ class FormJualController extends Controller
             $tujuan = str_replace('-', '', $konsumen->no_hp);
             $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
                     "*Invoice Pembelian*\n".
-                    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n" .
-                    $pt->nama . "\n\n" .
+                    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                    $pt->nama."\n\n".
                     "No Invoice:\n".
-                    "*".$invoice->kode."*\n\n".
-                    "Tanggal : ".$tanggal . "\n" .
-                    "Jam       : ".$jam . "\n\n" .
-                    "Uraian : ".$uraian."\n".
-                    "Pembayaran : ".$pembayaran."\n";
+                    '*'.$invoice->kode."*\n\n".
+                    'Tanggal : '.$tanggal."\n".
+                    'Jam       : '.$jam."\n\n".
+                    'Uraian : '.$uraian."\n".
+                    'Pembayaran : '.$pembayaran."\n";
 
             if ($invoice->konsumen_id && $invoice->lunas == 0 && $invoice->titipan == 0) {
                 $jatuhTempo = Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d-m-Y');
-                $pesan .= "Tgl Jatuh Tempo : ".$jatuhTempo."\n\n";
+                $pesan .= 'Tgl Jatuh Tempo : '.$jatuhTempo."\n\n";
 
             }
 
-            $pesan .= "Konsumen : *".$konsumen->nama."*\n\n".
-                    "Nilai DPP    : Rp " . number_format($invoice->total, 0, ',', '.') . "\n";
+            $pesan .= 'Konsumen : *'.$konsumen->nama."*\n\n".
+                    'Nilai DPP    : Rp '.number_format($invoice->total, 0, ',', '.')."\n";
 
             if ($invoice->kas_ppn == 1) {
-                $pesan.= "PPN         : Rp " . number_format($invoice->ppn, 0, ',', '.') . "\n";
-            }else {
-                $pesan.="\n";
+                $pesan .= 'PPN         : Rp '.number_format($invoice->ppn, 0, ',', '.')."\n";
+            } else {
+                $pesan .= "\n";
             }
 
             if ($invoice->lunas == 1) {
-                $pesan .= "Total Bayar : Rp " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
+                $pesan .= 'Total Bayar : Rp '.number_format($invoice->grand_total, 0, ',', '.')."\n\n";
             } else {
                 if ($invoice->dp > 0) {
-                    $pesan .= "DP      : Rp " . number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.') . "\n\n" .
-                            "Sisa Tagihan : *Rp " . number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.') . "*\n\n";
+                    $pesan .= 'DP      : Rp '.number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.')."\n\n".
+                            'Sisa Tagihan : *Rp '.number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.')."*\n\n";
                 } else {
-                    $pesan .= "Sisa Tagihan : *Rp " . number_format($invoice->grand_total, 0, ',', '.') . "*\n\n";
+                    $pesan .= 'Sisa Tagihan : *Rp '.number_format($invoice->grand_total, 0, ',', '.')."*\n\n";
                 }
             }
 
@@ -369,30 +364,30 @@ class FormJualController extends Controller
             if ($invoice->konsumen_id) {
                 $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
                 $pesan .= "Grand Total Tagihan Konsumen: \n".
-                "Rp. ".number_format($sisaTerakhir, 0, ',', '.')."\n\n";
+                'Rp. '.number_format($sisaTerakhir, 0, ',', '.')."\n\n";
 
                 $pesan .= "==========================\n";
 
                 $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
-                            ->where('titipan', 0)
-                            ->where('lunas', 0)
-                            ->where('void', 0)
-                            ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
-                            ->get();
+                    ->where('titipan', 0)
+                    ->where('lunas', 0)
+                    ->where('void', 0)
+                    ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
+                    ->get();
 
                 if ($checkInvoice->count() > 0) {
                     $pesan .= "Tagihan jatuh tempo :\n\n";
                     foreach ($checkInvoice as $key => $value) {
-                        $pesan .= "No Invoice : ".$value->kode . "\n" .
-                                    "Tgl jatuh tempo : ".Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y') . "\n".
-                                    "Nilai Tagihan  :  Rp " . number_format($value->grand_total-$value->dp-$value->dp_ppn, 0, ',', '.') . "\n\n";
+                        $pesan .= 'No Invoice : '.$value->kode."\n".
+                                    'Tgl jatuh tempo : '.Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y')."\n".
+                                    'Nilai Tagihan  :  Rp '.number_format($value->grand_total - $value->dp - $value->dp_ppn, 0, ',', '.')."\n\n";
                     }
                 }
 
             }
 
-            //tambahkan warning jika ada tagihan sudah 7 hari sebelum jatuh tempo ( Nomor invoice, tanggal jatuh tempo, dan nilai tagihan)
-            $pesan .= "Terima kasih 🙏🙏🙏";
+            // tambahkan warning jika ada tagihan sudah 7 hari sebelum jatuh tempo ( Nomor invoice, tanggal jatuh tempo, dan nilai tagihan)
+            $pesan .= 'Terima kasih 🙏🙏🙏';
 
             $storePesan = PesanWa::create([
                 'pesan' => $pesan,
@@ -413,9 +408,9 @@ class FormJualController extends Controller
         }
 
         return view('billing.stok.invoice',
-        [
-            'pdfUrl' => $pdfUrl,
-        ]);
+            [
+                'pdfUrl' => $pdfUrl,
+            ]);
     }
 
     public function invoice_image(InvoiceJual $invoice)
@@ -437,10 +432,10 @@ class FormJualController extends Controller
         ])->render();
 
         $directory = storage_path('app/public/invoices');
-        $jpegPath = $directory . '/invoice-' . $invoice->id . '.jpeg';
+        $jpegPath = $directory.'/invoice-'.$invoice->id.'.jpeg';
 
         // Check if the directory exists, if not, create it
-        if (!file_exists($directory)) {
+        if (! file_exists($directory)) {
             mkdir($directory, 0755, true);
         }
 
@@ -451,18 +446,18 @@ class FormJualController extends Controller
 
         // Save the new JPEG
         Browsershot::html($html)
-                    ->windowSize(707, 1000) // Ukuran A4 dalam portrait
-                    ->setOption('landscape', false) // Atur ke true jika ingin landscape
-                            ->save($jpegPath);
+            ->windowSize(707, 1000) // Ukuran A4 dalam portrait
+            ->setOption('landscape', false) // Atur ke true jika ingin landscape
+            ->save($jpegPath);
 
         // Generate the URL for the JPEG
-        $jpegUrl = asset('storage/invoices/invoice-' . $invoice->id . '.jpeg');
+        $jpegUrl = asset('storage/invoices/invoice-'.$invoice->id.'.jpeg');
 
         $konsumen = $invoice->konsumen ?? $invoice->konsumen_temp;
 
         if ($konsumen && $konsumen->no_hp) {
             $tujuan = str_replace('-', '', $konsumen->no_hp);
-            $pesan = 'Terima kasih telah berbelanja di ' . $pt->nama;
+            $pesan = 'Terima kasih telah berbelanja di '.$pt->nama;
             $file = $jpegPath;
             $wa = new StarSender($tujuan, $pesan, $file);
 
@@ -473,6 +468,4 @@ class FormJualController extends Controller
             'jpegUrl' => $jpegUrl,
         ]);
     }
-
-
 }

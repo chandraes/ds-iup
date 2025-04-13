@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Services\StarSender;
 use Illuminate\Console\Command;
-use Intervention\Image\ImageManager as Image;
 
 class testingWa extends Command
 {
@@ -31,7 +30,7 @@ class testingWa extends Command
         $tujuan = '085208303087';
         $file = asset('storage/invoices/invoice-3.pdf');
 
-        $req = new StarSender( $tujuan,$pesan, $file);
+        $req = new StarSender($tujuan, $pesan, $file);
         $req->sendGroup();
     }
 }

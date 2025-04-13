@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class InvestorModal extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $append = ['nf_modal', 'keuntungan', 'nf_keuntungan'];

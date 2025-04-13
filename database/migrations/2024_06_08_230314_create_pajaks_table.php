@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-       $data = [
+        $data = [
             ['untuk' => 'PPn', 'persen' => 11],
             ['untuk' => 'PPh', 'persen' => 2],
         ];

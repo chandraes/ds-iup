@@ -6,7 +6,6 @@ use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
-use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
@@ -30,7 +29,7 @@ class InvoiceController extends Controller
         return view('billing.invoice-supplier.index', [
             'data' => $data,
             'supplier' => $supplier,
-            'ppn' => $ppn
+            'ppn' => $ppn,
         ]);
     }
 
@@ -52,7 +51,7 @@ class InvoiceController extends Controller
         return view('billing.invoice-supplier.index-non-ppn', [
             'data' => $data,
             'supplier' => $supplier,
-            'ppn' => $ppn
+            'ppn' => $ppn,
         ]);
     }
 
@@ -66,18 +65,17 @@ class InvoiceController extends Controller
 
         $data['invoice_belanja_id'] = $invoice->id;
 
-        $db = new InvoiceBelanja();
+        $db = new InvoiceBelanja;
 
         $res = $db->cicil($data);
 
         return redirect()->back()->with($res['status'], $res['message']);
 
-
     }
 
     public function invoice_supplier_void(InvoiceBelanja $invoice)
     {
-        $db = new InvoiceBelanja();
+        $db = new InvoiceBelanja;
 
         $res = $db->void($invoice->id);
 
@@ -86,7 +84,7 @@ class InvoiceController extends Controller
 
     public function invoice_supplier_bayar(InvoiceBelanja $invoice)
     {
-        $db = new InvoiceBelanja();
+        $db = new InvoiceBelanja;
         // dd($invoice);
         $res = $db->bayar($invoice->id);
 
@@ -103,11 +101,12 @@ class InvoiceController extends Controller
     public function invoice_konsumen(Request $request)
     {
         $data = InvoiceJual::with(['konsumen', 'invoice_jual_cicil'])
-                ->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
+            ->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
         return view('billing.invoice-konsumen.index', [
             'data' => $data,
-            'ppn' => $ppn
+            'ppn' => $ppn,
         ]);
     }
 
@@ -116,10 +115,11 @@ class InvoiceController extends Controller
         $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 1)->get();
         $titipan = 1;
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
         return view('billing.invoice-konsumen.index', [
             'data' => $data,
             'titipan' => $titipan,
-            'ppn' => $ppn
+            'ppn' => $ppn,
         ]);
     }
 
@@ -128,7 +128,7 @@ class InvoiceController extends Controller
         $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 0)->get();
 
         return view('billing.invoice-konsumen.index-non-ppn', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -136,9 +136,10 @@ class InvoiceController extends Controller
     {
         $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 0)->get();
         $titipan = 1;
+
         return view('billing.invoice-konsumen.index-non-ppn', [
             'data' => $data,
-            'titipan' => $titipan
+            'titipan' => $titipan,
         ]);
     }
 
@@ -146,7 +147,7 @@ class InvoiceController extends Controller
     {
         $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
         $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
-            $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
+        $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
 
         return view('billing.invoice-konsumen.detail', [
             'data' => $data,
@@ -157,17 +158,16 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen_bayar(InvoiceJual $invoice)
     {
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
 
         $res = $db->bayar($invoice->id);
 
         return redirect()->back()->with($res['status'], $res['message']);
     }
 
-
     public function invoice_konsumen_void(InvoiceJual $invoice)
     {
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
 
         $res = $db->void($invoice->id);
 
@@ -182,7 +182,7 @@ class InvoiceController extends Controller
             'apa_ppn' => 'required|boolean',
         ]);
 
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
 
         $data['invoice_jual_id'] = $invoice->id;
 

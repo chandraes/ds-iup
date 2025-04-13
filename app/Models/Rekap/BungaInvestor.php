@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class BungaInvestor extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $appends = ['tanggal', 'nf_nominal', 'nf_pph'];

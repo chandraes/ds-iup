@@ -7,35 +7,33 @@ use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
 use App\Models\db\Jabatan;
 use App\Models\db\Karyawan;
-use App\Models\db\Supplier;
 use App\Models\db\Konsumen;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
 use App\Models\db\SalesArea;
 use App\Models\db\Satuan;
+use App\Models\db\Supplier;
 use App\Models\Pengelola;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
-use Illuminate\Validation\Rule;
 
 class DatabaseController extends Controller
 {
-
     public function satuan()
     {
         $data = Satuan::all();
 
         return view('db.satuan.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function satuan_store(Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required'
+            'nama' => 'required',
         ]);
 
         Satuan::create($data);
@@ -46,7 +44,7 @@ class DatabaseController extends Controller
     public function satuan_update(Satuan $satuan, Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required'
+            'nama' => 'required',
         ]);
 
         $satuan->update($data);
@@ -66,7 +64,7 @@ class DatabaseController extends Controller
         $data = CostOperational::all();
 
         return view('db.cost-operational.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -135,7 +133,7 @@ class DatabaseController extends Controller
 
         return view('db.karyawan.index', [
             'data' => $data,
-            'jabatan' => $jabatan
+            'jabatan' => $jabatan,
         ]);
     }
 
@@ -144,7 +142,7 @@ class DatabaseController extends Controller
         $jabatan = Jabatan::all();
 
         return view('db.karyawan.create', [
-            'jabatan' => $jabatan
+            'jabatan' => $jabatan,
         ]);
     }
 
@@ -187,8 +185,8 @@ class DatabaseController extends Controller
 
         try {
             DB::beginTransaction();
-            $file_name_ktp = Uuid::uuid4().'- KTP - '. $data['nama']. '.' . $request->foto_ktp->extension();
-            $file_name_diri = Uuid::uuid4(). ' - Foto Diri '. $data['nama']. '.' . $request->foto_diri->extension();
+            $file_name_ktp = Uuid::uuid4().'- KTP - '.$data['nama'].'.'.$request->foto_ktp->extension();
+            $file_name_diri = Uuid::uuid4().' - Foto Diri '.$data['nama'].'.'.$request->foto_diri->extension();
 
             $data['foto_ktp'] = $request->file('foto_ktp')->storeAs('public/karyawan', $file_name_ktp);
             $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
@@ -200,6 +198,7 @@ class DatabaseController extends Controller
             return redirect()->route('db.staff')->with('success', 'Data berhasil ditambahkan');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan');
         }
 
@@ -211,7 +210,7 @@ class DatabaseController extends Controller
 
         return view('db.karyawan.edit', [
             'data' => $staff,
-            'jabatan' => $jabatan
+            'jabatan' => $jabatan,
         ]);
     }
 
@@ -254,14 +253,14 @@ class DatabaseController extends Controller
             DB::beginTransaction();
 
             if ($request->hasFile('foto_ktp')) {
-                $file_name_ktp = Uuid::uuid4().'- KTP - '. $data['nama']. '.' . $request->foto_ktp->extension();
+                $file_name_ktp = Uuid::uuid4().'- KTP - '.$data['nama'].'.'.$request->foto_ktp->extension();
                 $data['foto_ktp'] = $request->file('foto_ktp')->storeAs('public/karyawan', $file_name_ktp);
                 $ktp_path = storage_path('app/'.$staff->foto_ktp);
                 unlink($ktp_path);
             }
 
             if ($request->hasFile('foto_diri')) {
-                $file_name_diri = Uuid::uuid4(). ' - Foto Diri '. $data['nama']. '.' . $request->foto_diri->extension();
+                $file_name_diri = Uuid::uuid4().' - Foto Diri '.$data['nama'].'.'.$request->foto_diri->extension();
                 $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
                 $diri_path = storage_path('app/'.$staff->foto_diri);
                 unlink($diri_path);
@@ -271,9 +270,8 @@ class DatabaseController extends Controller
 
             DB::commit();
 
-
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
 
             DB::rollBack();
 
@@ -303,14 +301,12 @@ class DatabaseController extends Controller
 
             DB::commit();
 
-
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return redirect()->back()->with('error', 'Terjadi kesalahan');
         }
-
 
         return redirect()->route('db.staff')->with('success', 'Data berhasil dihapus');
     }
@@ -318,15 +314,16 @@ class DatabaseController extends Controller
     public function pajak()
     {
         $data = Pajak::all();
+
         return view('db.pajak.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function pajak_update(Pajak $pajak, Request $request)
     {
         $data = $request->validate([
-            'persen' => 'required'
+            'persen' => 'required',
         ]);
 
         $pajak->update($data);
@@ -339,7 +336,7 @@ class DatabaseController extends Controller
         $data = Pengelola::all();
 
         return view('db.pengelola.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -351,7 +348,7 @@ class DatabaseController extends Controller
             'persentase' => 'required',
             'no_rek' => 'required',
             'bank' => 'required',
-            'nama_rek' => 'required'
+            'nama_rek' => 'required',
         ]);
 
         $check = Pengelola::sum('persentase') + $data['persentase'];
@@ -373,7 +370,7 @@ class DatabaseController extends Controller
             'persentase' => 'required',
             'no_rek' => 'required',
             'bank' => 'required',
-            'nama_rek' => 'required'
+            'nama_rek' => 'required',
         ]);
 
         $check = Pengelola::whereNot('id', $pengelola->id)->sum('persentase') + $data['persentase'];
@@ -397,14 +394,14 @@ class DatabaseController extends Controller
     public function sales_area(Request $request)
     {
         return response()->json([
-            'data' => SalesArea::select('id', 'nama')->get()
+            'data' => SalesArea::select('id', 'nama')->get(),
         ]);
     }
 
     public function sales_area_store(Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required'
+            'nama' => 'required',
         ]);
 
         SalesArea::create($data);
@@ -415,7 +412,7 @@ class DatabaseController extends Controller
     public function sales_area_update(SalesArea $sales, Request $request)
     {
         $data = $request->validate([
-            'nama' => 'required'
+            'nama' => 'required',
         ]);
 
         $sales->update($data);
@@ -433,6 +430,7 @@ class DatabaseController extends Controller
             return response()->json(['message' => 'Data berhasil dihapus']);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json(['error' => $th->getMessage()], 500);
         }
     }
@@ -447,12 +445,11 @@ class DatabaseController extends Controller
 
         $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
             $query->select('id_wilayah')
-            ->from('wilayahs')
-            ->where('id_induk_wilayah', '110000');
+                ->from('wilayahs')
+                ->where('id_induk_wilayah', '110000');
         })->where('id_level_wilayah', 3)->get();
 
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
-
 
         return view('db.konsumen.index', [
             'data' => $data,
@@ -480,7 +477,7 @@ class DatabaseController extends Controller
             'sales_area_id' => 'required|exists:sales_areas,id',
         ]);
 
-        $db = new Konsumen();
+        $db = new Konsumen;
 
         $data['plafon'] = str_replace('.', '', $data['plafon']);
 
@@ -527,7 +524,7 @@ class DatabaseController extends Controller
         $data = Supplier::all();
 
         return view('db.supplier.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -547,7 +544,7 @@ class DatabaseController extends Controller
             'status' => 'required',
         ]);
 
-        $db = new Supplier();
+        $db = new Supplier;
 
         $store = $db->createSupplier($data);
 
@@ -570,7 +567,7 @@ class DatabaseController extends Controller
             'status' => 'required',
         ]);
 
-        if($data['pembayaran'] == 1) {
+        if ($data['pembayaran'] == 1) {
             $data['tempo_hari'] = null;
         }
 
@@ -593,7 +590,7 @@ class DatabaseController extends Controller
 
         return view('db.kategori-inventaris.index', [
             'data' => $data,
-            'kategori' => $kategori
+            'kategori' => $kategori,
         ]);
     }
 
@@ -662,7 +659,7 @@ class DatabaseController extends Controller
         $data = Kreditor::where('is_active', 1)->get();
 
         return view('db.kreditor.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -706,5 +703,4 @@ class DatabaseController extends Controller
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
-
 }

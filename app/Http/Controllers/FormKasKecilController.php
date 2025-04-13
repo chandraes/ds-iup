@@ -15,7 +15,7 @@ class FormKasKecilController extends Controller
 {
     public function masuk()
     {
-        $nomor =  str_pad((KasKecil::max('nomor_kode_kas_kecil') + 1), 2, '0', STR_PAD_LEFT);
+        $nomor = str_pad((KasKecil::max('nomor_kode_kas_kecil') + 1), 2, '0', STR_PAD_LEFT);
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
 
         return view('billing.form-kas-kecil.masuk', [
@@ -27,34 +27,32 @@ class FormKasKecilController extends Controller
     public function masuk_store()
     {
 
-        $kb = new KasBesar();
+        $kb = new KasBesar;
         $saldo = $kb->saldoTerakhir(1);
 
-        if($saldo < 1000000){
+        if ($saldo < 1000000) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi.');
         }
 
-        $db = new KasKecil();
+        $db = new KasKecil;
 
         $store = $db->masukKasKecil();
 
-
-
         $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+        $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Kecil*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "*KK".sprintf("%02d",$store->nomor_kode_kas_kecil)."*\n\n".
+                    '*KK'.sprintf('%02d', $store->nomor_kode_kas_kecil)."*\n\n".
                     "Nilai : *Rp. 1.000.000,-*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank      : ".$store->bank."\n".
-                    "Nama    : ".$store->nama_rek."\n".
-                    "No. Rek : ".$store->no_rek."\n\n".
+                    'Bank      : '.$store->bank."\n".
+                    'Nama    : '.$store->nama_rek."\n".
+                    'No. Rek : '.$store->no_rek."\n\n".
                     "==========================\n".
                     "Sisa Saldo Kas Besar : \n".
-                    "Rp. ".number_format($saldo, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($saldo, 0, ',', '.')."\n\n".
                     "Sisa Saldo Kas Kecil : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
@@ -87,19 +85,19 @@ class FormKasKecilController extends Controller
             'no_rek' => 'nullable',
         ]);
 
-        $db = new KasKecil();
+        $db = new KasKecil;
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $saldo = $db->saldoTerakhir();
 
-        if($saldo < $data['nominal']){
+        if ($saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo tidak mencukupi');
         }
 
-        if($data['tipe'] == '1'){
+        if ($data['tipe'] == '1') {
             $data['nama_rek'] = 'Cash';
             unset($data['bank']);
             unset($data['no_rek']);
-        } elseif($data['tipe'] == '2') {
+        } elseif ($data['tipe'] == '2') {
             $data['nama_rek'] = substr($data['nama_rek'], 0, 15);
         }
 
@@ -114,29 +112,29 @@ class FormKasKecilController extends Controller
         $group = GroupWa::where('untuk', 'kas-kecil')->first();
 
         if ($data['nama_rek'] == 'Cash') {
-            $pesan =    "==========================\n".
+            $pesan = "==========================\n".
                         "*Form Pengeluaran Kas Kecil*\n".
                         "==========================\n\n".
-                        "Uraian: ".$store->uraian."\n\n".
-                        "Nilai : *Rp. ".number_format($store->nominal)."*\n\n".
+                        'Uraian: '.$store->uraian."\n\n".
+                        'Nilai : *Rp. '.number_format($store->nominal)."*\n\n".
                         "Cash\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Kecil : \n".
-                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
         } else {
-            $pesan =    "==========================\n".
+            $pesan = "==========================\n".
                         "*Form Pengeluaran Kas Kecil*\n".
                         "==========================\n\n".
-                        "Uraian: ".$store->uraian."\n\n".
-                        "Nilai : *Rp. ".number_format($store->nominal)."*\n\n".
+                        'Uraian: '.$store->uraian."\n\n".
+                        'Nilai : *Rp. '.number_format($store->nominal)."*\n\n".
                         "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
+                        'Bank      : '.$store->bank."\n".
+                        'Nama    : '.$store->nama_rek."\n".
+                        'No. Rek : '.$store->no_rek."\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Kecil : \n".
-                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
         }
 
@@ -150,7 +148,6 @@ class FormKasKecilController extends Controller
             'tujuan' => $group->nama_group,
             'status' => $status,
         ]);
-
 
         return redirect()->route('billing')->with('success', 'Data berhasil disimpan');
     }

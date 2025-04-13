@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class InventarisRekap extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $appends = ['nf_harga_satuan', 'nf_jumlah', 'nf_total', 'tanggal'];
@@ -76,7 +77,7 @@ class InventarisRekap extends Model
             $rekap->increment('pengurangan', $data['jumlah']);
 
             if ($data['total'] > 0) {
-                $kas = new KasBesar();
+                $kas = new KasBesar;
 
                 $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
 
@@ -89,7 +90,7 @@ class InventarisRekap extends Model
                     'nama_rek' => $rekening->nama_rek,
                     'no_rek' => $rekening->no_rek,
                     'bank' => $rekening->bank,
-                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1)
+                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir(1),
                 ]);
                 // dd($rekap, $data);
                 $inv = InventarisJenis::find($rekap->inventaris_jenis_id);
@@ -99,21 +100,21 @@ class InventarisRekap extends Model
                 $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                         "*FORM INVENTARIS*\n".
                         "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                        "Uraian :  *".$store->uraian."*\n\n".
-                        "Nilai    :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        'Uraian :  *'.$store->uraian."*\n\n".
+                        'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
+                        'Bank      : '.$store->bank."\n".
+                        'Nama    : '.$store->nama_rek."\n".
+                        'No. Rek : '.$store->no_rek."\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Besar : \n".
-                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                        "Sub total ".$inv->kategori->nama." : \n".
-                        "Rp. ".number_format($inv->kategori->sum_total, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                        'Sub total '.$inv->kategori->nama." : \n".
+                        'Rp. '.number_format($inv->kategori->sum_total, 0, ',', '.')."\n\n".
                         "Grand Total Inventaris: \n".
-                        "Rp. ".number_format($inv_tot, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($inv_tot, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
                 // Retrieve the group name once, as it's the same for both conditions
@@ -128,19 +129,17 @@ class InventarisRekap extends Model
 
             return [
                 'status' => 'success',
-                'message' => 'Berhasil membuat Aksi Inventaris!!'
+                'message' => 'Berhasil membuat Aksi Inventaris!!',
             ];
 
-
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal membuat Aksi Inventaris!! '. $th->getMessage()
+                'message' => 'Gagal membuat Aksi Inventaris!! '.$th->getMessage(),
             ];
         }
     }
-
 }

@@ -2,24 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
-Use App\Http\Controllers\Hash;
 use App\Models\Config;
 use App\Models\Holding;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Pengaturan;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PengaturanController extends Controller
 {
-
     public function index_view()
     {
         $password = PasswordKonfirmasi::first();
+
         return view('pengaturan.index',
             [
-                'password' => $password
+                'password' => $password,
             ]
         );
     }
@@ -27,7 +26,7 @@ class PengaturanController extends Controller
     public function password_konfirmasi(Request $request)
     {
         $data = $request->validate([
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         $response = PasswordKonfirmasi::updatePassword($data);
@@ -39,12 +38,12 @@ class PengaturanController extends Controller
     {
         try {
             $data = $request->validate([
-                'password' => 'required'
+                'password' => 'required',
             ]);
 
             $password = PasswordKonfirmasi::first();
 
-            if (!$password) {
+            if (! $password) {
                 return response()->json(['status' => 'error', 'message' => 'Password belum diatur']);
             }
 
@@ -63,7 +62,7 @@ class PengaturanController extends Controller
      */
     public function index()
     {
-        $db = new User();
+        $db = new User;
         $users = $db->get();
 
         $roles = $db->getRoles();
@@ -73,7 +72,6 @@ class PengaturanController extends Controller
             'roles' => $roles,
         ]);
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -110,8 +108,9 @@ class PengaturanController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
+
         // dd($user);
-        return view('pengaturan.pengguna.edit',  compact('user'));
+        return view('pengaturan.pengguna.edit', compact('user'));
     }
 
     /**
@@ -120,7 +119,7 @@ class PengaturanController extends Controller
     public function update(Request $request, $id)
     {
         $data = $request->validate([
-            'username' => 'required|string|max:255|unique:users,username,' . $id,
+            'username' => 'required|string|max:255|unique:users,username,'.$id,
             'name' => 'required|string|max:255',
             'email' => 'nullable',
             'password' => 'nullable',
@@ -180,14 +179,14 @@ class PengaturanController extends Controller
         $data = Pengaturan::all();
 
         return view('pengaturan.batasan.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function batasan_update(Pengaturan $batasan, Request $request)
     {
         $data = $request->validate([
-            'nilai' => 'required'
+            'nilai' => 'required',
         ]);
 
         $data['nilai'] = str_replace('.', '', $data['nilai']);
@@ -202,13 +201,14 @@ class PengaturanController extends Controller
         $data = Config::all();
 
         return view('pengaturan.aplikasi.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function aplikasi_edit(Config $config)
     {
         $data = $config;
+
         return view('pengaturan.aplikasi.edit', compact('data'));
     }
 
@@ -225,7 +225,7 @@ class PengaturanController extends Controller
 
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $filename = time().'.'.$file->getClientOriginalExtension();
             $file->move('uploads/logo/', $filename);
             $data['logo'] = $filename;
         }
@@ -240,7 +240,7 @@ class PengaturanController extends Controller
         $data = Holding::first();
 
         return view('pengaturan.holding.index', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -270,5 +270,4 @@ class PengaturanController extends Controller
 
         return redirect()->route('pengaturan.holding')->with('success', 'Data berhasil diubah!');
     }
-
 }

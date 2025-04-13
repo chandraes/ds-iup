@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class KasKonsumen extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $appends = ['tanggal', 'nf_bayar', 'nf_sisa', 'nf_hutang', 'nf_cash'];
@@ -73,9 +74,9 @@ class KasKonsumen extends Model
             ->orderBy('id', 'desc')
             ->first();
 
-        if (!$data) {
+        if (! $data) {
 
-        $data = $this->where('konsumen_id', $konsumen_id)
+            $data = $this->where('konsumen_id', $konsumen_id)
                 ->where('created_at', '<', Carbon::create($year, $month, 1))
                 ->orderBy('id', 'desc')
                 ->first();

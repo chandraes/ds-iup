@@ -29,7 +29,7 @@ class PoController extends Controller
         $unit = BarangUnit::all();
         $type = BarangType::all();
 
-        return view('po.form-po',[
+        return view('po.form-po', [
             'ppn' => $ppn,
             'supplier' => $supplier,
             'unit' => $unit,
@@ -60,7 +60,7 @@ class PoController extends Controller
         try {
             DB::beginTransaction();
 
-            $db = new PurchaseOrder();
+            $db = new PurchaseOrder;
             $data['kepada'] = Supplier::find($data['supplier_id'])->nama;
             $data['nomor'] = $db->generateNomor();
             $data['user_id'] = auth()->user()->id;
@@ -90,7 +90,7 @@ class PoController extends Controller
                 ]);
             }
 
-            if (!empty($data['catatan'])) {
+            if (! empty($data['catatan'])) {
                 foreach ($data['catatan'] as $catatan) {
                     $purchaseOrder->notes()->create([
                         'note' => $catatan,
@@ -103,6 +103,7 @@ class PoController extends Controller
             return redirect()->route('po')->with('success', 'Purchase Order berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan data. '.$e->getMessage()]);
         }
 
@@ -110,13 +111,12 @@ class PoController extends Controller
 
     public function rekap(Request $request)
     {
-        $db = new PurchaseOrder();
+        $db = new PurchaseOrder;
         $dataTahun = $db->dataTahun();
 
         $tahun = $request->get('tahun') ?? now()->year;
 
         $data = PurchaseOrder::whereYear('created_at', $tahun)->get();
-
 
         return view('po.rekap', [
             'data' => $data,
@@ -130,7 +130,7 @@ class PoController extends Controller
         $pt = Config::where('untuk', 'resmi')->first();
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
-        if($po->apa_ppn == 1){
+        if ($po->apa_ppn == 1) {
             $total = $po->items->sum('total') + ($po->items->sum('total') * $ppn / 100);
         } else {
             $total = $po->items->sum('total');
@@ -164,6 +164,7 @@ class PoController extends Controller
             return redirect()->route('po.rekap')->with('success', 'Purchase Order berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menghapus data. '.$e->getMessage()]);
         }
     }
@@ -171,6 +172,7 @@ class PoController extends Controller
     public function getTypes($unitId)
     {
         $types = BarangType::where('barang_unit_id', $unitId)->get();
+
         return response()->json($types);
     }
 
@@ -188,7 +190,7 @@ class PoController extends Controller
     public function getBarang($typeId, $kategoriId)
     {
         $barang = Barang::where('barang_type_id', $typeId)->where('barang_kategori_id', $kategoriId)->get();
+
         return response()->json($barang);
     }
-
 }

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 class RekapPpn extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $appends = ['tanggal', 'nf_nominal', 'nf_saldo'];
@@ -23,12 +24,14 @@ class RekapPpn extends Model
     public function generateMasukanId()
     {
         $id = $this->max('masukan_id') + 1;
+
         return $id;
     }
 
     public function generateKeluaranId()
     {
         $id = $this->max('keluaran_id') + 1;
+
         return $id;
     }
 
@@ -49,10 +52,10 @@ class RekapPpn extends Model
             ->orderBy('id', 'desc')
             ->first();
 
-        if (!$data) {
+        if (! $data) {
             $data = $this->where('created_at', '<', Carbon::create($year, $month, 1))
-                    ->orderBy('id', 'desc')
-                    ->first();
+                ->orderBy('id', 'desc')
+                ->first();
         }
 
         return $data;
@@ -90,7 +93,7 @@ class RekapPpn extends Model
 
     public function keranjang_masukan_lanjut($penyesuaian = 0)
     {
-        $db = new PpnMasukan();
+        $db = new PpnMasukan;
 
         $data = $db->where('is_keranjang', 1)->where('is_finish', 0)->get();
 
@@ -113,7 +116,7 @@ class RekapPpn extends Model
             if ($holding && $holding->status == 1) {
                 // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $holding->token,
+                    'Authorization' => 'Bearer '.$holding->token,
                     'Referer' => env('APP_URL'),
                 ])->asForm()->post($holding->holding_url.'/api/1.0/ppn-masukan', [
                     'masukan_id' => $create->masukan_id,
@@ -121,12 +124,11 @@ class RekapPpn extends Model
                     'nominal' => $create->nominal,
                 ]);
 
-
                 if ($response->status() != 200) {
 
                     return [
                         'status' => 'error',
-                        'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                        'message' => 'Gagal mengirim data ke Holding. '.$response['message'],
                     ];
                 }
             }
@@ -152,19 +154,19 @@ class RekapPpn extends Model
             ];
 
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal menyimpan data. '. $th->getMessage(),
+                'message' => 'Gagal menyimpan data. '.$th->getMessage(),
             ];
         }
     }
 
     public function keranjang_keluaran_lanjut($penyesuaian = 0)
     {
-        $db = new PpnKeluaran();
+        $db = new PpnKeluaran;
 
         $data = $db->where('is_keranjang', 1)->where('is_finish', 0)->get();
 
@@ -177,7 +179,7 @@ class RekapPpn extends Model
         try {
             DB::beginTransaction();
 
-            $dbKasBesar = new KasBesar();
+            $dbKasBesar = new KasBesar;
             $waState = 0;
 
             $create = $this->create([
@@ -192,7 +194,7 @@ class RekapPpn extends Model
             if ($holding && $holding->status == 1) {
                 // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $holding->token,
+                    'Authorization' => 'Bearer '.$holding->token,
                     'Referer' => env('APP_URL'),
                 ])->asForm()->post($holding->holding_url.'/api/1.0/ppn-keluaran', [
                     'keluaran_id' => $create->keluaran_id,
@@ -200,12 +202,11 @@ class RekapPpn extends Model
                     'nominal' => $create->nominal,
                 ]);
 
-
                 if ($response->status() != 200) {
 
                     return [
                         'status' => 'error',
-                        'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                        'message' => 'Gagal mengirim data ke Holding. '.$response['message'],
                     ];
                 }
             }
@@ -226,14 +227,14 @@ class RekapPpn extends Model
                 if ($holding && $holding->status == 1) {
                     // HTTP GET request to holding URL /get-rekening
                     $response = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $holding->token,
+                        'Authorization' => 'Bearer '.$holding->token,
                         'Referer' => env('APP_URL'),
                     ])->get($holding->holding_url.'/api/1.0/get-rekening');
 
                     if ($response->status() != 200) {
                         return [
                             'status' => 'error',
-                            'message' => 'Gagal mengambil data rekening dari Holding. ' . $response['message'],
+                            'message' => 'Gagal mengambil data rekening dari Holding. '.$response['message'],
                         ];
                     }
 
@@ -258,23 +259,21 @@ class RekapPpn extends Model
                     'modal_investor_terakhir' => $dbKasBesar->modalInvestorTerakhir(1),
                 ]);
 
-
                 if ($holding && $holding->status == 1) {
                     // http post request to holding url/ppn-masukan dengan form-data masukan_id, uraian, dan nominal serta token
                     $response = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $holding->token,
+                        'Authorization' => 'Bearer '.$holding->token,
                         'Referer' => env('APP_URL'),
                     ])->asForm()->post($holding->holding_url.'/api/1.0/kas-besar-masuk', [
                         'uraian' => $store->uraian,
                         'nominal' => $store->nominal,
                     ]);
 
-
                     if ($response->status() != 200) {
 
                         return [
                             'status' => 'error',
-                            'message' => 'Gagal mengirim data ke Holding. ' . $response['message'],
+                            'message' => 'Gagal mengirim data ke Holding. '.$response['message'],
                         ];
                     }
                 }
@@ -304,19 +303,19 @@ class RekapPpn extends Model
                 $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*Form PPN*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        "Uraian : ".$store->uraian."\n".
-                        "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        'Uraian : '.$store->uraian."\n".
+                        'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
-                        "Bank      : ".$store->bank."\n".
-                        "Nama    : ".$store->nama_rek."\n".
-                        "No. Rek : ".$store->no_rek."\n\n".
+                        'Bank      : '.$store->bank."\n".
+                        'Nama    : '.$store->nama_rek."\n".
+                        'No. Rek : '.$store->no_rek."\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Besar PPN: \n".
-                        "Rp. ".number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
                         "Sisa Saldo Kas Besar  NON PPN: \n".
-                        "Rp. ".number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($totalModal, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($totalModal, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             }
@@ -347,12 +346,12 @@ class RekapPpn extends Model
             ];
 
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
 
             return [
                 'status' => 'error',
-                'message' => 'Gagal menyimpan data. '. $th->getMessage(),
+                'message' => 'Gagal menyimpan data. '.$th->getMessage(),
             ];
         }
     }

@@ -14,7 +14,9 @@ class BarangType extends Model
     use HasFactory;
 
     public $categoryRowspan = [];
+
     public $typeRowspan = 0;
+
     public $groupedBarangs;
 
     protected $guarded = ['id'];
@@ -31,7 +33,7 @@ class BarangType extends Model
 
     public function scopeFilterByType($query, $type)
     {
-        if (!empty($type)) {
+        if (! empty($type)) {
             $query->where('id', $type); // Replace 'type_column' with the actual column name you want to filter by
         }
     }

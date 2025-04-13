@@ -56,7 +56,7 @@ class Barang extends Model
 
     public function scopeFilterByKategori($query, $kategori)
     {
-        if (!empty($kategori)) {
+        if (! empty($kategori)) {
             $query->where('barang_kategori_id', $kategori); // Adjust 'kategori_id' to the actual column name you want to filter by
         }
     }

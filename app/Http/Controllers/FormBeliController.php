@@ -23,7 +23,7 @@ class FormBeliController extends Controller
 
         $supplier = Supplier::where('status', 1)->get();
 
-        if($supplier->count() == 0) {
+        if ($supplier->count() == 0) {
             return redirect()->back()->with('error', 'Belum ada supplier yang aktif, silahkan tambah supplier terlebih dahulu!');
         }
 
@@ -33,9 +33,9 @@ class FormBeliController extends Controller
         $jenis = $req['kas_ppn'] == '1' ? 1 : 2;
 
         $keranjang = Keranjang::with(['barang.type.unit'])
-                        ->where('user_id', auth()->user()->id)
-                        ->where('jenis', $jenis)
-                        ->where('tempo', $req['tempo'])->get();
+            ->where('user_id', auth()->user()->id)
+            ->where('jenis', $jenis)
+            ->where('tempo', $req['tempo'])->get();
 
         return view('billing.form-beli.index', [
             'data' => $data,
@@ -63,7 +63,7 @@ class FormBeliController extends Controller
 
         $data = BarangKategori::whereIn('id', $kategori)->get();
 
-        if($data->count() == 0) {
+        if ($data->count() == 0) {
             return response()->json([
                 'status' => 0,
                 'message' => 'Data tidak ditemukan',
@@ -80,13 +80,13 @@ class FormBeliController extends Controller
     {
         $jenis = [$request->jenis, 3];
         $data = BarangNama::with('barang')->where('barang_kategori_id', $request->barang_kategori_id)
-                ->whereHas('barang', function($q) use ($request, $jenis) {
-                    $q->where('barang_type_id', $request->barang_type_id)
+            ->whereHas('barang', function ($q) use ($request, $jenis) {
+                $q->where('barang_type_id', $request->barang_type_id)
                     ->whereIn('jenis', $jenis);
-                })
-                ->get();
+            })
+            ->get();
 
-        if($data->count() == 0) {
+        if ($data->count() == 0) {
             return response()->json([
                 'status' => 0,
                 'message' => 'Data tidak ditemukan',
@@ -103,12 +103,12 @@ class FormBeliController extends Controller
     {
         $jenis = [$request->jenis, 3];
         $data = Barang::where('barang_nama_id', $request->barang_nama_id)
-                ->where('barang_kategori_id', $request->barang_kategori_id)
-                ->where('barang_type_id', $request->barang_type_id)
-                ->whereIn('jenis', $jenis)
-                ->get();
+            ->where('barang_kategori_id', $request->barang_kategori_id)
+            ->where('barang_type_id', $request->barang_type_id)
+            ->whereIn('jenis', $jenis)
+            ->get();
 
-        if($data->count() == 0) {
+        if ($data->count() == 0) {
             return response()->json([
                 'status' => 0,
                 'message' => 'Data tidak ditemukan',
@@ -124,11 +124,11 @@ class FormBeliController extends Controller
     public function getKode(Request $request)
     {
         $data = Barang::leftJoin('satuans as s', 's.id', 'barangs.satuan_id')
-                        ->where('barangs.id',$request->barang_id)
-                        ->select('barangs.*', 's.nama as satuan')
-                        ->first();
+            ->where('barangs.id', $request->barang_id)
+            ->select('barangs.*', 's.nama as satuan')
+            ->first();
 
-        if(!$data) {
+        if (! $data) {
             return response()->json([
                 'status' => 0,
                 'message' => 'Data tidak ditemukan',
@@ -162,10 +162,12 @@ class FormBeliController extends Controller
             Keranjang::create($data);
 
             DB::commit();
+
             return back()->with('success', 'Data berhasil disimpan');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', $e->getMessage());
         }
 
@@ -179,10 +181,12 @@ class FormBeliController extends Controller
             $keranjang->delete();
 
             DB::commit();
+
             return back()->with('success', 'Data berhasil dihapus');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -203,10 +207,12 @@ class FormBeliController extends Controller
                 ->delete();
 
             DB::commit();
+
             return back()->with('success', 'Keranjang berhasil dikosongkan');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -226,7 +232,7 @@ class FormBeliController extends Controller
             'jatuh_tempo' => 'required_if:tempo,1',
         ]);
 
-        $db = new Keranjang();
+        $db = new Keranjang;
 
         $res = $db->checkout($data);
 

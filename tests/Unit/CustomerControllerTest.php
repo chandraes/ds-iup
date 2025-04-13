@@ -2,17 +2,16 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-// use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Customer;
 use Illuminate\Http\Request;
+// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
+use Tests\TestCase;
 
 class CustomerControllerTest extends TestCase
 {
     // use RefreshDatabase;
 
-    public function testStore()
+    public function test_store()
     {
         $data = [
             'nama' => 'Test',
@@ -39,7 +38,7 @@ class CustomerControllerTest extends TestCase
 
         $request = new Request($data);
 
-        $controller = new \App\Http\Controllers\CustomerController();
+        $controller = new \App\Http\Controllers\CustomerController;
         $controller->store($request);
 
         $this->assertDatabaseHas('customers', $data);

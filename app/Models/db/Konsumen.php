@@ -12,6 +12,7 @@ class Konsumen extends Model
     use HasFactory;
 
     const CASH = 1;
+
     const TEMPO = 2;
 
     protected $guarded = ['id'];
@@ -41,12 +42,13 @@ class Konsumen extends Model
     public function generateKode()
     {
         $kode = $this->max('kode');
+
         return $kode + 1;
     }
 
     public function getFullKodeAttribute()
     {
-        return 'K' . str_pad($this->kode, 2, '0', STR_PAD_LEFT);
+        return 'K'.str_pad($this->kode, 2, '0', STR_PAD_LEFT);
     }
 
     public function getSistemPembayaranAttribute()
@@ -76,5 +78,4 @@ class Konsumen extends Model
 
         return $query;
     }
-
 }

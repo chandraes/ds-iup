@@ -20,8 +20,8 @@ return new class extends Migration
         });
 
         Schema::table('invoice_belanjas', function (Blueprint $table) {
-            $table->float('sisa', 35,2)->default(0)->change();
-            $table->float('sisa_ppn', 35,2)->default(0)->change();
+            $table->float('sisa', 35, 2)->default(0)->change();
+            $table->float('sisa_ppn', 35, 2)->default(0)->change();
             $table->boolean('kas_ppn')->default(1)->after('supplier_id');
         });
     }
@@ -32,8 +32,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('invoice_belanjas', function (Blueprint $table) {
-            $table->float('sisa', 35,2)->change();
-            $table->float('sisa_ppn', 35,2)->change();
+            $table->float('sisa', 35, 2)->change();
+            $table->float('sisa_ppn', 35, 2)->change();
             $table->dropColumn('kas_ppn');
         });
 
