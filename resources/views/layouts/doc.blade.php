@@ -15,7 +15,7 @@
             position: relative;
         }
 
-        , .footer {
+        .footer {
             margin-left: 70%;
             text-align: center;
             position: relative;

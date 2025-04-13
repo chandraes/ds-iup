@@ -6,9 +6,9 @@ use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\GroupWa;
 use App\Models\KasKonsumen;
 use App\Models\KonsumenTemp;
-use App\Models\PesanWa;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\KeranjangJual;
 use App\Services\StarSender;
@@ -17,9 +17,11 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
-
+use App\Http\Traits\Terbilang;
 class FormJualController extends Controller
 {
+    use Terbilang;
+
     public function get_konsumen(Request $request)
     {
         $data = $request->validate([
@@ -268,11 +270,16 @@ class FormJualController extends Controller
         $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
         $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
 
+        $tanggal_tempo = $invoice->lunas == 0 ?  Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
+
+        $terbilang = $invoice->lunas == 0 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
+
         $pdf = PDF::loadview('billing.stok.invoice-pdf', [
-            'data' => $invoice->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
+            'data' => $invoice->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.barang.satuan', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
             'pt' => $pt,
-            'jam' => $jam,
+            'tanggal_tempo' => $tanggal_tempo,
             'tanggal' => $tanggal,
+            'terbilang' => $terbilang,
         ])->setPaper('a4', 'portrait');
 
         $directory = storage_path('app/public/invoices');
@@ -320,7 +327,7 @@ class FormJualController extends Controller
             $pembayaran = 'Lunas';
         }
 
-        if ($konsumen && $konsumen->no_hp) {
+        if ($konsumen && $konsumen->no_hp && $invoice->send_wa == 0) {
             $tujuan = str_replace('-', '', $konsumen->no_hp);
             $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
                     "*Invoice Pembelian*\n".
@@ -389,22 +396,15 @@ class FormJualController extends Controller
             // tambahkan warning jika ada tagihan sudah 7 hari sebelum jatuh tempo ( Nomor invoice, tanggal jatuh tempo, dan nilai tagihan)
             $pesan .= 'Terima kasih 🙏🙏🙏';
 
-            $storePesan = PesanWa::create([
-                'pesan' => $pesan,
-                'tujuan' => $tujuan,
-                'status' => 0,
-            ]);
+
+            $dbWa = new GroupWa;
 
             // $file = $pdfUrl;
-            $wa = new StarSender($tujuan, $pesan);
+            $wa = $dbWa->sendWa($tujuan, $pesan);
 
-            $send = $wa->sendGroup();
-
-            if ($send == 'true') {
-                $storePesan->update([
-                    'status' => 1,
-                ]);
-            }
+            $invoice->update([
+                'send_wa' => 1,
+            ]);
         }
 
         return view('billing.stok.invoice',

@@ -160,6 +160,8 @@ class KeranjangJual extends Model
                 $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
             }
             // Create Invoice
+            $data['send_wa'] = 0;
+            
             $invoice = $dbInvoice->create($data);
 
             foreach ($keranjang as $item) {

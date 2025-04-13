@@ -1,6 +1,6 @@
 @extends('layouts.doc')
 @push('header')
-@if ($pt->logo != null)
+@if ($pt->logo !== null && file_exists(public_path('uploads/logo/'.$pt->logo)))
 <img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
 @endif
 <div class="header-div">
@@ -21,58 +21,59 @@
             <div class="col-md-6 invoice-col">
                 <table style="width: 100%; font-size: 10px">
                     <tr id="namaTr">
-                        <td class="text-start align-middle" style="width: 20%">Konsumen</td>
-                        <td class="text-start align-middle" style="width: 15px">:</td>
-                        <td class="text-start align-middle" style="width: 200px">
+                        <td style="width: 20%">Konsumen</td>
+                        <td style="width: 15px">:</td>
+                        <td style="width: 150px">
                             <strong>{{$data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama}}</strong>
                         </td>
                         <td style="width: 80px">&nbsp;</td>
-                        <td class="text-start align-middle" style="width: 20%">Invoice</td>
-                        <td class="text-start align-middle" style="width: 15px">:</td>
-                        <td class="text-start align-middle" style="width: 20%">
+                        <td style="width: 20%">Invoice</td>
+                        <td style="width: 15px">:</td>
+                        <td style="width: 20%">
                             <strong>{{$data->kode}}</strong>
                         </td>
 
                     </tr>
                     <tr>
-                        <td class="text-start align-middle" >Sistem Pembayaran</td>
-                        <td class="text-start align-middle" >:</td>
-                        <td class="text-start align-middle" >
-                            {{$data->konsumen ? $data->konsumen->sistem_pembayaran : 'Cash'}}
+                        <td>Sistem Pembayaran</td>
+                        <td>:</td>
+                        <td>
+                            {{$data->konsumen && $data->lunas == 0 ? $data->konsumen->sistem_pembayaran : 'Cash'}}
                         </td>
                         <td style="width: 10%"></td>
-                        <td class="text-start align-middle" >Tanggal Kirim</td>
-                        <td class="text-start align-middle" >:</td>
-                        <td class="text-start align-middle" >
+                        <td>Tanggal Kirim</td>
+                        <td>:</td>
+                        <td>
                             {{$tanggal}}
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-start align-middle">Tempo</td>
-                        <td class="text-start align-middle" style="width: 15px">:</td>
-                        <td class="text-start align-middle">
-                            {{$data->konsumen ? $data->konsumen->tempo_hari . ' Hari' : '-'}} </td>
+                        <td>Tempo</td>
+                        <td style="width: 15px">:</td>
+                        <td>
+                            {{$data->konsumen && $data->lunas == 0 ? $data->konsumen->tempo_hari . ' Hari' : '-'}} </td>
                         <td style="width: 5%"></td>
-                        <td class="text-start align-middle">Jam</td>
-                        <td class="text-start align-middle" style="width: 15px">:</td>
-                        <td class="text-start align-middle">
-                            {{$jam}}
+                        <td>Tanggal Tempo</td>
+                        <td style="width: 15px">:</td>
+                        <td>
+                            {{$tanggal_tempo}}
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-start align-middle">Alamat</td>
-                        <td class="text-start align-middle" style="width: 15px">:</td>
-                        <td class="text-start align-middle">
+                        <td style="vertical-align: top;">Alamat</td>
+                        <td style="width: 15px; vertical-align: top;">:</td>
+                        <td style="vertical-align: top;">
                             @if ($data->konsumen)
-                            {{$data->konsumen->kabupaten_kota->nama_wilayah}}, {{$data->konsumen->kecamatan->nama_wilayah}}, {{$data->konsumen->alamat}}
+                            {{$data->konsumen->alamat}}, {{$data->konsumen->kecamatan->nama_wilayah}},
+                            {{$data->konsumen->kabupaten_kota->nama_wilayah}}
                             @else
                             {{$data->konsumen_temp->alamat}}
                             @endif
                         </td>
-                        <td style="width: 5%"></td>
-                        <td class="text-start align-middle">No HP</td>
-                        <td class="text-start align-middle" style="width: 15px">:</td>
-                        <td class="text-start align-middle">
+                        <td style="width: 5%; vertical-align: top;"></td>
+                        <td style="vertical-align: top;">No HP</td>
+                        <td style="width: 15px; vertical-align: top;">:</td>
+                        <td style="vertical-align: top;">
                             {{$data->konsumen ? $data->konsumen->no_hp : $data->konsumen_temp->no_hp}}
                         </td>
                     </tr>
@@ -129,7 +130,7 @@
             <tfoot>
                 <tr>
                     <th style="text-align: right" colspan="7">Total DPP : </th>
-                    <th style="text-align: right">{{$data->dpp}}</th>
+                    <th style="text-align: right; padding-left:0.5rem">{{$data->dpp}}</th>
                 </tr>
                 <tr>
                     <th style="text-align: right" colspan="7">Diskon : </th>
@@ -151,7 +152,7 @@
                     <th style="text-align: right" colspan="7">Grand Total : </th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
-                @if ($data->konsumen && $data->konsumen->pembayaran == 2)
+                @if ($data->konsumen && $data->konsumen->pembayaran == 2 && $data->lunas == 0)
                 <tr>
                     <th style="text-align: right" colspan="7">DP : </th>
                     <th style="text-align: right">{{$data->nf_dp}}</th>
@@ -164,18 +165,35 @@
                 @endif
                 <tr>
                     <th style="text-align: right" colspan="7">Sisa Tagihan : </th>
-                    <th style="text-align: right">{{$data->sisa_tagihan}}</th>
+                    <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
+                </tr>
+                <tr>
+                    <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
+                </tr>
+                @else
+                <tr>
+                    <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
                 </tr>
                 @endif
             </tfoot>
         </table>
 </div>
-<div class="footer" style="margin-top: 50px">
-    <p><strong>{{$pt->nama}}</strong></p>
-    <br><br><br>
-    <p style="margin-bottom: 0;">
-        <strong>_________________________</strong>
-    </p>
-    {{-- <p style="margin-top: 0;">Direktur</p> --}}
-</div>
+<table style="width: 100%; table-layout: fixed; margin-top: 10px; font-size: 11px; page-break-inside: avoid;">
+    <tr>
+        <td style="width: 50%; text-align: center; vertical-align: top;">
+            <p><strong>{{ $pt->nama }}</strong></p>
+            <div style="height: 60px;"></div>
+            <p style="margin-bottom: 0;">
+                <strong>_________________________</strong>
+            </p>
+        </td>
+        <td style="width: 50%; text-align: center; vertical-align: top;">
+            <p><strong>{{ $data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama }}</strong></p>
+            <div style="height: 60px;"></div>
+            <p style="margin-bottom: 0;">
+                <strong>_________________________</strong>
+            </p>
+        </td>
+    </tr>
+</table>
 @endsection
