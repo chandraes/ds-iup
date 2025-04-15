@@ -217,6 +217,7 @@ class FormJualController extends Controller
             'npwp' => 'nullable',
             'alamat' => 'nullable',
             'dp' => 'nullable',
+            'dp_ppn' => 'nullable',
             'dipungut' => 'nullable',
         ]);
 

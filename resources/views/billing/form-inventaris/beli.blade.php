@@ -299,7 +299,7 @@
 
         if (apa_ppn === "1") {
             var ppnRate = {!! $ppn !!};
-            ppn = tot * (ppnRate / 100);
+            ppn = Math.floor(tot * (ppnRate / 100));
         }
 
         var total = tot + ppn - diskon + add_fee;

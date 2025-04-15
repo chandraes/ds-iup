@@ -231,18 +231,25 @@
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
+                                <tr id="trJumlahDp" hidden>
+                                    <th colspan="9" class="text-end align-middle">Jumlah DP :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
+                                            onkeyup="addDp()" />
+                                    </th>
+                                </tr>
                                 <tr id="trDp" hidden>
                                     <th colspan="9" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="0"
-                                            onkeyup="addDp()" />
+                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="0" readonly/>
                                     </th>
                                 </tr>
                                 @if ($ppnStore == 1)
                                 <tr id="trDpPpn" hidden>
                                     <th colspan="9" class="text-end align-middle">DP PPn :</th>
-                                    <th class="text-end align-middle" id="thDpPpn">
-                                        0
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="0"
+                                            readonly />
                                     </th>
                                 </tr>
                                 @endif
@@ -311,8 +318,8 @@
     function checkSisa() {
         var dp = document.getElementById('dp').value;
         var gt = document.getElementById('totalTagihanTh').innerText;
-        var dp_ppnElement = document.getElementById('thDpPpn');
-        var dp_ppn = dp_ppnElement ? dp_ppnElement.innerText : 0;
+        var dp_ppnElement = document.getElementById('dp_ppn');
+        var dp_ppn = dp_ppnElement ? dp_ppnElement.value : 0;
 
         if (dp_ppnElement) {
             dp_ppn = dp_ppn.replace(/\./g, '');
@@ -432,7 +439,12 @@
 
     function addDp(){
         console.log('add dp');
-        var dp = document.getElementById('dp').value;
+        var jumlah_dp = document.getElementById('jumlah_dp').value;
+
+        var dp = document.getElementById('dp');
+
+        dp = jumlah_dp;
+        // var dp = jumlah_dp;
         var gt = document.getElementById('totalTagihanTh').innerText;
         gt = gt.replace(/\./g, '');
         dp = dp.replace(/\./g, '');
@@ -447,7 +459,7 @@
                 text: 'DP tidak boleh melebihi Total Tagihan!',
             });
             document.getElementById('dp').value = 0;
-            document.getElementById('thDpPpn').innerText = 0;
+            document.getElementById('dp_ppn').value = 0;
             return;
         }
 
@@ -457,11 +469,13 @@
         if (thPpn != '0') {
             var ppn = {{$ppn}};
 
-            var dpPpn = dpNumber * ppn / 100;
+            var dpPpn = Math.floor(dpNumber * ppn / 100);
 
             var dpPpnNf = dpPpn.toLocaleString('id-ID');
 
-            document.getElementById('thDpPpn').innerText = dpPpnNf;
+            document.getElementById('dp').value = (dpNumber - dpPpn).toLocaleString('id-ID');
+            document.getElementById('dp_ppn').value = dpPpnNf;
+
         }
 
         checkSisa();
@@ -472,6 +486,8 @@
     {
         var pembayaran = document.getElementById('pembayaran').value;
         if (pembayaran == 2) {
+            console.log('tempo');
+            document.getElementById('trJumlahDp').hidden = false;
             document.getElementById('trDp').hidden = false;
             var dp = new Cleave('#dp', {
                 numeral: true,
@@ -492,6 +508,7 @@
             document.getElementById('thSisa').innerText = sisa;
         } else {
             document.getElementById('tempo_hari').value = '-';
+            document.getElementById('trJumlahDp').hidden = true;
             document.getElementById('trDp').hidden = true;
             var tdDpPpnElement = document.getElementById('trDpPpn');
             if (tdDpPpnElement) {
@@ -542,8 +559,15 @@
                         document.getElementById('pembayaran').value = 2;
 
                         document.getElementById('tempo_hari').value = data.tempo_hari;
+                        document.getElementById('trJumlahDp').hidden = false;
                         document.getElementById('trDp').hidden = false;
                         var dp = new Cleave('#dp', {
+                            numeral: true,
+                            numeralThousandsGroupStyle: 'thousand',
+                            numeralDecimalMark: ',',
+                            delimiter: '.'
+                        });
+                        var jumlah_dp = new Cleave('#jumlah_dp', {
                             numeral: true,
                             numeralThousandsGroupStyle: 'thousand',
                             numeralDecimalMark: ',',
@@ -562,6 +586,7 @@
                     } else {
 
                         document.getElementById('tempo_hari').value = '-';
+                        document.getElementById('trJumlahDp').hidden = true;
                         document.getElementById('trDp').hidden = true;
                         var tdDpPpnElement = document.getElementById('trDpPpn');
                         if (tdDpPpnElement) {
@@ -592,6 +617,7 @@
 
 
         document.getElementById('trDp').hidden = true;
+        document.getElementById('trJumlahDp').hidden = true;
         document.getElementById('trDpPpn').hidden = true;
         document.getElementById('trSisa').hidden = true;
         document.getElementById('namaTr').hidden = false;

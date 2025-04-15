@@ -92,7 +92,7 @@ class KeranjangJual extends Model
 
             $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
 
-            $data['dp_ppn'] = $data['dp'] > 0 && $barang_ppn == 1 ? $data['dp'] * $ppnVal / 100 : 0;
+            $data['dp_ppn'] = isset($data['dp_ppn']) ? str_replace('.', '', $data['dp_ppn']) : 0;
 
             if ($dipungut == 1) {
                 $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
