@@ -19,10 +19,10 @@ return new class extends Migration
         InvoiceJual::where('lunas', 0)
             ->where('void', 0)
             ->chunk(100, function ($data) {
-            foreach ($data as $d) {
-                $d->sistem_pembayaran = $d->titipan === 1 ? 3 : 2;
-                $d->save();
-            }
+                foreach ($data as $d) {
+                    $d->sistem_pembayaran = $d->titipan === 1 ? 3 : 2;
+                    $d->save();
+                }
             });
     }
 

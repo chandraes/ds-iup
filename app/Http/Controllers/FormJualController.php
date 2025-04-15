@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\Terbilang;
 use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Konsumen;
@@ -17,7 +18,7 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
-use App\Http\Traits\Terbilang;
+
 class FormJualController extends Controller
 {
     use Terbilang;
@@ -270,7 +271,7 @@ class FormJualController extends Controller
         $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
         $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
 
-        $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ?  Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
+        $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
 
         $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
 
@@ -403,7 +404,6 @@ class FormJualController extends Controller
 
             // tambahkan warning jika ada tagihan sudah 7 hari sebelum jatuh tempo ( Nomor invoice, tanggal jatuh tempo, dan nilai tagihan)
             $pesan .= 'Terima kasih 🙏🙏🙏';
-
 
             $dbWa = new GroupWa;
 
