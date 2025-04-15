@@ -96,6 +96,7 @@
 
                     <th class="text-center align-middle">Penyesuaian</th>
                     <th class="text-center align-middle">Total<br>Belanja</th>
+                    <th class="text-center align-middle"> - </th>
                 </tr>
             </thead>
             <tbody>
@@ -115,6 +116,11 @@
                     @endif
                     <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
+                    <td class="text-center align-middle text-nowrap">
+                        <div class="row px-3 pb-2">
+                            <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
+                        </div>
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -128,6 +134,7 @@
                     @endif
                     <th class="text-end align-middle">{{number_format($data->sum('add_fee'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>
 
@@ -153,6 +160,7 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
+
         });
 
         $('#supplier_id').select2({
