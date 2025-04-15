@@ -232,7 +232,7 @@
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
                                 <tr id="trJumlahDp" hidden>
-                                    <th colspan="9" class="text-end align-middle">Jumlah DP :</th>
+                                    <th colspan="9" class="text-end align-middle">Masukan Nominal DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
                                             onkeyup="addDp()" />
@@ -444,6 +444,8 @@
         var dp = document.getElementById('dp');
 
         dp = jumlah_dp;
+
+        document.getElementById('dp').value = dp;
         // var dp = jumlah_dp;
         var gt = document.getElementById('totalTagihanTh').innerText;
         gt = gt.replace(/\./g, '');

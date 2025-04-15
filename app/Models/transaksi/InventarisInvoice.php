@@ -104,24 +104,26 @@ class InventarisInvoice extends Model
 
     public function beliInventaris($data)
     {
+        $kas = new KasBesar;
+        $saldo = $kas->saldoTerakhir(1);
+
+        $total = ($data['jumlah'] * $data['harga_satuan']) + $data['ppn'] + $data['add_fee'] - $data['diskon'];
+
+        $checker = $data['pembayaran'] == 1 ? $total : str_replace('.', '', $data['dp']);
+
+        isset($data['dp']) ? $data['dp'] = str_replace('.', '', $data['dp']) : 0;
+
+        if ($saldo < $checker) {
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas besar tidak mencukupi! Sisa saldo: Rp. '.number_format($saldo, 0, ',', '.'),
+            ];
+        }
+        
         try {
             DB::beginTransaction();
 
-            $kas = new KasBesar;
-            $saldo = $kas->saldoTerakhir(1);
 
-            $total = ($data['jumlah'] * $data['harga_satuan']) + $data['ppn'] + $data['add_fee'] - $data['diskon'];
-
-            $checker = $data['pembayaran'] == 1 ? $total : str_replace('.', '', $data['dp']);
-
-            isset($data['dp']) ? $data['dp'] = str_replace('.', '', $data['dp']) : 0;
-
-            if ($saldo < $checker) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Saldo kas besar tidak mencukupi! Sisa saldo: Rp. '.number_format($saldo, 0, ',', '.'),
-                ];
-            }
 
             $inventaris = InventarisRekap::create([
                 'inventaris_jenis_id' => $data['inventaris_jenis_id'],
