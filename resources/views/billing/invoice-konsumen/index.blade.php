@@ -100,13 +100,16 @@
                     <td class="text-end align-middle {{$d->ppn_dipungut ? '' : 'table-danger'}}">{{$d->nf_sisa_ppn}}</td>
                     <td class="text-end align-middle">{{$d->nf_sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
-                    <td class="text-end align-middle">
+                    <td class="text-end align-middle' text-nowrap">
+                        <div class="row px-3">
+                            <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
+                        </div>
 
                         <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
                             class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa_tagihan}}">
                             @csrf
                             <div class="row p-3">
-                                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card"></i> Bayar</button>
+                                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card me-1"></i> Bayar</button>
                             </div>
                         </form>
                         <div class="row px-3">
@@ -118,7 +121,7 @@
                             class="void-form" data-id="{{ $d->id }}">
                             @csrf
                             <div class="row p-3">
-                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle me-1"></i> Void</button>
                             </div>
                         </form>
                         @endif
