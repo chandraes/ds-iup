@@ -270,12 +270,20 @@ class FormJualController extends Controller
         $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
         $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
 
-        $tanggal_tempo = $invoice->lunas == 0 ?  Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
+        $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ?  Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
 
-        $terbilang = $invoice->lunas == 0 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
+        $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
 
         $pdf = PDF::loadview('billing.stok.invoice-pdf', [
-            'data' => $invoice->load('konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.barang.satuan', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama'),
+            'data' => $invoice->loadMissing([
+                'konsumen',
+                'invoice_detail.stok.type',
+                'invoice_detail.stok.barang',
+                'invoice_detail.stok.barang.satuan',
+                'invoice_detail.stok.unit',
+                'invoice_detail.stok.kategori',
+                'invoice_detail.stok.barang_nama',
+            ]),
             'pt' => $pt,
             'tanggal_tempo' => $tanggal_tempo,
             'tanggal' => $tanggal,

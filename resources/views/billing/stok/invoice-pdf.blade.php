@@ -34,7 +34,7 @@
                         <td>Sistem Pembayaran</td>
                         <td>:</td>
                         <td>
-                            {{$data->konsumen && $data->lunas == 0 ? $data->konsumen->sistem_pembayaran : 'Cash'}}
+                            {{$data->sistem_pembayaran_word}}
                         </td>
                         <td style="width: 10%"></td>
                         <td>Tanggal Kirim</td>
@@ -47,7 +47,7 @@
                         <td>Tempo</td>
                         <td style="width: 15px">:</td>
                         <td>
-                            {{$data->konsumen && $data->lunas == 0 ? $data->konsumen->tempo_hari . ' Hari' : '-'}} </td>
+                            {{$data->sistem_pembayaran !== 1 ? $data->konsumen->tempo_hari . ' Hari' : '-'}} </td>
                         <td style="width: 5%"></td>
                         <td>Tanggal Tempo</td>
                         <td style="width: 15px">:</td>
@@ -79,100 +79,164 @@
     </table>
 </div>
 <div class="po-items">
-    <table class="table-items">
-        <table class="table-items" style="font-size: 10px">
-            <thead class=" table-success">
+    <table class="table-items" style="font-size: 10px">
+        <thead class=" table-success">
+            <tr>
+                <th class="text-center align-middle">No</th>
+                <th class="text-center align-middle">Nama Barang</th>
+                <th class="text-center align-middle">Kode Barang</th>
+                <th class="text-center align-middle">Merk Barang</th>
+                <th class="text-center align-middle">Banyak</th>
+                <th class="text-center align-middle">Satuan</th>
+                <th class="text-center align-middle">Harga Satuan</th>
+                <th class="text-center align-middle">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($data->invoice_detail as $d)
+            <tr>
+                <td style="text-align: center">
+                    {{$loop->iteration}}
+                </td>
+                <td style="text-align: center">
+                    {{$d->stok->barang_nama->nama}}
+                </td>
+                <td style="text-align: center">
+                    {{$d->stok->barang->kode}}
+                </td>
+                <td style="text-align: center">
+                    {{$d->stok->barang->merk}}
+                </td>
+                <td style="text-align: center">
+                    {{$d->nf_jumlah}}
+                </td>
+                <td style="text-align: center">
+                    {{$d->stok->barang->satuan ? $d->stok->barang->satuan->nama : '-'}}
+                </td>
+                <td style="text-align: right; padding-left:0.5rem">
+                    {{$d->nf_harga_satuan}}
+                </td>
+                <td style="text-align: right; padding-left:0.5rem">
+                    {{$d->nf_total}}
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+        {{-- <tfoot style="page-break-inside: avoid;">
+            <tr>
+                <th style="text-align: right">Total DPP : </th>
+                <th style="text-align: right; padding-left:0.5rem">{{$data->dpp}}</th>
+            </tr>
+            <tr>
+                <th style="text-align: right">Diskon : </th>
+                <th style="text-align: right">{{number_format($data->diskon, 0 ,',', '.')}}</th>
+            </tr>
+            <tr>
+                <th style="text-align: right">DPP Setelah Diskon : </th>
+                <th style="text-align: right">{{number_format($data->total-$data->diskon, 0 ,',', '.')}}</th>
+            </tr>
+            <tr>
+                <th style="text-align: right">Ppn : </th>
+                <th style="text-align: right">{{$data->nf_ppn}}</th>
+            </tr>
+            <tr>
+                <th style="text-align: right">Penyesuaian : </th>
+                <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
+            </tr>
+            <tr>
+                <th style="text-align: right">Grand Total : </th>
+                <th style="text-align: right">{{$data->nf_grand_total}}</th>
+            </tr>
+            @if ($data->konsumen && $data->konsumen->pembayaran == 2 && $data->lunas == 0)
+            <tr>
+                <th style="text-align: right">DP : </th>
+                <th style="text-align: right">{{$data->nf_dp}}</th>
+            </tr>
+            @if ($data->ppn > 0)
+            <tr>
+                <th style="text-align: right">DP PPn : </th>
+                <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
+            </tr>
+            @endif
+            <tr>
+                <th style="text-align: right">Sisa Tagihan : </th>
+                <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
+            </tr>
+            <tr>
+                <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
+            </tr>
+            @else
+            <tr>
+                <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
+            </tr>
+            @endif
+        </tfoot> --}}
+    </table>
+
+    <div style="page-break-inside: avoid; display: table; width: 100%; margin-top: 10px;">
+        <div style="display: table-footer-group;">
+            <table style="width: 100%; font-size: 10px; text-align: right;">
                 <tr>
-                    <th class="text-center align-middle">No</th>
-                    <th class="text-center align-middle">Nama Barang</th>
-                    <th class="text-center align-middle">Kode Barang</th>
-                    <th class="text-center align-middle">Merk Barang</th>
-                    <th class="text-center align-middle">Banyak</th>
-                    <th class="text-center align-middle">Satuan</th>
-                    <th class="text-center align-middle">Harga Satuan</th>
-                    <th class="text-center align-middle">Total</th>
+                    <th style="text-align: right; width:80%">Total DPP </th>
+                    <th style="text-align: right; width:5%">:</th>
+                    <th style="text-align: right; padding-left:0.5rem; width:12%">{{$data->dpp}}</th>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach ($data->invoice_detail as $d)
                 <tr>
-                    <td style="text-align: center">
-                        {{$loop->iteration}}
-                    </td>
-                    <td style="text-align: center">
-                        {{$d->stok->barang_nama->nama}}
-                    </td>
-                    <td style="text-align: center">
-                        {{$d->stok->barang->kode}}
-                    </td>
-                    <td style="text-align: center">
-                        {{$d->stok->barang->merk}}
-                    </td>
-                    <td style="text-align: center">
-                        {{$d->nf_jumlah}}
-                    </td>
-                    <td style="text-align: center">
-                        {{$d->stok->barang->satuan ? $d->stok->barang->satuan->nama : '-'}}
-                    </td>
-                    <td style="text-align: right">
-                        {{$d->nf_harga_satuan}}
-                    </td>
-                    <td style="text-align: right">
-                        {{$d->nf_total}}
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th style="text-align: right" colspan="7">Total DPP : </th>
-                    <th style="text-align: right; padding-left:0.5rem">{{$data->dpp}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="7">Diskon : </th>
+                    <th style="text-align: right">Diskon </th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{number_format($data->diskon, 0 ,',', '.')}}</th>
                 </tr>
                 <tr>
-                    <th style="text-align: right" colspan="7">DPP Setelah Diskon : </th>
+                    <th style="text-align: right">DPP Setelah Diskon </th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{number_format($data->total-$data->diskon, 0 ,',', '.')}}</th>
                 </tr>
+                @if ($data->kas_ppn === 1)
                 <tr>
-                    <th style="text-align: right" colspan="7">Ppn : </th>
+                    <th style="text-align: right">Ppn</th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_ppn}}</th>
                 </tr>
+                @endif
                 <tr>
-                    <th style="text-align: right" colspan="7">Penyesuaian : </th>
+                    <th style="text-align: right">Penyesuaian</th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
                 </tr>
                 <tr>
-                    <th style="text-align: right" colspan="7">Grand Total : </th>
+                    <th style="text-align: right">Grand Total </th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
                 @if ($data->konsumen && $data->konsumen->pembayaran == 2 && $data->lunas == 0)
                 <tr>
-                    <th style="text-align: right" colspan="7">DP : </th>
+                    <th style="text-align: right">DP </th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_dp}}</th>
                 </tr>
                 @if ($data->ppn > 0)
                 <tr>
-                    <th style="text-align: right" colspan="7">DP PPn : </th>
+                    <th style="text-align: right">DP PPn </th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
                 </tr>
                 @endif
                 <tr>
-                    <th style="text-align: right" colspan="7">Sisa Tagihan : </th>
+                    <th style="text-align: right">Sisa Tagihan </th>
+                    <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
                 </tr>
-                <tr>
-                    <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
+                <tr >
+                    <th colspan="3" style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem"><strong># {{$terbilang}} Rupiah #</strong></th>
                 </tr>
                 @else
                 <tr>
-                    <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
+                    <th colspan="3" style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem"><strong># {{$terbilang}} Rupiah #</strong></th>
                 </tr>
                 @endif
-            </tfoot>
-        </table>
+            </table>
+        </div>
+    </div>
 </div>
 <table style="width: 100%; table-layout: fixed; margin-top: 10px; font-size: 11px; page-break-inside: avoid;">
     <tr>
@@ -181,6 +245,7 @@
             <div style="height: 60px;"></div>
             <p style="margin-bottom: 0;">
                 <strong>_________________________</strong>
+                <br>PENGIRIM
             </p>
         </td>
         <td style="width: 50%; text-align: center; vertical-align: top;">
@@ -188,6 +253,7 @@
             <div style="height: 60px;"></div>
             <p style="margin-bottom: 0;">
                 <strong>_________________________</strong>
+                <br>PENERIMA
             </p>
         </td>
     </tr>

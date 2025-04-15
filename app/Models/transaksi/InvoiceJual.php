@@ -24,7 +24,10 @@ class InvoiceJual extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'nf_sisa_ppn', 'nf_sisa_tagihan',  'dpp_setelah_diskon'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn',
+                            'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'nf_sisa_ppn',
+                            'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word',
+                        ];
 
     public function invoice_jual_cicil()
     {
@@ -113,6 +116,16 @@ class InvoiceJual extends Model
     public function getNfSisaTagihanAttribute()
     {
         return number_format($this->sisa_tagihan, 0, ',', '.');
+    }
+
+    public function getSistemPembayaranWordAttribute()
+    {
+        return match ($this->sistem_pembayaran) {
+            1 => 'Cash',
+            2 => 'Tempo',
+            3 => 'Titipan',
+            default => '-',
+        };
     }
 
     public function generateNomor($barang_ppn)

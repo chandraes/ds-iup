@@ -161,6 +161,7 @@ class KeranjangJual extends Model
             }
             // Create Invoice
             $data['send_wa'] = 0;
+            $data['sistem_pembayaran'] = $data['pembayaran'];
             
             $invoice = $dbInvoice->create($data);
 
