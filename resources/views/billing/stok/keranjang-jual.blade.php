@@ -257,9 +257,7 @@
                         </table>
                     </div>
                     <div class="row ">
-                        <div class="col-md-6 text-end">
-                            @include('wa-status')
-                        </div>
+                        <div class="col-md-6"></div>
                         <div class="col-md-6 text-end">
                             <button type="submit" class="btn btn-success"><i class="fa fa-credit-card"></i>
                                 Lanjutkan Pembayaran</button>
@@ -271,6 +269,9 @@
                 </div>
             </div>
         </form>
+        <div class="col-md-6 text-end mt-2">
+            @include('wa-status')
+        </div>
     </div>
 </div>
 @endsection
@@ -304,12 +305,7 @@
 
     function ppnPungut() {
         var dipungut = document.getElementById('dipungut').value ?? 0;
-
-        console.log(dipungut);
         calculatePpn();
-        // checkSisa();
-
-
     }
 
     function checkSisa() {
