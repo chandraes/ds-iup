@@ -4,7 +4,7 @@ namespace App\Services;
 
 class WaStatus
 {
-    private $apiKey;
+    private $apikey;
 
     private $apiDevKey;
 
@@ -14,7 +14,7 @@ class WaStatus
     {
         $this->apiDevKey = env('STARSENDER_API_KEY');
         $this->deviceId = env('STARSENDER_DEVICE_ID');
-        $this->apiKey = env('STARSENDER_KEY');
+        $this->apikey = env('STARSENDER_KEY');
     }
 
     public function getStatusWa()
@@ -70,7 +70,7 @@ class WaStatus
 
     public function getRelog()
     {
-        $apikey = $this->apiKey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
@@ -99,7 +99,7 @@ class WaStatus
 
     public function getGroup()
     {
-        $apikey = $this->apiKey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
