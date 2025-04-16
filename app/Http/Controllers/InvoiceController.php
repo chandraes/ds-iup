@@ -116,7 +116,7 @@ class InvoiceController extends Controller
     {
         $filters = $request->only(['expired']);
         $titipan = 1;
-        $data = InvoiceJual::billing($filters, 1, 1);
+        $data = InvoiceJual::billing($filters, 1, $titipan);
 
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
@@ -129,7 +129,8 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen_non_ppn(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 0)->get();
+        $filters = $request->only(['expired']);
+        $data = InvoiceJual::billing($filters, 0, 0);
 
         return view('billing.invoice-konsumen.index-non-ppn', [
             'data' => $data,
@@ -138,8 +139,9 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen_titipan_non_ppn(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 0)->get();
         $titipan = 1;
+        $filters = $request->only(['expired']);
+        $data = InvoiceJual::billing($filters, 0, $titipan);
 
         return view('billing.invoice-konsumen.index-non-ppn', [
             'data' => $data,

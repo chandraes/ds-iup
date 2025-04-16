@@ -23,20 +23,20 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-6">
-            {{-- <form action="{{ route('billing.invoice-supplier') }}" method="GET" class="form-inline">
-                <div class="form-group mb-2">
-                    <label for="supplier_id" class="sr-only">Supplier:</label>
-                    <select name="supplier_id" id="supplier_id" class="form-control">
-                        <option value="" disabled selected>Pilih Supplier</option>
-                        @foreach($supplier as $sup)
-                            <option value="{{ $sup->id }}" {{ request('supplier_id') == $sup->id ? 'selected' : '' }}>{{ $sup->nama }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary mb-2">Filter</button>
-                <a href="{{ route('billing.invoice-supplier') }}" class="btn btn-secondary mb-2">Reset Filter</a>
-            </form> --}}
+        <div class="col-md-2">
+            <form action="{{url()->current()}}" method="get">
+                {{-- tombol filter untuk expired yang akan mengirimkan expired = 1 atau 0 --}}
+                <select name="expired" id="expired" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Data --</option>
+                    <option value="1" {{ request('expired') == 1 ? 'selected' : '' }}>Expired</option>
+                    <option value="0" {{ request()->has('expired') && request('expired') == 0 ? 'selected' : '' }}>Belum Expired</option>
+                </select>
+            </form>
+        </div>
+        <div class="col-md-2">
+            <div class="row">
+                <a href="{{ url()->current() }}" class="btn btn-secondary mb-2">Reset Filter</a>
+            </div>
         </div>
     </div>
 
