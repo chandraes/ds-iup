@@ -10,6 +10,7 @@ use App\Models\db\Pajak;
 use App\Models\GroupWa;
 use App\Models\KasKonsumen;
 use App\Models\KonsumenTemp;
+use App\Models\Rekening;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\KeranjangJual;
 use App\Services\StarSender;
@@ -274,6 +275,10 @@ class FormJualController extends Controller
 
         $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
 
+        $kas = $invoice->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+        $rekening = Rekening::where('untuk', $kas)->first();
+
         $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
 
         $pdf = PDF::loadview('billing.stok.invoice-pdf', [
@@ -290,6 +295,7 @@ class FormJualController extends Controller
             'tanggal_tempo' => $tanggal_tempo,
             'tanggal' => $tanggal,
             'terbilang' => $terbilang,
+            'rekening' => $rekening,
         ])->setPaper('a4', 'portrait');
 
         $directory = storage_path('app/public/invoices');

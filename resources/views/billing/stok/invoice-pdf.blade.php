@@ -238,6 +238,9 @@
         </div>
     </div>
 </div>
+<div style="font-size: 11px; margin-top: 10px; font-weight: bold; underline;">
+    Transfer ke: {{$rekening->bank}} {{$rekening->no_rek}} a.n {{$rekening->nama_rek}}
+</div>
 <table style="width: 100%; table-layout: fixed; margin-top: 10px; font-size: 11px; page-break-inside: avoid;">
     <tr>
         <td style="width: 50%; text-align: center; vertical-align: top;">
