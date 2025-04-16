@@ -66,7 +66,7 @@
                 @endphp
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-center align-middle">{{$d->tanggal_en}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
                     <td class="text-center align-middle">
                         <a href="{{route('billing.invoice-konsumen.detail', $d)}}">
@@ -93,7 +93,7 @@
                         @endif
                     </td>
                     <td class="text-end align-middle">{{$d->nf_sisa_tagihan}}</td>
-                    <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
+                    <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
                     <td class="text-end align-middle text-nowrap">
                         <div class="row px-3 pb-2">
                             <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>

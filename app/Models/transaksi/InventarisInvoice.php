@@ -119,11 +119,9 @@ class InventarisInvoice extends Model
                 'message' => 'Saldo kas besar tidak mencukupi! Sisa saldo: Rp. '.number_format($saldo, 0, ',', '.'),
             ];
         }
-        
+
         try {
             DB::beginTransaction();
-
-
 
             $inventaris = InventarisRekap::create([
                 'inventaris_jenis_id' => $data['inventaris_jenis_id'],

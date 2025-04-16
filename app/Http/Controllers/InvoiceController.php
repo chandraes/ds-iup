@@ -100,8 +100,10 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen(Request $request)
     {
-        $data = InvoiceJual::with(['konsumen', 'invoice_jual_cicil'])
-            ->where('void', 0)->where('titipan', 0)->where('lunas', 0)->where('kas_ppn', 1)->get();
+        $filters = $request->only(['expired']);
+
+        $data = InvoiceJual::billing($filters, 1, 0);
+
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('billing.invoice-konsumen.index', [
@@ -112,8 +114,10 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen_titipan(Request $request)
     {
-        $data = InvoiceJual::with('konsumen')->where('void', 0)->where('titipan', 1)->where('lunas', 0)->where('kas_ppn', 1)->get();
+        $filters = $request->only(['expired']);
         $titipan = 1;
+        $data = InvoiceJual::billing($filters, 1, 1);
+
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('billing.invoice-konsumen.index', [

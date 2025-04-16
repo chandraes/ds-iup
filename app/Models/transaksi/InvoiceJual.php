@@ -26,7 +26,7 @@ class InvoiceJual extends Model
 
     protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn',
         'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'nf_sisa_ppn',
-        'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word',
+        'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word', 'tanggal_en',
     ];
 
     public function invoice_jual_cicil()
@@ -56,6 +56,11 @@ class InvoiceJual extends Model
     public function getTanggalAttribute()
     {
         return Carbon::parse($this->created_at)->format('d-m-Y');
+    }
+
+    public function getTanggalEnAttribute()
+    {
+        return Carbon::parse($this->created_at)->format('Y-m-d');
     }
 
     public function getFullKodeAttribute()
@@ -546,5 +551,23 @@ class InvoiceJual extends Model
 
             return ['status' => 'error', 'message' => $th->getMessage()];
         }
+    }
+
+    public function scopeBilling($query, $filters, $kas_ppn, $titipan)
+    {
+        $data = $query->with(['konsumen', 'invoice_jual_cicil'])
+            ->where('void', 0)
+            ->where('titipan', $titipan)
+            ->where('lunas', 0)
+            ->where('kas_ppn', $kas_ppn);
+
+        if (isset($filters['expired']) && $filters['expired'] == 1) {
+            $data->where('jatuh_tempo', '<', Carbon::now());
+        }
+
+        $data = $data->get();
+
+        return $data;
+
     }
 }
