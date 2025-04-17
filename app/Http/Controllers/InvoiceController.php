@@ -6,6 +6,7 @@ use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
@@ -147,6 +148,25 @@ class InvoiceController extends Controller
             'data' => $data,
             'titipan' => $titipan,
         ]);
+    }
+
+    public function invoice_konsumen_download(Request $request)
+    {
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
+        $filters = $request->only(['expired', 'kas_ppn', 'titipan']);
+        $data = InvoiceJual::billing($filters, $filters['kas_ppn'] ?? 0, $filters['titipan'] ?? 0);
+        $stringTitipan = $filters['titipan'] ?? 1 ? 'Titipan' : 'Tempo';
+        $stringKas = $filters['kas_ppn'] ?? 1 ? 'PPN' : 'NON PPN';
+
+        $pdf = Pdf::loadview('billing.invoice-konsumen.pdf', [
+            'data' => $data,
+            'stringKas' => $stringKas,
+            'stringTitipan' => $stringTitipan,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Invoice Konsumen '.$stringKas.' '.$stringTitipan.'.pdf');
     }
 
     public function invoice_konsumen_detail(InvoiceJual $invoice)

@@ -561,7 +561,7 @@ class InvoiceJual extends Model
             ->where('lunas', 0)
             ->where('kas_ppn', $kas_ppn);
 
-        if (isset($filters['expired'])) {
+        if (isset($filters['expired']) && $filters['expired'] != '') {
             $data->where('jatuh_tempo', $filters['expired'] == 0 ? '>' : '<=', Carbon::now());
         }
 

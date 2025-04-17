@@ -8,17 +8,19 @@
         </div>
     </div>
     <div class="row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-7">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
                             Billing</a></td>
+                    <td><a target="_blank" href="{{route('billing.invoice-konsumen.pdf', ['expired' => request()->has('expired') ? request('expired') : '', 'kas_ppn' => 1, 'titipan' => isset($titipan) && $titipan == 1 ? 1 : 0])}}"><img src="{{asset('images/print.svg')}}" alt="dokumen" width="30">
+                        Print</a></td>
                 </tr>
             </table>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-5">
             @include('wa-status')
         </div>
     </div>
@@ -49,17 +51,17 @@
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">Nilai<br>DPP</th>
+                    <th class="text-center align-middle">Nilai <br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">PPn</th>
                     <th class="text-center align-middle">Penyesuaian</th>
-                    <th class="text-center align-middle">Total<br>Belanja</th>
+                    <th class="text-center align-middle">Total <br>Belanja</th>
                     <th class="text-center align-middle">DP</th>
-                    <th class="text-center align-middle">DP<br>PPN</th>
+                    <th class="text-center align-middle">DP <br>PPN</th>
                     <th class="text-center align-middle">Cicilan</th>
-                    <th class="text-center align-middle">Sisa<br>PPN</th>
-                    <th class="text-center align-middle">Sisa<br>Tagihan</th>
-                    <th class="text-center align-middle">Jatuh<br>Tempo</th>
+                    <th class="text-center align-middle">Sisa <br>PPN</th>
+                    <th class="text-center align-middle">Sisa <br>Tagihan</th>
+                    <th class="text-center align-middle">Jatuh <br>Tempo</th>
                     <th class="text-center align-middle">ACT</th>
                 </tr>
             </thead>

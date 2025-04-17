@@ -8,17 +8,22 @@
         </div>
     </div>
     <div class="row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-7">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
+                    <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
+                                width="30">
                             Billing</a></td>
+                    <td><a target="_blank"
+                            href="{{route('billing.invoice-konsumen.pdf', ['expired' => request()->has('expired') ? request('expired') : '', 'kas_ppn' => 0, 'titipan' => isset($titipan) && $titipan == 1 ? 1 : 0])}}"><img
+                                src="{{asset('images/print.svg')}}" alt="dokumen" width="30">
+                            Print</a></td>
                 </tr>
             </table>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-5">
             @include('wa-status')
         </div>
     </div>
@@ -28,8 +33,9 @@
                 {{-- tombol filter untuk expired yang akan mengirimkan expired = 1 atau 0 --}}
                 <select name="expired" id="expired" class="form-select" onchange="this.form.submit()">
                     <option value="">-- Semua Data --</option>
-                    <option value="1" {{ request('expired') == 1 ? 'selected' : '' }}>Expired</option>
-                    <option value="0" {{ request()->has('expired') && request('expired') == 0 ? 'selected' : '' }}>Belum Expired</option>
+                    <option value="1" {{ request('expired')==1 ? 'selected' : '' }}>Expired</option>
+                    <option value="0" {{ request()->has('expired') && request('expired') == 0 ? 'selected' : '' }}>Belum
+                        Expired</option>
                 </select>
             </form>
         </div>
@@ -96,30 +102,35 @@
                     <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
                     <td class="text-end align-middle text-nowrap">
                         <div class="row px-3 pb-2">
-                            <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
+                            <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank"
+                                class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
                         </div>
 
-                        <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
-                            class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa_tagihan}}">
+                        <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post"
+                            id="bayarForm{{ $d->id }}" class="bayar-form" data-id="{{ $d->id }}"
+                            data-nominal="{{$d->nf_sisa_tagihan}}">
                             @csrf
                             <div class="row px-3 pb-2">
-                                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-credit-card me-1"></i> Bayar</button>
+                                <button type="submit" class="btn btn-sm btn-success"><i
+                                        class="fa fa-credit-card me-1"></i> Bayar</button>
                             </div>
                         </form>
                         <div class="row px-3 px-3 pb-2">
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#cicilanModal"
-                             onclick="cicilan({{$d}})">Cicil</button>
+                                onclick="cicilan({{$d}})">Cicil</button>
                         </div>
                         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-                        <form action="{{route('billing.invoice-konsumen.void', ['invoice' => $d])}}" method="post" id="voidForm{{ $d->id }}"
-                            class="void-form" data-id="{{ $d->id }}">
+                        <form action="{{route('billing.invoice-konsumen.void', ['invoice' => $d])}}" method="post"
+                            id="voidForm{{ $d->id }}" class="void-form" data-id="{{ $d->id }}">
                             @csrf
                             <div class="row px-3">
-                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-exclamation-circle"></i> Void</button>
+                                <button type="submit" class="btn btn-sm btn-danger"><i
+                                        class="fa fa-exclamation-circle"></i> Void</button>
                             </div>
                         </form>
                         @endif
-                        {{-- <a href="{{route('billing.invoice-konsumen.invoice-jpeg', ['invoice', $d->id])}}" class="btn btn-sm btn-primary">Invoice</a> --}}
+                        {{-- <a href="{{route('billing.invoice-konsumen.invoice-jpeg', ['invoice', $d->id])}}"
+                            class="btn btn-sm btn-primary">Invoice</a> --}}
                     </td>
                 </tr>
                 @endforeach
@@ -133,7 +144,9 @@
                     <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('dp'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($sumCicilan, 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('grand_total')-$data->sum('dp')-$data->sum('dp_ppn'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">
+                        {{number_format($data->sum('grand_total')-$data->sum('dp')-$data->sum('dp_ppn'), 0, ',', '.')}}
+                    </th>
                     <th class="text-end align-middle" colspan="2"></th>
                 </tr>
             </tfoot>
@@ -152,7 +165,6 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-
     $(document).ready(function() {
         $('#rekapTable').DataTable({
             "paging": false,
