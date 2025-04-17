@@ -221,6 +221,13 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::delete('/{konsumen}/delete', [App\Http\Controllers\DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');
             });
 
+            Route::prefix('kode-toko')->group(function () {
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kode_toko'])->name('db.kode-toko');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kode_toko_store'])->name('db.kode-toko.store');
+                Route::patch('/update/{kode}', [App\Http\Controllers\DatabaseController::class, 'kode_toko_update'])->name('db.kode-toko.update');
+                Route::delete('/delete/{kode}', [App\Http\Controllers\DatabaseController::class, 'kode_toko_delete'])->name('db.kode-toko.delete');
+            });
+
             Route::prefix('sales-area')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'sales_area'])->name('db.sales-area');
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'sales_area_store'])->name('db.sales-area.store');

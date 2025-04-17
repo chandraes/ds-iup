@@ -16,8 +16,10 @@
                             Database</a></td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalSalesArea"><img
                                 src="{{asset('images/area.svg')}}" width="30"> Sales Area</a>
-
                     </td>
+                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalKodeToko"><img
+                        src="{{asset('images/kode-toko.svg')}}" width="30"> Kode Toko</a>
+            </td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#createInvestor"><img
                                 src="{{asset('images/customer.svg')}}" width="30"> Tambah Konsumen</a>
 
@@ -31,12 +33,25 @@
 @include('db.konsumen.create')
 @include('db.konsumen.edit')
 @include('db.konsumen.sales-area')
+@include('db.konsumen.kode-toko')
 
 <div class="container-fluid mt-5 table-responsive">
 
     {{-- buat filter untuk sales area --}}
     <form method="GET" action="{{ url()->current() }}">
         <div class="row mb-3">
+            <div class="col-md-2">
+                <label for="filterSalesArea" class="form-label">Filter Kode Toko</label>
+
+                <select id="filterKodeToko" name="kode_toko" class="form-select" onchange="this.form.submit()">
+                    <option value="" selected>-- Semua Kode Toko --</option>
+                    @foreach ($kode_toko as $k)
+                    <option value="{{ $k->id }}" {{ request('kode_toko')==$k->id ? 'selected' : '' }}>
+                        {{ $k->kode }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-3">
                 <label for="filterSalesArea" class="form-label">Filter Sales Area</label>
 
@@ -68,15 +83,11 @@
             </div>
         </div>
     </form>
-
-
-
-
-
     <table class="table table-bordered table-hover" id="data">
         <thead class="table-warning bg-gradient">
             <tr>
                 <th class="text-center align-middle">KODE</th>
+                <th class="text-center align-middle">KODE <br>TOKO</th>
                 <th class="text-center align-middle">NAMA</th>
                 <th class="text-center align-middle">CP</th>
                 <th class="text-center align-middle">NPWP</th>
@@ -104,6 +115,7 @@
             <tr>
 
                 <td class="text-center align-middle">{{$d->full_kode}}</td>
+                <td class="text-center align-middle">{{$d->kode_toko ? $d->kode_toko->kode : ''}}</td>
                 <td class="text-center align-middle {{$isDuplicateNama ? 'text-danger' : ''}}">{{$d->nama}}</td>
                 <td class="text-start align-middle">
                     @php
@@ -229,6 +241,7 @@
         $('#edit_kabupaten_kota_id').empty();
         $('#edit_kecamatan_id').empty();
         document.getElementById('edit_nama').value = data.nama;
+        document.getElementById('edit_kode_toko_id').value = data.kode_toko_id;
         document.getElementById('edit_no_hp').value = data.no_hp;
         document.getElementById('edit_no_kantor').value = data.no_kantor;
         document.getElementById('edit_cp').value = data.cp;
@@ -257,13 +270,6 @@
 
 
     }
-
-    // $('#editInvestor').on('shown.bs.modal', function () {
-    //     var selectElement = document.getElementById('edit_provinsi_id');
-    //     if (selectElement.value) {
-    //         getEditKabKota();
-    //     }
-    // });
 
     function getEditKabKota(selectedKabupatenKotaId, selectedKecamatanId) {
         var provinsi = document.getElementById('edit_provinsi_id').value;

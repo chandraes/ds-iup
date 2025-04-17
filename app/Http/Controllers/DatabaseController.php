@@ -7,6 +7,7 @@ use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
 use App\Models\db\Jabatan;
 use App\Models\db\Karyawan;
+use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
@@ -391,6 +392,50 @@ class DatabaseController extends Controller
         return redirect()->route('db.pengelola')->with('success', 'Data berhasil dihapus');
     }
 
+    public function kode_toko()
+    {
+        return response()->json([
+            'data' => KodeToko::select('id', 'kode')->get(),
+        ]);
+    }
+
+    public function kode_toko_store(Request $request)
+    {
+        $data = $request->validate([
+            'kode' => 'required|unique:kode_tokos,kode',
+        ]);
+
+        KodeToko::create($data);
+
+        return response()->json(['message' => 'Data berhasil disimpan']);
+    }
+
+    public function kode_toko_update(KodeToko $kode, Request $request)
+    {
+        $data = $request->validate([
+            'kode' => 'required|unique:kode_tokos,kode,'.$kode->id,
+        ]);
+
+        $kode->update($data);
+
+        return response()->json(['message' => 'Data berhasil diubah']);
+    }
+
+    public function kode_toko_delete(KodeToko $kode)
+    {
+        try {
+            DB::beginTransaction();
+            $kode->delete();
+            DB::commit();
+
+            return response()->json(['message' => 'Data berhasil dihapus']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+    }
+
     public function sales_area(Request $request)
     {
         return response()->json([
@@ -437,10 +482,11 @@ class DatabaseController extends Controller
 
     public function konsumen(Request $request)
     {
-        $filters = $request->only(['area', 'kecamatan']); // Ambil filter dari request
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko']); // Ambil filter dari request
 
-        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area'])
+        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko'])
             ->filter($filters) // Gunakan scope filter
+            ->where('active', 1)
             ->get();
 
         $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
@@ -455,6 +501,7 @@ class DatabaseController extends Controller
             'data' => $data,
             'provinsi' => $provinsi,
             'sales_area' => SalesArea::select('id', 'nama')->get(),
+            'kode_toko' => KodeToko::select('id', 'kode')->get(),
             'kecamatan_filter' => $kecamatan_filter,
         ]);
     }
@@ -462,6 +509,7 @@ class DatabaseController extends Controller
     public function konsumen_store(Request $request)
     {
         $data = $request->validate([
+            'kode_toko_id' => 'required|exists:kode_tokos,id',
             'nama' => 'required',
             'cp' => 'required',
             'no_hp' => 'required',
@@ -491,6 +539,7 @@ class DatabaseController extends Controller
     public function konsumen_update(Konsumen $konsumen, Request $request)
     {
         $data = $request->validate([
+            'kode_toko_id' => 'required|exists:kode_tokos,id',
             'nama' => 'required',
             'cp' => 'required',
             'no_hp' => 'required',
@@ -514,9 +563,9 @@ class DatabaseController extends Controller
 
     public function konsumen_delete(Konsumen $konsumen)
     {
-        $konsumen->delete();
+        $konsumen->update(['active' => 0]);
 
-        return redirect()->route('db.konsumen')->with('success', 'Data berhasil dihapus');
+        return redirect()->route('db.konsumen')->with('success', 'Data berhasil Di Nonaktifkan');
     }
 
     public function supplier()

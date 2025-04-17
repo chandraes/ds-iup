@@ -39,6 +39,11 @@ class Konsumen extends Model
         return $this->belongsTo(SalesArea::class);
     }
 
+    public function kode_toko()
+    {
+        return $this->belongsTo(KodeToko::class);
+    }
+
     public function generateKode()
     {
         $kode = $this->max('kode');
@@ -74,6 +79,10 @@ class Konsumen extends Model
 
         if (isset($filters['kecamatan']) && $filters['kecamatan']) {
             $query->where('kecamatan_id', $filters['kecamatan']);
+        }
+
+        if (isset($filters['kode_toko']) && $filters['kode_toko']) {
+            $query->where('kode_toko_id', $filters['kode_toko']);
         }
 
         return $query;
