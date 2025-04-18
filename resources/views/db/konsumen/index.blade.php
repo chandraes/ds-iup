@@ -40,8 +40,8 @@
     {{-- buat filter untuk sales area --}}
     <form method="GET" action="{{ url()->current() }}">
         <div class="row mb-3">
-            <div class="col-md-2">
-                <label for="filterSalesArea" class="form-label">Filter Kode Toko</label>
+            <div class="col-md-3">
+                <label for="filterSalesArea" class="form-label">Kode Toko</label>
 
                 <select id="filterKodeToko" name="kode_toko" class="form-select" onchange="this.form.submit()">
                     <option value="" selected>-- Semua Kode Toko --</option>
@@ -53,7 +53,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="filterSalesArea" class="form-label">Filter Sales Area</label>
+                <label for="filterSalesArea" class="form-label">Sales Area</label>
 
                 <select id="filterSalesArea" name="area" class="form-select" onchange="this.form.submit()">
                     <option value="" selected>-- Semua Sales Area --</option>
@@ -65,7 +65,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="filterKecamatan" class="form-label">Filter Kecamatan</label>
+                <label for="filterKecamatan" class="form-label">Kecamatan</label>
                     <select id="filterKecamatan" name="kecamatan" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Semua Kecamatan --</option>
                         @foreach ($kecamatan_filter as $kec)
@@ -75,7 +75,14 @@
                         @endforeach
                     </select>
             </div>
-            <div class="col-md-2 mt-4">
+            <div class="col-md-2">
+                <label for="filterKecamatan" class="form-label">Status</label>
+                    <select id="filterStatus" name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="1" {{ request()->has('status') && request('status') == 1 ? 'selected' : 'selected' }}>Aktif</option>
+                        <option value="0" {{ request()->has('status') && request('status') == 0 ? 'selected' : '' }}>Non Aktif</option>
+                    </select>
+            </div>
+            <div class="col-md-1 mt-4">
                 <div class="row">
                     <a href="{{ url()->current() }}" class="btn btn-secondary mt-2">Reset</a>
                 </div>
@@ -96,8 +103,13 @@
                 <th class="text-center align-middle">Kab/Kota</th>
                 <th class="text-center align-middle">Kecamatan</th>
                 <th class="text-center align-middle">Alamat</th>
+                @if (request()->has('status') && request('status') == 0)
+                <th class="text-center align-middle">Alasan<br>Nonaktif</th>
+                @else
                 <th class="text-center align-middle">Sistem<br>Pembayaran</th>
                 <th class="text-center align-middle">Limit<br>Plafon</th>
+                @endif
+
                 <th class="text-center align-middle">ACT</th>
             </tr>
         </thead>
@@ -141,6 +153,11 @@
                 <td class="text-start align-middle">
                     {{$d->alamat}}
                 </td>
+                @if (request()->has('status') && request('status') == 0)
+                <td class="text-start align-middle">
+                    {{$d->alasan}}
+                </td>
+                @else
                 <td class="text-center align-middle">
                     {{$d->sistem_pembayaran}} <br>
                     @if ($d->pembayaran == 2)
@@ -148,6 +165,8 @@
                     @endif
                 </td>
                 <td class="text-end align-middle">{{$d->nf_plafon}}</td>
+                @endif
+
                 <td class="text-center align-middle">
                     <div class="d-flex justify-content-center">
                         <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
@@ -156,21 +175,22 @@
                         <form action="{{route('db.konsumen.delete', $d)}}" method="post" id="deleteForm-{{$d->id}}">
                             @csrf
                             @method('delete')
-                            <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
+                            <button type="submit" class="btn btn-danger m-2"><i class="fa fa-{{request()->has('status') && request('status') == 0 ? 'refresh' : 'power-off' }}"></i></button>
                         </form>
                     </div>
                 </td>
             </tr>
+            @if (request()->has('status') && request('status') == 0)
             <script>
-                $('#deleteForm-{{$d->id}}').submit(function(e){
+                 $('#deleteForm-{{$d->id}}').submit(function(e){
                     e.preventDefault();
                     Swal.fire({
-                        title: 'Apakah data yakin untuk menghapus data ini?',
+                        title: 'Apakah data yakin untuk mengaktifkan data ini?',
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#3085d6',
                         cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Ya, hapus!'
+                        confirmButtonText: 'Ya, aktifkan kembali!'
                         }).then((result) => {
                         if (result.isConfirmed) {
                             $('#spinner').show();
@@ -179,6 +199,44 @@
                     })
                 });
             </script>
+            @else
+            <script>
+                $('#deleteForm-{{$d->id}}').submit(function(e){
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Apakah data yakin untuk menonaktifkan konsumen ini?',
+                        icon: 'warning',
+                        input: 'text',
+                        inputPlaceholder: 'Masukkan alasan',
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'Anda harus memasukkan alasan!'
+                            }
+                        },
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, hapus!'
+                        }).then((result) => {
+                        if (result.isConfirmed) {
+                            var status =1;
+                            $('#deleteForm-{{$d->id}}').append($('<input>').attr({
+                                type: 'hidden',
+                                name: 'status',
+                                value: status
+                            }));
+                            $('<input>').attr({
+                                type: 'hidden',
+                                name: 'alasan',
+                                value: result.value
+                            }).appendTo('#deleteForm-{{$d->id}}');
+                            $('#spinner').show();
+                            this.submit();
+                        }
+                    })
+                });
+            </script>
+            @endif
             @endforeach
         </tbody>
     </table>
@@ -227,7 +285,18 @@
             dropdownParent: $('#editInvestor'),
         });
 
+        $('#edit_kode_toko_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#editInvestor'),
+        });
+
         $('#filterSalesArea').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+        });
+
+        $('#filterKodeToko').select2({
             theme: 'bootstrap-5',
             width: '100%',
         });

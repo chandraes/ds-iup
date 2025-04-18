@@ -73,16 +73,22 @@ class Konsumen extends Model
 
     public function scopeFilter($query, $filters)
     {
-        if (isset($filters['area']) && $filters['area']) {
+        if (isset($filters['area']) && $filters['area'] !== '') {
             $query->where('sales_area_id', $filters['area']);
         }
 
-        if (isset($filters['kecamatan']) && $filters['kecamatan']) {
+        if (isset($filters['kecamatan']) && $filters['kecamatan'] !== '') {
             $query->where('kecamatan_id', $filters['kecamatan']);
         }
 
-        if (isset($filters['kode_toko']) && $filters['kode_toko']) {
+        if (isset($filters['kode_toko']) && $filters['kode_toko'] !== '') {
             $query->where('kode_toko_id', $filters['kode_toko']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $query->where('active', $filters['status']);
+        } else {
+            $query->where('active', 1);
         }
 
         return $query;

@@ -482,11 +482,10 @@ class DatabaseController extends Controller
 
     public function konsumen(Request $request)
     {
-        $filters = $request->only(['area', 'kecamatan', 'kode_toko']); // Ambil filter dari request
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
         $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko'])
             ->filter($filters) // Gunakan scope filter
-            ->where('active', 1)
             ->get();
 
         $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
@@ -561,9 +560,16 @@ class DatabaseController extends Controller
         return redirect()->route('db.konsumen')->with('success', 'Data berhasil diupdate');
     }
 
-    public function konsumen_delete(Konsumen $konsumen)
+    public function konsumen_delete(Konsumen $konsumen, Request $request)
     {
-        $konsumen->update(['active' => 0]);
+        $data = $request->validate([
+            'alasan' => 'required_if:status,1',
+        ]);
+
+        $konsumen->update([
+            'active' => !$konsumen->active,
+            'alasan' => $data['alasan'] ?? null,
+        ]);
 
         return redirect()->route('db.konsumen')->with('success', 'Data berhasil Di Nonaktifkan');
     }

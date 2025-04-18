@@ -10,6 +10,15 @@
                 @csrf
                 <div class="modal-body">
                     <div class="row">
+                        <div class="col-md-4 col-sm-3 mb-3">
+                            <label for="npwp" class="form-label">Kode Toko</label>
+                            <select name="kode_toko_id" id="kode_toko_id" required class="form-select">
+                                <option value="" disabled selected>-- Pilih Salah Satu --</option>
+                                @foreach ($kode_toko as $kt)
+                                <option value="{{$kt->id}}">{{$kt->kode}}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="col-md-4 col-sm-6 mb-3">
                             <label for="nama" class="form-label">Nama Perusahaan / Perorangan</label>
                             <input type="text" class="form-control" name="nama" id="nama" aria-describedby="helpId" value="{{old('nama')}}"
