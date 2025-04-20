@@ -90,7 +90,7 @@
                     @foreach ($selectBarangNama as $bn)
                     <option value="{{ $bn->nama }}" {{ request('barang_nama')==$bn->nama ? 'selected' : '' }}>
                         {{ $bn->nama }}
-                    @endforeach
+                        @endforeach
                 </select>
             </div>
             <div class="col-md-2">
@@ -130,6 +130,7 @@
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Satuan</th>
+                    <th class="text-center align-middle">Foto</th>
                     {{-- <th class="text-center align-middle">Ket<br></th> --}}
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
@@ -170,21 +171,59 @@
                     <td class="text-center align-middle">{{ $barang->kode }}</td>
                     <td class="text-center align-middle">{{ $barang->merk }}</td>
                     <td class="text-center align-middle">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#keteranganModal" onclick="showKeterangan({{ $barang }})">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#keteranganModal"
+                            onclick="showKeterangan({{ $barang }})">
                             {{ $barang->satuan ? $barang->satuan->nama : '' }}
                         </a>
 
                     </td>
-                    {{-- <td class="text-start align-middle">
+                    <td class="text-start align-middle">
+                        @if ($barang->foto != null)
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal{{ $barang->id }}">
+                            <img src="{{ asset('storage/' . $barang->foto) }}" alt="Foto Barang" class="img-fluid" width="100">
+                        </a>
 
-                        @if ($barang->detail_types)
-                        <ul>
-                            @foreach ($barang->detail_types as $detailType)
-                            <li>{{ $detailType->type->nama }}</li>
-                            @endforeach
-                        </ul>
+                        <!-- Modal -->
+                        <div class="modal fade" id="imageModal{{ $barang->id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ $barang->id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="imageModalLabel{{ $barang->id }}">Foto Barang</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-center">
+                                        <div class="image-container">
+                                            <img id="zoomableImage{{ $barang->id }}" src="{{ asset('storage/' . $barang->foto) }}" alt="Foto Barang" class="img-fluid">
+                                        </div>
+                                        <input type="range" id="zoomSlider{{ $barang->id }}" class="form-range mt-3" min="1" max="3" step="0.1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const image = document.getElementById('zoomableImage{{ $barang->id }}');
+                                const slider = document.getElementById('zoomSlider{{ $barang->id }}');
+
+                                slider.addEventListener('input', function () {
+                                    const scale = slider.value;
+                                    image.style.transform = `scale(${scale})`;
+                                });
+                            });
+                        </script>
+                        <style>
+                            .image-container {
+                                overflow: hidden;
+                                display: inline-block;
+                            }
+
+                            .image-container img {
+                                transition: transform 0.2s ease;
+                            }
+                        </style>
                         @endif
-                    </td> --}}
+                    </td>
                     <td class="text-center align-middle">
                         @if ($barang->jenis == 1)
                         <i class="fa fa-check"></i>
@@ -198,14 +237,14 @@
 
                     </td>
                     <td class="text-center align-middle">
-                        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal"
+                        <a href="#" class="btn btn-warning m-2" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{ $barang }}, {{ $type->id }}, {{ $unit->id }})"><i
                                 class="fa fa-edit"></i></a>
                         <form action="{{ route('db.barang.delete', $barang->id) }}" method="post"
                             class="d-inline delete-form" id="deleteForm{{ $barang->id }}" data-id="{{ $barang->id }}">
                             @csrf
                             @method('delete')
-                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                            <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
                         </form>
                     </td>
                 </tr>
@@ -237,7 +276,6 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-
     $('#detail_type').select2({
         theme: 'classic',
         width: '100%',
@@ -295,6 +333,14 @@
         document.getElementById('edit_merk').value = data.merk;
         document.getElementById('edit_keterangan').value = data.keterangan;
         document.getElementById('edit_satuan_id').value = data.satuan_id;
+
+        if (data.foto != null) {
+            document.getElementById('edit_foto_preview').hidden = false;
+            document.getElementById('edit_foto_preview_img').src = "{{ asset('storage') }}/" + data.foto;
+        } else {
+            document.getElementById('edit_foto_preview').hidden = true;
+        }
+
 
         let kategoriSelect = document.getElementById('edit_barang_kategori_id');
         kategoriSelect.onchange = () => {

@@ -8,7 +8,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{route('db.barang.store')}}" method="post" id="createForm">
+            <form action="{{route('db.barang.store')}}" method="post" id="createForm" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
@@ -61,18 +61,25 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="keterangan" class="form-label">KETERANGAN</label>
                             <input type="text" class="form-control" name="keterangan" id="keterangan" aria-describedby="helpId"
                                 placeholder="">
                         </div>
-                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 <option value="1">Barang PPN</option>
                                 <option value="2">Barang Non PPN</option>
                             </select>
+                        </div>
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                            <label for="foto" class="form-label">UPLOAD FOTO BARANG</label>
+                            <input type="file" class="form-control" name="foto" id="edit_foto" aria-describedby="helpId"
+                                placeholder="" accept="image/*">
+                            <small class="text-danger">* Maksimal 500kb</small>
+                            <small class="text-danger">* Format file jpg, jpeg, png</small>
                         </div>
                         {{-- <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="detail_type" class="form-label">KETERANGAN TYPE</label>

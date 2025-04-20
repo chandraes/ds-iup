@@ -15,6 +15,7 @@ use App\Models\GantiRugi;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class BarangController extends Controller
@@ -288,6 +289,7 @@ class BarangController extends Controller
             ],
             'keterangan' => 'nullable',
             'detail_type' => 'nullable|array',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:512',
         ]);
 
         try {
@@ -299,6 +301,20 @@ class BarangController extends Controller
                 unset($data['detail_type']);
             }
             $data['barang_unit_id'] = BarangType::find($data['barang_type_id'])->barang_unit_id;
+
+            if ($request->hasFile('foto')) {
+
+                $file = $request->file('foto');
+                $filename = 'new'.'_'.time().'.'.$file->getClientOriginalExtension();
+
+                if (!Storage::disk('public')->exists('barang')) {
+                    Storage::disk('public')->makeDirectory('barang');
+                }
+
+                $path = $file->storeAs('barang', $filename, 'public');
+                $data['foto'] = $path;
+            }
+
             $store = Barang::create($data);
 
             if ($detailType != null) {
@@ -343,17 +359,36 @@ class BarangController extends Controller
             ],
             'keterangan' => 'nullable',
             'detail_type' => 'nullable|array',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:512',
         ]);
 
         try {
             DB::beginTransaction();
+
             $detailType = null;
+
             if (isset($data['detail_type'])) {
                 $detailType = $data['detail_type'];
                 unset($data['detail_type']);
             }
 
             $data['barang_unit_id'] = BarangType::find($data['barang_type_id'])->barang_unit_id;
+
+            if ($request->hasFile('foto')) {
+                if ($barang->foto && Storage::disk('public')->exists($barang->foto)) {
+                    Storage::disk('public')->delete($barang->foto);
+                }
+
+                $file = $request->file('foto');
+                $filename = $barang->id.'_'.time().'.'.$file->getClientOriginalExtension();
+
+                if (!Storage::disk('public')->exists('barang')) {
+                    Storage::disk('public')->makeDirectory('barang');
+                }
+
+                $path = $file->storeAs('barang', $filename, 'public');
+                $data['foto'] = $path;
+            }
 
             $store = $barang->update($data);
 

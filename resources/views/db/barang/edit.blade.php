@@ -1,14 +1,14 @@
 <div class="modal fade" id="editModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
     aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document" >
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">
-                    Edit Type
+                    Edit Kode & Merk Barang
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" id="editForm">
+            <form method="post" id="editForm" enctype="multipart/form-data">
                 @csrf
                 @method('patch')
                 <div class="modal-body">
@@ -64,18 +64,30 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="keterangan" class="form-label">KETERANGAN</label>
                             <input type="text" class="form-control" name="keterangan" id="edit_keterangan" aria-describedby="helpId"
                                 placeholder="">
                         </div>
-                        <div class="col-lg-12 col-md-12 mb-3 mt-3">
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="nama" class="form-label">PPN / NON PPN</label>
                             <select class="form-select" name="jenis" id="edit_jenis" required>
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
                                 <option value="1">Barang PPN</option>
                                 <option value="2">Barang Non PPN</option>
                             </select>
+                        </div>
+                        {{-- upload photo with 500kb max --}}
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
+                            <label for="foto" class="form-label">UPLOAD FOTO BARANG</label>
+                            <input type="file" class="form-control" name="foto" id="edit_foto" aria-describedby="helpId"
+                                placeholder="" accept="image/*">
+                            <small class="text-danger">* Maksimal 500kb</small>
+                            <small class="text-danger">* Format file jpg, jpeg, png</small>
+                            <small class="text-danger">* Kosongkan jika tidak ingin mengubah foto</small>
+                        </div>
+                        <div class="col-lg-6 col-md-6 mb-3 mt-3" id="edit_foto_preview" hidden>
+                            <img src="" id="edit_foto_preview_img" class="img-fluid" alt="Preview Foto Barang" width="200">
                         </div>
                         {{-- <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
