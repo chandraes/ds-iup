@@ -54,7 +54,7 @@ class SalesController extends Controller
         // $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
 
         // dd($units->toArray());
-        return view('sales.stok', [
+        return view('sales.stok-harga.index', [
             'data' => $data,
             'nonPpn' => $nonPpn,
             // 'kategori' => $kategori,

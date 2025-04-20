@@ -7,6 +7,7 @@
         </div>
     </div>
     @include('swal')
+    @include('sales.stok-harga.foto')
     {{-- @include('billing.stok.keranjang') --}}
 
     <div class="flex-row justify-content-between mt-3">
@@ -128,10 +129,17 @@
                 @php $namaDisplayed = true; @endphp
                 @endif
                 @if (!$barangDisplayed)
-                <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">{{
-                $stokHarga->barang->kode }}</td>
-                <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">{{
-                $stokHarga->barang->merk }}</td>
+                <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                    @if ($stokHarga->barang->foto)
+                    <a href="javascript:void(0)" onclick="viewImage('{{ asset('storage/'.$stokHarga->barang->foto) }}')">
+                    @endif
+
+                    {{ $stokHarga->barang->kode }}</td>
+                <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                    @if ($stokHarga->barang->foto)
+                    <a href="javascript:void(0)" onclick="viewImage('{{ asset('storage/'.$stokHarga->barang->foto) }}')">
+                    @endif
+                    {{ $stokHarga->barang->merk }}</td>
                 @php $barangDisplayed = true; @endphp
                 @endif
                 <td class="text-end align-middle">
@@ -220,10 +228,17 @@
                     @php $namaDisplayed = true; @endphp
                     @endif
                     @if (!$barangDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">{{
-                        $stokHarga->barang->kode }}</td>
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">{{
-                        $stokHarga->barang->merk }}</td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        @if ($stokHarga->barang->foto)
+                        <a href="javascript:void(0)" onclick="viewImage('{{ asset('storage/'.$stokHarga->barang->foto) }}')">
+                        @endif
+
+                        {{ $stokHarga->barang->kode }} </td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        @if ($stokHarga->barang->foto)
+                        <a href="javascript:void(0)" onclick="viewImage('{{ asset('storage/'.$stokHarga->barang->foto) }}')">
+                        @endif
+                        {{ $stokHarga->barang->merk }}</td>
                     @php $barangDisplayed = true; @endphp
                     @endif
                     <td class="text-end align-middle">
@@ -277,12 +292,31 @@
 @endpush
 @push('js')
 {{-- <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script> --}}
+<script src="{{asset('assets/js/bootstrap-bundle.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
     $('#filter_barang_nama').select2({
-    theme: 'bootstrap-5',
-    width: '100%',
+        theme: 'bootstrap-5',
+        width: '100%',
     });
+
+    function viewImage(imageUrl) {
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        const zoomableImage = document.getElementById('zoomableImage');
+        zoomableImage.src = imageUrl;
+        imageModal.show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const image = document.getElementById('zoomableImage');
+        const slider = document.getElementById('zoomSlider');
+
+        slider.addEventListener('input', function () {
+            const scale = slider.value;
+            image.style.transform = `scale(${scale})`;
+        });
+    });
+
 
 
 </script>
