@@ -8,6 +8,7 @@
     </div>
     @include('swal')
     @include('sales.stok-harga.foto')
+    @include('sales.stok-harga.modal-jual')
     {{-- @include('billing.stok.keranjang') --}}
 
     <div class="flex-row justify-content-between mt-3">
@@ -75,8 +76,25 @@
         </div>
 
     </form>
-
-
+    <div class="row my-3">
+        <div class="col-md-6">
+            <div class="row px-3">
+                <a href="{{route('sales.stok.keranjang')}}" class="btn btn-success @if ($keranjang->count() == 0) disabled
+                @endif" role="button"><i class="fa fa-shopping-cart"></i> Keranjang {{$keranjang->count() == 0 ? '' :
+                    '('.$keranjang->count().')'}}</a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <form action="{{route('sales.stok.keranjang.empty')}}" method="post" id="keranjangEmpty">
+                @csrf
+                <div class="row px-3">
+                    <button class="btn btn-danger" @if ($keranjang->count() == 0) disabled
+                        @endif><i class="fa fa-trash"></i> Kosongkan Keranjang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @if ($keranjang->where('barang_ppn', 0)->count() == 0)
     <center>
         <h2>Barang PPN</h2>
     </center>
@@ -90,12 +108,13 @@
                 <th class="text-center align-middle">Nama<br>Barang</th>
                 <th class="text-center align-middle">Kode<br>Barang</th>
                 <th class="text-center align-middle">Merk<br>Barang</th>
-                <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
                 <th class="text-center align-middle">PPN<br>Keluaran</th>
                 <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                 <th class="text-center align-middle">Stok<br>Barang</th>
                 <th class="text-center align-middle">Satuan<br>Barang</th>
                 <th class="text-center align-middle">Kelipatan<br>Order</th>
+                <th class="text-center align-middle" style="width: 13%"> - </th>
             </tr>
             </thead>
             @php
@@ -155,6 +174,22 @@
                 <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                 $stokHarga->barang->satuan->nama : '-' }}</td>
                  <td class="text-center align-middle">{{ $stokHarga->min_jual }}</td>
+                 <td class="text-center align-middle">
+                    @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
+                    <div class="input-group">
+                        <button class="btn btn-danger"
+                            onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
+                        <input type="text" class="form-control text-center"
+                            value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
+                            max="{{$stokHarga->stok}}" disabled>
+                        <button class="btn btn-success"
+                            onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
+                    </div>
+                    @else
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
+                        onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">Jual</button>
+                    @endif
+                </td>
             </tr>
             @endif
             @endforeach
@@ -175,7 +210,8 @@
     <br>
     <hr>
     <br>
-
+    @endif
+    @if ($keranjang->where('barang_ppn', 1)->count() == 0)
     <center>
         <h2>Barang Non PPN</h2>
     </center>
@@ -189,12 +225,13 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
                     <th class="text-center align-middle">PPN<br>Keluaran</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
                     <th class="text-center align-middle">Kelipatan<br>Order</th>
+                    <th class="text-center align-middle" style="width: 13%"> - </th>
                 </tr>
             </thead>
             @php
@@ -255,6 +292,22 @@
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
                         <td class="text-center align-middle">{{ $stokHarga->min_jual }}</td>
+                        <td class="text-center align-middle">
+                            @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
+                            <div class="input-group">
+                                <button class="btn btn-danger"
+                                    onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
+                                <input type="text" class="form-control text-center"
+                                    value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
+                                    max="{{$stokHarga->stok}}" disabled>
+                                <button class="btn btn-success"
+                                    onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
+                            </div>
+                            @else
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#keranjangModal"
+                                onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">Jual</button>
+                            @endif
+                        </td>
                 </tr>
                 @endif
                 @endforeach
@@ -273,7 +326,7 @@
         </table>
     </div>
 </div>
-
+@endif
 
 @if(session('pdfUrl'))
 <script type="text/javascript">
@@ -285,20 +338,91 @@
 @endif
 @endsection
 @push('css')
-{{--
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet"> --}}
+
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
-{{-- <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script> --}}
 <script src="{{asset('assets/js/bootstrap-bundle.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
     $('#filter_barang_nama').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
+    theme: 'bootstrap-5',
+    width: '100%',
     });
+
+    confirmAndSubmit("#keranjangEmpty", "Apakah anda yakin untuk mengosongkan keranjang?");
+
+    function setModalJumlah(data, id)
+    {
+        console.log(data);
+        document.getElementById('titleJumlah').innerText = data.barang_nama.nama;
+        document.getElementById('jumlah_satuan').innerText = data.barang.satuan ? data.barang.satuan.nama : '';
+        document.getElementById('minJualSatuan').innerText = data.barang.satuan ? data.barang.satuan.nama : '';
+        document.getElementById('minJual').value = data.nf_min_jual;
+        document.getElementById('barang_stok_harga_id').value = id;
+
+        if (data.barang.jenis == 1) {
+            document.getElementById('barang_ppn').value = 1;
+        } else {
+            document.getElementById('barang_ppn').value = 0;
+        }
+    }
+
+    function updateCart(productId, quantity, maxStock) {
+        let currentQuantity = parseInt($(`button[onclick="updateCart(${productId}, 2, ${maxStock})"]`).siblings('input').val());
+
+        if (currentQuantity + quantity > maxStock) {
+            alert('Jumlah item tidak boleh melebihi stok yang tersedia.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{route('sales.stok.keranjang.update')}}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                barang_stok_harga_id: productId,
+                quantity: quantity
+            },
+            success: function(response) {
+                $('#spinner').show();
+                console.log(response);
+                if (response.success) {
+                    location.reload(); // Reload the page to reflect the changes
+                } else {
+                    alert('Gagal memperbarui keranjang.');
+                }
+            }
+        });
+    }
+
+    function changeQuantity(productId, newQuantity, maxStock) {
+        newQuantity = parseInt(newQuantity);
+
+        if (newQuantity > maxStock) {
+            alert('Jumlah item tidak boleh melebihi stok yang tersedia.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{route('sales.stok.keranjang.set-jumlah')}}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                barang_stok_harga_id: productId,
+                quantity: newQuantity
+            },
+            success: function(response) {
+                $('#spinner').show();
+                if (response.success) {
+                    location.reload(); // Reload the page to reflect the changes
+                } else {
+                    alert('Gagal memperbarui keranjang.');
+                }
+            }
+        });
+    }
 
     function viewImage(imageUrl) {
         const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
@@ -316,8 +440,5 @@
             image.style.transform = `scale(${scale})`;
         });
     });
-
-
-
 </script>
 @endpush

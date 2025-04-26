@@ -408,13 +408,11 @@
 @endif
 @endsection
 @push('css')
-{{--
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet"> --}}
+
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
-{{-- <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script> --}}
 <script src="{{asset('assets/js/bootstrap-bundle.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>

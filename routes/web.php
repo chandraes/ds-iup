@@ -27,6 +27,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
+
+            Route::prefix('keranjang')->group(function () {
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'keranjang'])->name('sales.stok.keranjang');
+                Route::post('/store', [App\Http\Controllers\SalesController::class, 'keranjang_store'])->name('sales.stok.keranjang.store');
+                Route::post('/update', [App\Http\Controllers\SalesController::class, 'keranjang_update'])->name('sales.stok.keranjang.update');
+                Route::post('/set-jumlah', [App\Http\Controllers\SalesController::class, 'keranjang_set'])->name('sales.stok.keranjang.set-jumlah');
+                Route::post('/empty', [App\Http\Controllers\SalesController::class, 'keranjang_empty'])->name('sales.stok.keranjang.empty');
+            });
         });
     });
 
