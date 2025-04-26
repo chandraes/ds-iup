@@ -503,6 +503,39 @@ class BarangController extends Controller
         ]);
     }
 
+    public function edit_stok_su(BarangStokHarga $stok, Request $request)
+    {
+        $data = $request->validate([
+            'stok_awal' => 'required',
+            'stok' => 'required',
+            'harga_beli' => 'required'
+        ]);
+
+        if (auth()->user()->role != 'su') {
+            return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk eksekusi ini!!');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $stok->update([
+                'stok_awal' => $data['stok_awal'],
+                'stok' => $data['stok'],
+                'harga_beli' => $data['harga_beli'],
+            ]);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi Kesalahan');
+        }
+
+        return redirect()->back()->with('success', 'Data Berhasil Di update!!');
+    }
+
     public function stok_ppn(Request $request)
     {
         // $kategori = BarangKategori::with(['barang_nama'])->get();

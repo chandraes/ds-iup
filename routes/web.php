@@ -341,6 +341,8 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::post('/hide/{barang}', [App\Http\Controllers\BarangController::class, 'hide_stok'])->name('db.hide');
 
+            Route::patch('/stok/edit-stok-su/{stok}', [App\Http\Controllers\BarangController::class, 'edit_stok_su'])->name('db.stok.edit-stok-su');
+
             Route::prefix('stok-ppn')->group(function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
                 Route::get('/history', [App\Http\Controllers\BarangController::class, 'stok_history'])->name('db.stok-ppn.history');

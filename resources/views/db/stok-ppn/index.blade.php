@@ -11,6 +11,7 @@
     @include('db.stok-ppn.edit')
     @include('db.stok-ppn.action')
     @include('db.stok-ppn.histori')
+    @include('db.stok-ppn.edit-stok')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
@@ -196,7 +197,12 @@
                     @php $barangDisplayed = true; @endphp
                     @endif
                     <td class="text-center align-middle">
+                        @if ($stokHarga->stok > 0 && auth()->user()->role == 'su')
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#eModal"
+                            onclick="editStok({{$stokHarga}})">{{ $stokHarga->nf_stok_awal }}</a>
+                        @else
                         {{ $stokHarga->nf_stok_awal }}
+                        @endif
                     </td>
                     <td class="text-center align-middle">
                         {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
@@ -317,6 +323,17 @@
         dropdownParent: $('#actionModal')
     });
 
+    function editStok(data)
+    {
+        console.log(data);
+        document.getElementById('e_stok_awal').value = data.stok_awal;
+        document.getElementById('e_stok').value = data.stok ?? '';
+        document.getElementById('e_harga_beli').value = data.harga_beli;
+
+        // document.getElementById('harga').value = data.stok_ppn.nf_harga;
+        document.getElementById('eForm').action = `{{route('db.stok.edit-stok-su', ':id')}}`.replace(':id', data.id);
+    }
+
     function editFun(data)
     {
 
@@ -343,6 +360,7 @@
     }
     confirmAndSubmit("#actionForm", "Apakah anda yakin?");
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
+    confirmAndSubmit("#eForm", "Apakah anda yakin untuk mengubah data ini?");
 
     function toggleNamaJabatan(id) {
 
