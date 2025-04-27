@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Karyawan;
 use App\Models\Holding;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Pengaturan;
@@ -64,12 +65,15 @@ class PengaturanController extends Controller
     {
         $db = new User;
         $users = $db->get();
-
+        $karyawan = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                        $query->where('is_sales', 1);
+                    })->select('id', 'nama')->get();
         $roles = $db->getRoles();
 
         return view('pengaturan.pengguna.index', [
             'data' => $users,
             'roles' => $roles,
+            'karyawan' => $karyawan,
         ]);
     }
 
@@ -92,7 +96,7 @@ class PengaturanController extends Controller
             'email' => 'nullable',
             'password' => 'required',
             'role' => 'required',
-            'supplier_id' => 'nullable',
+            'karyawan_id' => 'required_if:role,' . User::ROLE_SALES,
         ]);
 
         $data['password'] = bcrypt($data['password']);
@@ -124,6 +128,7 @@ class PengaturanController extends Controller
             'email' => 'nullable',
             'password' => 'nullable',
             'role' => 'required',
+            'karyawan_id' => 'required_if:role,' . User::ROLE_SALES,
         ]);
 
         $user = User::findOrFail($id);

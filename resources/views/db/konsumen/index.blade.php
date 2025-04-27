@@ -140,7 +140,7 @@
                     </ul>
                 </td>
                 <td class="text-center align-middle">{{$d->npwp}}</td>
-                <td class="text-center align-middle">{{$d->sales_area ? $d->sales_area->nama : ''}}</td>
+                <td class="text-center align-middle">{{$d->karyawan ? $d->karyawan->nama : ''}}</td>
                 <td class="text-start align-middle">
                     {{$d->provinsi ? $d->provinsi->nama_wilayah : ''}}
                 </td>
@@ -279,7 +279,7 @@
             dropdownParent: $('#createInvestor'),
         });
 
-        $('#edit_sales_area_id').select2({
+        $('#edit_karyawan_id').select2({
             theme: 'bootstrap-5',
             width: '100%',
             dropdownParent: $('#editInvestor'),
@@ -319,6 +319,7 @@
         document.getElementById('edit_plafon').value = data.nf_plafon;
         document.getElementById('edit_tempo_hari').value = data.tempo_hari;
         document.getElementById('edit_alamat').value = data.alamat;
+        document.getElementById('edit_karyawan_id').value = data.karyawan_id;
 
 
         if (data.provinsi_id !== null) {
@@ -337,6 +338,11 @@
         });
 
 
+        $('#edit_karyawan_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#editInvestor'),
+        });
 
     }
 

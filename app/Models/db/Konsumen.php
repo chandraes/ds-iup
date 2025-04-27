@@ -39,6 +39,11 @@ class Konsumen extends Model
         return $this->belongsTo(SalesArea::class);
     }
 
+    public function karyawan()
+    {
+        return $this->belongsTo(Karyawan::class);
+    }
+
     public function kode_toko()
     {
         return $this->belongsTo(KodeToko::class);
@@ -74,7 +79,7 @@ class Konsumen extends Model
     public function scopeFilter($query, $filters)
     {
         if (isset($filters['area']) && $filters['area'] !== '') {
-            $query->where('sales_area_id', $filters['area']);
+            $query->where('karyawan_id', $filters['area']);
         }
 
         if (isset($filters['kecamatan']) && $filters['kecamatan'] !== '') {

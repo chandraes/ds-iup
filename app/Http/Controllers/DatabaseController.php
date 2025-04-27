@@ -484,7 +484,7 @@ class DatabaseController extends Controller
     {
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
-        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko'])
+        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
             ->filter($filters) // Gunakan scope filter
             ->get();
 
@@ -496,10 +496,14 @@ class DatabaseController extends Controller
 
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
 
+        $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
+
         return view('db.konsumen.index', [
             'data' => $data,
             'provinsi' => $provinsi,
-            'sales_area' => SalesArea::select('id', 'nama')->get(),
+            'sales_area' => $sales_area,
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
             'kecamatan_filter' => $kecamatan_filter,
         ]);
@@ -521,7 +525,7 @@ class DatabaseController extends Controller
             'pembayaran' => 'required',
             'plafon' => 'required_if:pembayaran,1',
             'tempo_hari' => 'required_if:pembayaran,1',
-            'sales_area_id' => 'required|exists:sales_areas,id',
+            'karyawan_id' => 'required|exists:karyawans,id',
         ]);
 
         $db = new Konsumen;
@@ -551,7 +555,7 @@ class DatabaseController extends Controller
             'pembayaran' => 'required',
             'plafon' => 'required',
             'tempo_hari' => 'required',
-            'sales_area_id' => 'required|exists:sales_areas,id',
+            'karyawan_id' => 'required|exists:karyawans,id',
         ]);
 
         $data['plafon'] = str_replace('.', '', $data['plafon']);
