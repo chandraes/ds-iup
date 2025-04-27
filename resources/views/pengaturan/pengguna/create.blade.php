@@ -70,6 +70,17 @@
                             </select>
                         </div>
                     </div>
+                    <div class="row mb-4" id="karyawan_div" hidden>
+                        <label for="" class="col-md-3 form-label">Karyawan</label>
+                        <div class="col-md-9">
+                            <select class="form-select" name="karyawan_id" id="karyawan_id" required>
+                                <option value="">-- Pilih database Karyawan --</option>
+                                @foreach ($karyawan as $k)
+                                <option value="{{ $k->id }}">{{ Str::upper($k->nama) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -92,5 +103,18 @@
         eyeIcon.classList.toggle('fa-eye');
         eyeIcon.classList.toggle('fa-eye-slash');
     });
+
+    function checkRole() {
+        var role = document.getElementById('role').value;
+        var karyawanDiv = document.getElementById('karyawan_div');
+        if (role == 'sales') {
+            karyawanDiv.removeAttribute('hidden');
+            document.getElementById('karyawan_id').setAttribute('required', true);
+        } else {
+            karyawanDiv.setAttribute('hidden', true);
+            document.getElementById('karyawan_id').removeAttribute('required');
+            document.getElementById('karyawan_id').value = '';
+        }
+    }
 </script>
 @endpush
