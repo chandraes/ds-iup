@@ -14,9 +14,9 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('db')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
-                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalSalesArea"><img
+                    {{-- <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalSalesArea"><img
                                 src="{{asset('images/area.svg')}}" width="30"> Sales Area</a>
-                    </td>
+                    </td> --}}
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalKodeToko"><img
                         src="{{asset('images/kode-toko.svg')}}" width="30"> Kode Toko</a>
             </td>
@@ -32,7 +32,6 @@
 @include('swal')
 @include('db.konsumen.create')
 @include('db.konsumen.edit')
-@include('db.konsumen.sales-area')
 @include('db.konsumen.kode-toko')
 
 <div class="container-fluid mt-5 table-responsive">
