@@ -96,7 +96,7 @@
                 <input type="hidden" name="total" value="{{$total}}">
                 <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
             </form>
-            <a href="{{route('billing.form-cost-operational')}}" class="btn btn-secondary btn-lg">Batalkan</a>
+            <a href="{{route('billing')}}" class="btn btn-secondary btn-lg">Batalkan</a>
             {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
           </div>
     </div>
