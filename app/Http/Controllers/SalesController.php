@@ -233,7 +233,7 @@ class SalesController extends Controller
 
         $kode = $db->generateKode($keranjang->first()->barang_ppn);
 
-        return view('sales.keranjang', [
+        return view('sales.stok-harga.keranjang', [
             'keranjang' => $keranjang,
             'ppn' => $ppn,
             'total' => $total,

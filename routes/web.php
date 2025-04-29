@@ -35,6 +35,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/set-jumlah', [App\Http\Controllers\SalesController::class, 'keranjang_set'])->name('sales.stok.keranjang.set-jumlah');
                 Route::post('/empty', [App\Http\Controllers\SalesController::class, 'keranjang_empty'])->name('sales.stok.keranjang.empty');
             });
+
+         
         });
     });
 
