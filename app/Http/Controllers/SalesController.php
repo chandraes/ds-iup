@@ -9,7 +9,9 @@ use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\Pengaturan;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\KeranjangJual;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -215,14 +217,16 @@ class SalesController extends Controller
     public function keranjang()
     {
 
-        $keranjang = KeranjangJual::with('stok')->where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::with('stok', 'barang')->where('user_id', auth()->user()->id)->get();
         $dbPajak = new Pajak;
         $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
         $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
         $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
-        $konsumen = Konsumen::where('active', 1)->where('karyawan_id', auth()->user()->id)->get();
+        $konsumen = Konsumen::where('active', 1)->where('karyawan_id', auth()->user()->karyawan_id)->get();
         $ppnStore = $nominalPpn > 0 ? 1 : 0;
+
+        $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
         Carbon::setLocale('id');
 
         // Format the date
@@ -231,7 +235,6 @@ class SalesController extends Controller
 
         $db = new InvoiceJual();
 
-        $kode = $db->generateKode($keranjang->first()->barang_ppn);
 
         return view('sales.stok-harga.keranjang', [
             'keranjang' => $keranjang,
@@ -242,8 +245,8 @@ class SalesController extends Controller
             'konsumen' => $konsumen,
             'tanggal' => $tanggal,
             'jam' => $jam,
-            'kode' => $kode,
             'ppnStore' => $ppnStore,
+            'penyesuaian' => $penyesuaian,
         ]);
     }
 
@@ -272,11 +275,24 @@ class SalesController extends Controller
 
         $db = new KeranjangJual;
 
-        $res = $db->checkout($data);
+        $res = $db->checkoutSales($data);
 
-        return redirect()->route('billing.lihat-stok')->with($res['status'], $res['message']);
+        return redirect()->route('sales.stok')->with($res['status'], $res['message']);
     }
 
+    public function order(Request $request)
+    {
+        if (auth()->user()->karyawan_id == null) {
+            return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
+        }
 
+        $data = InvoiceJualSales::where('karyawan_id', auth()->user()->karyawan_id)->get();
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        return view('sales.order.index', [
+            'data' => $data,
+            'ppn' => $ppn
+        ]);
+    }
 
 }

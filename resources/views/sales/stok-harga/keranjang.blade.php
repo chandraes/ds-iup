@@ -13,7 +13,7 @@
         </div>
     </div>
     <div class="row">
-        <form action="#" method="post" id="storeForm">
+        <form action="{{route('sales.stok.keranjang.checkout')}}" method="post" id="storeForm">
             @csrf
             <div class="card">
 
@@ -93,14 +93,14 @@
                                     <div class="col-md-6 invoice-col" >
                                         <div class="row d-flex justify-content-end">
                                             <table style="width: 90%">
-                                                <tr style="height:50px">
+                                                {{-- <tr style="height:50px">
                                                     <td class="text-start align-middle">Invoice</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
                                                         <input type="text" name="kode" id="kode" class="form-control"
                                                             disabled value="{{$kode}}">
                                                     </td>
-                                                </tr>
+                                                </tr> --}}
                                                 <tr style="height:50px">
                                                     <td class="text-start align-middle">Tanggal</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
@@ -154,9 +154,7 @@
                         <table class="table table-bordered">
                             <thead class="table-success">
                                 <tr>
-                                    <th class="text-center align-middle">Perusahaan</th>
-                                    <th class="text-center align-middle">Bidang</th>
-                                    <th class="text-center align-middle">Kategori Barang</th>
+                                    <th class="text-center align-middle">Kelompok Barang</th>
                                     <th class="text-center align-middle">Nama Barang</th>
                                     <th class="text-center align-middle">Kode Barang</th>
                                     <th class="text-center align-middle">Merk Barang</th>
@@ -168,9 +166,7 @@
                             </thead>
                             <tbody>
                                 @foreach ($keranjang as $b)
-                                <tr>
-                                    <td class="text-center align-middle">{{$b->stok->unit->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->stok->type->nama}}</td>
+                                <tr class="{{$b->stok_kurang == 1 ? 'table-danger' : ''}}">
                                     <td class="text-center align-middle">{{$b->stok->kategori->nama}}</td>
                                     <td class="text-center align-middle">{{$b->stok->barang_nama->nama}}</td>
                                     <td class="text-center align-middle">{{$b->stok->barang->kode}}</td>
@@ -186,67 +182,67 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">DPP :</th>
+                                    <th colspan="7" class="text-end align-middle">DPP :</th>
                                     <th class="text-end align-middle" id="dppTh">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
                                 </tr>
                                 <tr id="trDiskon">
-                                    <th colspan="9" class="text-end align-middle">Diskon :</th>
+                                    <th colspan="7" class="text-end align-middle">Diskon :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="diskon" id="diskon" value="0"
                                             onkeyup="addDiskon()" />
                                     </th>
                                 </tr>
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">DPP Setelah Diskon :</th>
+                                    <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
                                     <th class="text-end align-middle" id="thDppDiskon">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
                                 </tr>
                                 @if ($ppnStore == 1)
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">Ppn :</th>
+                                    <th colspan="7" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0,
                                         ',','.')}}</th>
                                 </tr>
                                 @endif
 
                                 {{-- <tr>
-                                    <th colspan="9" class="text-end align-middle">Pph :</th>
+                                    <th colspan="7" class="text-end align-middle">Pph :</th>
                                     <th class="text-end align-middle" id="pphTh">0</th>
                                 </tr> --}}
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">Grand Total :</th>
+                                    <th colspan="7" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">Penyesuaian:</th>
+                                    <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
                                             value="0" />
                                     </th>
                                 </tr>
                                 <tr>
-                                    <th colspan="9" class="text-end align-middle">Total Tagihan :</th>
+                                    <th colspan="7" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
                                 </tr>
                                 <tr id="trJumlahDp" hidden>
-                                    <th colspan="9" class="text-end align-middle">Masukan Nominal DP :</th>
+                                    <th colspan="7" class="text-end align-middle">Masukan Nominal DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
                                             onkeyup="addDp()" />
                                     </th>
                                 </tr>
                                 <tr id="trDp" hidden>
-                                    <th colspan="9" class="text-end align-middle">DP :</th>
+                                    <th colspan="7" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp" id="dp" value="0" readonly/>
                                     </th>
                                 </tr>
                                 @if ($ppnStore == 1)
                                 <tr id="trDpPpn" hidden>
-                                    <th colspan="9" class="text-end align-middle">DP PPn :</th>
+                                    <th colspan="7" class="text-end align-middle">DP PPn :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="0"
                                             readonly />
@@ -255,7 +251,7 @@
                                 @endif
 
                                 <tr id="trSisa" hidden>
-                                    <th colspan="9" class="text-end align-middle">Sisa Tagihan :</th>
+                                    <th colspan="7" class="text-end align-middle">Sisa Tagihan :</th>
                                     <th class="text-end align-middle" id="thSisa">
                                         0
                                     </th>
@@ -295,99 +291,72 @@
         width: '100%',
     });
 
-    var add_fee = new Cleave('#add_fee', {
-                numeral: true,
-                negative: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.'
-            });
-
-    var diskon = new Cleave('#diskon', {
+    // Format input angka dengan Cleave.js
+    const cleaveOptions = {
         numeral: true,
         numeralThousandsGroupStyle: 'thousand',
         numeralDecimalMark: ',',
-        delimiter: '.'
-    });
+        delimiter: '.',
+        negative: true
+    };
+    new Cleave('#add_fee', cleaveOptions);
+    new Cleave('#diskon', cleaveOptions);
+
+    // Helper untuk menghapus format angka
+    function parseNumber(value) {
+        return parseFloat(value.replace(/\./g, '') || 0);
+    }
+
+    // Helper untuk memformat angka ke format Indonesia
+    function formatNumber(value) {
+        return value.toLocaleString('id-ID');
+    }
 
     function ppnPungut() {
         var dipungut = document.getElementById('dipungut').value ?? 0;
         calculatePpn();
     }
 
-    function checkSisa() {
-        var dp = document.getElementById('dp').value;
-        var gt = document.getElementById('totalTagihanTh').innerText;
-        var dp_ppnElement = document.getElementById('dp_ppn');
-        var dp_ppn = dp_ppnElement ? dp_ppnElement.value : 0;
-
-        if (dp_ppnElement) {
-            dp_ppn = dp_ppn.replace(/\./g, '');
-        }
-
-        gt = gt.replace(/\./g, '');
-        dp = dp.replace(/\./g, '');
-
-        var dpNumber = parseFloat(dp);
-        var gtNumber = parseFloat(gt);
-        var dpPpnNumber = parseFloat(dp_ppn);
-        var dipungutElement = document.getElementById('dipungut');
-        var dipungut = dipungutElement ? dipungutElement.value : 0;
-
-        if (dipungut == 0)  {
-            var sisa = gtNumber - dpNumber;
-        } else {
-            var sisa = gtNumber - dpNumber - dpPpnNumber;
-        }
-
-        var sisaNf = sisa.toLocaleString('id-ID');
-
-        document.getElementById('thSisa').innerText = sisaNf;
+     // Update Total Tagihan
+     function updateTotalTagihan(total) {
+        document.getElementById('totalTagihanTh').innerText = formatNumber(total);
+        checkSisa();
     }
 
+    // Hitung Sisa Tagihan
+    function checkSisa() {
+        const dp = parseNumber(document.getElementById('dp').value || '0');
+        const grandTotal = parseNumber(document.getElementById('totalTagihanTh').innerText);
+        const dpPpn = parseNumber(document.getElementById('dp_ppn')?.value || '0');
+        const dipungut = document.getElementById('dipungut')?.value || 0;
+
+        const sisa = dipungut == 0 ? grandTotal - dp : grandTotal - dp - dpPpn;
+        document.getElementById('thSisa').innerText = formatNumber(sisa);
+    }
+
+    // Tambahkan Diskon
     function addDiskon() {
-        var dpp = document.getElementById('dppTh').innerText;
-        var diskon = document.getElementById('diskon').value == '' ? 0 : document.getElementById('diskon').value;
-        dpp = dpp.replace(/\./g, '');
-        diskon = diskon == 0 ? 0 : diskon.replace(/\./g, '');
+        const dpp = parseNumber(document.getElementById('dppTh').innerText);
+        const diskon = parseNumber(document.getElementById('diskon').value || '0');
+        const dppDiskon = dpp - diskon;
 
-        var dppNumber = parseFloat(dpp);
-        var diskonNumber = parseFloat(diskon);
-
-        var dppDiskon = dppNumber - diskonNumber;
-        var dppDiskonNf = dppDiskon.toLocaleString('id-ID');
-        document.getElementById('thDppDiskon').innerText = dppDiskonNf;
-
+        document.getElementById('thDppDiskon').innerText = formatNumber(dppDiskon);
         calculatePpn();
     }
 
     function calculatePpn()
     {
-        var dpp = document.getElementById('thDppDiskon').innerText;
-        dpp = parseFloat(dpp.replace(/\./g, ''));
-        var ppn = {{$ppn}};
+        const dpp = parseNumber(document.getElementById('thDppDiskon').innerText);
+        const ppnRate = {{ $ppn }};
+        const ppnValue = Math.round(dpp * ppnRate / 100);
+        const dipungut = document.getElementById('dipungut')?.value || 0;
 
-        var dppNumber = parseFloat(dpp);
-
-        var ppnVal = Math.round(dppNumber * ppn / 100);
-        var dipungutElement = document.getElementById('dipungut');
-        var dipungut = dipungutElement ? dipungutElement.value : 0;
-
-        var grandTotal = 0;
-
-        if(dipungut == 0) {
-            grandTotal = dppNumber;
-        } else {
-            grandTotal = dppNumber + ppnVal;
-        }
-        // console.log(ppnVal);
-        var ppnValNf = ppnVal.toLocaleString('id-ID');
-        var grandTotalNf = grandTotal.toLocaleString('id-ID');
+        const grandTotal = dipungut == 0 ? dpp : dpp + ppnValue;
 
         if (document.getElementById('thPpn')) {
-            document.getElementById('thPpn').innerText = ppnValNf;
+            document.getElementById('thPpn').innerText = formatNumber(ppnValue);
         }
-        document.getElementById('grandTotalTh').innerText = grandTotalNf;
+        document.getElementById('grandTotalTh').innerText = formatNumber(grandTotal);
 
         checkSisa();
         calculateTotalTagihan();
@@ -410,16 +379,22 @@
     }
 
     function addCheck() {
-        var add_fee = document.getElementById('add_fee').value;
-        var gt = document.getElementById('grandTotalTh').innerText;
-        gt = gt.replace(/\./g, '');
-        add_fee = add_fee.replace(/\./g, '');
+        const addFee = parseNumber(document.getElementById('add_fee').value);
+        const limitPenyesuaian = parseFloat({{ $penyesuaian }});
+        const limitNegatif = limitPenyesuaian * -1;
+        const grandTotal = parseNumber(document.getElementById('grandTotalTh').innerText);
 
-        var addFeeNumber = parseFloat(add_fee);
-        var gtNumber = parseFloat(gt);
+        if (addFee > limitPenyesuaian || addFee < limitNegatif) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Penyesuaian tidak boleh melebihi batas limit!',
+            });
+            document.getElementById('add_fee').value = 0;
+            return;
+        }
 
-        if (addFeeNumber > gtNumber) {
-            console.log('add fee melebihi gt');
+        if (addFee > grandTotal) {
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
@@ -429,11 +404,7 @@
             return;
         }
 
-        totahTagihan = gtNumber + addFeeNumber;
-        var totahTagihanNf = totahTagihan.toLocaleString('id-ID');
-        document.getElementById('totalTagihanTh').innerText = totahTagihanNf;
-
-        checkSisa();
+        updateTotalTagihan(grandTotal + addFee);
     }
 
 
@@ -495,7 +466,8 @@
                 numeral: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',
-                delimiter: '.'
+                delimiter: '.',
+                negative: false
             });
 
             var ppnValElement = document.getElementById('thPpn');
@@ -533,7 +505,7 @@
             document.getElementById('npwp').disabled = true;
             document.getElementById('no_hp').disabled = true;
             $.ajax({
-                url: '{{route('billing.form-jual.keranjang.get-konsumen')}}',
+                url: '{{route('universal.get-konsumen')}}',
                 type: 'GET',
                 data: {
                     id: id
@@ -567,13 +539,15 @@
                             numeral: true,
                             numeralThousandsGroupStyle: 'thousand',
                             numeralDecimalMark: ',',
-                            delimiter: '.'
+                            delimiter: '.',
+                            negative: false
                         });
                         var jumlah_dp = new Cleave('#jumlah_dp', {
                             numeral: true,
                             numeralThousandsGroupStyle: 'thousand',
                             numeralDecimalMark: ',',
-                            delimiter: '.'
+                            delimiter: '.',
+                            negative: false
                         });
                         var ppnValElement = document.getElementById('thPpn');
                         var ppnVal = ppnValElement ? ppnValElement.innerText : 0;

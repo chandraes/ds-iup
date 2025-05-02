@@ -44,7 +44,7 @@
 @push('js')
     <script>
         function refreshStatus() {
-            const url = "{{ route('status-wa') }}"; // Endpoint API
+            const url = "{{ route('universal.get-status-wa') }}"; // Endpoint API
             const indicator = document.getElementById('connection-status-indicator');
             const statusText = document.getElementById('connection-status-text');
 

@@ -24,6 +24,11 @@ Auth::routes([
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
+    Route::prefix('universal')->group(function () {
+        Route::get('/get-konsumen', [App\Http\Controllers\UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
+        Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
+    });
+
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
@@ -34,9 +39,15 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/update', [App\Http\Controllers\SalesController::class, 'keranjang_update'])->name('sales.stok.keranjang.update');
                 Route::post('/set-jumlah', [App\Http\Controllers\SalesController::class, 'keranjang_set'])->name('sales.stok.keranjang.set-jumlah');
                 Route::post('/empty', [App\Http\Controllers\SalesController::class, 'keranjang_empty'])->name('sales.stok.keranjang.empty');
+
+                Route::post('/checkout', [App\Http\Controllers\SalesController::class, 'keranjang_checkout'])->name('sales.stok.keranjang.checkout');
             });
 
-         
+            Route::prefix('order')->group(function(){
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'order'])->name('sales.order');
+            });
+
+
         });
     });
 
