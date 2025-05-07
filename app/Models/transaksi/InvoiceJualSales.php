@@ -3,6 +3,7 @@
 namespace App\Models\transaksi;
 
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\GroupWa;
@@ -44,6 +45,11 @@ class InvoiceJualSales extends Model
     public function order_inden()
     {
         return $this->hasMany(OrderInden::class, 'invoice_jual_sales_id');
+    }
+
+    public function karyawan()
+    {
+        return $this->belongsTo(Karyawan::class, 'karyawan_id');
     }
 
     public function getDppAttribute()

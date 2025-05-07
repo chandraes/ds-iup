@@ -16,12 +16,15 @@ use App\Models\GroupWa;
 use App\Models\Investor;
 use App\Models\InvestorModal;
 use App\Models\KasBesar;
+use App\Models\Pengaturan;
 use App\Models\Pengelola;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\transaksi\InvoiceJualSales;
+use App\Models\transaksi\InvoiceJualSalesDetail;
 use App\Models\transaksi\KeranjangJual;
 use App\Services\StarSender;
 use Carbon\Carbon;
@@ -107,6 +110,12 @@ class BillingController extends Controller
             ->where('void', 0)
             ->first();
 
+        $salesOrderCounts = InvoiceJualSales::select(
+            DB::raw('COUNT(CASE WHEN kas_ppn = 1 THEN 1 END) as sales_order_ppn'),
+            DB::raw('COUNT(CASE WHEN kas_ppn = 0 THEN 1 END) as sales_order_non_ppn'),
+        )->where('is_finished', 0)
+            ->first();
+
         $gr = GantiRugi::where('lunas', 0)->count();
 
         return view('billing.index', [
@@ -117,6 +126,8 @@ class BillingController extends Controller
             'gr' => $gr,
             'ikt' => $invoiceJualCounts->ikt,
             'iktn' => $invoiceJualCounts->iktn,
+            'sales_order_ppn' => $salesOrderCounts->sales_order_ppn,
+            'sales_order_non_ppn' => $salesOrderCounts->sales_order_non_ppn,
         ]);
     }
 
@@ -431,5 +442,57 @@ class BillingController extends Controller
 
         return redirect()->route('billing')->with($res['status'], $res['message']);
 
+    }
+
+    public function sales_order(Request $request)
+    {
+        $req = $request->validate([
+            'kas_ppn' => 'required|boolean',
+        ]);
+
+        $data = InvoiceJualSales::with(['karyawan'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn'])->get();
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        return view('billing.sales-order.index', [
+            'data' => $data,
+            'ppn' => $ppn,
+        ]);
+
+    }
+
+    public function sales_order_detail(InvoiceJualSales $order)
+    {
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
+
+        return view('billing.sales-order.detail', [
+            'order' => $order->load('konsumen', 'invoice_detail.barang', 'invoice_detail.barangStokHarga'),
+            'ppn' => $ppn,
+            'penyesuaian' => $penyesuaian,
+        ]);
+    }
+
+    public function sales_order_delete(InvoiceJualSalesDetail $orderDetail)
+    {
+
+        $check = InvoiceJualSalesDetail::where('invoice_jual_sales_id', $orderDetail->invoice_jual_sales_id)->where('deleted', 0)->count();
+
+        if ($check == 1) {
+            return redirect()->back()->with('error', 'Item tidak bisa dihapus, karena item ini adalah satu-satunya item dalam sales order ini');
+        }
+
+        $orderDetail->update([
+            'deleted' => !$orderDetail->deleted,
+        ]);
+
+        return redirect()->back()->with('success', 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.');
+    }
+
+    public function sales_order_void(InvoiceJualSales $order)
+    {
+        $db = new InvoiceJualSales;
+        $res = $db->void_order($order->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
     }
 }

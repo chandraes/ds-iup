@@ -485,6 +485,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::prefix('billing')->group(function () {
             Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');
 
+            // Routing Sales Order
+            Route::prefix('sales-order')->group(function () {
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'sales_order'])->name('billing.sales-order');
+                Route::get('/detail/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_detail'])->name('billing.sales-order.detail');
+                Route::post('/void/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_void'])->name('billing.sales-order.void');
+
+                Route::post('/detail/update/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_update'])->name('billing.sales-order.detail.update');
+                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\BillingController::class, 'sales_order_delete'])->name('billing.sales-order.detail.delete');
+            });
+
             Route::prefix('bunga-investor')->group(function () {
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
                 Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
