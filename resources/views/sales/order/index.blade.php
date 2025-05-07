@@ -133,14 +133,29 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '{{route('sales.order.void', ':id')}}'.replace(':id', id),
+                    url: '{{route('sales.order.void', ['order' => ':id'])}}'.replace(':id', id.id),
                     type: 'POST',
                     data: {
                         id: id,
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(data) {
-                        location.reload();
+                        if (data.status == 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: data.message,
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message,
+                            });
+                        }
+
                     }
                 });
             }

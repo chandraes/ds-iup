@@ -344,7 +344,7 @@ class SalesController extends Controller
         $db = new InvoiceJualSales;
         $res = $db->order_void($order->id);
 
-        return redirect()->back()->with($res['status'], $res['message']);
+        return response()->json($res);
     }
 
     public function order_detail(InvoiceJualSales $order)

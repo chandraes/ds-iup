@@ -493,14 +493,14 @@ class BillingController extends Controller
         $db = new InvoiceJualSales;
         $res = $db->order_void($order->id);
 
-        return redirect()->back()->with($res['status'], $res['message']);
+        return response()->json($res);
     }
 
     public function sales_order_lanjutkan(InvoiceJualSales $order)
     {
         ini_set('max_execution_time', 300);
         ini_set('memory_limit', '512M');
-        
+
         $db = new InvoiceJual();
         $res = $db->lanjut_order($order->id);
 

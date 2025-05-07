@@ -151,7 +151,21 @@
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(data) {
-                        location.reload();
+                        if (data.status == 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: data.message,
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message,
+                            });
+                        }
                     }
                 });
             }

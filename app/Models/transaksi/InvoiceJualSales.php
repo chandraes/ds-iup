@@ -175,7 +175,7 @@ class InvoiceJualSales extends Model
             // Hapus invoice
             $invoice->delete();
 
-            // DB::commit();
+            DB::commit();
 
         } catch (\Throwable $th) {
             //throw $th;
