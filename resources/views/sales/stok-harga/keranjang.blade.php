@@ -16,12 +16,64 @@
         <form action="{{route('sales.stok.keranjang.checkout')}}" method="post" id="storeForm">
             @csrf
             <div class="card">
-
                 <div class="card-body bg-white">
                     <h4 class="card-title">
                         {{-- <strong>#INVOICE : {{$invoice}}</strong> --}}
                     </h4>
                     <div class="row mt-3 mb-3">
+                        <div class="row mb-3">
+                            <div class="col-md-12 my-3">
+                                Order Barang Inden:
+                            </div>
+                            <div class="col-md-5 pt-1">
+                                {{-- select barang nama and input jumlah --}}
+                                <select class="form-select" name="barang_id" id="barang_id">
+                                    <option value="" disabled selected>-- Pilih Barang --</option>
+                                    @foreach ($barang as $bInden)
+                                    <option value="{{$bInden->id}}">{{$bInden->barang_nama->nama}} ({{$bInden->kode}}) ({{$bInden->merk}})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" class="form-control" name="jumlah_inden" id="jumlah_inden" placeholder="Jumlah">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary" onclick="addKeranjangInden()"><i class="fa fa-plus"></i>
+                                    Tambah</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th class="text-center align-middle">No</th>
+                                        <th class="text-center align-middle">Kelompok Barang</th>
+                                        <th class="text-center align-middle">Nama Barang</th>
+                                        <th class="text-center align-middle">Jumlah</th>
+                                        <th class="text-center align-middle">Satuan</th>
+                                        <th class="text-center align-middle">ACT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($orderInden as $a)
+                                    <tr>
+                                        <td class="text-center align-middle">{{$loop->iteration}}</td>
+                                        <td class="text-center align-middle">{{$a->barang->kategori->nama}}</td>
+                                        <td class="text-center align-middle">{{$a->barang->barang_nama->nama}}</td>
+                                        <td class="text-center align-middle">{{$a->barang->satuan->nama}}</td>
+                                        <td class="text-center align-middle">{{$a->nf_jumlah}}</td>
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="indenDelete({{$a->id}})"><i
+                                                    class="fa fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+
+                            </table>
+                        </div>
+
+                        <hr>
                         <div class="col-md-12 my-3">
                             <div class="row" id="konsumenRow">
                                 <div class="row invoice-info">
@@ -162,6 +214,7 @@
                                     <th class="text-center align-middle">Satuan</th>
                                     <th class="text-center align-middle">Harga Satuan</th>
                                     <th class="text-center align-middle">Total</th>
+                                    <th class="text-center align-middle">Act</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -177,6 +230,10 @@
                                     <td class="text-center align-middle">{{$b->nf_harga}}</td>
                                     <td class="text-end align-middle">{{$b->nf_total}}
                                     </td>
+                                    <td class="text-center align-middle">
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteKeranjang({{$b->id}})"><i
+                                                class="fa fa-trash"></i></button>
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -185,6 +242,7 @@
                                     <th colspan="7" class="text-end align-middle">DPP :</th>
                                     <th class="text-end align-middle" id="dppTh">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
+                                    <td></td>
                                 </tr>
                                 <tr id="trDiskon">
                                     <th colspan="7" class="text-end align-middle">Diskon :</th>
@@ -192,17 +250,20 @@
                                         <input type="text" class="form-control text-end" name="diskon" id="diskon" value="0"
                                             onkeyup="addDiskon()" />
                                     </th>
+                                    <td></td>
                                 </tr>
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
                                     <th class="text-end align-middle" id="thDppDiskon">{{number_format($keranjang->sum('total'), 0,
                                         ',','.')}}</th>
+                                        <td></td>
                                 </tr>
                                 @if ($ppnStore == 1)
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0,
                                         ',','.')}}</th>
+                                        <td></td>
                                 </tr>
                                 @endif
 
@@ -214,6 +275,7 @@
                                     <th colspan="7" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
+                                        <td></td>
                                 </tr>
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
@@ -221,11 +283,13 @@
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
                                             value="0" />
                                     </th>
+                                    <td></td>
                                 </tr>
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
+                                        <td></td>
                                 </tr>
                                 <tr id="trJumlahDp" hidden>
                                     <th colspan="7" class="text-end align-middle">Masukan Nominal DP :</th>
@@ -233,12 +297,14 @@
                                         <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
                                             onkeyup="addDp()" />
                                     </th>
+                                    <td></td>
                                 </tr>
                                 <tr id="trDp" hidden>
                                     <th colspan="7" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp" id="dp" value="0" readonly/>
                                     </th>
+                                    <td></td>
                                 </tr>
                                 @if ($ppnStore == 1)
                                 <tr id="trDpPpn" hidden>
@@ -247,6 +313,7 @@
                                         <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="0"
                                             readonly />
                                     </th>
+                                    <td></td>
                                 </tr>
                                 @endif
 
@@ -255,6 +322,7 @@
                                     <th class="text-end align-middle" id="thSisa">
                                         0
                                     </th>
+                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -263,7 +331,7 @@
                         <div class="col-md-6"></div>
                         <div class="col-md-6 text-end">
                             <button type="submit" class="btn btn-success"><i class="fa fa-credit-card"></i>
-                                Lanjutkan Pembayaran</button>
+                                Lanjutkan</button>
                             {{-- <button type="button" class="btn btn-info text-white"
                                 onclick="javascript:window.print();"><i class="fa fa-print"></i> Print Invoice</button>
                             --}}
@@ -288,6 +356,10 @@
 <script>
 
     $('#konsumen_id').select2({
+        width: '100%',
+    });
+
+    $('#barang_id').select2({
         width: '100%',
     });
 
@@ -628,5 +700,98 @@
             }
         })
     });
+
+    function deleteKeranjang(id)
+    {
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '{{route('sales.stok.keranjang.delete', ':id')}}'.replace(':id', id),
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(data) {
+                        location.reload();
+                    }
+                });
+            }
+        })
+    }
+
+    function addKeranjangInden()
+    {
+
+        var barang_id = document.getElementById('barang_id').value;
+        var jumlah = document.getElementById('jumlah_inden').value;
+
+        if (barang_id == '' || barang_id == null) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Barang tidak boleh kosong!',
+            });
+            return;
+        }
+
+        if (jumlah == '' || jumlah == null) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Jumlah tidak boleh kosong!',
+            });
+            return;
+        }
+
+        $.ajax({
+            url: '{{route('sales.stok.keranjang.inden.store')}}',
+            type: 'POST',
+            data: {
+                barang_id: barang_id,
+                jumlah: jumlah,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(data) {
+                // reset barang_id dan jumlah
+                document.getElementById('barang_id').value = '';
+                document.getElementById('jumlah_inden').value = '';
+                location.reload();
+            }
+        });
+    }
+
+    function indenDelete(id)
+    {
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '{{route('sales.stok.keranjang.inden.delete', ':id')}}'.replace(':id', id),
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(data) {
+                        location.reload();
+                    }
+                });
+            }
+        })
+    }
 </script>
 @endpush

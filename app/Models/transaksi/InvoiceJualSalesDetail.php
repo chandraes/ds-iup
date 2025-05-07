@@ -13,6 +13,13 @@ class InvoiceJualSalesDetail extends Model
 
     protected $guarded = ['id'];
 
+    protected $appends = [
+        'nf_jumlah',
+        'nf_harga_satuan',
+        'total',
+        'nf_total',
+    ];
+
     public function invoiceJualSales()
     {
         return $this->belongsTo(InvoiceJualSales::class, 'invoice_jual_sales_id');
@@ -26,5 +33,25 @@ class InvoiceJualSalesDetail extends Model
     public function barangStokHarga()
     {
         return $this->belongsTo(BarangStokHarga::class, 'barang_stok_harga_id');
+    }
+
+    public function getNfJumlahAttribute()
+    {
+        return number_format($this->jumlah, 0, ',', '.');
+    }
+
+    public function getNfHargaSatuanAttribute()
+    {
+        return number_format($this->harga_satuan, 0, ',', '.');
+    }
+
+    public function getTotalAttribute()
+    {
+        return $this->jumlah * $this->harga_satuan;
+    }
+
+    public function getNfTotalAttribute()
+    {
+        return number_format($this->total, 0, ',', '.');
     }
 }

@@ -614,7 +614,22 @@ class KeranjangJual extends Model
             // Create Invoice
             $data['sistem_pembayaran'] = $data['pembayaran'];
 
+            $inden = KeranjangInden::where('user_id', auth()->user()->id)->get();
+
+            $data['total_inden'] = $inden->count();
+
+            $data['inden_finished'] = $data['total_inden'] > 0 ? 0 : 1;
+
             $invoice = $dbInvoice->create($data);
+
+            foreach ($inden as $barangInden) {
+                $invoice->order_inden()->create([
+                    'barang_id' => $barangInden->barang_id,
+                    'jumlah' => $barangInden->jumlah,
+                ]);
+
+                $barangInden->delete();
+            }
 
             foreach ($keranjang as $item) {
                 $invoice->invoice_detail()->create([
@@ -636,6 +651,34 @@ class KeranjangJual extends Model
             $this->where('user_id', auth()->user()->id)->delete();
 
             DB::commit();
+
+            $dbWa = new GroupWa;
+
+            $pesan = $invoice->konsumen->nama."\n".
+                    $invoice->konsumen->alamat."\n\n";
+
+            $n = 1;
+            foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
+                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+            }
+
+            if ($invoice->total_inden > 0) {
+                $nInden = 1;
+                $pesan .= "\nOrder Stok Habis: \n";
+                foreach ($invoice->load('order_inden.barang.barang_nama', 'order_inden.barang.satuan')->order_inden as $d) {
+                    $pesan .= $nInden++.'. ['.$d->barang->barang_nama->nama."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+                }
+            }
+
+
+
+
+            $pesan .= "\nNote: \n".
+                    $dbInvoice->pembayaran($invoice->sistem_pembayaran);
+
+            $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
+
+            $dbWa->sendWa($tujuan, $pesan);
 
         } catch (\Throwable $th) {
             DB::rollBack();

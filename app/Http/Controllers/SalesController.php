@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -12,7 +13,10 @@ use App\Models\db\Pajak;
 use App\Models\Pengaturan;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
+use App\Models\transaksi\InvoiceJualSalesDetail;
+use App\Models\transaksi\KeranjangInden;
 use App\Models\transaksi\KeranjangJual;
+use App\Models\transaksi\OrderInden;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -229,14 +233,20 @@ class SalesController extends Controller
         $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
         Carbon::setLocale('id');
 
+        $jenis = $keranjang->first()->barang_ppn == 1 ? 1 : 2;
+
+        $barang = Barang::with('barang_nama')->where('jenis', $jenis)->get();
         // Format the date
         $tanggal = Carbon::now()->translatedFormat('d F Y');
         $jam = Carbon::now()->translatedFormat('H:i');
+        $orderInden = KeranjangInden::with(['barang.kategori', 'barang.barang_nama', 'barang.satuan'])->where('user_id', auth()->user()->id)->get();
 
         $db = new InvoiceJual();
 
 
         return view('sales.stok-harga.keranjang', [
+            'orderInden' => $orderInden,
+            'barang' => $barang,
             'keranjang' => $keranjang,
             'ppn' => $ppn,
             'total' => $total,
@@ -248,6 +258,36 @@ class SalesController extends Controller
             'ppnStore' => $ppnStore,
             'penyesuaian' => $penyesuaian,
         ]);
+    }
+
+    public function keranjang_inden_store(Request $request)
+    {
+        $data = $request->validate([
+            'barang_id' => 'required|exists:barangs,id',
+            'jumlah' => 'required',
+        ]);
+
+        KeranjangInden::create([
+            'user_id' => auth()->user()->id,
+            'barang_id' => $data['barang_id'],
+            'jumlah' => $data['jumlah'],
+        ]);
+
+        return redirect()->back()->with('success', 'Barang inden berhasil ditambahkan ke keranjang');
+    }
+
+    public function keranjang_inden_delete(KeranjangInden $keranjangInden)
+    {
+        $keranjangInden->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function keranjang_delete(KeranjangJual $keranjang)
+    {
+        $keranjang->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function keranjang_checkout(Request $request)
@@ -286,7 +326,11 @@ class SalesController extends Controller
             return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
         }
 
-        $data = InvoiceJualSales::where('karyawan_id', auth()->user()->karyawan_id)->get();
+        $req = $request->validate([
+            'kas_ppn' => 'required|boolean',
+        ]);
+
+        $data = InvoiceJualSales::where('karyawan_id', auth()->user()->karyawan_id)->where('kas_ppn', $req['kas_ppn'])->where('is_finished', 0)->get();
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('sales.order.index', [
@@ -294,5 +338,55 @@ class SalesController extends Controller
             'ppn' => $ppn
         ]);
     }
+
+    public function order_void(InvoiceJualSales $order)
+    {
+        $db = new InvoiceJualSales;
+        $res = $db->void_order($order->id);
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function order_detail(InvoiceJualSales $order)
+    {
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
+
+        return view('sales.order.detail', [
+            'order' => $order->load('konsumen', 'invoice_detail.barang', 'invoice_detail.barangStokHarga'),
+            'ppn' => $ppn,
+            'penyesuaian' => $penyesuaian,
+        ]);
+    }
+
+    public function order_detail_delete(InvoiceJualSalesDetail $orderDetail)
+    {
+        $orderDetail->update([
+            'deleted' => !$orderDetail->deleted,
+        ]);
+
+        return redirect()->back()->with('success', 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.');
+    }
+
+    public function order_detail_update(InvoiceJualSales $order, Request $request)
+    {
+        $data = $request->validate([
+            'pembayaran' => 'required',
+            'diskon' => 'required',
+            'add_fee' => 'required',
+            'dp' => 'nullable',
+            'dp_ppn' => 'nullable',
+            'dipungut' => 'nullable',
+        ]);
+
+        $data['id'] = $order->id;
+
+        $db = new InvoiceJualSales;
+
+        $res = $db->update_order($data);
+
+        return redirect()->route('sales.order', ['kas_ppn' => $order->kas_ppn])->with($res['status'], $res['message']);
+    }
+
 
 }

@@ -35,16 +35,24 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('keranjang')->group(function () {
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'keranjang'])->name('sales.stok.keranjang');
+                Route::post('/delete/{keranjang}', [App\Http\Controllers\SalesController::class, 'keranjang_delete'])->name('sales.stok.keranjang.delete');
                 Route::post('/store', [App\Http\Controllers\SalesController::class, 'keranjang_store'])->name('sales.stok.keranjang.store');
                 Route::post('/update', [App\Http\Controllers\SalesController::class, 'keranjang_update'])->name('sales.stok.keranjang.update');
                 Route::post('/set-jumlah', [App\Http\Controllers\SalesController::class, 'keranjang_set'])->name('sales.stok.keranjang.set-jumlah');
                 Route::post('/empty', [App\Http\Controllers\SalesController::class, 'keranjang_empty'])->name('sales.stok.keranjang.empty');
-
                 Route::post('/checkout', [App\Http\Controllers\SalesController::class, 'keranjang_checkout'])->name('sales.stok.keranjang.checkout');
+
+                Route::post('/inden/store', [App\Http\Controllers\SalesController::class, 'keranjang_inden_store'])->name('sales.stok.keranjang.inden.store');
+                Route::post('/inden/delete/{keranjangInden}', [App\Http\Controllers\SalesController::class, 'keranjang_inden_delete'])->name('sales.stok.keranjang.inden.delete');
             });
 
             Route::prefix('order')->group(function(){
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'order'])->name('sales.order');
+                Route::get('/{order}', [App\Http\Controllers\SalesController::class, 'order_detail'])->name('sales.order.detail');
+                Route::post('/void/{order}', [App\Http\Controllers\SalesController::class, 'order_void'])->name('sales.order.void');
+
+                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\SalesController::class, 'order_detail_delete'])->name('sales.order.detail.delete');
+                Route::post('/detail/update/{order}', [App\Http\Controllers\SalesController::class, 'order_detail_update'])->name('sales.order.detail.update');
             });
 
 

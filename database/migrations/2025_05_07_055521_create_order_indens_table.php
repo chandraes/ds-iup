@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoice_jual_sales_details', function (Blueprint $table) {
+
+        Schema::create('order_indens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('invoice_jual_sales_id')->constrained('invoice_jual_sales')->onDelete('cascade');
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->onDelete('set null');
-            $table->foreignId('barang_stok_harga_id')->nullable()->constrained('barang_stok_hargas')->onDelete('set null');
-            $table->integer('jumlah')->default(0);
-            $table->bigInteger('harga_satuan')->default(0);
-            $table->bigInteger('total')->default(0);
+            $table->integer('jumlah');
             $table->boolean('deleted')->default(0);
             $table->timestamps();
+        });
+
+        Schema::table('invoice_jual_sales', function (Blueprint $table) {
+            $table->integer('total_inden')->default(0)->after('ppn_dipungut');
+            $table->boolean('inden_finished')->default(0)->after('total_inden');
         });
     }
 
@@ -29,8 +32,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('order_indens');
 
-
-        Schema::dropIfExists('invoice_jual_sales_details');
+        Schema::table('invoice_jual_sales', function (Blueprint $table) {
+            $table->dropColumn('total_inden');
+            $table->dropColumn('inden_finished');
+        });
     }
 };

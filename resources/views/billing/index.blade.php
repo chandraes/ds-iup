@@ -147,6 +147,18 @@
                 <h4 class="mt-3">FORM JUAL</h4>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('sales.order', ['kas_ppn' => 1])}}" class="text-decoration-none">
+                <img src="{{asset('images/order-ppn.svg')}}" alt="" width="70">
+                <h5 class="mt-3">SALES ORDER<br>PPN</h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('sales.order', ['kas_ppn' => 0])}}" class="text-decoration-none">
+                <img src="{{asset('images/order-non-ppn.svg')}}" alt="" width="70">
+                <h5 class="mt-3">SALES ORDER<br>NON PPN</h5>
+            </a>
+        </div>
     </div>
     <hr>
     <br>
@@ -186,7 +198,7 @@
         </div>
         <div class="col-md-2 text-center mt-5">
 
-            @include('billing.modal-invoice-konsumen-non-ppn') 
+            @include('billing.modal-invoice-konsumen-non-ppn')
 
             <a href="#" class="text-decoration-none" data-bs-toggle="modal"
             data-bs-target="#modalKonsumenNonPpn">

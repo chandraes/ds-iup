@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('konsumen_id')->nullable()->constrained('konsumens')->onDelete('set null');
             $table->bigInteger('total')->default(0);
             $table->bigInteger('diskon')->default(0);
+            $table->bigInteger('ppn')->default(0);
             $table->bigInteger('add_fee')->default(0);
             $table->bigInteger('grand_total')->default(0);
             $table->bigInteger('dp')->default(0);
