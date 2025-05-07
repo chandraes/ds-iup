@@ -491,6 +491,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/detail/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_detail'])->name('billing.sales-order.detail');
                 Route::post('/void/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_void'])->name('billing.sales-order.void');
 
+                Route::get('/lanjutkan/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_lanjutkan'])->name('billing.sales-order.lanjutkan');
+
                 Route::post('/detail/update/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_update'])->name('billing.sales-order.detail.update');
                 Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\BillingController::class, 'sales_order_delete'])->name('billing.sales-order.detail.delete');
             });

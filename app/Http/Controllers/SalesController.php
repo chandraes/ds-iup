@@ -342,7 +342,7 @@ class SalesController extends Controller
     public function order_void(InvoiceJualSales $order)
     {
         $db = new InvoiceJualSales;
-        $res = $db->void_order($order->id);
+        $res = $db->order_void($order->id);
 
         return redirect()->back()->with($res['status'], $res['message']);
     }

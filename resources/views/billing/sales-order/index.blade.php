@@ -74,6 +74,10 @@
                                 class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Detail</a>
                         </div>
                         <div class="row p-2">
+                            <button type="button" onclick="lanjutkanOrder({{$d->id}})"
+                                class="btn btn-success btn-sm"><i class="fa fa-credit-card me-1"></i> Lanjutkan</button>
+                        </div>
+                        <div class="row p-2">
                             <button type="button" class="btn btn-danger btn-sm" onclick="voidOrder({{$d}})"><i
                                     class="fa fa-exclamation-circle me-1"></i> Void</button>
                         </div>
@@ -140,7 +144,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '{{route('sales.order.void', ':id')}}'.replace(':id', id),
+                    url: '{{route('billing.sales-order.void', ':id')}}'.replace(':id', id),
                     type: 'POST',
                     data: {
                         id: id,
@@ -154,7 +158,22 @@
         })
     }
 
-
+    function lanjutkanOrder(id)
+    {
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Saya  Yakin!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // redirect to route
+                window.location.href = '{{route('billing.sales-order.lanjutkan', ['order' => ':id'])}}'.replace(':id', id);
+            }
+        })
+    }
 
 </script>
 @endpush
