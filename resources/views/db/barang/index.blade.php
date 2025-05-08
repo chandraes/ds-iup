@@ -11,6 +11,7 @@
     @include('db.barang.create')
     @include('db.barang.edit')
     @include('db.barang.keterangan')
+    @include('db.barang.upload-foto')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
@@ -222,6 +223,18 @@
                                 transition: transform 0.2s ease;
                             }
                         </style>
+                        {{-- button to trigger modal and onclick function --}}
+                        <div class="row px-3 text-nowrap mt-1">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$barang->id}})" class="btn btn-success btn-sm">
+                                <i class="fa fa-upload"></i> Edit
+                            </button>
+                        </div>
+                        @else
+                        <div class="row px-3 text-nowrap">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$barang->id}})" class="btn btn-primary btn-sm">
+                                <i class="fa fa-upload"></i> Upload
+                            </button>
+                        </div>
                         @endif
                     </td>
                     <td class="text-center align-middle">
@@ -320,6 +333,11 @@
             width: '100%',
             dropdownParent: $('#editModal')
         });
+
+    function uploadFoto(id) {
+        document.getElementById('uploadFotoForm').action = `{{route('db.barang.upload-image', ':id')}}`.replace(':id', id);
+    }
+
 
     function editFun(data, type, unit)
     {

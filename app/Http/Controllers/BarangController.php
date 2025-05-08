@@ -420,6 +420,32 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Berhasil mengubah data barang!');
     }
 
+    public function barang_upload_foto(Request $request, Barang $barang)
+    {
+        $data = $request->validate([
+            'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:512',
+        ]);
+
+
+        if ($barang->foto && Storage::disk('public')->exists($barang->foto)) {
+            Storage::disk('public')->delete($barang->foto);
+        }
+
+        $file = $request->file('foto');
+        $filename = $barang->id.'_'.time().'.'.$file->getClientOriginalExtension();
+
+        if (!Storage::disk('public')->exists('barang')) {
+            Storage::disk('public')->makeDirectory('barang');
+        }
+
+        $path = $file->storeAs('barang', $filename, 'public');
+        $data['foto'] = $path;
+
+        $barang->update($data);
+
+        return redirect()->back()->with('success', 'Berhasil mengubah foto barang!');
+    }
+
     public function barang_delete(Barang $barang)
     {
         $errorMessage = null;

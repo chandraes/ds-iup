@@ -354,6 +354,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::patch('/update/{barang}', [App\Http\Controllers\BarangController::class, 'barang_update'])->name('db.barang.update');
                 Route::delete('/delete/{barang}', [App\Http\Controllers\BarangController::class, 'barang_delete'])->name('db.barang.delete');
 
+                Route::post('/upload/image/{barang}', [App\Http\Controllers\BarangController::class, 'barang_upload_foto'])->name('db.barang.upload-image');
+
                 Route::post('/kategori/store', [App\Http\Controllers\BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
                 Route::patch('/kategori/update/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
                 Route::delete('/kategori/delete/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_delete'])->name('db.barang.kategori.delete');

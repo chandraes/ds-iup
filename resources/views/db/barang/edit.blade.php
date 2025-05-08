@@ -77,18 +77,7 @@
                                 <option value="2">Barang Non PPN</option>
                             </select>
                         </div>
-                        {{-- upload photo with 500kb max --}}
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3">
-                            <label for="foto" class="form-label">UPLOAD FOTO BARANG</label>
-                            <input type="file" class="form-control" name="foto" id="edit_foto" aria-describedby="helpId"
-                                placeholder="" accept="image/*">
-                            <small class="text-danger">* Maksimal 500kb</small>
-                            <small class="text-danger">* Format file jpg, jpeg, png</small>
-                            <small class="text-danger">* Kosongkan jika tidak ingin mengubah foto</small>
-                        </div>
-                        <div class="col-lg-6 col-md-6 mb-3 mt-3" id="edit_foto_preview" hidden>
-                            <img src="" id="edit_foto_preview_img" class="img-fluid" alt="Preview Foto Barang" width="200">
-                        </div>
+                        
                         {{-- <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
                             <select class="form-select" name="detail_type[]" id="edit_detail_type" multiple>
