@@ -307,6 +307,11 @@
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
 
+    $(document).ready(function() {
+        // Initialize Select2
+        checkSisa();
+    });
+
     $('#konsumen_id').select2({
         width: '100%',
     });

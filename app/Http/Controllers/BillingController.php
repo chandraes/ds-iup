@@ -488,6 +488,26 @@ class BillingController extends Controller
         return redirect()->back()->with('success', 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.');
     }
 
+    public function sales_order_update(InvoiceJualSales $order, Request $request)
+    {
+        $data = $request->validate([
+            'pembayaran' => 'required',
+            'diskon' => 'required',
+            'add_fee' => 'required',
+            'dp' => 'nullable',
+            'dp_ppn' => 'nullable',
+            'dipungut' => 'nullable',
+        ]);
+
+        $data['id'] = $order->id;
+
+        $db = new InvoiceJualSales;
+
+        $res = $db->update_order($data);
+
+        return redirect()->route('billing.sales-order', ['kas_ppn' => $order->kas_ppn])->with($res['status'], $res['message']);
+    }
+
     public function sales_order_void(InvoiceJualSales $order)
     {
         $db = new InvoiceJualSales;
