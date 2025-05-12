@@ -2,7 +2,7 @@
 
 namespace App\Models\transaksi;
 
-use App\Models\db\Barang\Barang;
+use App\Models\db\Konsumen;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,13 +12,13 @@ class OrderInden extends Model
 
     protected $guarded = ['id'];
 
-    public function invoice_jual_sales()
+    public function konsumen()
     {
-        return $this->belongsTo(InvoiceJualSales::class, 'invoice_jual_sales_id');
+        return $this->belongsTo(Konsumen::class);
     }
 
-    public function barang()
+    public function detail()
     {
-        return $this->belongsTo(Barang::class, 'barang_id');
+        return $this->hasMany(OrderIndenDetail::class);
     }
 }

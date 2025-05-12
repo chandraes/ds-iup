@@ -110,17 +110,17 @@ class SalesController extends Controller
             return redirect()->back()->with('error', $errorMessage);
         }
 
-        $ppnValue = $data['barang_ppn'];
-        $oppositePpnValue = $ppnValue == 1 ? 0 : 1;
+        // $ppnValue = $data['barang_ppn'];
+        // $oppositePpnValue = $ppnValue == 1 ? 0 : 1;
 
-        $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->where('user_id', auth()->user()->id)->first();
-        if ($checkKeranjang) {
-            $errorMessage = $ppnValue == 1
-                ? 'Keranjang sudah terisi dengan barang non ppn. Silahkan hapus barang non ppn terlebih dahulu'
-                : 'Keranjang sudah terisi dengan barang ppn. Silahkan hapus barang ppn terlebih dahulu';
+        // $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->where('user_id', auth()->user()->id)->first();
+        // if ($checkKeranjang) {
+        //     $errorMessage = $ppnValue == 1
+        //         ? 'Keranjang sudah terisi dengan barang non ppn. Silahkan hapus barang non ppn terlebih dahulu'
+        //         : 'Keranjang sudah terisi dengan barang ppn. Silahkan hapus barang ppn terlebih dahulu';
 
-            return redirect()->back()->with('error', $errorMessage);
-        }
+        //     return redirect()->back()->with('error', $errorMessage);
+        // }
 
         $data['user_id'] = auth()->user()->id;
         $data['jumlah'] = str_replace('.', '', $data['jumlah']);
@@ -225,17 +225,12 @@ class SalesController extends Controller
         $dbPajak = new Pajak;
         $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
-        $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
-        $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
-        $konsumen = Konsumen::where('active', 1)->where('karyawan_id', auth()->user()->karyawan_id)->get();
-        $ppnStore = $nominalPpn > 0 ? 1 : 0;
-
+        $konsumen = Konsumen::with('kode_toko')->where('active', 1)->where('karyawan_id', auth()->user()->karyawan_id)->get();
+        $adaPpn = $keranjang->where('barang_ppn', 1)->count() > 0 ? 1 : 0;
         $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
         Carbon::setLocale('id');
 
-        $jenis = $keranjang->first()->barang_ppn == 1 ? 1 : 2;
-
-        $barang = Barang::with('barang_nama')->where('jenis', $jenis)->get();
+        $barang = Barang::with(['barang_nama', 'satuan'])->get();
         // Format the date
         $tanggal = Carbon::now()->translatedFormat('d F Y');
         $jam = Carbon::now()->translatedFormat('H:i');
@@ -250,13 +245,11 @@ class SalesController extends Controller
             'keranjang' => $keranjang,
             'ppn' => $ppn,
             'total' => $total,
-            'pphVal' => $pphVal,
-            'nominalPpn' => $nominalPpn,
             'konsumen' => $konsumen,
             'tanggal' => $tanggal,
             'jam' => $jam,
-            'ppnStore' => $ppnStore,
             'penyesuaian' => $penyesuaian,
+            'adaPpn' => $adaPpn
         ]);
     }
 
@@ -292,30 +285,58 @@ class SalesController extends Controller
 
     public function keranjang_checkout(Request $request)
     {
-        $data = $request->validate([
+        // Ambil data keranjang berdasarkan user
+        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+
+        // Validasi berdasarkan jenis barang (PPN atau Non-PPN)
+        $isPpn = $keranjang->where('barang_ppn', 1)->isNotEmpty();
+        $isNonPpn = $keranjang->where('barang_ppn', 0)->isNotEmpty();
+
+        $rules = [
             'konsumen_id' => 'required',
             'pembayaran' => 'required',
-            'diskon' => 'required',
-            'add_fee' => 'required',
             'nama' => 'required_if:konsumen_id,*',
             'no_hp' => 'required_if:konsumen_id,*',
             'npwp' => 'nullable',
             'alamat' => 'nullable',
-            'dp' => 'nullable',
-            'dp_ppn' => 'nullable',
-            'dipungut' => 'nullable',
-        ]);
+        ];
 
+        if ($isPpn) {
+            $rules = array_merge($rules, [
+                'diskon' => 'required',
+                'add_fee' => 'required',
+                'dp' => 'nullable',
+                'dp_ppn' => 'nullable',
+                'dipungut' => 'nullable',
+            ]);
+        }
+
+        if ($isNonPpn) {
+            $rules = array_merge($rules, [
+                'diskon_non_ppn' => 'required',
+                'add_fee_non_ppn' => 'required',
+                'dp_non_ppn' => 'nullable',
+            ]);
+        }
+
+        $data = $request->validate($rules);
+
+        // Atur batas waktu eksekusi dan memori
         ini_set('max_execution_time', 300);
         ini_set('memory_limit', '512M');
 
+        // Validasi tambahan untuk konsumen cash
         if ($data['konsumen_id'] == '*' && $data['pembayaran'] != 1) {
             return redirect()->back()->with('error', 'Konsumen cash tidak bisa memilih sistem pembayaran lain selain cash');
         }
 
+        // Proses checkout
         $db = new KeranjangJual;
-
         $res = $db->checkoutSales($data);
+
+        if ($res['status'] == 'error') {
+            return redirect()->back()->with('error', $res['message']);
+        }
 
         return redirect()->route('sales.stok')->with($res['status'], $res['message']);
     }
@@ -386,6 +407,15 @@ class SalesController extends Controller
         $res = $db->update_order($data);
 
         return redirect()->route('sales.order', ['kas_ppn' => $order->kas_ppn])->with($res['status'], $res['message']);
+    }
+
+    public function order_inden(Request $request)
+    {
+        $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan'])->where('user_id', auth()->user()->karyawan_id)->get();
+
+        return view('sales.order-inden.index', [
+            'data' => $data,
+        ]);
     }
 
 

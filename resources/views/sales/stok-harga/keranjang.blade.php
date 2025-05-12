@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Invoice Penjualan</u></h1>
+            <h1><u>KERANJANG SALES ORDER</u></h1>
         </div>
     </div>
     <div class="row mb-3 d-flex">
@@ -27,15 +27,19 @@
                             </div>
                             <div class="col-md-5 pt-1">
                                 {{-- select barang nama and input jumlah --}}
-                                <select class="form-select" name="barang_id" id="barang_id">
+                                <select class="form-select" name="barang_id" id="barang_id" onchange="setSatuan()">
                                     <option value="" disabled selected>-- Pilih Barang --</option>
                                     @foreach ($barang as $bInden)
-                                    <option value="{{$bInden->id}}">{{$bInden->barang_nama->nama}} ({{$bInden->kode}}) ({{$bInden->merk}})</option>
+                                    <option value="{{$bInden->id}}" data-satuan="{{$bInden->satuan->nama}}">{{$bInden->barang_nama->nama}} ({{$bInden->kode}}) ({{$bInden->merk}})</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <input type="text" class="form-control" name="jumlah_inden" id="jumlah_inden" placeholder="Jumlah">
+                                <div class="input-group mb-3">
+
+                                    <input type="text" class="form-control" name="jumlah_inden" id="jumlah_inden" placeholder="Jumlah">
+                                    <span class="input-group-text" id="satuan-inden">-</span>
+                                  </div>
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-primary" onclick="addKeranjangInden()"><i class="fa fa-plus"></i>
@@ -88,7 +92,7 @@
                                                         <option value="" disabled selected>-- Pilih Konsumen --</option>
                                                         {{-- <option value="*">INPUT MANUAL</option> --}}
                                                         @foreach ($konsumen as $k)
-                                                        <option value="{{$k->id}}">{{$k->nama}}</option>
+                                                        <option value="{{$k->id}}">{{$k->kode_toko ? $k->kode_toko->kode.'.' : ''}} {{$k->nama}}</option>
                                                         @endforeach
                                                     </select>
                                                 </td>
@@ -177,7 +181,7 @@
                                                             disabled>
                                                     </td>
                                                 </tr>
-                                                @if ($ppnStore == 1)
+                                                @if ($adaPpn == 1)
                                                 <tr style="height:50px">
                                                     <td class="text-start align-middle">PPn Disetor Oleh</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
@@ -202,131 +206,13 @@
 
                     </div>
                     <hr>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="table-success">
-                                <tr>
-                                    <th class="text-center align-middle">Kelompok Barang</th>
-                                    <th class="text-center align-middle">Nama Barang</th>
-                                    <th class="text-center align-middle">Kode Barang</th>
-                                    <th class="text-center align-middle">Merk Barang</th>
-                                    <th class="text-center align-middle">Banyak</th>
-                                    <th class="text-center align-middle">Satuan</th>
-                                    <th class="text-center align-middle">Harga Satuan</th>
-                                    <th class="text-center align-middle">Total</th>
-                                    <th class="text-center align-middle">Act</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($keranjang as $b)
-                                <tr class="{{$b->stok_kurang == 1 ? 'table-danger' : ''}}">
-                                    <td class="text-center align-middle">{{$b->stok->kategori->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->stok->barang_nama->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->stok->barang->kode}}</td>
-                                    <td class="text-center align-middle">{{$b->stok->barang->merk}}</td>
-                                    <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
-                                        : '-'}}</td>
-                                    <td class="text-center align-middle">{{$b->nf_harga}}</td>
-                                    <td class="text-end align-middle">{{$b->nf_total}}
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteKeranjang({{$b->id}})"><i
-                                                class="fa fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">DPP :</th>
-                                    <th class="text-end align-middle" id="dppTh">{{number_format($keranjang->sum('total'), 0,
-                                        ',','.')}}</th>
-                                    <td></td>
-                                </tr>
-                                <tr id="trDiskon">
-                                    <th colspan="7" class="text-end align-middle">Diskon :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="diskon" id="diskon" value="0"
-                                            onkeyup="addDiskon()" />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
-                                    <th class="text-end align-middle" id="thDppDiskon">{{number_format($keranjang->sum('total'), 0,
-                                        ',','.')}}</th>
-                                        <td></td>
-                                </tr>
-                                @if ($ppnStore == 1)
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Ppn :</th>
-                                    <th class="text-end align-middle" id="thPpn">{{number_format(($nominalPpn), 0,
-                                        ',','.')}}</th>
-                                        <td></td>
-                                </tr>
-                                @endif
-
-                                {{-- <tr>
-                                    <th colspan="7" class="text-end align-middle">Pph :</th>
-                                    <th class="text-end align-middle" id="pphTh">0</th>
-                                </tr> --}}
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Grand Total :</th>
-                                    <th class="text-end align-middle" id="grandTotalTh">
-                                        {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
-                                        <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
-                                            value="0" />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Total Tagihan :</th>
-                                    <th class="text-end align-middle" id="totalTagihanTh">
-                                        {{number_format(($total+$nominalPpn), 0, ',','.')}}</th>
-                                        <td></td>
-                                </tr>
-                                <tr id="trJumlahDp" hidden>
-                                    <th colspan="7" class="text-end align-middle">Masukan Nominal DP :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
-                                            onkeyup="addDp()" />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                <tr id="trDp" hidden>
-                                    <th colspan="7" class="text-end align-middle">DP :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="0" readonly/>
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                @if ($ppnStore == 1)
-                                <tr id="trDpPpn" hidden>
-                                    <th colspan="7" class="text-end align-middle">DP PPn :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="0"
-                                            readonly />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                @endif
-
-                                <tr id="trSisa" hidden>
-                                    <th colspan="7" class="text-end align-middle">Sisa Tagihan :</th>
-                                    <th class="text-end align-middle" id="thSisa">
-                                        0
-                                    </th>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                    @if ($keranjang->where('barang_ppn' , 1)->count() > 0)
+                    @include('sales.stok-harga.table-ppn')
+                    @endif
+                    <hr>
+                    @if ($keranjang->where('barang_ppn' , 0)->count() > 0)
+                    @include('sales.stok-harga.table-non-ppn')
+                    @endif
                     <div class="row ">
                         <div class="col-md-6"></div>
                         <div class="col-md-6 text-end">
@@ -371,8 +257,23 @@
         delimiter: '.',
         negative: true
     };
-    new Cleave('#add_fee', cleaveOptions);
-    new Cleave('#diskon', cleaveOptions);
+
+
+    function setSatuan() {
+        // Ambil elemen select dan span
+        const selectElement = document.getElementById('barang_id');
+        const satuanSpan = document.getElementById('satuan-inden');
+
+        // Ambil opsi yang dipilih
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+
+        // Ambil data-satuan dari opsi yang dipilih
+        const satuan = selectedOption.getAttribute('data-satuan');
+
+        // Ganti innerText dari span dengan satuan
+        satuanSpan.innerText = satuan || '-';
+    }
+
 
     // Helper untuk menghapus format angka
     function parseNumber(value) {
@@ -389,152 +290,26 @@
         calculatePpn();
     }
 
-     // Update Total Tagihan
-     function updateTotalTagihan(total) {
-        document.getElementById('totalTagihanTh').innerText = formatNumber(total);
-        checkSisa();
-    }
-
-    // Hitung Sisa Tagihan
-    function checkSisa() {
-        const dp = parseNumber(document.getElementById('dp').value || '0');
-        const grandTotal = parseNumber(document.getElementById('totalTagihanTh').innerText);
-        const dpPpn = parseNumber(document.getElementById('dp_ppn')?.value || '0');
-        const dipungut = document.getElementById('dipungut')?.value || 0;
-
-        const sisa = dipungut == 0 ? grandTotal - dp : grandTotal - dp - dpPpn;
-        document.getElementById('thSisa').innerText = formatNumber(sisa);
-    }
-
-    // Tambahkan Diskon
-    function addDiskon() {
-        const dpp = parseNumber(document.getElementById('dppTh').innerText);
-        const diskon = parseNumber(document.getElementById('diskon').value || '0');
-        const dppDiskon = dpp - diskon;
-
-        document.getElementById('thDppDiskon').innerText = formatNumber(dppDiskon);
-        calculatePpn();
-    }
-
-    function calculatePpn()
-    {
-        const dpp = parseNumber(document.getElementById('thDppDiskon').innerText);
-        const ppnRate = {{ $ppn }};
-        const ppnValue = Math.round(dpp * ppnRate / 100);
-        const dipungut = document.getElementById('dipungut')?.value || 0;
-
-        const grandTotal = dipungut == 0 ? dpp : dpp + ppnValue;
-
-        if (document.getElementById('thPpn')) {
-            document.getElementById('thPpn').innerText = formatNumber(ppnValue);
-        }
-        document.getElementById('grandTotalTh').innerText = formatNumber(grandTotal);
-
-        checkSisa();
-        calculateTotalTagihan();
-    }
-
-    function calculateTotalTagihan() {
-        var gt = document.getElementById('grandTotalTh').innerText;
-        var add_fee = document.getElementById('add_fee').value;
-        gt = gt.replace(/\./g, '');
-        add_fee = add_fee.replace(/\./g, '');
-
-        var addFeeNumber = parseFloat(add_fee);
-        var gtNumber = parseFloat(gt);
-
-        totahTagihan = gtNumber + addFeeNumber;
-        var totahTagihanNf = totahTagihan.toLocaleString('id-ID');
-        document.getElementById('totalTagihanTh').innerText = totahTagihanNf;
-
-        checkSisa();
-    }
-
-    function addCheck() {
-        const addFee = parseNumber(document.getElementById('add_fee').value);
-        const limitPenyesuaian = parseFloat({{ $penyesuaian }});
-        const limitNegatif = limitPenyesuaian * -1;
-        const grandTotal = parseNumber(document.getElementById('grandTotalTh').innerText);
-
-        if (addFee > limitPenyesuaian || addFee < limitNegatif) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Penyesuaian tidak boleh melebihi batas limit!',
-            });
-            document.getElementById('add_fee').value = 0;
-            return;
-        }
-
-        if (addFee > grandTotal) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Additional Fee tidak boleh melebihi Grand Total!',
-            });
-            document.getElementById('add_fee').value = 0;
-            return;
-        }
-
-        updateTotalTagihan(grandTotal + addFee);
-    }
-
-
-    function addDp(){
-        console.log('add dp');
-        var jumlah_dp = document.getElementById('jumlah_dp').value;
-
-        var dp = document.getElementById('dp');
-
-        dp = jumlah_dp;
-
-        document.getElementById('dp').value = dp;
-        // var dp = jumlah_dp;
-        var gt = document.getElementById('totalTagihanTh').innerText;
-        gt = gt.replace(/\./g, '');
-        dp = dp.replace(/\./g, '');
-        var dpNumber = parseFloat(dp);
-        var gtNumber = parseFloat(gt);
-
-        if (dpNumber > gtNumber) {
-            console.log('dp melebihi gt');
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'DP tidak boleh melebihi Total Tagihan!',
-            });
-            document.getElementById('dp').value = 0;
-            document.getElementById('dp_ppn').value = 0;
-            return;
-        }
-
-        var thPpnElement = document.getElementById('thPpn');
-        var thPpn = thPpnElement ? thPpnElement.innerText : 0;
-                        // remove . in ppnVal
-        if (thPpn != '0') {
-            var ppn = {{$ppn}};
-
-            var dpPpn = Math.floor(dpNumber * ppn / 100);
-
-            var dpPpnNf = dpPpn.toLocaleString('id-ID');
-
-            document.getElementById('dp').value = (dpNumber - dpPpn).toLocaleString('id-ID');
-            document.getElementById('dp_ppn').value = dpPpnNf;
-
-        }
-
-        checkSisa();
-
-    }
 
     function checkPembayaran()
     {
         var pembayaran = document.getElementById('pembayaran').value;
         if (pembayaran == 2) {
-            console.log('tempo');
             document.getElementById('trJumlahDp').hidden = false;
+            document.getElementById('trJumlahDp_non_ppn').hidden = false;
+
             document.getElementById('trDp').hidden = false;
+            document.getElementById('trDp_non_ppn').hidden = false;
+
             var dp = new Cleave('#dp', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.',
+                negative: false
+            });
+
+            var dp_non_ppn = new Cleave('#dp_non_ppn', {
                 numeral: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',
@@ -550,18 +325,27 @@
             }
 
             var sisa = document.getElementById('grandTotalTh').innerText;
+            var sisa_non_ppn = document.getElementById('grandTotalTh_non_ppn').innerText;
+
             document.getElementById('trSisa').hidden = false;
+            document.getElementById('trSisa_non_ppn').hidden = false;
+
             document.getElementById('thSisa').innerText = sisa;
+            document.getElementById('thSisa_non_ppn').innerText = sisa_non_ppn;
         } else {
             document.getElementById('tempo_hari').value = '-';
             document.getElementById('trJumlahDp').hidden = true;
+            document.getElementById('trJumlahDp_non_ppn').hidden = true;
             document.getElementById('trDp').hidden = true;
+            document.getElementById('trDp_non_ppn').hidden = true;
+
             var tdDpPpnElement = document.getElementById('trDpPpn');
             if (tdDpPpnElement) {
                 document.getElementById('trDpPpn').hidden = true;
             }
             // document.getElementById('trDpPpn').hidden = true;
             document.getElementById('trSisa').hidden = true;
+            document.getElementById('trSisa_non_ppn').hidden = true;
         }
     }
 
@@ -570,42 +354,71 @@
     {
         var id = document.getElementById('konsumen_id').value;
 
-        if (id != '*') {
-            document.getElementById('nama').required = false;
-            document.getElementById('namaTr').hidden = true;
-            document.getElementById('alamat').disabled = true;
-            document.getElementById('npwp').disabled = true;
-            document.getElementById('no_hp').disabled = true;
-            $.ajax({
-                url: '{{route('universal.get-konsumen')}}',
-                type: 'GET',
-                data: {
-                    id: id
-                },
-                success: function(data) {
-                    document.getElementById('pembayaran').value = data.sistem_pembayaran;
+        document.getElementById('nama').required = false;
+        document.getElementById('namaTr').hidden = true;
+        document.getElementById('alamat').disabled = true;
+        document.getElementById('npwp').disabled = true;
+        document.getElementById('no_hp').disabled = true;
+        $.ajax({
+            url: '{{route('universal.get-konsumen')}}',
+            type: 'GET',
+            data: {
+                id: id
+            },
+            success: function(data) {
+                document.getElementById('pembayaran').value = data.sistem_pembayaran;
 
-                    document.getElementById('alamat').value = data.alamat;
-                    document.getElementById('npwp').value = data.npwp;
-                    document.getElementById('no_hp').value = data.no_hp;
-                    if (data.pembayaran == 2) {
-                        // empty pembayaran option
-                        document.getElementById('pembayaran').innerHTML = '';
-                        // add option dengan value 1 cash, 2 tempo, 3 titipan menggunakan array atau json lalu buat selected ke 2
-                        var pembayaranText = ['Cash', 'Tempo', 'Titipan'];
-                        var pembayaranValue = [1, 2, 3];
+                document.getElementById('alamat').value = data.alamat;
+                document.getElementById('npwp').value = data.npwp;
+                document.getElementById('no_hp').value = data.no_hp;
+                if (data.pembayaran == 2) {
+                    // empty pembayaran option
+                    document.getElementById('pembayaran').innerHTML = '';
+                    // add option dengan value 1 cash, 2 tempo, 3 titipan menggunakan array atau json lalu buat selected ke 2
+                    var pembayaranText = ['Cash', 'Tempo', 'Titipan'];
+                    var pembayaranValue = [1, 2, 3];
 
-                        for (var i = 0; i < pembayaranText.length; i++) {
-                            var option = document.createElement('option');
-                            option.value = pembayaranValue[i];
-                            option.text = pembayaranText[i];
-                            document.getElementById('pembayaran').add(option);
-                        }
+                    for (var i = 0; i < pembayaranText.length; i++) {
+                        var option = document.createElement('option');
+                        option.value = pembayaranValue[i];
+                        option.text = pembayaranText[i];
+                        document.getElementById('pembayaran').add(option);
+                    }
 
-                        document.getElementById('pembayaran').value = 2;
+                    document.getElementById('pembayaran').value = 2;
 
-                        document.getElementById('tempo_hari').value = data.tempo_hari;
+                    document.getElementById('tempo_hari').value = data.tempo_hari;
+
+                    var jumlah_dp_ppn = document.getElementById('trJumlahDp');
+                    var jumlah_dp_non_ppn =  document.getElementById('trJumlahDp_non_ppn');
+                    var dp_ppn = document.getElementById('trDp');
+                    var dp_non_ppn = document.getElementById('trDp_non_ppn');
+
+                    if (jumlah_dp_ppn) {
                         document.getElementById('trJumlahDp').hidden = false;
+
+                        var dpCleave = new Cleave('#jumlah_dp', {
+                            numeral: true,
+                            numeralThousandsGroupStyle: 'thousand',
+                            numeralDecimalMark: ',',
+                            delimiter: '.',
+                            negative: false
+                        });
+                    }
+                    if (jumlah_dp_non_ppn) {
+                        document.getElementById('trJumlahDp_non_ppn').hidden = false;
+
+                        var dpNonPpnCleave = new Cleave('#jumlah_dp_non_ppn', {
+                            numeral: true,
+                            numeralThousandsGroupStyle: 'thousand',
+                            numeralDecimalMark: ',',
+                            delimiter: '.',
+                            negative: false
+                        });
+                    }
+
+                    if (dp_ppn) {
+
                         document.getElementById('trDp').hidden = false;
                         var dp = new Cleave('#dp', {
                             numeral: true,
@@ -614,73 +427,65 @@
                             delimiter: '.',
                             negative: false
                         });
-                        var jumlah_dp = new Cleave('#jumlah_dp', {
+                    }
+
+                    if (dp_non_ppn) {
+                        document.getElementById('trDp_non_ppn').hidden = false;
+                        var dpNonPpn = new Cleave('#dp_non_ppn', {
                             numeral: true,
                             numeralThousandsGroupStyle: 'thousand',
                             numeralDecimalMark: ',',
                             delimiter: '.',
                             negative: false
                         });
-                        var ppnValElement = document.getElementById('thPpn');
-                        var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
-                        // remove . in ppnVal
-                        if (ppnVal != '0') {
-                            document.getElementById('trDpPpn').hidden = false;
-                        }
-
-                        var sisa = document.getElementById('grandTotalTh').innerText;
-                        document.getElementById('trSisa').hidden = false;
-                        document.getElementById('thSisa').innerText = sisa;
-                    } else {
-
-                        document.getElementById('tempo_hari').value = '-';
-                        document.getElementById('trJumlahDp').hidden = true;
-                        document.getElementById('trDp').hidden = true;
-                        var tdDpPpnElement = document.getElementById('trDpPpn');
-                        if (tdDpPpnElement) {
-                            document.getElementById('trDpPpn').hidden = true;
-                        }
-                        // document.getElementById('trDpPpn').hidden = true;
-                        document.getElementById('trSisa').hidden = true;
                     }
+
+                    var ppnValElement = document.getElementById('thPpn');
+                    var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
+                    // remove . in ppnVal
+                    if (ppnVal != '0') {
+                        document.getElementById('trDpPpn').hidden = false;
+                    }
+
+
+
+
+                    var trSisaElement = document.getElementById('trSisa');
+                    var trSisaNonPpnElement = document.getElementById('trSisa_non_ppn');
+
+                    if (trSisaElement) {
+                        document.getElementById('trSisa').hidden = false;
+                        var sisa = document.getElementById('grandTotalTh').innerText;
+                        document.getElementById('thSisa').innerText = sisa;
+                    }
+                    if (trSisaNonPpnElement) {
+                        document.getElementById('trSisa_non_ppn').hidden = false;
+                        var sisa_non_ppn = document.getElementById('grandTotalTh_non_ppn').innerText;
+                        document.getElementById('thSisa_non_ppn').innerText = sisa_non_ppn;
+                    }
+
+                } else {
+
+                    document.getElementById('tempo_hari').value = '-';
+                    document.getElementById('trJumlahDp').hidden = true;
+                    document.getElementById('trJumlahDp_non_ppn').hidden = true;
+
+                    document.getElementById('trDp').hidden = true;
+                    document.getElementById('trDp_non_ppn').hidden = true;
+
+                    var tdDpPpnElement = document.getElementById('trDpPpn');
+                    if (tdDpPpnElement) {
+                        document.getElementById('trDpPpn').hidden = true;
+                    }
+                    // document.getElementById('trDpPpn').hidden = true;
+
+                    document.getElementById('trSisa').hidden = true;
+
+                    document.getElementById('trSisa_non_ppn').hidden = true;
                 }
-            });
-            return;
-        }
-
-        document.getElementById('pembayaran').innerHTML = '';
-        // add option dengan value 1 cash selected
-        var pembayaranText = ['Cash'];
-        var pembayaranValue = [1];
-
-        for (var i = 0; i < pembayaranText.length; i++) {
-            var option = document.createElement('option');
-            option.value = pembayaranValue[i];
-            option.text = pembayaranText[i];
-            if (pembayaranValue[i] == 1) { // Jika value adalah 1, maka set sebagai selected
-                option.selected = true;
             }
-            document.getElementById('pembayaran').add(option);
-        }
-
-
-        document.getElementById('trDp').hidden = true;
-        document.getElementById('trJumlahDp').hidden = true;
-        document.getElementById('trDpPpn').hidden = true;
-        document.getElementById('trSisa').hidden = true;
-        document.getElementById('namaTr').hidden = false;
-        document.getElementById('pembayaran').value = 'Cash';
-        document.getElementById('tempo_hari').value = '-';
-        document.getElementById('npwp').value = '';
-        // remove disabled from alamat & npwp
-        document.getElementById('alamat').disabled = false;
-        document.getElementById('npwp').disabled = false;
-        document.getElementById('no_hp').disabled = false;
-        document.getElementById('no_hp').value = '';
-        document.getElementById('no_hp').required = true;
-        document.getElementById('alamat').value = '';
-        // nama required
-        document.getElementById('nama').required = true;
+        });
+        return;
 
     }
 

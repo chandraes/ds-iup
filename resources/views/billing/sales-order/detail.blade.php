@@ -309,7 +309,7 @@
 
     $(document).ready(function() {
         // Initialize Select2
-        checkSisa();
+        calculateTotalTagihan();
     });
 
     $('#konsumen_id').select2({

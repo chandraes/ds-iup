@@ -234,7 +234,7 @@
                                     <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
-                                            value="0" />
+                                            value="{{$order->nf_add_fee}}" />
                                     </th>
                                     <td></td>
                                 </tr>
@@ -309,7 +309,7 @@
 
     $(document).ready(function() {
         // Initialize Select2
-        checkSisa();
+        calculateTotalTagihan();
     });
 
     $('#konsumen_id').select2({

@@ -94,7 +94,7 @@
             </form>
         </div>
     </div>
-    @if ($keranjang->where('barang_ppn', 0)->count() == 0)
+
     <center>
         <h2>Barang PPN</h2>
     </center>
@@ -210,8 +210,7 @@
     <br>
     <hr>
     <br>
-    @endif
-    @if ($keranjang->where('barang_ppn', 1)->count() == 0)
+
     <center>
         <h2>Barang Non PPN</h2>
     </center>
@@ -326,16 +325,7 @@
         </table>
     </div>
 </div>
-@endif
 
-@if(session('pdfUrl'))
-<script type="text/javascript">
-    window.onload = function() {
-            var pdfUrl = "{{ session('pdfUrl') }}";
-            window.open(pdfUrl, '_blank');
-        };
-</script>
-@endif
 @endsection
 @push('css')
 
@@ -347,8 +337,8 @@
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
     $('#filter_barang_nama').select2({
-    theme: 'bootstrap-5',
-    width: '100%',
+        theme: 'bootstrap-5',
+        width: '100%',
     });
 
     confirmAndSubmit("#keranjangEmpty", "Apakah anda yakin untuk mengosongkan keranjang?");

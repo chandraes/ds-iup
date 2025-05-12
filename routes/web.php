@@ -55,6 +55,10 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/detail/update/{order}', [App\Http\Controllers\SalesController::class, 'order_detail_update'])->name('sales.order.detail.update');
             });
 
+            Route::prefix('order-inden')->group(function() {
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'order_inden'])->name('sales.order-inden');
+            });
+
 
         });
     });

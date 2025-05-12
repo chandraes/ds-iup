@@ -522,6 +522,9 @@ class KeranjangJual extends Model
             // dd($data);
             $keranjang = $this->where('user_id', auth()->user()->id)->get();
 
+            $keranjang_ppn = $keranjang->where('barang_ppn', 1);
+            $keranjang_non_ppn = $keranjang->where('barang_ppn', 0);
+
             if ($keranjang->isEmpty()) {
                 return [
                     'status' => 'error',
@@ -529,14 +532,9 @@ class KeranjangJual extends Model
                 ];
             }
 
-            $dipungut = isset($data['dipungut']) ? $data['dipungut'] : 1;
-
-            $barang_ppn = $keranjang->first()->barang_ppn;
-
-            $dbPajak = new Pajak;
-            $dbInvoice = new InvoiceJualSales;
-
             $data['karyawan_id'] = auth()->user()->karyawan_id;
+            $data['titipan'] = $data['pembayaran'] == 3 ? 1 : 0;
+            $data['sistem_pembayaran'] = $data['pembayaran'];
 
             if ($data['karyawan_id'] == null) {
                 return [
@@ -544,137 +542,84 @@ class KeranjangJual extends Model
                     'message' => 'User belum memiliki karyawan id. Silahkan menghubungi Admin.',
                 ];
             }
-            $data['total'] = $keranjang->sum('total');
-            $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
-            $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
-
-            $data['titipan'] = $data['pembayaran'] == 3 ? 1 : 0;
-
-            $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
-            $dppSetelahDiskon = $data['total'] - $data['diskon'];
-
-            $data['ppn'] = $keranjang->where('barang_ppn', 1)->first() ? ($dppSetelahDiskon * $ppnVal / 100) : 0;
-
-            $data['kas_ppn'] = $barang_ppn;
-
-            $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
-
-            $data['dp_ppn'] = isset($data['dp_ppn']) ? str_replace('.', '', $data['dp_ppn']) : 0;
-
-            if ($dipungut == 1) {
-                $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
-            } else {
-                $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
-            }
-
-            $data['ppn_dipungut'] = $dipungut;
-
 
             $konsumen = Konsumen::find($data['konsumen_id']);
 
             $data['lunas'] = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
 
-            // kalau sistem pembayaran konsumen adalah tempo dan sistem pembayaran invoice bukan tunai
-            // maka cek sisa plafon konsumen
-            if ($konsumen->pembayaran == 2 && $data['pembayaran'] != 1) {
-                $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
-                if ($sisaTerakhir + $data['grand_total'] > $konsumen->plafon) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Plafon konsumen sudah melebihi batas.',
-                    ];
+            if ($keranjang_ppn->count() > 0) {
+                $store_ppn = $this->keranjangPpn($keranjang_ppn, $data);
+
+                if (isset($store_ppn['status']) && $store_ppn['status'] == false) {
+                     $stok_update = $store_ppn;
+                    throw new \Exception('Terdapat stok yang kurang dari barang yang dijual');
                 }
+            }
 
-                // jika invoice pembayaran adalah tempo, cek apakah konsumen memiliki tagihan yang jatuh tempo
-                if ($data['pembayaran'] == 2) {
-                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
-                        ->where('titipan', 0)
-                        ->where('lunas', 0)
-                        ->where('void', 0)
-                        ->where('jatuh_tempo', '<', today())
-                        ->exists();
+            if ($keranjang_non_ppn->count() > 0) {
+                $store_non_ppn = $this->keranjangNonPpn($keranjang_non_ppn, $data);
 
-                    if ($checkInvoice) {
-                        return [
-                            'status' => 'error',
-                            'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.',
-                        ];
-                    }
+                if (isset($store_non_ppn['status']) && $store_non_ppn['status'] == false) {
+                    $stok_update = $store_non_ppn;
+                    throw new \Exception('Terdapat stok yang kurang dari barang yang dijual');
                 }
-
-            }
-
-            $stateBayar = $data['lunas'] == 1 ? 1 : 0;
-
-            // Update sisa tagihan dan sisa ppn
-            if ($data['lunas'] != 1) {
-                $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
-                $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
-            }
-            // Create Invoice
-            $data['sistem_pembayaran'] = $data['pembayaran'];
-
-            $inden = KeranjangInden::where('user_id', auth()->user()->id)->get();
-
-            $data['total_inden'] = $inden->count();
-
-            $data['inden_finished'] = $data['total_inden'] > 0 ? 0 : 1;
-
-            $invoice = $dbInvoice->create($data);
-
-            foreach ($inden as $barangInden) {
-                $invoice->order_inden()->create([
-                    'barang_id' => $barangInden->barang_id,
-                    'jumlah' => $barangInden->jumlah,
-                ]);
-
-                $barangInden->delete();
-            }
-
-            foreach ($keranjang as $item) {
-                $invoice->invoice_detail()->create([
-                    'barang_id' => $item->barang_id,
-                    'barang_stok_harga_id' => $item->barang_stok_harga_id,
-                    'jumlah' => $item->jumlah,
-                    'harga_satuan' => $item->harga_satuan,
-                    'total' => $item->total,
-                ]);
-            }
-
-            $stok_update = $this->update_stok($keranjang);
-
-            if (isset($stok_update['status']) && $stok_update['status'] == false) {
-                $status = 'Terdapat stok yang kurang dari barang yang di jual';
-                throw new \Exception('Terdapat stok yang kurang dari barang yang dijual');
             }
 
             $this->where('user_id', auth()->user()->id)->delete();
 
-            DB::commit();
+            $inden = KeranjangInden::where('user_id', auth()->user()->id)->get();
+            $pesanInden = '';
 
-            $dbWa = new GroupWa;
+            if ($inden->count() > 0) {
+                $jumlah_inden = $inden->count();
 
-            $pesan = $invoice->konsumen->nama."\n".
-                    $invoice->konsumen->alamat."\n\n";
+                $createInden = OrderInden::create([
+                    'karyawan_id' => auth()->user()->karyawan_id,
+                    'konsumen_id' => $data['konsumen_id'],
+                    'jumlah' => $jumlah_inden,
+                    'is_finished' => 0,
+                ]);
 
-            $n = 1;
-            foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
-            }
+                foreach ($inden as $barangInden) {
+                    $createInden->detail()->create([
+                        'barang_id' => $barangInden->barang_id,
+                        'jumlah' => $barangInden->jumlah,
+                    ]);
 
-            if ($invoice->total_inden > 0) {
+                    $barangInden->delete();
+                }
+
+
                 $nInden = 1;
-                $pesan .= "\nOrder Stok Habis: \n";
-                foreach ($invoice->load('order_inden.barang.barang_nama', 'order_inden.barang.satuan')->order_inden as $d) {
-                    $pesan .= $nInden++.'. ['.$d->barang->barang_nama->nama."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+                $pesanInden .= "\nOrder Stok Habis: \n";
+
+                foreach ($createInden->load('detail.barang.barang_nama', 'detail.barang.satuan')->detail as $d) {
+                    $pesanInden .= $nInden++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
                 }
             }
 
+            DB::commit();
 
+            $dbWa = new GroupWa;
+            $dbInvoice = new InvoiceJualSales;
 
+            $pesan = $konsumen->nama."\n".
+                    $konsumen->alamat."\n";
+
+            if (isset($store_ppn['pesan'])) {
+                $pesan .= "\n".$store_ppn['pesan'];
+            }
+
+            if (isset($store_non_ppn['pesan'])) {
+                $pesan .= "\n".$store_non_ppn['pesan'];
+            }
+
+            if ($inden->count() > 0) {
+                $pesan .= $pesanInden;
+            }
 
             $pesan .= "\nNote: \n".
-                    $dbInvoice->pembayaran($invoice->sistem_pembayaran);
+                    $dbInvoice->pembayaran($data['sistem_pembayaran']);
 
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
@@ -698,7 +643,136 @@ class KeranjangJual extends Model
         return [
             'status' => 'success',
             'message' => 'Transaksi berhasil',
-            'invoice' => $invoice,
         ];
     }
+
+    private function keranjangPpn($keranjang, $data)
+    {
+        $data['kas_ppn'] = 1;
+
+        $dipungut = isset($data['dipungut']) ? $data['dipungut'] : 1;
+
+        $dbPajak = new Pajak;
+
+        $data['total'] = $keranjang->sum('total');
+        $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
+        $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
+
+        $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
+        $dppSetelahDiskon = $data['total'] - $data['diskon'];
+
+        $data['ppn'] = floor($dppSetelahDiskon * $ppnVal / 100);
+
+        $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
+
+        $data['dp_ppn'] = isset($data['dp_ppn']) ? str_replace('.', '', $data['dp_ppn']) : 0;
+
+        if ($dipungut == 1) {
+            $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
+        } else {
+            $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
+        }
+
+        $data['ppn_dipungut'] = $dipungut;
+
+         // Update sisa tagihan dan sisa ppn
+        if ($data['lunas'] != 1) {
+            $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
+            $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
+        }
+        // Create Invoice
+
+        $dbInvoice = new InvoiceJualSales;
+        $invoice = $dbInvoice->create($data);
+
+        foreach ($keranjang as $item) {
+            $invoice->invoice_detail()->create([
+                'barang_id' => $item->barang_id,
+                'barang_stok_harga_id' => $item->barang_stok_harga_id,
+                'jumlah' => $item->jumlah,
+                'harga_satuan' => $item->harga_satuan,
+                'total' => $item->total,
+            ]);
+        }
+
+        $stok_update = $this->update_stok($keranjang);
+
+        if (isset($stok_update['status']) && $stok_update['status'] == false) {
+            return [
+                'id' => $stok_update['id'],
+                'status' => false,
+            ];
+        }
+
+        $pesan = "Barang PPN: \n";
+
+        $n = 1;
+        foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
+            $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+        }
+
+        return [
+            'status' => true,
+            'pesan' => $pesan,
+        ];
+
+    }
+
+    private function keranjangNonPpn($keranjang, $data)
+    {
+        $data['kas_ppn'] = 0;
+
+        $dipungut = 1;
+
+        $data['total'] = $keranjang->sum('total');
+        $data['diskon'] = isset($data['diskon_non_ppn']) ? str_replace('.', '', $data['diskon_non_ppn']) : 0;
+        $data['add_fee'] = isset($data['add_fee_non_ppn']) ? str_replace('.', '', $data['add_fee_non_ppn']) : 0;
+
+        $dppSetelahDiskon = $data['total'] - $data['diskon'];
+
+        $data['dp'] = isset($data['dp_non_ppn']) ? str_replace('.', '', $data['dp_non_ppn']) : 0;
+        $data['dp_ppn'] = 0;
+        
+        $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
+        $data['ppn_dipungut'] = $dipungut;
+
+        $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
+        $data['sisa_ppn'] = 0;
+
+        $dbInvoice = new InvoiceJualSales;
+        $invoice = $dbInvoice->create($data);
+
+        foreach ($keranjang as $item) {
+            $invoice->invoice_detail()->create([
+                'barang_id' => $item->barang_id,
+                'barang_stok_harga_id' => $item->barang_stok_harga_id,
+                'jumlah' => $item->jumlah,
+                'harga_satuan' => $item->harga_satuan,
+                'total' => $item->total,
+            ]);
+        }
+
+        $stok_update = $this->update_stok($keranjang);
+
+        if (isset($stok_update['status']) && $stok_update['status'] == false) {
+            return [
+                'id' => $stok_update['id'],
+                'status' => false,
+            ];
+        }
+
+        $pesan = "Barang Non PPN: \n";
+
+        $n = 1;
+        foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
+            $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+        }
+
+        return [
+            'status' => true,
+            'pesan' => $pesan,
+        ];
+
+    }
+
 }
