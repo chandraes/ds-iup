@@ -162,12 +162,20 @@ class InvoiceJualSales extends Model
         $invoice = InvoiceJualSales::find($id);
 
         $detail = $invoice->invoice_detail;
-
+        $pesan = '';
         try {
 
             DB::beginTransaction();
              // Update stok barang
             $this->updateStok($detail);
+
+            $pesan = $invoice->konsumen->nama."\n".
+                    $invoice->konsumen->alamat."\n\n";
+
+            $n = 1;
+            foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
+                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+            }
 
             // Hapus detail invoice
             $invoice->invoice_detail()->delete();
@@ -176,6 +184,15 @@ class InvoiceJualSales extends Model
             $invoice->delete();
 
             DB::commit();
+
+            $dbWa = new GroupWa;
+
+            $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
+
+            $pesan .= "\nNote: \n".
+                    "VOID";
+
+            $dbWa->sendWa($tujuan, $pesan);
 
         } catch (\Throwable $th) {
             //throw $th;
@@ -255,8 +272,9 @@ class InvoiceJualSales extends Model
 
             $n = 1;
             foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
             }
+
 
             $pesan .= "\nNote: \n".
                     $dbInvoice->pembayaran($invoice->sistem_pembayaran).
