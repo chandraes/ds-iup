@@ -450,14 +450,24 @@ class BillingController extends Controller
     {
         $req = $request->validate([
             'kas_ppn' => 'required|boolean',
+            'karyawan_id' => 'nullable|exists:karyawans,id',
         ]);
 
-        $data = InvoiceJualSales::with(['karyawan'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn'])->get();
+        $data = InvoiceJualSales::with(['karyawan'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn']);
+
+        if (isset($req['karyawan_id']) && $req['karyawan_id'] != '') {
+            $data->where('karyawan_id', $req['karyawan_id']);
+        }
+
+        $data = $data->get();
+
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $karyawan = Karyawan::where('jabatan_id', 3)->get();
 
         return view('billing.sales-order.index', [
             'data' => $data,
             'ppn' => $ppn,
+            'karyawan' => $karyawan,
         ]);
 
     }

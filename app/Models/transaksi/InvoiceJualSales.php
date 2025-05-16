@@ -163,7 +163,7 @@ class InvoiceJualSales extends Model
 
         $detail = $invoice->invoice_detail;
         $pesan = '';
-        
+
         try {
 
             DB::beginTransaction();
@@ -269,17 +269,35 @@ class InvoiceJualSales extends Model
             $dbWa = new GroupWa;
 
             $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
-                    $invoice->konsumen->alamat."\n\n";
+                    $invoice->konsumen->alamat."\n".
+                    $invoice->konsumen->kota."\n\n";
+
+            // create tanggal from created_at invoice with format d F Y in indonesian
+            $tanggal = Carbon::parse($invoice->created_at)->translatedFormat('d F Y');
+
+            $barang = $invoice->kas_ppn == 1 ? 'Barang PPN' : 'Barang Non PPN';
+            $pesan .= "*Order* : ".$tanggal."\n".
+                    $barang.":\n";
+
+            $grandTotal = $data['grand_total'];
 
             $n = 1;
             foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+                $pesan .= $n++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
             }
 
+            $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$invoice->konsumen->tempo_hari . ' Hari';
 
-            $pesan .= "\nNote: \n".
-                    $dbInvoice->pembayaran($invoice->sistem_pembayaran).
-                    "\nEdited";
+            $sales = $invoice->karyawan->nama;
+
+            $pesan .= "==========================\n";
+
+            $pesan .= "Note: \n".
+                        "\nEdited\n".
+                        "•⁠ Sales: ".$sales."\n".
+                        "•⁠ ".$pembayaran."\n";
+
+            $pesan .= "•⁠ Order: *Rp. ". number_format($grandTotal, 0,',','.')."*";
 
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 

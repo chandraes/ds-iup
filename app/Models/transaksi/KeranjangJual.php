@@ -4,6 +4,7 @@ namespace App\Models\transaksi;
 
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\GroupWa;
@@ -592,7 +593,7 @@ class KeranjangJual extends Model
 
                 $nInden = 1;
                 $pesanInden .= "==========================\n";
-                $pesanInden .= "\n*Pre order*: \n";
+                $pesanInden .= "*Pre order*: \n";
 
                 foreach ($createInden->load('detail.barang.barang_nama', 'detail.barang.satuan')->detail as $d) {
                     $pesanInden .= $nInden++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
@@ -603,26 +604,40 @@ class KeranjangJual extends Model
 
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
+            $grandTotal = 0;
 
             $pesan = $konsumen->kode_toko->kode. ' '.$konsumen->nama."\n".
                     $konsumen->alamat."\n".
-                    $konsumen->kabupaten_kota->nama_wilayah."\n";
+                    $konsumen->kota."\n";
+
+             $tanggal = Carbon::now()->translatedFormat('d F Y');
+
+            $pesan .= "*Order* : ".$tanggal."\n";
 
             if (isset($store_ppn['pesan'])) {
-                $pesan .= "\n".$store_ppn['pesan'];
+                $pesan .= $store_ppn['pesan'];
+                $grandTotal += $store_ppn['grand_total'];
             }
 
             if (isset($store_non_ppn['pesan'])) {
-                $pesan .= "\n".$store_non_ppn['pesan'];
+                $pesan .= $store_non_ppn['pesan'];
+                $grandTotal += $store_non_ppn['grand_total'];
             }
 
             if ($inden->count() > 0) {
                 $pesan .= $pesanInden;
             }
 
-            $pesan .= "\n==========================\n";
+            $pesan .= "==========================\n";
+
+            $sales = Karyawan::find(auth()->user()->karyawan_id);
+
+            $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$konsumen->tempo_hari . ' Hari';
             $pesan .= "Note: \n".
-                    $dbInvoice->pembayaran($data['sistem_pembayaran']);
+                    "•⁠ Sales: *".$sales->nama."*\n".
+                    "•⁠ ".$pembayaran."\n";
+
+            $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n";
 
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
@@ -717,6 +732,7 @@ class KeranjangJual extends Model
         return [
             'status' => true,
             'pesan' => $pesan,
+            'grand_total' => $data['grand_total'],
         ];
 
     }
@@ -774,6 +790,7 @@ class KeranjangJual extends Model
         return [
             'status' => true,
             'pesan' => $pesan,
+            'grand_total' => $data['grand_total'],
         ];
 
     }

@@ -28,6 +28,20 @@
 
 </div>
 <div class="container-fluid table-responsive ml-3">
+
+    <form method="GET" action="{{ url()->current() }}">
+        <input type="hidden" name="kas_ppn" value="{{ request()->get('kas_ppn') }}">
+        <div class="row text-end">
+            <div class="col-md-3">
+                <select class="form-select" name="karyawan_id" id="karyawan_id" onchange="this.form.submit()">
+                    <option value="" selected>-- Semua Karyawan</option>
+                    @foreach ($karyawan as $k)
+                    <option value="{{$k->id}}" @if (request()->get('karyawan_id') == $k->id) selected @endif>{{$k->nama}}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </form>
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%">
             <thead class="table-success">
@@ -74,8 +88,8 @@
                                 class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Detail</a>
                         </div>
                         <div class="row p-2">
-                            <button type="button" onclick="lanjutkanOrder({{$d->id}})"
-                                class="btn btn-success btn-sm"><i class="fa fa-credit-card me-1"></i> Lanjutkan</button>
+                            <button type="button" onclick="lanjutkanOrder({{$d->id}})" class="btn btn-success btn-sm"><i
+                                    class="fa fa-credit-card me-1"></i> Lanjutkan</button>
                         </div>
                         <div class="row p-2">
                             <button type="button" class="btn btn-danger btn-sm" onclick="voidOrder({{$d}})"><i
