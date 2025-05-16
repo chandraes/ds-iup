@@ -600,7 +600,7 @@ class KeranjangJual extends Model
                 }
             }
 
-            DB::commit();
+            // DB::commit();
 
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
@@ -608,7 +608,7 @@ class KeranjangJual extends Model
 
             $pesan = $konsumen->kode_toko->kode. ' '.$konsumen->nama."\n".
                     $konsumen->alamat."\n".
-                    $konsumen->kota."\n";
+                    $konsumen->kota."\n\n";
 
              $tanggal = Carbon::now()->translatedFormat('d F Y');
 
@@ -634,8 +634,9 @@ class KeranjangJual extends Model
 
             $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$konsumen->tempo_hari . ' Hari';
             $pesan .= "Note: \n".
-                    "•⁠ Sales: *".$sales->nama."*\n".
-                    "•⁠ ".$pembayaran."\n";
+                    "•⁠ ".$pembayaran."\n".
+                    "•⁠ Sales: *".$sales->nama."*\n"
+                    ;
 
             $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n";
 

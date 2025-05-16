@@ -89,7 +89,7 @@
                                                 <td class="text-start align-middle">
                                                     <select class="form-select" name="konsumen_id" id="konsumen_id" required
                                                         onchange="getKonsumenData()">
-                                                        <option value="" disabled selected>-- Pilih Konsumen --</option>
+                                                        <option value="" selected>-- Pilih Konsumen --</option>
                                                         {{-- <option value="*">INPUT MANUAL</option> --}}
                                                         @foreach ($konsumen as $k)
                                                         <option value="{{$k->id}}">{{$k->kode_toko ? $k->kode_toko->kode.'.' : ''}} {{$k->nama}}</option>
@@ -188,9 +188,7 @@
                                                     <td class="text-start align-middle">
                                                         <select class="form-select" name="dipungut" id="dipungut" required
                                                         onchange="ppnPungut()">
-                                                            <option value="" selected>-- Pilih Salah Satu --</option>
-                                                            <option value="1">Sendiri</option>
-                                                            <option value="0">Konsumen</option>
+                                                            <option selected value="1">Sendiri</option>
                                                     </select>
                                                     </td>
                                                 </tr>
@@ -371,7 +369,7 @@
 
             var thSisaElement = document.getElementById('thSisa');
             var thSisaNonPpnElement = document.getElementById('thSisa_non_ppn');
-            
+
             if (thSisaElement) {
                 document.getElementById('thSisa').innerText = sisa;
             }
