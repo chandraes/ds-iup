@@ -362,7 +362,7 @@ class FormJualController extends Controller
 
             }
 
-            $pesan .= 'Konsumen : *'.$konsumen->nama."*\n\n".
+            $pesan .= 'Konsumen : *'.$konsumen->kode_toko->kode." ".$konsumen->nama."*\n\n".
                     'Nilai DPP    : Rp '.number_format($invoice->total, 0, ',', '.')."\n";
 
             if ($invoice->kas_ppn == 1) {
