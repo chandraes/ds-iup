@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>REKAP KONSUMEN</u></h1>
-            <h1><u>{{$konsumen->nama}}</u></h1>
+            <h1><u>{{$konsumen->kode_toko->kode." ".$konsumen->nama}}</u></h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>

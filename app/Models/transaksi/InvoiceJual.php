@@ -866,7 +866,7 @@ class InvoiceJual extends Model
                             '*'.$invoice->kode."*\n\n".
                             'Uraian : *'.$uraian."*\n".
                             'Pembayaran : *'.$pembayaran."*\n\n".
-                            'Konsumen : *'.$konsumen->nama."*\n".
+                            'Konsumen : *'.$konsumen->kode_toko->kode.' '.$konsumen->nama."*\n".
                             'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                             "Ditransfer ke rek:\n\n".
                             'Bank      : '.$store->bank."\n".
@@ -952,7 +952,7 @@ class InvoiceJual extends Model
                                '*'.$invoice->kode."*\n\n".
                                "Uraian : *Tanpa DP*\n".
                                'Pembayaran : *'.$pembayaran."*\n\n".
-                               'Konsumen : *'.$konsumen->nama."*\n".
+                               'Konsumen : *'.$konsumen->kode_toko->kode.' '.$konsumen->nama."*\n".
                                'Nilai :  *Rp. '.$invoice->nf_sisa_tagihan."*\n\n".
                                // "Ditransfer ke rek:\n\n".
                                // "Bank      : ".$rekening->bank."\n".
