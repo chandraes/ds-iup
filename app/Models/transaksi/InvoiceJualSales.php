@@ -268,7 +268,7 @@ class InvoiceJualSales extends Model
 
             $dbWa = new GroupWa;
 
-            $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
+            $pesan = "*".$invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."*\n".
                     $invoice->konsumen->alamat."\n".
                     $invoice->konsumen->kota."\n\n";
 
@@ -292,10 +292,9 @@ class InvoiceJualSales extends Model
 
             $pesan .= "==========================\n";
 
-            $pesan .= "Note: \n".
-                        "\nEdited\n".
-                        "•⁠ Sales: ".$sales."\n".
-                        "•⁠ ".$pembayaran."\n";
+            $pesan .= "Note: Edited\n".
+                         "•⁠ *".$pembayaran."*\n".
+                        "•⁠ Sales : ".$sales."\n";
 
             $pesan .= "•⁠ Order: *Rp. ". number_format($grandTotal, 0,',','.')."*";
 
