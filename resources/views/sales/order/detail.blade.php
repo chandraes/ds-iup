@@ -132,7 +132,6 @@
                                                         <select class="form-select" name="dipungut" id="dipungut" required
                                                         onchange="ppnPungut()">
                                                             <option value="1" @if ($order->ppn_dipungut == 1) selected @endif>Sendiri</option>
-                                                            <option value="0" @if ($order->ppn_dipungut == 0) selected @endif>Konsumen</option>
                                                     </select>
                                                     </td>
                                                 </tr>

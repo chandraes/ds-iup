@@ -600,13 +600,13 @@ class KeranjangJual extends Model
                 }
             }
 
-            // DB::commit();
+            DB::commit();
 
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
             $grandTotal = 0;
 
-            $pesan = $konsumen->kode_toko->kode. ' '.$konsumen->nama."\n".
+            $pesan = "*".$konsumen->kode_toko->kode. ' '.$konsumen->nama."*\n".
                     $konsumen->alamat."\n".
                     $konsumen->kota."\n\n";
 
