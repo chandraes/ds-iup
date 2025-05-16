@@ -163,13 +163,14 @@ class InvoiceJualSales extends Model
 
         $detail = $invoice->invoice_detail;
         $pesan = '';
+        
         try {
 
             DB::beginTransaction();
              // Update stok barang
             $this->updateStok($detail);
 
-            $pesan = $invoice->konsumen->nama."\n".
+            $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
                     $invoice->konsumen->alamat."\n\n";
 
             $n = 1;
@@ -267,7 +268,7 @@ class InvoiceJualSales extends Model
 
             $dbWa = new GroupWa;
 
-            $pesan = $invoice->konsumen->nama."\n".
+            $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
                     $invoice->konsumen->alamat."\n\n";
 
             $n = 1;

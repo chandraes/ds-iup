@@ -12,6 +12,8 @@ class OrderIndenDetail extends Model
 
     protected $guarded = ['id'];
 
+    protected $appends = ['nf_jumlah'];
+
     public function orderInden()
     {
         return $this->belongsTo(OrderInden::class);
@@ -20,5 +22,10 @@ class OrderIndenDetail extends Model
     public function barang()
     {
         return $this->belongsTo(Barang::class);
+    }
+
+    public function getNfJumlahAttribute()
+    {
+        return number_format($this->jumlah, 0, ',', '.');
     }
 }

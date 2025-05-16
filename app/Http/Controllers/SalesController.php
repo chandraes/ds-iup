@@ -17,6 +17,7 @@ use App\Models\transaksi\InvoiceJualSalesDetail;
 use App\Models\transaksi\KeranjangInden;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
+use App\Models\transaksi\OrderIndenDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -409,13 +410,64 @@ class SalesController extends Controller
         return redirect()->route('sales.order', ['kas_ppn' => $order->kas_ppn])->with($res['status'], $res['message']);
     }
 
-    public function order_inden(Request $request)
+    public function preorder(Request $request)
     {
-        $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan'])->where('user_id', auth()->user()->karyawan_id)->get();
+        $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen'])->where('karyawan_id', auth()->user()->karyawan_id)->get();
 
-        return view('sales.order-inden.index', [
+        return view('sales.pre-order.index', [
             'data' => $data,
         ]);
+    }
+
+    public function preorder_detail(OrderInden $preorder)
+    {
+        $order = $preorder->load(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen.kode_toko']);
+
+        return view('sales.pre-order.detail', [
+            'order' => $order,
+        ]);
+    }
+
+    public function preorder_detail_delete(OrderIndenDetail $orderDetail)
+    {
+
+        $orderDetail->update([
+            'deleted' => !$orderDetail->deleted,
+        ]);
+
+        $message = $orderDetail->deleted
+            ? 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.'
+            : 'Item berhasil dibatalkan dari status dihapus.';
+        return response()->json(['status' => 'success', 'message' => $message]);
+    }
+
+    public function preorder_detail_update(OrderInden $preorder)
+    {
+        $detail = $preorder->detail;
+
+        $count = $detail->where('deleted', 1)->count();
+
+
+        if ($count == 0) {
+            return redirect()->back()->with('error', 'Tidak ada item yang ditandai untuk dihapus');
+        }
+
+        $db = new OrderInden;
+
+        $res = $db->update_order($preorder->id);
+
+        return redirect()->route('sales.pre-order')->with($res['status'], $res['message']);
+    }
+
+    public function preorder_void(OrderInden $preorder)
+    {
+
+        $db = new OrderInden;
+
+        $res = $db->order_void($preorder->id);
+
+        return response()->json($res);
+
     }
 
 

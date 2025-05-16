@@ -23,7 +23,7 @@
                     <div class="row mt-3 mb-3">
                         <div class="row mb-3">
                             <div class="col-md-12 my-3">
-                                Order Barang Inden:
+                                Pre Order:
                             </div>
                             <div class="col-md-5 pt-1">
                                 {{-- select barang nama and input jumlah --}}
@@ -64,8 +64,8 @@
                                         <td class="text-center align-middle">{{$loop->iteration}}</td>
                                         <td class="text-center align-middle">{{$a->barang->kategori->nama}}</td>
                                         <td class="text-center align-middle">{{$a->barang->barang_nama->nama}}</td>
+                                         <td class="text-center align-middle">{{$a->nf_jumlah}}</td>
                                         <td class="text-center align-middle">{{$a->barang->satuan->nama}}</td>
-                                        <td class="text-center align-middle">{{$a->nf_jumlah}}</td>
                                         <td class="text-center align-middle">
                                             <button type="button" class="btn btn-danger btn-sm" onclick="indenDelete({{$a->id}})"><i
                                                     class="fa fa-trash"></i></button>
@@ -295,27 +295,52 @@
     {
         var pembayaran = document.getElementById('pembayaran').value;
         if (pembayaran == 2) {
-            document.getElementById('trJumlahDp').hidden = false;
-            document.getElementById('trJumlahDp_non_ppn').hidden = false;
+            var elementTrJumlahDp = document.getElementById('trJumlahDp');
+            var elementTrJumlahDpNonPpn = document.getElementById('trJumlahDp_non_ppn');
+            var elementTrDp = document.getElementById('trDp');
+            var elementTrDpNonPpn = document.getElementById('trDp_non_ppn');
 
-            document.getElementById('trDp').hidden = false;
-            document.getElementById('trDp_non_ppn').hidden = false;
+            if (elementTrJumlahDp) {
+                document.getElementById('trJumlahDp').hidden = false;
+            }
 
-            var dp = new Cleave('#dp', {
-                numeral: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.',
-                negative: false
-            });
+            if (elementTrJumlahDpNonPpn) {
+                document.getElementById('trJumlahDp_non_ppn').hidden = false;
 
-            var dp_non_ppn = new Cleave('#dp_non_ppn', {
-                numeral: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.',
-                negative: false
-            });
+            }
+
+            if (elementTrDp) {
+                document.getElementById('trDp').hidden = false;
+
+            }
+
+            if (elementTrDpNonPpn) {
+                document.getElementById('trDp_non_ppn').hidden = false;
+
+            }
+
+            var elementDpCleave = document.getElementById('dp');
+            var elementDpNonPpnCleave = document.getElementById('dp_non_ppn');
+
+            if (elementDpCleave) {
+                var dp = new Cleave('#dp', {
+                    numeral: true,
+                    numeralThousandsGroupStyle: 'thousand',
+                    numeralDecimalMark: ',',
+                    delimiter: '.',
+                    negative: false
+                });
+            }
+
+            if (elementDpNonPpnCleave) {
+                var dp_non_ppn = new Cleave('#dp_non_ppn', {
+                    numeral: true,
+                    numeralThousandsGroupStyle: 'thousand',
+                    numeralDecimalMark: ',',
+                    delimiter: '.',
+                    negative: false
+                });
+            }
 
             var ppnValElement = document.getElementById('thPpn');
             var ppnVal = ppnValElement ? ppnValElement.innerText : 0;
@@ -324,28 +349,79 @@
                 document.getElementById('trDpPpn').hidden = false;
             }
 
-            var sisa = document.getElementById('grandTotalTh').innerText;
-            var sisa_non_ppn = document.getElementById('grandTotalTh_non_ppn').innerText;
+            var gtElement = document.getElementById('grandTotalTh');
+            var gtNonPpnElement = document.getElementById('grandTotalTh_non_ppn');
 
-            document.getElementById('trSisa').hidden = false;
-            document.getElementById('trSisa_non_ppn').hidden = false;
+            if (gtElement) {
+                var sisa = gtElement.innerText;
+            }
 
-            document.getElementById('thSisa').innerText = sisa;
-            document.getElementById('thSisa_non_ppn').innerText = sisa_non_ppn;
+            if (gtNonPpnElement) {
+                var sisa_non_ppn = gtNonPpnElement.innerText;
+            }
+
+            var trSisaElement = document.getElementById('trSisa');
+            var trSisaNonPpnElement = document.getElementById('trSisa_non_ppn');
+            if (trSisaElement) {
+                document.getElementById('trSisa').hidden = false;
+            }
+            if (trSisaNonPpnElement) {
+                document.getElementById('trSisa_non_ppn').hidden = false;
+            }
+
+            var thSisaElement = document.getElementById('thSisa');
+            var thSisaNonPpnElement = document.getElementById('thSisa_non_ppn');
+            
+            if (thSisaElement) {
+                document.getElementById('thSisa').innerText = sisa;
+            }
+            if (thSisaNonPpnElement) {
+               document.getElementById('thSisa_non_ppn').innerText = sisa_non_ppn;
+            }
+
+
+
         } else {
+            var elementTrJumlahDp = document.getElementById('trJumlahDp');
+            var elementTrJumlahDpNonPpn = document.getElementById('trJumlahDp_non_ppn');
+            if (elementTrJumlahDp) {
+                document.getElementById('trJumlahDp').hidden = true;
+
+            }
+
+            if (elementTrJumlahDpNonPpn) {
+                document.getElementById('trJumlahDp_non_ppn').hidden = true;
+
+            }
+
             document.getElementById('tempo_hari').value = '-';
-            document.getElementById('trJumlahDp').hidden = true;
-            document.getElementById('trJumlahDp_non_ppn').hidden = true;
-            document.getElementById('trDp').hidden = true;
-            document.getElementById('trDp_non_ppn').hidden = true;
+
+            var elementTrDp = document.getElementById('trDp');
+            var elementTrDpNonPpn = document.getElementById('trDp_non_ppn');
+            if (elementTrDp) {
+                document.getElementById('trDp').hidden = true;
+
+            }
+            if (elementTrDpNonPpn) {
+                document.getElementById('trDp_non_ppn').hidden = true;
+
+            }
 
             var tdDpPpnElement = document.getElementById('trDpPpn');
             if (tdDpPpnElement) {
                 document.getElementById('trDpPpn').hidden = true;
             }
             // document.getElementById('trDpPpn').hidden = true;
-            document.getElementById('trSisa').hidden = true;
-            document.getElementById('trSisa_non_ppn').hidden = true;
+            var trSisaElement = document.getElementById('trSisa');
+            var trSisaNonPpnElement = document.getElementById('trSisa_non_ppn');
+            if (trSisaElement) {
+                document.getElementById('trSisa').hidden = true;
+            }
+            if (trSisaNonPpnElement) {
+                 document.getElementById('trSisa_non_ppn').hidden = true;
+            }
+
+
         }
     }
 

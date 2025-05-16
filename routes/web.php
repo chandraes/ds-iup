@@ -55,8 +55,12 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/detail/update/{order}', [App\Http\Controllers\SalesController::class, 'order_detail_update'])->name('sales.order.detail.update');
             });
 
-            Route::prefix('order-inden')->group(function() {
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'order_inden'])->name('sales.order-inden');
+            Route::prefix('pre-order')->group(function() {
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'preorder'])->name('sales.pre-order');
+                Route::get('/{preorder}', [App\Http\Controllers\SalesController::class, 'preorder_detail'])->name('sales.pre-order.detail');
+                Route::post('/update/{preorder}', [App\Http\Controllers\SalesController::class, 'preorder_detail_update'])->name('sales.pre-order.update');
+                Route::post('/void/{preorder}', [App\Http\Controllers\SalesController::class, 'preorder_void'])->name('sales.pre-order.void');
+                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\SalesController::class, 'preorder_detail_delete'])->name('sales.pre-order.detail.delete');
             });
 
 

@@ -433,7 +433,7 @@ class KeranjangJual extends Model
                                '*'.$invoice->kode."*\n\n".
                                "Uraian : *Tanpa DP*\n".
                                'Pembayaran : *'.$pembayaran."*\n\n".
-                               'Konsumen : *'.$konsumen->nama."*\n".
+                               'Konsumen : *'.$konsumen->kode_toko->kode.' '.$konsumen->nama."*\n".
                                'Nilai :  *Rp. '.$invoice->nf_sisa_tagihan."*\n\n".
                                // "Ditransfer ke rek:\n\n".
                                // "Bank      : ".$rekening->bank."\n".
@@ -591,10 +591,11 @@ class KeranjangJual extends Model
 
 
                 $nInden = 1;
-                $pesanInden .= "\nOrder Stok Habis: \n";
+                $pesanInden .= "==========================\n";
+                $pesanInden .= "\n*Pre order*: \n";
 
                 foreach ($createInden->load('detail.barang.barang_nama', 'detail.barang.satuan')->detail as $d) {
-                    $pesanInden .= $nInden++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+                    $pesanInden .= $nInden++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
                 }
             }
 
@@ -603,8 +604,9 @@ class KeranjangJual extends Model
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
 
-            $pesan = $konsumen->nama."\n".
-                    $konsumen->alamat."\n";
+            $pesan = $konsumen->kode_toko->kode. ' '.$konsumen->nama."\n".
+                    $konsumen->alamat."\n".
+                    $konsumen->kabupaten_kota->nama_wilayah."\n";
 
             if (isset($store_ppn['pesan'])) {
                 $pesan .= "\n".$store_ppn['pesan'];
@@ -618,7 +620,8 @@ class KeranjangJual extends Model
                 $pesan .= $pesanInden;
             }
 
-            $pesan .= "\nNote: \n".
+            $pesan .= "\n==========================\n";
+            $pesan .= "Note: \n".
                     $dbInvoice->pembayaran($data['sistem_pembayaran']);
 
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
@@ -704,11 +707,11 @@ class KeranjangJual extends Model
             ];
         }
 
-        $pesan = "Barang PPN: \n";
+        $pesan = "A. Barang PPN: \n";
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-            $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+             $pesan .= $n++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
         }
 
         return [
@@ -732,7 +735,7 @@ class KeranjangJual extends Model
 
         $data['dp'] = isset($data['dp_non_ppn']) ? str_replace('.', '', $data['dp_non_ppn']) : 0;
         $data['dp_ppn'] = 0;
-        
+
         $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
         $data['ppn_dipungut'] = $dipungut;
 
@@ -761,11 +764,11 @@ class KeranjangJual extends Model
             ];
         }
 
-        $pesan = "Barang Non PPN: \n";
+        $pesan = "B. Barang Non PPN: \n";
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-            $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+            $pesan .= $n++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
         }
 
         return [
