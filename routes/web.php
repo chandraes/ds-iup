@@ -507,6 +507,15 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\BillingController::class, 'sales_order_delete'])->name('billing.sales-order.detail.delete');
             });
 
+              Route::prefix('pre-order')->group(function() {
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'preorder'])->name('billing.pre-order');
+                Route::get('/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_detail'])->name('billing.pre-order.detail');
+                Route::post('/update/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_detail_update'])->name('billing.pre-order.update');
+                Route::post('/void/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_void'])->name('billing.pre-order.void');
+                Route::post('/finish/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_finish'])->name('billing.pre-order.finish');
+                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\BillingController::class, 'preorder_detail_delete'])->name('billing.pre-order.detail.delete');
+            });
+
             Route::prefix('bunga-investor')->group(function () {
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
                 Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');

@@ -167,6 +167,13 @@
                 </h5>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.pre-order')}}" class="text-decoration-none">
+                <img src="{{asset('images/order-inden.svg')}}" alt="" width="70">
+                <h5 class="mt-2">PRE ORDER</h5>
+            </a>
+        </div>
+
     </div>
     <hr>
     <br>
@@ -193,9 +200,8 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-           @include('billing.modal-invoice-konsumen-ppn')
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
-            data-bs-target="#modalKonsumenPpn">
+            @include('billing.modal-invoice-konsumen-ppn')
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKonsumenPpn">
                 <img src="{{asset('images/invoice-konsumen.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE KONSUMEN<br>PPN
                     @if ($ik > 0)
@@ -208,8 +214,7 @@
 
             @include('billing.modal-invoice-konsumen-non-ppn')
 
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
-            data-bs-target="#modalKonsumenNonPpn">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKonsumenNonPpn">
                 <img src="{{asset('images/invoice-konsumen-non.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE KONSUMEN<br>NON PPN
                     @if ($ikn > 0)

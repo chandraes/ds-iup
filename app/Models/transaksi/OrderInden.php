@@ -2,6 +2,7 @@
 
 namespace App\Models\transaksi;
 
+use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\GroupWa;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,6 +18,11 @@ class OrderInden extends Model
     public function konsumen()
     {
         return $this->belongsTo(Konsumen::class);
+    }
+
+    public function karyawan()
+    {
+        return $this->belongsTo(Karyawan::class);
     }
 
     public function detail()

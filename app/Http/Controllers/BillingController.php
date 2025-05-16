@@ -26,6 +26,8 @@ use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\InvoiceJualSalesDetail;
 use App\Models\transaksi\KeranjangJual;
+use App\Models\transaksi\OrderInden;
+use App\Models\transaksi\OrderIndenDetail;
 use App\Services\StarSender;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -530,5 +532,75 @@ class BillingController extends Controller
         }
 
         return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function preorder(Request $request)
+    {
+        $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen'])->where('is_finished', 0)->get();
+
+        return view('billing.pre-order.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function preorder_detail(OrderInden $preorder)
+    {
+        $order = $preorder->load(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen.kode_toko', 'karyawan']);
+
+        return view('billing.pre-order.detail', [
+            'order' => $order,
+        ]);
+    }
+
+    public function preorder_detail_delete(OrderIndenDetail $orderDetail)
+    {
+
+        $orderDetail->update([
+            'deleted' => !$orderDetail->deleted,
+        ]);
+
+        $message = $orderDetail->deleted
+            ? 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.'
+            : 'Item berhasil dibatalkan dari status dihapus.';
+        return response()->json(['status' => 'success', 'message' => $message]);
+    }
+
+    public function preorder_detail_update(OrderInden $preorder)
+    {
+        $detail = $preorder->detail;
+
+        $count = $detail->where('deleted', 1)->count();
+
+
+        if ($count == 0) {
+            return redirect()->back()->with('error', 'Tidak ada item yang ditandai untuk dihapus');
+        }
+
+        $db = new OrderInden;
+
+        $res = $db->update_order($preorder->id);
+
+        return redirect()->route('billing.pre-order')->with($res['status'], $res['message']);
+    }
+
+    public function preorder_void(OrderInden $preorder)
+    {
+
+        $db = new OrderInden;
+
+        $res = $db->order_void($preorder->id);
+
+        return response()->json($res);
+
+    }
+
+    public function preorder_finish(OrderInden $preorder)
+    {
+
+        $preorder->update([
+            'is_finished' => 1,
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Preorder berhasil diselesaikan']);
     }
 }

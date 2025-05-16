@@ -412,7 +412,8 @@ class SalesController extends Controller
 
     public function preorder(Request $request)
     {
-        $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen'])->where('karyawan_id', auth()->user()->karyawan_id)->get();
+        $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen'])
+                ->where('karyawan_id', auth()->user()->karyawan_id)->where('is_finished', 0)->get();
 
         return view('sales.pre-order.index', [
             'data' => $data,
@@ -469,6 +470,8 @@ class SalesController extends Controller
         return response()->json($res);
 
     }
+
+  
 
 
 }
