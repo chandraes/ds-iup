@@ -24,7 +24,7 @@
 </div>
 <div class="container table-responsive ml-3">
 
-    <form action="{{url()->current()}}" method="get">
+    <form action="{{route('sales.omset-harian')}}" method="get">
         {{-- select bulan dan tanggal --}}
         <div class="row mt-3">
             <div class="col-md-3">
