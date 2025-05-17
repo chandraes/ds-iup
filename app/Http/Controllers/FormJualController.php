@@ -415,7 +415,10 @@ class FormJualController extends Controller
             $dbWa = new GroupWa;
 
             // $file = $pdfUrl;
-            $wa = $dbWa->sendWa($tujuan, $pesan);
+            if (strlen($tujuan) > 10) {
+                $wa = $dbWa->sendWa($tujuan, $pesan);
+            }
+
 
             $invoice->update([
                 'send_wa' => 1,

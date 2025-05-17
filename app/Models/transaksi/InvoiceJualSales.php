@@ -195,6 +195,14 @@ class InvoiceJualSales extends Model
 
             $dbWa->sendWa($tujuan, $pesan);
 
+            $no_konsumen = $invoice->konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
+
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
@@ -301,6 +309,14 @@ class InvoiceJualSales extends Model
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);
+
+            $no_konsumen = $invoice->konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
             // Update invoice
         } catch (\Throwable $th) {
             DB::rollBack();

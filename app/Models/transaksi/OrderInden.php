@@ -67,6 +67,14 @@ class OrderInden extends Model
 
             $dbWa->sendWa($tujuan, $pesan);
 
+            $no_konsumen = $order->konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
+
             return [
                 'status' => 'success',
                 'message' => 'Berhasil menghapus order inden'
@@ -126,6 +134,14 @@ class OrderInden extends Model
             $pesan .= "Note: Edited\n";
 
             $dbWa->sendWa($tujuan, $pesan);
+
+            $no_konsumen = $order->konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
 
             return [
                 'status' => 'success',

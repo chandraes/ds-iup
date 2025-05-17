@@ -199,7 +199,7 @@
                                 <tr id="trDiskon">
                                     <th colspan="7" class="text-end align-middle">Diskon :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="diskon" id="diskon" value="{{$diskon}}"
+                                        <input type="text" class="form-control text-end" name="diskon" id="diskon" value="{{$diskon}}" readonly
                                             onkeyup="addDiskon()" />
                                     </th>
                                     <td></td>
@@ -372,7 +372,7 @@
     {
         const dpp = parseNumber(document.getElementById('thDppDiskon').innerText);
         const ppnRate = {{ $ppn }};
-        const ppnValue = Math.round(dpp * ppnRate / 100);
+        const ppnValue = Math.floor(dpp * ppnRate / 100);
         const dipungut = document.getElementById('dipungut')?.value || 0;
 
         const grandTotal = dipungut == 0 ? dpp : dpp + ppnValue;

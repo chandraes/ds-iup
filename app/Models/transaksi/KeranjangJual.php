@@ -600,7 +600,7 @@ class KeranjangJual extends Model
                 }
             }
 
-            DB::commit();
+            // DB::commit();
 
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
@@ -643,6 +643,14 @@ class KeranjangJual extends Model
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);
+
+            $no_konsumen = $konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
 
         } catch (\Throwable $th) {
             DB::rollBack();
