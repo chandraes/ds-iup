@@ -1,9 +1,14 @@
 @extends('layouts.app')
 @section('content')
+@php
+    $selectedBulan = request('bulan') ?? date('m');
+    $selectedTahun = request('tahun') ?? date('Y');
+@endphp
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>OMSET HARIAN SALES</u></h1>
+            <h1><u>OMSET HARIAN SALES<br>
+                {{$selectedBulan}}-{{$selectedTahun}}</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -19,10 +24,7 @@
     </div>
 </div>
 <div class="container table-responsive ml-3">
-    @php
-        $selectedBulan = request('bulan') ?? date('m');
-        $selectedTahun = request('tahun') ?? date('Y');
-    @endphp
+
     <form action="{{url()->current()}}" method="get">
         {{-- select bulan dan tanggal --}}
         <div class="row mt-3">
