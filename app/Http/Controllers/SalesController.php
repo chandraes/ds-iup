@@ -477,11 +477,32 @@ class SalesController extends Controller
         $year = $request->input('year') ?? date('Y');
 
         $db = new InvoiceJual;
+
+        $dataTahun = $db->dataTahun();
+
+        // create array of month in indonesian with key 1-12
+        $dataBulan = [
+            '01' => 'Januari',
+            '02' => 'Februari',
+            '03' => 'Maret',
+            '04' => 'April',
+            '05' => 'Mei',
+            '06' => 'Juni',
+            '07' => 'Juli',
+            '08' => 'Agustus',
+            '09' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember'
+        ];
+
         $data = $db->omset_harian($month, $year);
 
         return view('sales.omset-harian.index', [
              'rows' => $data['data'],
-            'karyawans' => $data['karyawans']
+            'karyawans' => $data['karyawans'],
+            'dataTahun' => $dataTahun,
+            'dataBulan' => $dataBulan,
         ]);
     }
 

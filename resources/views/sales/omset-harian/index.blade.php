@@ -85,47 +85,6 @@
 
     });
 
-    function voidOrder(id) {
-        Swal.fire({
-            title: 'Apakah anda yakin?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Saya  Yakin!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '{{route('sales.order.void', ['order' => ':id'])}}'.replace(':id', id.id),
-                    type: 'POST',
-                    data: {
-                        id: id,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(data) {
-                        if (data.status == 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: data.message,
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: data.message,
-                            });
-                        }
-
-                    }
-                });
-            }
-        })
-    }
-
-
 
 </script>
 @endpush
