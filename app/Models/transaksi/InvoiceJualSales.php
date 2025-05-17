@@ -169,13 +169,14 @@ class InvoiceJualSales extends Model
             DB::beginTransaction();
              // Update stok barang
             $this->updateStok($detail);
-
+            $kota = $invoice->konsumen->kabupaten_kota ? $invoice->konsumen->kabupaten_kota->nama_wilayah : '';
             $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
-                    $invoice->konsumen->alamat."\n\n";
+                    $invoice->konsumen->alamat."\n".
+                    $kota."\n\n";
 
             $n = 1;
             foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-                $pesan .= $n++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"." (".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
+                $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""." \n".$d->barang->merk.""."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n";
             }
 
             // Hapus detail invoice
@@ -275,10 +276,10 @@ class InvoiceJualSales extends Model
             DB::commit();
 
             $dbWa = new GroupWa;
-
+            $kota = $invoice->konsumen->kabupaten_kota ? $invoice->konsumen->kabupaten_kota->nama_wilayah : '';
             $pesan = "*".$invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."*\n".
                     $invoice->konsumen->alamat."\n".
-                    $invoice->konsumen->kota."\n\n";
+                    $kota."\n\n";
 
             // create tanggal from created_at invoice with format d F Y in indonesian
             $tanggal = Carbon::parse($invoice->created_at)->translatedFormat('d F Y');
@@ -291,7 +292,7 @@ class InvoiceJualSales extends Model
 
             $n = 1;
             foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-                $pesan .= $n++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+                $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
             }
 
             $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$invoice->konsumen->tempo_hari . ' Hari';

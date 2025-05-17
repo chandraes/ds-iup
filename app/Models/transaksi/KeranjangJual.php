@@ -596,7 +596,7 @@ class KeranjangJual extends Model
                 $pesanInden .= "*Pre order*: \n";
 
                 foreach ($createInden->load('detail.barang.barang_nama', 'detail.barang.satuan')->detail as $d) {
-                    $pesanInden .= $nInden++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+                    $pesanInden .= $nInden++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
                 }
             }
 
@@ -605,10 +605,11 @@ class KeranjangJual extends Model
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
             $grandTotal = 0;
+            $kota = $konsumen->kabupaten_kota ? $konsumen->kabupaten_kota->nama_wilayah : '';
 
             $pesan = "*".$konsumen->kode_toko->kode. ' '.$konsumen->nama."*\n".
                     $konsumen->alamat."\n".
-                    $konsumen->kota."\n\n";
+                    $kota."\n\n";
 
              $tanggal = Carbon::now()->translatedFormat('d F Y');
 
@@ -751,7 +752,7 @@ class KeranjangJual extends Model
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-             $pesan .= $n++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+             $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
         }
 
         return [
@@ -809,7 +810,7 @@ class KeranjangJual extends Model
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-            $pesan .= $n++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+            $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
         }
 
         return [

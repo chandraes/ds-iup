@@ -117,17 +117,18 @@ class OrderInden extends Model
 
             $dbWa = new GroupWa;
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
+            $kota = $order->konsumen->kabupaten_kota ? $order->konsumen->kabupaten_kota->nama_wilayah : '';
 
              $pesan = "*".$order->konsumen->kode_toko->kode. ' '.$order->konsumen->nama."*\n".
                     $order->konsumen->alamat."\n".
-                    $order->konsumen->kota."\n\n";
+                    $kota."\n\n";
 
             $pesan .= "==========================\n";
             $pesan .= "\n*Pre order*: \n";
 
             $no = 1;
             foreach ($order->detail as $d) {
-                $pesan .= $no++.'. '.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+                $pesan .= $no++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
             }
 
             $pesan .= "\n==========================\n";
