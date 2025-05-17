@@ -37,7 +37,7 @@
         @php
             $totalBarangPpn = $keranjang->where('barang_ppn', 1)->sum('total');
             $ppnNominalBarangPpn = 0;
-            $ppnNominalBarangPpn = floor($total * ($ppn/100));
+            $ppnNominalBarangPpn = floor($totalBarangPpn * ($ppn/100));
             $gtPpn = $totalBarangPpn + $ppnNominalBarangPpn;
         @endphp
         <tfoot>
@@ -73,7 +73,7 @@
                     {{number_format(($gtPpn), 0, ',','.')}}</th>
                     <td></td>
             </tr>
-            <tr>
+            <tr id="penyesuaianTr" hidden>
                 <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
                 <th class="text-end align-middle">
                     <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
@@ -159,7 +159,7 @@
     {
         const dpp = parseNumber(document.getElementById('thDppDiskon').innerText);
         const ppnRate = {{ $ppn }};
-        const ppnValue = Math.round(dpp * ppnRate / 100);
+        const ppnValue = Math.floor(dpp * ppnRate / 100);
         const dipungut = document.getElementById('dipungut')?.value || 0;
 
         const grandTotal = dipungut == 0 ? dpp : dpp + ppnValue;

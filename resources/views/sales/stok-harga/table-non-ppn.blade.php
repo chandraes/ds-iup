@@ -65,7 +65,7 @@
                     {{number_format(($gtNonPpn), 0, ',','.')}}</th>
                     <td></td>
             </tr>
-            <tr>
+            <tr id="penyesuaianTr_non_ppn" hidden>
                 <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
                 <th class="text-end align-middle">
                     <input type="text" class="form-control text-end" name="add_fee_non_ppn" id="add_fee_non_ppn" onkeyup="addCheckNonPpn()"
