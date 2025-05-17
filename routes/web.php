@@ -397,6 +397,12 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['role:su,admin,user,investor']], function () {
+
+        Route::prefix('statistik')->group(function () {
+            Route::get('/', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik');
+            Route::get('/omset-harian-sales', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales'])->name('statistik.omset-harian-sales');
+        });
+
         Route::get('rekap', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
 
@@ -415,8 +421,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/{kas}/void', [App\Http\Controllers\RekapController::class, 'void_kas_kecil'])->name('rekap.kas-kecil.void');
             });
 
-            Route::get('/statistik/{customer}', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik.index');
-            Route::get('/statistik/{customer}/print', [App\Http\Controllers\StatistikController::class, 'print'])->name('statistik.print');
+            // Route::get('/statistik/{customer}', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik.index');
+            // Route::get('/statistik/{customer}/print', [App\Http\Controllers\StatistikController::class, 'print'])->name('statistik.print');
 
             Route::get('kas-project', [App\Http\Controllers\RekapController::class, 'kas_project'])->name('rekap.kas-project');
             Route::post('/kas-project/void/{kasProject}', [App\Http\Controllers\RekapController::class, 'void_kas_project'])->name('rekap.kas-project.void');
