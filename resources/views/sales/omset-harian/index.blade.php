@@ -19,36 +19,62 @@
     </div>
 </div>
 <div class="container table-responsive ml-3">
-    <div class="row mt-3">
+    @php
+        $selectedBulan = request('bulan') ?? date('m');
+        $selectedTahun = request('tahun') ?? date('Y');
+    @endphp
+    <form action="{{url()->current()}}" method="get">
+        {{-- select bulan dan tanggal --}}
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <label for="month" class="form-label">Bulan</label>
+                <select name="month" id="month" class="form-select" onchange="this.form.submit()">
+                    @foreach ($dataBulan as $key => $value)
+                    <option value="{{ $key }}" {{ $key==$selectedBulan ? 'selected' : '' }}>{{ $value }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="year" class="form-label">Tahun</label>
+                <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+                    @foreach ($dataTahun as $tahun)
+                    <option value="{{ $tahun->tahun }}" {{ $tahun==$selectedTahun ? 'selected' : '' }}>{{
+                        $tahun->tahun }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </form>
+    <div class="row">
         <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
                     @foreach ($karyawans as $karyawan)
-                        <th class="text-center align-middle">{{ $karyawan->nama }}</th>
+                    <th class="text-center align-middle">{{ $karyawan->nama }}</th>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
                 @foreach ($rows as $row)
-                    <tr>
-                        <td class="text-center align-middle">{{ \Carbon\Carbon::parse($row['tanggal'])->format('d') }}</td>
-                        @foreach ($karyawans as $karyawan)
-                            <td class="text-end align-middle">{{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}</td>
-                        @endforeach
-                    </tr>
+                <tr>
+                    <td class="text-center align-middle">{{ \Carbon\Carbon::parse($row['tanggal'])->format('d') }}</td>
+                    @foreach ($karyawans as $karyawan)
+                    <td class="text-end align-middle">{{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}</td>
+                    @endforeach
+                </tr>
                 @endforeach
             </tbody>
-             <tfoot>
+            <tfoot>
                 <tr>
                     <th class="text-center align-middle">Grand Total</th>
                     @foreach ($karyawans as $karyawan)
-                        @php
-                            $total = collect($rows)->sum(function($row) use ($karyawan) {
-                                return $row[$karyawan->id] ?? 0;
-                            });
-                        @endphp
-                        <th class="text-end align-middle">{{ number_format($total, 0, ',', '.') }}</th>
+                    @php
+                    $total = collect($rows)->sum(function($row) use ($karyawan) {
+                    return $row[$karyawan->id] ?? 0;
+                    });
+                    @endphp
+                    <th class="text-end align-middle">{{ number_format($total, 0, ',', '.') }}</th>
                     @endforeach
                 </tr>
             </tfoot>
@@ -66,7 +92,6 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-
     $(document).ready(function() {
         $('#rekapTable').DataTable({
             "paging": false,

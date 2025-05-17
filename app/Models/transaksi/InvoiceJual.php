@@ -1004,10 +1004,12 @@ class InvoiceJual extends Model
 
         // Buat array tanggal
         $dates = collect();
+
+
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             $dates->push($date->format('Y-m-d'));
         }
-
+        // dd($dates, $month, $year);
         // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
         $invoices = $this->where('void', 0)
             ->selectRaw('DATE(created_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')

@@ -482,15 +482,15 @@ class SalesController extends Controller
 
         // create array of month in indonesian with key 1-12
         $dataBulan = [
-            '01' => 'Januari',
-            '02' => 'Februari',
-            '03' => 'Maret',
-            '04' => 'April',
-            '05' => 'Mei',
-            '06' => 'Juni',
-            '07' => 'Juli',
-            '08' => 'Agustus',
-            '09' => 'September',
+            '1' => 'Januari',
+            '2' => 'Februari',
+            '3' => 'Maret',
+            '4' => 'April',
+            '5' => 'Mei',
+            '6' => 'Juni',
+            '7' => 'Juli',
+            '8' => 'Agustus',
+            '9' => 'September',
             '10' => 'Oktober',
             '11' => 'November',
             '12' => 'Desember'
@@ -501,7 +501,7 @@ class SalesController extends Controller
         if ($karyawan == null) {
             return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
         }
-        
+
         $data = $db->omset_harian($month, $year, $karyawan);
 
         return view('sales.omset-harian.index', [
