@@ -96,7 +96,7 @@
     </div>
 
     <center>
-        <h2>Barang PPN</h2>
+        <h2>Barang A</h2>
     </center>
     <div class="table-container mt-4">
 
@@ -108,9 +108,9 @@
                 <th class="text-center align-middle">Nama<br>Barang</th>
                 <th class="text-center align-middle">Kode<br>Barang</th>
                 <th class="text-center align-middle">Merk<br>Barang</th>
-                <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
-                <th class="text-center align-middle">PPN<br>Keluaran</th>
-                <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
+                {{-- <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
+                <th class="text-center align-middle">PPN<br>Keluaran</th> --}}
+                <th class="text-center align-middle">Harga<br>Jual Barang</th>
                 <th class="text-center align-middle">Stok<br>Barang</th>
                 <th class="text-center align-middle">Satuan<br>Barang</th>
                 <th class="text-center align-middle">Kelipatan<br>Order</th>
@@ -161,12 +161,12 @@
                     {{ $stokHarga->barang->merk }}</td>
                 @php $barangDisplayed = true; @endphp
                 @endif
-                <td class="text-end align-middle">
+                {{-- <td class="text-end align-middle">
                 {{$stokHarga->nf_harga}}
                 </td>
                 <td class="text-end align-middle">
                 {{ number_format($stokHarga->harga*$ppnRate/100, 0, ',','.') }}
-                </td>
+                </td> --}}
                 <td class="text-end align-middle">
                 {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
                 </td>
@@ -212,7 +212,7 @@
     <br>
 
     <center>
-        <h2>Barang Non PPN</h2>
+        <h2>Barang B</h2>
     </center>
     <div class="table-container mt-4">
 
@@ -224,9 +224,9 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
-                    <th class="text-center align-middle">PPN<br>Keluaran</th>
-                    <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
+                    {{-- <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle">PPN<br>Keluaran</th> --}}
+                    <th class="text-center align-middle">Harga<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
                     <th class="text-center align-middle">Kelipatan<br>Order</th>
@@ -281,12 +281,12 @@
                         {{$stokHarga->nf_harga}}
                     </td>
 
-                    <td class="text-end align-middle">
+                    {{-- <td class="text-end align-middle">
                         0
                     </td>
                     <td class="text-end align-middle">
                         {{$stokHarga->nf_harga}}
-                    </td>
+                    </td> --}}
                     <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
