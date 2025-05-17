@@ -14,7 +14,7 @@ class UniversalController extends Controller
             'id' => 'required|exists:konsumens,id',
         ]);
 
-        $konsumen = Konsumen::find($data['id']);
+        $konsumen = Konsumen::with('kabupaten_kota')->where('id',$data['id'])->first();
 
         return response()->json($konsumen);
     }

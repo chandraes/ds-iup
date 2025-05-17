@@ -446,8 +446,8 @@
             },
             success: function(data) {
                 document.getElementById('pembayaran').value = data.sistem_pembayaran;
-
-                document.getElementById('alamat').value = data.alamat + ', ' + data.kota;
+                var kota = data.kabupaten_kota ? data.kabupaten_kota.nama_wilayah : '';
+                document.getElementById('alamat').value = data.alamat + ', ' + kota;
                 document.getElementById('npwp').value = data.npwp;
                 document.getElementById('no_hp').value = data.no_hp;
                 if (data.pembayaran == 2) {
