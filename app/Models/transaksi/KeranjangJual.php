@@ -632,7 +632,21 @@ class KeranjangJual extends Model
 
             $sales = Karyawan::find(auth()->user()->karyawan_id);
 
-            $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$konsumen->tempo_hari . ' Hari';
+            switch ($data['pembayaran']) {
+                case 1:
+                    $pembayaran = 'Cash';
+                    break;
+                case 2:
+                    $pembayaran = 'Tempo : '.$konsumen->tempo_hari.' Hari';
+                    break;
+                case 3:
+                    $pembayaran = 'Titipan';
+                    break;
+                default:
+                    $pembayaran = '';
+            }
+
+            // $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$konsumen->tempo_hari . ' Hari';
             $pesan .= "Note: \n".
                     "•⁠ ".$pembayaran."\n".
                     "•⁠ Sales: *".$sales->nama."*\n"

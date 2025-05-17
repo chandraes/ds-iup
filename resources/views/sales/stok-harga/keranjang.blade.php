@@ -126,14 +126,7 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                            <tr style="height:50px">
-                                                <td class="text-start align-middle">NPWP</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <input type="text" name="npwp" id="npwp" class="form-control"
-                                                        disabled>
-                                                </td>
-                                            </tr>
+
                                             <tr style="height:50px">
                                                 <td class="text-start align-middle">Alamat</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
@@ -181,8 +174,16 @@
                                                             disabled>
                                                     </td>
                                                 </tr>
-                                                @if ($adaPpn == 1)
                                                 <tr style="height:50px">
+                                                    <td class="text-start align-middle">NPWP</td>
+                                                    <td class="text-start align-middle" style="width: 10%">:</td>
+                                                    <td class="text-start align-middle">
+                                                        <input type="text" name="npwp" id="npwp" class="form-control"
+                                                            disabled>
+                                                    </td>
+                                                </tr>
+                                                @if ($adaPpn == 1)
+                                                <tr style="height:50px" hidden>
                                                     <td class="text-start align-middle">PPn Disetor Oleh</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
