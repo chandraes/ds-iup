@@ -496,7 +496,8 @@ class SalesController extends Controller
             '12' => 'Desember'
         ];
 
-        $data = $db->omset_harian($month, $year);
+        $karyawan = auth()->user()->karyawan_id;
+        $data = $db->omset_harian($month, $year, $karyawan);
 
         return view('sales.omset-harian.index', [
              'rows' => $data['data'],

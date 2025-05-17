@@ -990,13 +990,17 @@ class InvoiceJual extends Model
         ];
     }
 
-    public function omset_harian($month, $year)
+    public function omset_harian($month, $year, $karyawan_id = null)
     {
-         $startDate = Carbon::create($year, $month, 1);
+        $startDate = Carbon::create($year, $month, 1);
         $endDate = $startDate->copy()->endOfMonth();
 
         // Ambil semua karyawan dengan jabatan_id = 3
-        $karyawans = Karyawan::where('jabatan_id', 3)->get();
+        if ($karyawan_id) {
+            $karyawans = Karyawan::where('jabatan_id', 3)->where('id', $karyawan_id)->get();
+        } else {
+            $karyawans = Karyawan::where('jabatan_id', 3)->get();
+        }
 
         // Buat array tanggal
         $dates = collect();
