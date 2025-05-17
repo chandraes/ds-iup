@@ -652,8 +652,10 @@ class KeranjangJual extends Model
                     "•⁠ Sales: *".$sales->nama."*\n"
                     ."•⁠ CP: *".$sales->no_hp."*\n";
 
-            $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n";
 
+            $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n\n";
+
+            $pesan .= "No Kantor: *0853-3939-3918* \n";
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);

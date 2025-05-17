@@ -305,7 +305,9 @@ class InvoiceJualSales extends Model
                         "•⁠ Sales : ".$sales."\n".
                         "•⁠ CP : ".$invoice->karyawan->no_hp."\n";
 
-            $pesan .= "•⁠ Order: *Rp. ". number_format($grandTotal, 0,',','.')."*";
+            $pesan .= "•⁠ Order: *Rp. ". number_format($grandTotal, 0,',','.')."*\n\n";
+
+            $pesan .= "No Kantor: *0853-3939-3918* \n";
 
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
