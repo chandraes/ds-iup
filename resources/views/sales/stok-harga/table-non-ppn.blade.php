@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <h3>BARANG NON PPN : </h3>
+    <h3>BARANG B : </h3>
     <table class="table table-bordered">
         <thead class="table-success">
             <tr>

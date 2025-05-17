@@ -731,7 +731,7 @@ class KeranjangJual extends Model
             ];
         }
 
-        $pesan = "A. Barang PPN: \n";
+        $pesan = "Barang A: \n";
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
@@ -789,7 +789,7 @@ class KeranjangJual extends Model
             ];
         }
 
-        $pesan = "B. Barang Non PPN: \n";
+        $pesan = "Barang B: \n";
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {

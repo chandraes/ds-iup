@@ -283,7 +283,7 @@ class InvoiceJualSales extends Model
             // create tanggal from created_at invoice with format d F Y in indonesian
             $tanggal = Carbon::parse($invoice->created_at)->translatedFormat('d F Y');
 
-            $barang = $invoice->kas_ppn == 1 ? 'Barang PPN' : 'Barang Non PPN';
+            $barang = $invoice->kas_ppn == 1 ? 'Barang A' : 'Barang B';
             $pesan .= "*Order* : ".$tanggal."\n".
                     $barang.":\n";
 
