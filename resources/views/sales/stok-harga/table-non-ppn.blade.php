@@ -40,7 +40,7 @@
         @endphp
         <tfoot>
             <tr>
-                <th colspan="7" class="text-end align-middle">DPP :</th>
+                <th colspan="7" class="text-end align-middle">Total :</th>
                 <th class="text-end align-middle" id="dppTh_non_ppn">{{number_format($totalBarangNonPpn, 0,
                     ',','.')}}</th>
                 <td></td>
@@ -54,7 +54,7 @@
                 <td></td>
             </tr>
             <tr>
-                <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
+                <th colspan="7" class="text-end align-middle">Total Setelah Diskon :</th>
                 <th class="text-end align-middle" id="thDppDiskon_non_ppn">{{number_format($totalBarangNonPpn, 0,
                     ',','.')}}</th>
                     <td></td>
