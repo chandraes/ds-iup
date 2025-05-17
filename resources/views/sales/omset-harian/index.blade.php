@@ -15,7 +15,7 @@
         </div>
     </div>
     <div class="row justify-content-between mt-3">
-        <div class="col-md-7">
+        <div class="col-md-6">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
@@ -24,23 +24,20 @@
                 </tr>
             </table>
         </div>
-    </div>
-</div>
-<div class="container table-responsive ml-3">
-
-    <form action="{{url()->current()}}" method="get">
+        <div class="col-md-6">
+<form action="{{url()->current()}}" method="get">
         {{-- select bulan dan tanggal --}}
-        <div class="row mt-3">
-            <div class="col-md-3">
-                <label for="month" class="form-label">Bulan</label>
+        <div class="row mt-1">
+            <div class="col-md-6">
+
                 <select name="month" id="month" class="form-select" onchange="this.form.submit()">
                     @foreach ($dataBulan as $key => $value)
                     <option value="{{ $key }}" {{ $key==$selectedBulan ? 'selected' : '' }}>{{ $value }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
-                <label for="year" class="form-label">Tahun</label>
+            <div class="col-md-6">
+
                 <select name="year" id="year" class="form-select" onchange="this.form.submit()">
                     @foreach ($dataTahun as $tahun)
                     <option value="{{ $tahun->tahun }}" {{ $tahun==$selectedTahun ? 'selected' : '' }}>{{
@@ -50,6 +47,10 @@
             </div>
         </div>
     </form>
+        </div>
+    </div>
+</div>
+<div class="container table-responsive mt-2">
     <div class="row">
         <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%">
             <thead class="table-success">
