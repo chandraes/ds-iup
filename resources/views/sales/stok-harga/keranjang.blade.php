@@ -239,6 +239,8 @@
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
 
+    var tempTempo = '-';
+
     $('#konsumen_id').select2({
         width: '100%',
     });
@@ -292,7 +294,10 @@
     function checkPembayaran()
     {
         var pembayaran = document.getElementById('pembayaran').value;
+         var tempo_hari = tempTempo;
         if (pembayaran == 2) {
+
+
             var elementTrJumlahDp = document.getElementById('trJumlahDp');
             var elementTrJumlahDpNonPpn = document.getElementById('trJumlahDp_non_ppn');
             var elementTrDp = document.getElementById('trDp');
@@ -377,7 +382,7 @@
                document.getElementById('thSisa_non_ppn').innerText = sisa_non_ppn;
             }
 
-
+            document.getElementById('tempo_hari').value = tempo_hari;
 
         } else {
             var elementTrJumlahDp = document.getElementById('trJumlahDp');
@@ -462,6 +467,8 @@
                     document.getElementById('pembayaran').value = 2;
 
                     document.getElementById('tempo_hari').value = data.tempo_hari;
+
+                    tempTempo = data.tempo_hari;
 
                     var jumlah_dp_ppn = document.getElementById('trJumlahDp');
                     var jumlah_dp_non_ppn =  document.getElementById('trJumlahDp_non_ppn');

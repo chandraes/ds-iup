@@ -306,6 +306,7 @@
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
 
+
     $(document).ready(function() {
         // Initialize Select2
         calculateTotalTagihan();
@@ -484,7 +485,6 @@
     {
         var pembayaran = document.getElementById('pembayaran').value;
         if (pembayaran == 2) {
-            console.log('tempo');
             document.getElementById('trJumlahDp').hidden = false;
             document.getElementById('trDp').hidden = false;
             var dp = new Cleave('#jumlah_dp', {

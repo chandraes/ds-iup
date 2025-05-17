@@ -600,7 +600,7 @@ class KeranjangJual extends Model
                 }
             }
 
-            // DB::commit();
+            DB::commit();
 
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
