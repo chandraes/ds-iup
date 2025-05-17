@@ -48,7 +48,7 @@ class OrderInden extends Model
 
         $no = 1;
         foreach ($order->detail as $d) {
-            $pesan .= $no++.'. ['.$d->barang->barang_nama->nama." (".$d->barang->kode.")"."\n(".$d->barang->merk.")"."]....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+            $pesan .= $no++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
         }
 
         $pesan .= "\n==========================\n";
@@ -61,19 +61,19 @@ class OrderInden extends Model
 
             DB::commit();
 
-            $dbWa = new GroupWa;
+            // $dbWa = new GroupWa;
 
-            $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
+            // $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
-            $dbWa->sendWa($tujuan, $pesan);
+            // $dbWa->sendWa($tujuan, $pesan);
 
-            $no_konsumen = $order->konsumen->no_hp;
-            $no_konsumen = str_replace('-', '', $no_konsumen);
+            // $no_konsumen = $order->konsumen->no_hp;
+            // $no_konsumen = str_replace('-', '', $no_konsumen);
 
-            // check length no hp
-            if (strlen($no_konsumen) > 10) {
-                $dbWa->sendWa($no_konsumen, $pesan);
-            }
+            // // check length no hp
+            // if (strlen($no_konsumen) > 10) {
+            //     $dbWa->sendWa($no_konsumen, $pesan);
+            // }
 
             return [
                 'status' => 'success',
@@ -115,34 +115,34 @@ class OrderInden extends Model
 
             DB::commit();
 
-            $dbWa = new GroupWa;
-            $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
-            $kota = $order->konsumen->kabupaten_kota ? $order->konsumen->kabupaten_kota->nama_wilayah : '';
+            // $dbWa = new GroupWa;
+            // $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
+            // $kota = $order->konsumen->kabupaten_kota ? $order->konsumen->kabupaten_kota->nama_wilayah : '';
 
-             $pesan = "*".$order->konsumen->kode_toko->kode. ' '.$order->konsumen->nama."*\n".
-                    $order->konsumen->alamat."\n".
-                    $kota."\n\n";
+            //  $pesan = "*".$order->konsumen->kode_toko->kode. ' '.$order->konsumen->nama."*\n".
+            //         $order->konsumen->alamat."\n".
+            //         $kota."\n\n";
 
-            $pesan .= "==========================\n";
-            $pesan .= "\n*Pre order*: \n";
+            // $pesan .= "==========================\n";
+            // $pesan .= "\n*Pre order*: \n";
 
-            $no = 1;
-            foreach ($order->detail as $d) {
-                $pesan .= $no++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
-            }
+            // $no = 1;
+            // foreach ($order->detail as $d) {
+            //     $pesan .= $no++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+            // }
 
-            $pesan .= "\n==========================\n";
-            $pesan .= "Note: Edited\n";
+            // $pesan .= "\n==========================\n";
+            // $pesan .= "Note: Edited\n";
 
-            $dbWa->sendWa($tujuan, $pesan);
+            // $dbWa->sendWa($tujuan, $pesan);
 
-            $no_konsumen = $order->konsumen->no_hp;
-            $no_konsumen = str_replace('-', '', $no_konsumen);
+            // $no_konsumen = $order->konsumen->no_hp;
+            // $no_konsumen = str_replace('-', '', $no_konsumen);
 
-            // check length no hp
-            if (strlen($no_konsumen) > 10) {
-                $dbWa->sendWa($no_konsumen, $pesan);
-            }
+            // // check length no hp
+            // if (strlen($no_konsumen) > 10) {
+            //     $dbWa->sendWa($no_konsumen, $pesan);
+            // }
 
             return [
                 'status' => 'success',

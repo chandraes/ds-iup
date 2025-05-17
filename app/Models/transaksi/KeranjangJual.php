@@ -605,24 +605,30 @@ class KeranjangJual extends Model
             $dbWa = new GroupWa;
             $dbInvoice = new InvoiceJualSales;
             $grandTotal = 0;
+            $dp = 0;
+            $sisa = 0;
             $kota = $konsumen->kabupaten_kota ? $konsumen->kabupaten_kota->nama_wilayah : '';
 
             $pesan = "*".$konsumen->kode_toko->kode. ' '.$konsumen->nama."*\n".
                     $konsumen->alamat."\n".
                     $kota."\n\n";
 
-             $tanggal = Carbon::now()->translatedFormat('d F Y');
+            $tanggal = Carbon::now()->translatedFormat('d F Y');
 
             $pesan .= "*Order* : ".$tanggal."\n";
 
             if (isset($store_ppn['pesan'])) {
                 $pesan .= $store_ppn['pesan'];
                 $grandTotal += $store_ppn['grand_total'];
+                $dp += $store_ppn['dp'];
+                $sisa += $store_ppn['sisa_tagihan'];
             }
 
             if (isset($store_non_ppn['pesan'])) {
                 $pesan .= $store_non_ppn['pesan'];
                 $grandTotal += $store_non_ppn['grand_total'];
+                $dp += $store_non_ppn['dp'];
+                $sisa += $store_non_ppn['sisa_tagihan'];
             }
 
             if ($inden->count() > 0) {
@@ -654,7 +660,13 @@ class KeranjangJual extends Model
                     ."•⁠ CP: *".$sales->no_hp."*\n";
 
 
-            $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n\n";
+            $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n";
+
+
+            if ($dp > 0) {
+                $pesan .= "•⁠ DP: *Rp. ".number_format($dp, 0, ',','.')."*\n";
+                $pesan .= "•⁠ Sisa Tagihan: *Rp. ".number_format($sisa, 0, ',','.')."*\n\n";
+            }
 
             $pesan .= "No Kantor: *0853-3939-3918* \n";
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
@@ -759,6 +771,8 @@ class KeranjangJual extends Model
             'status' => true,
             'pesan' => $pesan,
             'grand_total' => $data['grand_total'],
+            'dp' => $data['dp']+$data['dp_ppn'],
+            'sisa_tagihan' => $data['sisa_tagihan'],
         ];
 
     }
@@ -817,6 +831,8 @@ class KeranjangJual extends Model
             'status' => true,
             'pesan' => $pesan,
             'grand_total' => $data['grand_total'],
+            'dp' => $data['dp'],
+            'sisa_tagihan' => $data['sisa_tagihan'],
         ];
 
     }
