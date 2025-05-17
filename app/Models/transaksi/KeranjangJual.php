@@ -650,7 +650,7 @@ class KeranjangJual extends Model
             $pesan .= "Note: \n".
                     "•⁠ ".$pembayaran."\n".
                     "•⁠ Sales: *".$sales->nama."*\n"
-                    ;
+                    ."CP: *".$sales->no_hp."*\n";
 
             $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n";
 
