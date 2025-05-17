@@ -23,4 +23,13 @@
             <h5 class="mt-2">PRE ORDER</h5>
         </a>
     </div>
+
+</div>
+<div class="row justify-content-left">
+   <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{route('sales.omset-harian')}}" class="text-decoration-none">
+            <img src="{{asset('images/omset-sales.svg')}}" alt="" width="70">
+            <h5 class="mt-2">OMSET HARIAN SALES</h5>
+        </a>
+    </div>
 </div>

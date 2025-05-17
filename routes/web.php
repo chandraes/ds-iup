@@ -63,6 +63,10 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\SalesController::class, 'preorder_detail_delete'])->name('sales.pre-order.detail.delete');
             });
 
+            Route::prefix('omset-harian')->group(function() {
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'omset_harian'])->name('sales.omset-harian');
+            });
+
 
         });
     });

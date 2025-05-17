@@ -4,6 +4,7 @@ namespace App\Models\transaksi;
 
 use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\GroupWa;
@@ -986,6 +987,49 @@ class InvoiceJual extends Model
             'status' => 'success',
             'message' => 'Transaksi berhasil',
             'invoice' => $invoice,
+        ];
+    }
+
+    public function omset_harian($month, $year)
+    {
+        $startDate = Carbon::create($year, $month, 1);
+        $endDate = $startDate->copy()->endOfMonth();
+
+        // Ambil semua karyawan
+        $karyawans = Karyawan::where('jabatan_id', 3)->get();
+
+        // Buat array tanggal
+        $dates = collect();
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dates->push($date->format('Y-m-d'));
+        }
+
+        // Ambil semua invoice yang relevan
+        $invoices = $this->where('void', 0)
+            ->selectRaw('DATE(created_at) as tanggal, karyawan_id, SUM(grand_total) as total')
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('karyawan_id')
+            ->groupBy('tanggal', 'karyawan_id')
+            ->get();
+
+        // Buat array hasil [tanggal][karyawan_id] = total
+        $result = [];
+
+        foreach ($dates as $date) {
+            $row = ['tanggal' => $date];
+            foreach ($karyawans as $karyawan) {
+                $found = $invoices->first(function($item) use ($date, $karyawan) {
+                    return $item->tanggal == $date && $item->karyawan_id == $karyawan->id;
+                });
+                $row[$karyawan->id] = $found ? $found->total : 0;
+            }
+            $result[] = $row;
+        }
+        // dd($result);
+        return [
+            'data' => $result,
+            'karyawans' => $karyawans,
         ];
     }
 }

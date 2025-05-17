@@ -471,7 +471,19 @@ class SalesController extends Controller
 
     }
 
-  
+    public function omset_harian(Request $request)
+    {
+        $month = $request->input('month') ?? date('m');
+        $year = $request->input('year') ?? date('Y');
+
+        $db = new InvoiceJual;
+        $data = $db->omset_harian($month, $year);
+
+        return view('sales.omset-harian.index', [
+             'rows' => $data['data'],
+            'karyawans' => $data['karyawans']
+        ]);
+    }
 
 
 }

@@ -307,6 +307,8 @@
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
 
+    var tempTempo = {{$order->konsumen->tempo_hari}};
+
     $(document).ready(function() {
         // Initialize Select2
         calculateTotalTagihan();
@@ -485,7 +487,7 @@
     {
         var pembayaran = document.getElementById('pembayaran').value;
         if (pembayaran == 2) {
-            console.log('tempo');
+            var tempo_hari = tempTempo;
             document.getElementById('trJumlahDp').hidden = false;
             document.getElementById('trDp').hidden = false;
             var dp = new Cleave('#jumlah_dp', {
@@ -506,6 +508,7 @@
             var sisa = document.getElementById('grandTotalTh').innerText;
             document.getElementById('trSisa').hidden = false;
             document.getElementById('thSisa').innerText = sisa;
+            document.getElementById('tempo_hari').value = tempo_hari;
         } else {
             document.getElementById('tempo_hari').value = '-';
             document.getElementById('trJumlahDp').hidden = true;
