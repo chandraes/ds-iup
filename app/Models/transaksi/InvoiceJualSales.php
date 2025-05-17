@@ -302,7 +302,8 @@ class InvoiceJualSales extends Model
 
             $pesan .= "Note: Edited\n".
                          "•⁠ *".$pembayaran."*\n".
-                        "•⁠ Sales : ".$sales."\n";
+                        "•⁠ Sales : ".$sales."\n".
+                        "•⁠ CP : ".$invoice->karyawan->no_hp."\n";
 
             $pesan .= "•⁠ Order: *Rp. ". number_format($grandTotal, 0,',','.')."*";
 
