@@ -497,6 +497,11 @@ class SalesController extends Controller
         ];
 
         $karyawan = auth()->user()->karyawan_id;
+
+        if ($karyawan == null) {
+            return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
+        }
+        
         $data = $db->omset_harian($month, $year, $karyawan);
 
         return view('sales.omset-harian.index', [
