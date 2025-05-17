@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>SALES ORDER<br>{{ request()->get('kas_ppn') == 1 ? 'PPN' : 'NON PPN' }}</u></h1>
+            <h1><u>OMSET HARIAN SALES</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -39,13 +39,19 @@
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot>
+             <tfoot>
                 <tr>
-                    <th class="text-center align-middle">Total</th>
+                    <th class="text-center align-middle">Grand Total</th>
                     @foreach ($karyawans as $karyawan)
-                        <th class="text-end align-middle">{{ number_format($totals[$karyawan->id] ?? 0, 0, ',', '.') }}</th>
+                        @php
+                            $total = collect($rows)->sum(function($row) use ($karyawan) {
+                                return $row[$karyawan->id] ?? 0;
+                            });
+                        @endphp
+                        <th class="text-end align-middle">{{ number_format($total, 0, ',', '.') }}</th>
                     @endforeach
                 </tr>
+            </tfoot>
         </table>
     </div>
 </div>

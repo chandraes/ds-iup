@@ -992,10 +992,10 @@ class InvoiceJual extends Model
 
     public function omset_harian($month, $year)
     {
-        $startDate = Carbon::create($year, $month, 1);
+         $startDate = Carbon::create($year, $month, 1);
         $endDate = $startDate->copy()->endOfMonth();
 
-        // Ambil semua karyawan
+        // Ambil semua karyawan dengan jabatan_id = 3
         $karyawans = Karyawan::where('jabatan_id', 3)->get();
 
         // Buat array tanggal
@@ -1004,14 +1004,18 @@ class InvoiceJual extends Model
             $dates->push($date->format('Y-m-d'));
         }
 
-        // Ambil semua invoice yang relevan
+        // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
         $invoices = $this->where('void', 0)
-            ->selectRaw('DATE(created_at) as tanggal, karyawan_id, SUM(grand_total) as total')
+            ->selectRaw('DATE(created_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->whereNotNull('karyawan_id')
-            ->groupBy('tanggal', 'karyawan_id')
-            ->get();
+            ->groupBy('tanggal_raw', 'karyawan_id')
+            ->get()
+            ->map(function($item) {
+                $item->tanggal = Carbon::parse($item->tanggal_raw)->format('Y-m-d');
+                return $item;
+            });
 
         // Buat array hasil [tanggal][karyawan_id] = total
         $result = [];
@@ -1019,14 +1023,16 @@ class InvoiceJual extends Model
         foreach ($dates as $date) {
             $row = ['tanggal' => $date];
             foreach ($karyawans as $karyawan) {
-                $found = $invoices->first(function($item) use ($date, $karyawan) {
-                    return $item->tanggal == $date && $item->karyawan_id == $karyawan->id;
+                $found = $invoices->first(function ($item) use ($date, $karyawan) {
+
+                    return $item->tanggal_raw === $date && $item->karyawan_id == $karyawan->id;
                 });
+
                 $row[$karyawan->id] = $found ? $found->total : 0;
             }
             $result[] = $row;
         }
-        // dd($result);
+
         return [
             'data' => $result,
             'karyawans' => $karyawans,
