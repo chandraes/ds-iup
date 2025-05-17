@@ -86,7 +86,30 @@
             </tfoot>
         </table>
     </div>
+    <hr>
+    <div class="row">
+        <canvas id="omsetChart"></canvas>
+    </div>
 </div>
+@php
+    $tanggalLabels = collect($rows)->pluck('tanggal')->map(fn($t) => \Carbon\Carbon::parse($t)->format('d'));
+
+    // Ambil nilai maksimum untuk sumbu Y
+    $maxOmset = collect($rows)->flatMap(function($row) use ($karyawans) {
+        return $karyawans->map(function($k) use ($row) {
+            return $row[$k->id] ?? 0;
+        });
+    })->max();
+    $maxYAxis = ceil($maxOmset * 1.2); // tambahkan 20% ruang atas
+
+    // Warna kontras
+    $colors = [
+        '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+        '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
+        '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000',
+        '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
+    ];
+@endphp
 @endsection
 @push('css')
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
@@ -97,6 +120,7 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     $(document).ready(function() {
         $('#rekapTable').DataTable({
@@ -117,5 +141,80 @@
     });
 
 
+</script>
+<script>
+   const tanggalLabels = @json($tanggalLabels);
+    const datasets = [];
+
+    @foreach ($karyawans as $index => $karyawan)
+        datasets.push({
+            label: "{{ $karyawan->nama }}",
+            data: [
+                @foreach ($rows as $row)
+                    {{ (int) ($row[$karyawan->id] ?? 0) }},
+                @endforeach
+            ],
+            borderColor: "{{ $colors[$index % count($colors)] }}",
+            backgroundColor: "transparent",
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.3,
+        });
+    @endforeach
+
+    const ctx = document.getElementById('omsetChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: tanggalLabels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Grafik Omset Harian Karyawan',
+                    font: {
+                        size: 18
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.parsed.y || 0;
+                            return context.dataset.label + ': Rp ' + value.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: {{ $maxYAxis }},
+                    title: {
+                        display: true,
+                        text: 'Total Omset (Rp)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rp ' + value.toLocaleString('id-ID');
+                        }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tanggal'
+                    }
+                }
+            }
+        }
+    });
 </script>
 @endpush
