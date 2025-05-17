@@ -1,13 +1,17 @@
 @extends('layouts.app')
 @section('content')
 @php
-    $selectedBulan = request('bulan') ?? date('m');
-    $selectedTahun = request('tahun') ?? date('Y');
+    $selectedBulan = request('month') ?? date('m');
+    $selectedTahun = request('year') ?? date('Y');
 @endphp
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>OMSET HARIAN SALES<br></u></h1>
+            @php
+                use Carbon\Carbon;
+                $bulanNama = Carbon::create()->month($selectedBulan)->locale('id')->isoFormat('MMMM');
+            @endphp
+            <h1><u>OMSET HARIAN SALES<br>{{ ucfirst($bulanNama) }} {{$selectedTahun}}</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
