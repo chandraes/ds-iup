@@ -41,7 +41,7 @@ $selectedTahun = request('year') ?? date('Y');
 
                         <select name="year" id="year" class="form-select" onchange="this.form.submit()">
                             @foreach ($dataTahun as $tahun)
-                            <option value="{{ $tahun->tahun }}" {{ $tahun==$selectedTahun ? 'selected' : '' }}>{{
+                            <option value="{{ $tahun->tahun }}" {{ $tahun->tahun==$selectedTahun ? 'selected' : '' }}>{{
                                 $tahun->tahun }}</option>
                             @endforeach
                         </select>
@@ -67,22 +67,40 @@ $selectedTahun = request('year') ?? date('Y');
                 <tr>
                     <td class="text-center align-middle">{{ \Carbon\Carbon::parse($row['tanggal'])->format('d') }}</td>
                     @foreach ($karyawans as $karyawan)
-                    <td class="text-end align-middle">{{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}</td>
+                    <td class="text-end align-middle">
+                         @if ($row[$karyawan->id] > 0)
+                        <a href="{{route('statistik.omset-harian-sales.detail', ['tanggal' => $row['tanggal'], 'karyawan_id' => $karyawan->id])}}" />
+                        @endif
+                        {{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
+                @php
+                    $gt = 0;
+                @endphp
                 <tr>
-                    <th class="text-center align-middle">Grand Total</th>
+                    <th class="text-center align-middle">Total</th>
                     @foreach ($karyawans as $karyawan)
                     @php
                     $total = collect($rows)->sum(function($row) use ($karyawan) {
                     return $row[$karyawan->id] ?? 0;
                     });
+                    $gt += $total;
                     @endphp
-                    <th class="text-end align-middle">{{ number_format($total, 0, ',', '.') }}</th>
+                    <th class="text-end align-middle">
+
+                        {{ number_format($total, 0, ',', '.') }}
+                    </th>
                     @endforeach
+                </tr>
+                <tr>
+                    <th class="text-center align-middle">Grand Total</th>
+                    <th class="text-center align-middle" colspan="{{ count($karyawans) }}">
+                        {{ number_format($gt, 0, ',', '.') }}
+                    </th>
                 </tr>
             </tfoot>
         </table>

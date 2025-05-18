@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\db\Karyawan;
 use App\Models\Transaksi;
 use App\Models\transaksi\InvoiceJual;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -48,6 +49,29 @@ class StatistikController extends Controller
             'karyawans' => $data['karyawans'],
             'dataTahun' => $dataTahun,
             'dataBulan' => $dataBulan,
+        ]);
+    }
+
+    public function omset_harian_sales_detail(Request $request)
+    {
+        $req = $request->validate([
+            'tanggal' => 'required|date',
+            'karyawan_id' => 'required|exists:karyawans,id',
+        ]);
+
+        $db = new InvoiceJual;
+
+        $karyawan = Karyawan::where('id',$req['karyawan_id'])->select('nama')->first();
+
+        if ($karyawan == null) {
+            return redirect()->back()->with('error', 'Karyawan tidak ditemukan');
+        }
+
+        $data = $db->omset_harian_detail($request->input('tanggal'), $request->input('karyawan_id'));
+
+        return view('statistik.omset-harian.detail', [
+            'data' => $data,
+            'karyawan' => $karyawan,
         ]);
     }
 }

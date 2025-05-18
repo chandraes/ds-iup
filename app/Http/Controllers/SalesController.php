@@ -8,6 +8,7 @@ use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
+use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\Pengaturan;
@@ -509,6 +510,33 @@ class SalesController extends Controller
             'karyawans' => $data['karyawans'],
             'dataTahun' => $dataTahun,
             'dataBulan' => $dataBulan,
+        ]);
+    }
+
+    public function omset_harian_detail(Request $request)
+    {
+        $req = $request->validate([
+            'tanggal' => 'required|date',
+            'karyawan_id' => 'required|exists:karyawans,id',
+        ]);
+
+        if ($req['karyawan_id'] != auth()->user()->karyawan_id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat data ini');
+        }
+
+        $db = new InvoiceJual;
+
+        $karyawan = Karyawan::where('id',$req['karyawan_id'])->select('nama')->first();
+
+        if ($karyawan == null) {
+            return redirect()->back()->with('error', 'Karyawan tidak ditemukan');
+        }
+
+        $data = $db->omset_harian_detail($request->input('tanggal'), $request->input('karyawan_id'));
+
+        return view('sales.omset-harian.detail', [
+            'data' => $data,
+            'karyawan' => $karyawan,
         ]);
     }
 

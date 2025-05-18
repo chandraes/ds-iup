@@ -41,7 +41,7 @@ $selectedTahun = request('year') ?? date('Y');
 
                         <select name="year" id="year" class="form-select" onchange="this.form.submit()">
                             @foreach ($dataTahun as $tahun)
-                            <option value="{{ $tahun->tahun }}" {{ $tahun==$selectedTahun ? 'selected' : '' }}>{{
+                            <option value="{{ $tahun->tahun }}" {{ $tahun->tahun==$selectedTahun ? 'selected' : '' }}>{{
                                 $tahun->tahun }}</option>
                             @endforeach
                         </select>
@@ -67,7 +67,12 @@ $selectedTahun = request('year') ?? date('Y');
                 <tr>
                     <td class="text-center align-middle">{{ \Carbon\Carbon::parse($row['tanggal'])->format('d') }}</td>
                     @foreach ($karyawans as $karyawan)
-                    <td class="text-end align-middle">{{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}</td>
+                    <td class="text-end align-middle">
+                        @if ($row[$karyawan->id] > 0)
+                        <a href="{{route('sales.omset-harian.detail', ['tanggal' => $row['tanggal'], 'karyawan_id' => $karyawan->id])}}" />
+                        @endif
+                        {{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach

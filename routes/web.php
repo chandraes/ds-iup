@@ -65,6 +65,7 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('omset-harian')->group(function() {
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'omset_harian'])->name('sales.omset-harian');
+                Route::get('/detail', [App\Http\Controllers\SalesController::class, 'omset_harian_detail'])->name('sales.omset-harian.detail');
             });
 
 
@@ -400,7 +401,12 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::prefix('statistik')->group(function () {
             Route::get('/', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik');
-            Route::get('/omset-harian-sales', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales'])->name('statistik.omset-harian-sales');
+
+            Route::prefix('omset-harian-sales')->group(function(){
+                Route::get('/', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales'])->name('statistik.omset-harian-sales');
+                Route::get('/detail', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales_detail'])->name('statistik.omset-harian-sales.detail');
+            });
+
         });
 
         Route::get('rekap', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap');
