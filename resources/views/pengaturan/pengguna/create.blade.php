@@ -81,6 +81,17 @@
                             </select>
                         </div>
                     </div>
+                      <div class="row mb-4" id="perusahaan_div" hidden>
+                        <label for="" class="col-md-3 form-label">Perusahaan</label>
+                        <div class="col-md-9">
+                            <select class="form-select" name="barang_unit_id" id="barang_unit_id" required>
+                                <option value="">-- Pilih database perusahaan --</option>
+                                @foreach ($perusahaan as $p)
+                                <option value="{{ $p->id }}">{{ Str::upper($p->nama) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -106,14 +117,28 @@
 
     function checkRole() {
         var role = document.getElementById('role').value;
+        console.log(role);
         var karyawanDiv = document.getElementById('karyawan_div');
+        var perusahaanDiv = document.getElementById('perusahaan_div');
         if (role == 'sales') {
             karyawanDiv.removeAttribute('hidden');
             document.getElementById('karyawan_id').setAttribute('required', true);
-        } else {
+            perusahaanDiv.setAttribute('hidden', true);
+            document.getElementById('barang_unit_id').removeAttribute('required');
+            document.getElementById('barang_unit_id').value = '';
+        } else if(role == 'perusahaan') {
+            perusahaanDiv.removeAttribute('hidden');
             karyawanDiv.setAttribute('hidden', true);
             document.getElementById('karyawan_id').removeAttribute('required');
             document.getElementById('karyawan_id').value = '';
+            document.getElementById('barang_unit_id').setAttribute('required', true);
+        } else {
+            karyawanDiv.setAttribute('hidden', true);
+            perusahaanDiv.setAttribute('hidden', true);
+            document.getElementById('barang_unit_id').removeAttribute('required');
+            document.getElementById('karyawan_id').removeAttribute('required');
+            document.getElementById('karyawan_id').value = '';
+            document.getElementById('barang_unit_id').value = '';
         }
     }
 </script>

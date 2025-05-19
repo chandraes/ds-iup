@@ -4,7 +4,7 @@
     <h1><u>DASHBOARD</u></h1>
 </div>
 <div class="container mt-3">
-    @if (auth()->user()->role != 'sales')
+    @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su' || auth()->user()->role == 'user')
     <div class="row justify-content-left">
 
         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
@@ -106,6 +106,9 @@
     @endif
     @if (auth()->user()->role == 'sales')
     @include('dashboard-sales')
+    @endif
+    @if (auth()->user()->role == 'perusahaan')
+    @include('dashboard-perusahaan')
     @endif
 </div>
 @endsection

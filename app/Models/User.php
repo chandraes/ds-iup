@@ -13,7 +13,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     const ROLE_SALES = 'sales';
-
+    const ROLE_PERUSAHAAN = 'perusahaan';
     /**
      * The attributes that are mass assignable.
      *
@@ -26,6 +26,7 @@ class User extends Authenticatable
         'email',
         'password',
         'karyawan_id',
+        'barang_unit_id'
     ];
 
     /**
@@ -51,7 +52,7 @@ class User extends Authenticatable
     public function getRoles()
     {
         $roles = [
-            'admin', 'user', 'sales',
+            'admin', 'user', 'sales', 'perusahaan'
         ];
 
         return $roles;

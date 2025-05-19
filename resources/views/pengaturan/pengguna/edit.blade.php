@@ -82,7 +82,19 @@
                         </div>
                     </div>
                     @endif
-
+                    @if ($d->role == 'perusahaan')
+                    <div class="row mb-4">
+                        <label for="" class="col-md-3 form-label">Perusahaan</label>
+                        <div class="col-md-9">
+                            <select class="form-select" name="barang_unit_id" id="barang_unit_id" required>
+                                <option value="">-- Pilih database perusahaan --</option>
+                                @foreach ($perusahaan as $p)
+                                <option value="{{ $p->id }}" @if ($p->id == $d->barang_unit_id) selected @endif>{{ Str::upper($p->nama) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
                 <div class="modal-footer">

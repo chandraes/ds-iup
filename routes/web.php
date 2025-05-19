@@ -29,6 +29,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
     });
 
+    Route::group(['middleware' => ['role:perusahaan']], function(){
+        Route::prefix('perusahaan')->group(function(){
+            Route::get('/konsumen', [App\Http\Controllers\PerusahaanController::class, 'konsumen'])->name('perusahaan.konsumen');
+            Route::get('/konsumen/data', [App\Http\Controllers\PerusahaanController::class, 'konsumen_data'])->name('perusahaan.konsumen.data');
+
+            Route::get('/sales', [App\Http\Controllers\PerusahaanController::class, 'sales'])->name('perusahaan.sales');
+        });
+
+    });
+
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');

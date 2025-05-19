@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Karyawan;
 use App\Models\Holding;
 use App\Models\PasswordKonfirmasi;
@@ -69,11 +70,13 @@ class PengaturanController extends Controller
                         $query->where('is_sales', 1);
                     })->select('id', 'nama')->get();
         $roles = $db->getRoles();
+        $perusahaan = BarangUnit::all();
 
         return view('pengaturan.pengguna.index', [
             'data' => $users,
             'roles' => $roles,
             'karyawan' => $karyawan,
+            'perusahaan' => $perusahaan,
         ]);
     }
 
@@ -97,6 +100,7 @@ class PengaturanController extends Controller
             'password' => 'required',
             'role' => 'required',
             'karyawan_id' => 'required_if:role,' . User::ROLE_SALES,
+            'barang_unit_id' => 'required_if:role,' . User::ROLE_PERUSAHAAN,
         ]);
 
         $data['password'] = bcrypt($data['password']);
@@ -129,6 +133,7 @@ class PengaturanController extends Controller
             'password' => 'nullable',
             'role' => 'required',
             'karyawan_id' => 'required_if:role,' . User::ROLE_SALES,
+            'barang_unit_id' => 'required_if:role,' . User::ROLE_PERUSAHAAN,
         ]);
 
         $user = User::findOrFail($id);
@@ -139,8 +144,12 @@ class PengaturanController extends Controller
             unset($data['password']);
         }
 
-        if ($data['role'] != 'supplier') {
-            $data['supplier_id'] = null;
+        if ($data['role'] != 'perusahaan') {
+            $data['barang_unit_id'] = null;
+        }
+
+        if ($data['role'] != 'sales') {
+            $data['karyawan_id'] = null;
         }
 
         try {
