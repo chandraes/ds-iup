@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
         columns: [
             { data: 0, className: "text-center align-middle" },
             { data: 1, className: "text-center align-middle" },
-            { data: 2, className: "text-center align-middle text-wrap" },
+            { data: 2, className: "text-start align-middle text-wrap" },
             { data: 3, className: "text-start align-middle text-wrap" },
             { data: 4, className: "text-center align-middle" },
             { data: 5, className: "text-center align-middle text-wrap" },

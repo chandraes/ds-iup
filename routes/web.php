@@ -35,6 +35,9 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/konsumen/data', [App\Http\Controllers\PerusahaanController::class, 'konsumen_data'])->name('perusahaan.konsumen.data');
 
             Route::get('/sales', [App\Http\Controllers\PerusahaanController::class, 'sales'])->name('perusahaan.sales');
+
+            Route::get('/stok-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_ppn'])->name('perusahaan.stok-ppn');
+            Route::get('/stok-non-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_non_ppn'])->name('perusahaan.stok-non-ppn');
         });
 
     });

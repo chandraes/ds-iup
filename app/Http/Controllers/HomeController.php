@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\Barang;
 use App\Models\Wilayah;
 use App\Services\WaStatus;
 use Illuminate\Http\Request;
@@ -25,6 +26,20 @@ class HomeController extends Controller
      */
     public function index()
     {
+        if (auth()->user()->role == 'perusahaan') {
+            $barang_ppn = Barang::where('barang_unit_id', auth()->user()->barang_unit_id)
+                ->where('jenis', 1)
+                ->first() ? 1 : 0;
+
+            $barang_non_ppn = Barang::where('barang_unit_id', auth()->user()->barang_unit_id)
+                ->where('jenis', 2)
+                ->first() ? 1 : 0;
+
+            return view('home', [
+                'barang_ppn' => $barang_ppn,
+                'barang_non_ppn' => $barang_non_ppn,
+            ]);
+        }
         return view('home');
     }
 

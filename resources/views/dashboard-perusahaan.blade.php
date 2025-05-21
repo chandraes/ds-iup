@@ -14,6 +14,22 @@
             <h5 class="mt-2">KARYAWAN</h5>
         </a>
     </div>
+    @if ($barang_ppn)
+    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{route('perusahaan.stok-ppn')}}" class="text-decoration-none">
+            <img src="{{asset('images/stok-ppn.svg')}}" alt="" width="70">
+            <h5 class="mt-2">STOK & HARGA JUAL BARANG<br>PPN</h5>
+        </a>
+    </div>
+    @endif
+    @if ($barang_non_ppn)
+    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{route('perusahaan.stok-non-ppn')}}" class="text-decoration-none">
+            <img src="{{asset('images/stok-non-ppn.svg')}}" alt="" width="70">
+            <h5 class="mt-2">STOK & HARGA JUAL BARANG NON PPN</h5>
+        </a>
+    </div>
+    @endif
 </div>
 <hr>
 {{-- <div class="row justify-content-left">
