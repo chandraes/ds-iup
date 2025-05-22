@@ -18,7 +18,7 @@ class PerusahaanController extends Controller
 {
     public function konsumen(Request $request)
     {
-        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
+        $filters = $request->only(['area', 'kab_kota','kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
         $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
             $query->select('id_wilayah')
@@ -53,7 +53,6 @@ class PerusahaanController extends Controller
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('nama', 'like', "%$search%")
-                ->orWhere('cp', 'like', "%$search%")
                 ->orWhere('no_hp', 'like', "%$search%");
             });
         }
@@ -68,8 +67,6 @@ class PerusahaanController extends Controller
                 $d->full_kode,
                 $d->kode_toko ? $d->kode_toko->kode : '',
                 $d->nama,
-                $d->cp . ' / ' . $d->no_hp, // Ganti ini
-                $d->npwp,
                 $d->karyawan ? $d->karyawan->nama : '',
                 $d->provinsi ? $d->provinsi->nama_wilayah : '',
                 $d->kabupaten_kota ? $d->kabupaten_kota->nama_wilayah : '',
@@ -160,7 +157,7 @@ class PerusahaanController extends Controller
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
 
-        
+
 
         if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();

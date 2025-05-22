@@ -82,8 +82,6 @@
                     <th class="text-center align-middle">KODE</th>
                     <th class="text-center align-middle">KODE <br>TOKO</th>
                     <th class="text-center align-middle">NAMA</th>
-                    <th class="text-center align-middle">CP</th>
-                    <th class="text-center align-middle">NPWP</th>
                     <th class="text-center align-middle">Sales Area</th>
                     <th class="text-center align-middle">Provinsi</th>
                     <th class="text-center align-middle">Kab/Kota</th>
@@ -160,13 +158,11 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 0, className: "text-center align-middle" },
             { data: 1, className: "text-center align-middle" },
             { data: 2, className: "text-start align-middle text-wrap" },
-            { data: 3, className: "text-start align-middle text-wrap" },
-            { data: 4, className: "text-center align-middle" },
-            { data: 5, className: "text-center align-middle text-wrap" },
+            { data: 3, className: "text-center align-middle text-wrap" },
+            { data: 4, className: "text-start align-middle" },
+            { data: 5, className: "text-start align-middle" },
             { data: 6, className: "text-start align-middle" },
-            { data: 7, className: "text-start align-middle" },
-            { data: 8, className: "text-start align-middle" },
-            { data: 9, className: "text-start align-middle text-wrap" },
+            { data: 7, className: "text-start align-middle text-wrap" },
         ]
     });
 
