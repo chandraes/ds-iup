@@ -23,7 +23,7 @@
     {{-- buat filter untuk sales area --}}
     <form method="GET" action="{{ url()->current() }}">
         <div class="row mb-3">
-            <div class="col-md-3">
+            <div class="col-md-3 mb-1">
                 <label for="filterSalesArea" class="form-label">Kode Toko</label>
 
                 <select id="filterKodeToko" name="kode_toko" class="form-select" onchange="this.form.submit()">
@@ -35,7 +35,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-2">
                 <label for="filterSalesArea" class="form-label">Sales Area</label>
 
                 <select id="filterSalesArea" name="area" class="form-select" onchange="this.form.submit()">
@@ -47,7 +47,29 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-2">
+                <label for="filterProvinsi" class="form-label">Provinsi</label>
+                <select id="filterProvinsi" name="provinsi" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Provinsi --</option>
+                    @foreach ($provinsi as $prov)
+                    <option value="{{ $prov->id }}" {{ request('provinsi')==$prov->id ? 'selected' : '' }}>
+                        {{ $prov->nama_wilayah }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+               <div class="col-md-3 mb-2">
+                <label for="filterKota" class="form-label">Kab/Kota</label>
+                <select id="filterKota" name="kabupaten_kota" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Kab/Kota --</option>
+                    @foreach ($kabupaten_kota as $kab)
+                    <option value="{{ $kab->id }}" {{ request('kabupaten_kota')==$kab->id ? 'selected' : '' }}>
+                        {{ $kab->nama_wilayah }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
                 <label for="filterKecamatan" class="form-label">Kecamatan</label>
                 <select id="filterKecamatan" name="kecamatan" class="form-select" onchange="this.form.submit()">
                     <option value="">-- Semua Kecamatan --</option>
@@ -58,7 +80,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3 mb-2">
                 <label for="filterKecamatan" class="form-label">Status</label>
                 <select id="filterStatus" name="status" class="form-select" onchange="this.form.submit()">
                     <option value="1" {{ request()->has('status') && request('status') == 1 ? 'selected' : 'selected'
@@ -124,6 +146,15 @@
         width: '100%',
     });
 
+    $('#filterKota').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
+
+    $('#filterProvinsi').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
 
 document.addEventListener('DOMContentLoaded', function() {
     function getFilters() {
@@ -131,6 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
             area: document.getElementById('filterSalesArea').value,
             kecamatan: document.getElementById('filterKecamatan').value,
             kode_toko: document.getElementById('filterKodeToko').value,
+            kabupaten_kota: document.getElementById('filterKota').value,
+            provinsi: document.getElementById('filterProvinsi').value,
             status: document.getElementById('filterStatus').value,
         };
     }
@@ -146,6 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 var filters = getFilters();
                 d.area = filters.area;
                 d.kecamatan = filters.kecamatan;
+                d.provinsi = filters.provinsi;
+                d.kabupaten_kota = filters.kabupaten_kota;
                 d.kode_toko = filters.kode_toko;
                 d.status = filters.status;
             }

@@ -18,15 +18,23 @@ class PerusahaanController extends Controller
 {
     public function konsumen(Request $request)
     {
-        $filters = $request->only(['area', 'kab_kota','kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
+        $filters = $request->only(['area', 'kabupaten_kota','kecamatan', 'kode_toko', 'status', 'provinsi']); // Ambil filter dari request
+        $wilayah = Wilayah::whereIn('id_level_wilayah', [1, 2, 3])->get()->groupBy('id_level_wilayah');
+        $provinsi = $wilayah->get(1, collect());
 
-        $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
-            $query->select('id_wilayah')
-                ->from('wilayahs')
-                ->where('id_induk_wilayah', '110000');
-        })->where('id_level_wilayah', 3)->get();
+        if ($request->has('provinsi') && $request->input('provinsi') != '') {
+            $prov = Wilayah::find($request->input('provinsi'));
+            $kabupaten_kota = Wilayah::where('id_induk_wilayah', $prov->id_wilayah)->where('id_level_wilayah', 2)->get();
+        } else {
+            $kabupaten_kota = $wilayah->get(2, collect());
+        }
 
-        $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
+        if ($request->has('kabupaten_kota') && $request->input('kabupaten_kota') != '') {
+            $kab = Wilayah::find($request->input('kabupaten_kota'));
+            $kecamatan_filter = Wilayah::where('id_induk_wilayah', $kab->id_wilayah )->where('id_level_wilayah', 3)->get();
+        } else {
+            $kecamatan_filter = $wilayah->get(3, collect());
+        }
 
         $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
             $query->where('is_sales', 1);
@@ -34,6 +42,7 @@ class PerusahaanController extends Controller
 
         return view('perusahaan.konsumen', [
             'provinsi' => $provinsi,
+            'kabupaten_kota' => $kabupaten_kota,
             'sales_area' => $sales_area,
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
             'kecamatan_filter' => $kecamatan_filter,
@@ -45,7 +54,7 @@ class PerusahaanController extends Controller
         $start = $request->input('start', 0);
         $length = $request->input('length', 10);
         $search = $request->input('search.value');
-        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']);
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'kabupaten_kota', 'provinsi']);
 
         $query = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
             ->filter($filters);
@@ -53,7 +62,7 @@ class PerusahaanController extends Controller
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('nama', 'like', "%$search%")
-                ->orWhere('no_hp', 'like', "%$search%");
+                ->orWhere('alamat', 'like', "%$search%");
             });
         }
 
