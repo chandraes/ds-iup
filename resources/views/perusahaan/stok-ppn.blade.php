@@ -8,6 +8,7 @@
         </div>
     </div>
     @include('swal')
+    @include('perusahaan.foto')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
@@ -53,17 +54,6 @@
     <form method="GET" action="{{url()->current()}}" class="mt-3 mb-5">
         <div class="row">
             <div class="col-md-2">
-                <label for="type">Bidang</label>
-                <select name="type" id="type" class="form-select">
-                    <option value=""> ---------- </option>
-                    @foreach($selectType as $type)
-                    <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
-                        {{ $type->nama }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
                 <label for="kategori">Kelompok Barang</label>
                 <select name="kategori" id="kategori" class="form-select">
                     <option value=""> ---------- </option>
@@ -104,8 +94,8 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
-                    <th class="text-center align-middle">Perusahaan</th>
-                    <th class="text-center align-middle">Bidang</th>
+                    {{-- <th class="text-center align-middle">Perusahaan</th>
+                    <th class="text-center align-middle">Bidang</th> --}}
                     <th class="text-center align-middle">Kelompok<br>Barang</th>
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
@@ -141,8 +131,8 @@
                 @foreach ($stokHargas as $stokHarga)
                 {{-- @if ($stokHarga->stok > 0) --}}
                 <tr>
-                    @if (!$unitDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->unitRowspan }}">{{ $number++ }}</td>
+                    {{-- @if (!$unitDisplayed)
+
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->unitRowspan }}">{{
                         $stokHarga->unit->nama }}</td>
                     @php $unitDisplayed = true; @endphp
@@ -151,8 +141,9 @@
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->typeRowspan }}">{{
                         $stokHarga->type->nama }}</td>
                     @php $typeDisplayed = true; @endphp
-                    @endif
+                    @endif --}}
                     @if (!$kategoriDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->kategoriRowspan}}">{{ $number++ }}</td>
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->kategoriRowspan }}">{{
                         $stokHarga->kategori->nama }}</td>
                     @php $kategoriDisplayed = true; @endphp
@@ -165,9 +156,15 @@
                     @endif
                     @if (!$barangDisplayed)
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        @if ($stokHarga->barang->foto)
+                        <a href="javascript:void(0)" onclick="viewImage('{{ asset('storage/'.$stokHarga->barang->foto) }}')">
+                        @endif
                         {{ $stokHarga->barang->kode }}
                     </td>
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        @if ($stokHarga->barang->foto)
+                        <a href="javascript:void(0)" onclick="viewImage('{{ asset('storage/'.$stokHarga->barang->foto) }}')">
+                        @endif
                         {{ $stokHarga->barang->merk }}
                     </td>
                     @php $barangDisplayed = true; @endphp
@@ -247,11 +244,29 @@
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
+<script src="{{asset('assets/js/bootstrap-bundle.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
     $('#filter_barang_nama').select2({
         theme: 'bootstrap-5',
         width: '100%',
+    });
+
+    function viewImage(imageUrl) {
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        const zoomableImage = document.getElementById('zoomableImage');
+        zoomableImage.src = imageUrl;
+        imageModal.show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const image = document.getElementById('zoomableImage');
+        const slider = document.getElementById('zoomSlider');
+
+        slider.addEventListener('input', function () {
+            const scale = slider.value;
+            image.style.transform = `scale(${scale})`;
+        });
     });
 
 </script>
