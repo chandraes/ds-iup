@@ -82,8 +82,8 @@
                     <th class="text-center align-middle">Stok<br>Awal</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
-                    <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
-                    <th class="text-center align-middle">Harga Jual<br>Barang</th>
+                    <th class="text-center align-middle">Harga<br>Beli Barang</th>
+                    <th class="text-center align-middle">Harga<br>Jual<br>Barang</th>
                 </tr>
             </thead>
             @php

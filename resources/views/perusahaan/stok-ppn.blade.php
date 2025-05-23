@@ -103,9 +103,7 @@
                     <th class="text-center align-middle">Stok<br>Awal</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
-                    <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
-                    <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     {{-- <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th> --}}
@@ -203,14 +201,8 @@
                     }
 
                     @endphp
-                    <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
                     <td class="text-center align-middle">{{ number_format(($stokHarga->harga_beli +
                         ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') }}</td>
-                    <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
-                        {{ $stokHarga->nf_harga }}
-
-
-                    </td>
                     <td class="text-end align-middle">
                         {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
                     </td>
