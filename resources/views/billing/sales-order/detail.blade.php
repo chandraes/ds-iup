@@ -188,8 +188,8 @@
                                 $total = $order->invoice_detail->where('deleted', 0)->sum('total');
                                 $diskon = $order->diskon;
                                 $dpp_setelah_diskon = $total - $diskon;
-                                $ppn = $order->kas_ppn ? floor($dpp_setelah_diskon * $ppn / 100) : 0;
-                                $grand_total = $dpp_setelah_diskon + $ppn;
+                                $ppn_val_ = $order->kas_ppn ? floor($dpp_setelah_diskon * $ppn / 100) : 0;
+                                $grand_total = $dpp_setelah_diskon + $ppn_val_;
                                 @endphp
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">DPP :</th>
@@ -214,7 +214,7 @@
                                 @if ($order->kas_ppn == 1)
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Ppn :</th>
-                                    <th class="text-end align-middle" id="thPpn">{{number_format(($ppn), 0,
+                                    <th class="text-end align-middle" id="thPpn">{{number_format(($ppn_val_), 0,
                                         ',','.')}}</th>
                                         <td></td>
                                 </tr>
@@ -375,7 +375,7 @@
     {
         const dpp = parseNumber(document.getElementById('thDppDiskon').innerText);
         const ppnRate = {{ $ppn }};
-        const ppnValue = Math.round(dpp * ppnRate / 100);
+        const ppnValue = Math.floor(dpp * ppnRate / 100);
         const dipungut = document.getElementById('dipungut')?.value || 0;
 
         const grandTotal = dipungut == 0 ? dpp : dpp + ppnValue;
