@@ -739,6 +739,9 @@ class KeranjangJual extends Model
         if ($data['lunas'] != 1) {
             $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
             $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
+        } else {
+            $data['sisa_tagihan'] = 0;
+            $data['sisa_ppn'] = 0;
         }
         // Create Invoice
 
@@ -799,6 +802,16 @@ class KeranjangJual extends Model
         $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
         $data['ppn_dipungut'] = $dipungut;
 
+        if ($data['lunas'] != 1) {
+            // Update sisa tagihan dan sisa ppn
+            $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
+            $data['sisa_ppn'] = 0;
+        } else {
+            // kalau sudah lunas, maka sisa tagihan dan sisa ppn adalah 0
+            $data['sisa_tagihan'] = 0;
+            $data['sisa_ppn'] = 0;
+            # code...
+        }
         $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
         $data['sisa_ppn'] = 0;
 
