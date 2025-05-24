@@ -341,6 +341,10 @@ class KeranjangJual extends Model
                 $dbPpnKeluaran = new PpnKeluaran;
                 $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
+                // dd($invoice->kode);
+
+                $nama_konsumen = $invoice->konsumen_id ? $konsumen->kode_toko->kode.' '.$konsumen->nama : $konsumen->nama;
+
                 $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*FORM PENJUALAN*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -348,7 +352,7 @@ class KeranjangJual extends Model
                             '*'.$invoice->kode."*\n\n".
                             'Uraian : *'.$uraian."*\n".
                             'Pembayaran : *'.$pembayaran."*\n\n".
-                            'Konsumen : *'.$konsumen->kode_toko->kode." ".$konsumen->nama."*\n".
+                            'Konsumen : *'.$nama_konsumen."*\n".
                             'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
                             "Ditransfer ke rek:\n\n".
                             'Bank      : '.$store->bank."\n".
@@ -427,6 +431,8 @@ class KeranjangJual extends Model
                 $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
                 $header = $data['pembayaran'] == 3 ? "🟢🟢🟢🟢🟢🟢🟢🟢🟢\n" : "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n";
 
+                $nama_konsumen = $invoice->konsumen_id ? $konsumen->kode_toko->kode.' '.$konsumen->nama : $konsumen->nama;
+
                 $pesan = $header.
                                "*FORM PENJUALAN*\n".
                                $header."\n".
@@ -434,7 +440,7 @@ class KeranjangJual extends Model
                                '*'.$invoice->kode."*\n\n".
                                "Uraian : *Tanpa DP*\n".
                                'Pembayaran : *'.$pembayaran."*\n\n".
-                               'Konsumen : *'.$konsumen->kode_toko->kode.' '.$konsumen->nama."*\n".
+                               'Konsumen : *'.$nama_konsumen."*\n".
                                'Nilai :  *Rp. '.$invoice->nf_sisa_tagihan."*\n\n".
                                // "Ditransfer ke rek:\n\n".
                                // "Bank      : ".$rekening->bank."\n".
