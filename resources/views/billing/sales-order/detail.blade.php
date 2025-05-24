@@ -31,7 +31,7 @@
                                                 <td class="text-start align-middle">Konsumen</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <input type="text" class="form-control" value="{{$order->konsumen->nama}}">
+                                                    <input type="text" class="form-control" value="{{$order->konsumen->kode_toko->kode.' '.$order->konsumen->nama}}">
                                                 </td>
                                             </tr>
                                             <tr id="namaTr" hidden style="height:50px">
