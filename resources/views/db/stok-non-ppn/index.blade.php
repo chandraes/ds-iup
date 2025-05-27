@@ -217,12 +217,10 @@
                     @endphp
                     <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
                     <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif">
-                        @if ($stokHarga->stok > 0)
+                        
                             <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
                                 onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
-                        @else
-                        {{ $stokHarga->nf_harga }}
-                        @endif
+
 
                     </td>
 

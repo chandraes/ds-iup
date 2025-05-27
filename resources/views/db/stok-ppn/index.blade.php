@@ -234,13 +234,9 @@
                     <td class="text-center align-middle">{{ number_format(($stokHarga->harga_beli +
                         ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') }}</td>
                     <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
-                        @if ($stokHarga->stok > 0)
                         <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{$stokHarga}})">{{ $stokHarga->nf_harga }}</a>
-                        @else
+                            onclick="editFun({{$stokHarga}})">
                         {{ $stokHarga->nf_harga }}
-                        @endif
-
                     </td>
                     <td class="text-end align-middle">
                         {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
