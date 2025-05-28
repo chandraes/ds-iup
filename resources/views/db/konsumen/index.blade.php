@@ -37,21 +37,9 @@
 <div class="container-fluid mt-5 table-responsive">
 
     {{-- buat filter untuk sales area --}}
-    <form method="GET" action="{{ url()->current() }}">
+   <form method="GET" action="{{ url()->current() }}">
         <div class="row mb-3">
-            <div class="col-md-3">
-                <label for="filterSalesArea" class="form-label">Kode Toko</label>
-
-                <select id="filterKodeToko" name="kode_toko" class="form-select" onchange="this.form.submit()">
-                    <option value="" selected>-- Semua Kode Toko --</option>
-                    @foreach ($kode_toko as $k)
-                    <option value="{{ $k->id }}" {{ request('kode_toko')==$k->id ? 'selected' : '' }}>
-                        {{ $k->kode }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-2">
                 <label for="filterSalesArea" class="form-label">Sales Area</label>
 
                 <select id="filterSalesArea" name="area" class="form-select" onchange="this.form.submit()">
@@ -63,23 +51,61 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
-                <label for="filterKecamatan" class="form-label">Kecamatan</label>
-                    <select id="filterKecamatan" name="kecamatan" class="form-select" onchange="this.form.submit()">
-                        <option value="">-- Semua Kecamatan --</option>
-                        @foreach ($kecamatan_filter as $kec)
-                            <option value="{{ $kec->id }}" {{ request('kecamatan') == $kec->id ? 'selected' : '' }}>
-                                {{ $kec->nama_wilayah }}
-                            </option>
-                        @endforeach
-                    </select>
+
+
+            <div class="col-md-3 mb-2">
+                <label for="filterProvinsi" class="form-label">Provinsi</label>
+                <select id="filterProvinsi" name="provinsi" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Provinsi --</option>
+                    @foreach ($provinsi as $prov)
+                    <option value="{{ $prov->id }}" {{ request('provinsi')==$prov->id ? 'selected' : '' }}>
+                        {{ $prov->nama_wilayah }}
+                    </option>
+                    @endforeach
+                </select>
             </div>
-            <div class="col-md-2">
+               <div class="col-md-3 mb-2">
+                <label for="filterKota" class="form-label">Kab/Kota</label>
+                <select id="filterKota" name="kabupaten_kota" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Kab/Kota --</option>
+                    @foreach ($kabupaten_kota as $kab)
+                    <option value="{{ $kab->id }}" {{ request('kabupaten_kota')==$kab->id ? 'selected' : '' }}>
+                        {{ $kab->nama_wilayah }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <label for="filterKecamatan" class="form-label">Kecamatan</label>
+                <select id="filterKecamatan" name="kecamatan" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Kecamatan --</option>
+                    @foreach ($kecamatan_filter as $kec)
+                    <option value="{{ $kec->id }}" {{ request('kecamatan')==$kec->id ? 'selected' : '' }}>
+                        {{ $kec->nama_wilayah }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3 mb-1">
+                <label for="filterSalesArea" class="form-label">Kode Toko</label>
+
+                <select id="filterKodeToko" name="kode_toko" class="form-select" onchange="this.form.submit()">
+                    <option value="" selected>-- Semua Kode Toko --</option>
+                    @foreach ($kode_toko as $k)
+                    <option value="{{ $k->id }}" {{ request('kode_toko')==$k->id ? 'selected' : '' }}>
+                        {{ $k->kode }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
                 <label for="filterKecamatan" class="form-label">Status</label>
-                    <select id="filterStatus" name="status" class="form-select" onchange="this.form.submit()">
-                        <option value="1" {{ request()->has('status') && request('status') == 1 ? 'selected' : 'selected' }}>Aktif</option>
-                        <option value="0" {{ request()->has('status') && request('status') == 0 ? 'selected' : '' }}>Non Aktif</option>
-                    </select>
+                <select id="filterStatus" name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="1" {{ request()->has('status') && request('status') == 1 ? 'selected' : 'selected'
+                        }}>Aktif</option>
+                    <option value="0" {{ request()->has('status') && request('status') == 0 ? 'selected' : '' }}>Non
+                        Aktif</option>
+                </select>
             </div>
             <div class="col-md-1 mt-4">
                 <div class="row">
@@ -112,13 +138,13 @@
                 <th class="text-center align-middle">ACT</th>
             </tr>
         </thead>
-        @php
+        {{-- @php
         $noHpCounts = $data->pluck('no_hp')->countBy();
         $namaCounts = $data->pluck('nama')->countBy();
-        @endphp
+        @endphp --}}
 
         <tbody>
-            @foreach ($data as $d)
+            {{-- @foreach ($data as $d)
             @php
             $isDuplicate = $noHpCounts[$d->no_hp] > 1;
             $isDuplicateNama = $namaCounts[$d->nama] > 1;
@@ -236,7 +262,7 @@
                 });
             </script>
             @endif
-            @endforeach
+            @endforeach --}}
         </tbody>
     </table>
 </div>
@@ -245,23 +271,20 @@
 @push('css')
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link href="{{asset('assets/js/datatables.min.css')}}" rel="stylesheet">
+{{-- <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"> --}}
+{{-- <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.bootstrap5.min.css"> --}}
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
-<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
-{{-- <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script> --}}
+<script src="{{asset('assets/js/datatables.min.js')}}"></script>
+{{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
+{{-- <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script> --}}
+{{-- <script src="https://cdn.datatables.net/scroller/2.4.3/js/scroller.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script> --}}
 <script>
-
-</script>
-<script>
-    $('#provinsi_id').select2({
+ $('#provinsi_id').select2({
             theme: 'bootstrap-5',
             width: '100%',
             dropdownParent: $('#createInvestor'),
@@ -304,6 +327,70 @@
             theme: 'bootstrap-5',
             width: '100%',
         });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function getFilters() {
+            return {
+                area: document.getElementById('filterSalesArea').value,
+                kecamatan: document.getElementById('filterKecamatan').value,
+                kode_toko: document.getElementById('filterKodeToko').value,
+                kabupaten_kota: document.getElementById('filterKota').value,
+                provinsi: document.getElementById('filterProvinsi').value,
+                status: document.getElementById('filterStatus').value,
+            };
+        }
+
+        var table = $('#data').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('db.konsumen.data') }}",
+                data: function(d) {
+                    // Tambahkan filter ke parameter AJAX
+                    var filters = getFilters();
+                    d.area = filters.area;
+                    d.kecamatan = filters.kecamatan;
+                    d.provinsi = filters.provinsi;
+                    d.kabupaten_kota = filters.kabupaten_kota;
+                    d.kode_toko = filters.kode_toko;
+                    d.status = filters.status;
+                }
+            },
+            scrollY: "450px",
+            scrollCollapse: true,
+            scroller: true, // Aktifkan infinite scroll
+            columns: [
+                { data: 'full_kode', className: 'text-center align-middle text-wrap' },
+                { data: 'kode_toko', className: 'text-center align-middle text-wrap' },
+                { data: 'nama', className: 'text-center align-middle text-wrap' },
+                { data: 'cp', className: 'align-middle' },
+                { data: 'npwp', className: 'text-center align-middle text-wrap' },
+                { data: 'sales_area', className: 'text-center align-middle text-wrap' },
+                { data: 'provinsi', className: 'text-center align-middle text-wrap' },
+                { data: 'kab_kota', className: 'text-center align-middle text-wrap' },
+                { data: 'kecamatan', className: 'text-center align-middle text-wrap' },
+                { data: 'alamat', className: 'align-middle text-wrap' },
+                { data: 'pembayaran', className: 'text-center align-middle text-wrap'},
+                { data: 'limit_plafon', className: 'text-end align-middle text-wrap' },
+                { data: 'act', orderable: false, searchable: false, className: 'text-center align-middle text-wrap',
+
+                 }
+            ],
+            columnDefs: [
+                { targets: [3, 12], orderable: false, searchable: false } // agar kolom HTML bisa dirender
+            ]
+        });
+
+
+        document.querySelectorAll('#filterSalesArea, #filterKecamatan, #filterKodeToko, #filterStatus').forEach(function(el) {
+            el.addEventListener('change', function() {
+                table.ajax.reload();
+            });
+        });
+    });
+
+
 
    function editInvestor(data, id) {
         $('#edit_kabupaten_kota_id').empty();
@@ -441,14 +528,6 @@
             }
         });
     }
-
-    $('#data').DataTable({
-        paging: false,
-        scrollCollapse: true,
-        stateSave: true,
-        scrollY: "550px",
-        scrollX: true,
-    });
 
 
     var no_hp = new Cleave('#no_hp', {
