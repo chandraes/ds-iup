@@ -69,21 +69,16 @@
 @push('css')
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-<link href="{{asset('assets/js/datatables.min.css')}}" rel="stylesheet">
+<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 {{-- <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"> --}}
-{{-- <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.bootstrap5.min.css"> --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.bootstrap5.min.css">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
-<script src="{{asset('assets/js/datatables.min.js')}}"></script>
+<script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="https://cdn.datatables.net/scroller/2.3.0/js/dataTables.scroller.min.js"></script>
 <script>
-
-
-
-
-
-
 
         var table = $('#data').DataTable({
             processing: true,
@@ -100,7 +95,7 @@
                     d.status = $('#filterStatus').val();
                 }
             },
-            scrollY: "450px",
+            scrollY: "550px",
             scrollCollapse: true,
             scroller: true, // Aktifkan infinite scroll
             columns: [
@@ -166,6 +161,19 @@ $('#provinsi_id').select2({
         });
 
 
+        $('#modalSalesArea').on('shown.bs.modal', function () {
+            table.columns.adjust().draw();
+        });
+
+        $('#modalSalesArea').on('hidden.bs.modal', function () {
+            if ($.fn.DataTable.isDataTable('#salesAreaTable')) {
+                table.destroy();
+                $('#salesAreaTable tbody').empty(); // bersihkan isi table
+            }
+
+            // 🔄 Refresh halaman
+            location.reload();
+        });
 
 
 
