@@ -79,4 +79,14 @@ class HomeController extends Controller
             'data' => $data,
         ]);
     }
+
+    public function checklist_sales(Request $request)
+    {
+
+    }
+
+    public function checklist_sales_download(Request $request)
+    {
+
+    }
 }

@@ -95,6 +95,12 @@
                 <h4 class="mt-2">STRUKTUR<br>SKALA UPAH</h4>
             </a>
         </div>
+         <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('checklist-sales')}}" class="text-decoration-none">
+                <img src="{{asset('images/checklist-sales.svg')}}" alt="" width="70">
+                <h4 class="mt-2">CHECKLIST<br>SALES</h4>
+            </a>
+        </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengaturan.svg')}}" alt="" width="70">
