@@ -187,7 +187,7 @@
     });
 
     function downloadPDF() {
-        $('#spinner').show();
+
         var kodeToko = $('#filterKodeToko').val();
         var area = $('#filterSalesArea').val();
         var kecamatan = $('#filterKecamatan').val();
@@ -202,7 +202,9 @@
         if (kecamatan) {
             params.append('kecamatan', kecamatan);
         }
-        window.location.href = url + '?' + params.toString();
+        window.open(url + '?' + params.toString(), '_blank');
+
+
     }
 
 
