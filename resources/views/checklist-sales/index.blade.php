@@ -187,6 +187,7 @@
     });
 
     function downloadPDF() {
+        $('#spinner').show();
         var kodeToko = $('#filterKodeToko').val();
         var area = $('#filterSalesArea').val();
         var kecamatan = $('#filterKecamatan').val();
