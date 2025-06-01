@@ -86,6 +86,13 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['role:su,admin,user']], function () {
+
+        Route::prefix('checklist-sales')->group(function () {
+            Route::get('/', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
+            Route::get('/download', [App\Http\Controllers\HomeController::class, 'checklist_sales_download'])->name('checklist-sales.download');
+        });
+
+
         Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
         Route::get('/get-kab-kota', [App\Http\Controllers\HomeController::class, 'getKabKota'])->name('get-kab-kota');
         Route::get('/get-kecamatan', [App\Http\Controllers\HomeController::class, 'getKecamatan'])->name('get-kecamatan');
