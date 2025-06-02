@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Config;
 use App\Models\db\CostOperational;
 use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
@@ -19,6 +20,7 @@ use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DatabaseController extends Controller
 {
@@ -507,6 +509,20 @@ class DatabaseController extends Controller
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
             'kecamatan_filter' => $kecamatan_filter,
         ]);
+    }
+
+    public function konsumen_daftar_kunjungan(Konsumen $konsumen)
+    {
+        $pt = Config::where('untuk', 'resmi')->first();
+
+        $tahun = date('Y');
+
+        $pdf = PDF::loadview('db.konsumen.daftar-kunjungan', [
+            'konsumen' => $konsumen,
+            'pt' => $pt,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Daftar Kunjungan - '.$konsumen->nama.' - '.$tahun.'.pdf');
     }
 
     public function konsumen_store(Request $request)

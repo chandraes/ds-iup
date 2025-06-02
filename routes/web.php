@@ -278,6 +278,7 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('konsumen')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'konsumen'])->name('db.konsumen');
+                Route::get('/daftar-kunjungan/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_daftar_kunjungan'])->name('db.konsumen.daftar-kunjungan');
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_store'])->name('db.konsumen.store');
                 Route::patch('/{konsumen}/update', [App\Http\Controllers\DatabaseController::class, 'konsumen_update'])->name('db.konsumen.update');
                 Route::delete('/{konsumen}/delete', [App\Http\Controllers\DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');

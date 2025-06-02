@@ -177,6 +177,9 @@
                             <button type="submit" class="btn btn-danger m-2"><i class="fa fa-{{request()->has('status') && request('status') == 0 ? 'refresh' : 'power-off' }}"></i></button>
                         </form>
                     </div>
+                     <div class="d-flex justify-content-center">
+                        <a href="{{route('db.konsumen.daftar-kunjungan', $d->id)}}" class="btn btn-success btn-sm m-2" target="_blank">Daftar Kunjungan</a>
+                     </div>
                 </td>
             </tr>
             @if (request()->has('status') && request('status') == 0)
