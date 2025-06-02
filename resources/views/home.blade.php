@@ -108,6 +108,14 @@
             </a>
         </div>
         @endif
+        @if (auth()->user()->role == 'user')
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('checklist-sales')}}" class="text-decoration-none">
+                <img src="{{asset('images/checklist-sales.svg')}}" alt="" width="70">
+                <h4 class="mt-2">CHECKLIST<br>SALES</h4>
+            </a>
+        </div>
+        @endif
     </div>
     @endif
     @if (auth()->user()->role == 'sales')
