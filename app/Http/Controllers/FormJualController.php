@@ -296,7 +296,7 @@ class FormJualController extends Controller
             'tanggal' => $tanggal,
             'terbilang' => $terbilang,
             'rekening' => $rekening,
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper('a5', 'portrait');
 
         $directory = storage_path('app/public/invoices');
         $pdfPath = $directory.'/invoice-'.$invoice->id.'.pdf';
