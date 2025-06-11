@@ -52,7 +52,7 @@
                         <td style="vertical-align:top; width: 15px">:</td>
                         <td style="vertical-align:top; width: 150px">
                             <strong>
-                                {{$konsumen->alamat}}
+                                {{$konsumen->alamat}},  {{$konsumen->kecamatan ? $konsumen->kecamatan->nama_wilayah : ''}}
                             </strong>
                         </td>
                         <td style="vertical-align:top; width: 80px">&nbsp;</td>
@@ -70,13 +70,14 @@
                     <tr id="namaTr">
                         <td style="vertical-align:top; width: 20%">
                             <strong>
-                                KECAMATAN
+                                KAB/KOTA, PROVINSI
                             </strong>
                         </td>
                         <td style="vertical-align:top; width: 15px">:</td>
                         <td style="vertical-align:top; width: 150px">
                             <strong>
-                                {{$konsumen->kecamatan ? $konsumen->kecamatan->nama_wilayah : ''}}
+                                {{$konsumen->kabupaten_kota ? $konsumen->kabupaten_kota->nama_wilayah : ''}},
+                                {{$konsumen->provinsi ? $konsumen->provinsi->nama_wilayah : ''}}
                             </strong>
                         </td>
                         <td style="vertical-align:top; width: 80px">&nbsp;</td>
