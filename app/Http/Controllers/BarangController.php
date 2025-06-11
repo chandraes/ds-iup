@@ -629,9 +629,12 @@ class BarangController extends Controller
         $data['harga'] = str_replace('.', '', $data['harga']);
         $data['min_jual'] = str_replace('.', '', $data['min_jual']);
 
-        if ($data['harga'] < $barang->harga_beli) {
-            return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
+        if (auth()->user()->role != 'su') {
+           if ($data['harga'] < $barang->harga_beli) {
+                return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
+            }
         }
+
 
         if ($data['min_jual'] <= 0) {
             return redirect()->back()->with('error', 'Minimum kelipatan jual tidak boleh dibawah 1 !');
