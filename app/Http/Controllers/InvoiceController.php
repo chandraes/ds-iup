@@ -78,6 +78,8 @@ class InvoiceController extends Controller
     {
         $db = new InvoiceBelanja;
 
+        return redirect()->back()->with('error', 'Fitur sedang dalam perbaikan, Silahkan hubungi admin untuk manual void sementara waktu.');
+
         $res = $db->void($invoice->id);
 
         return redirect()->back()->with($res['status'], $res['message']);
