@@ -6,12 +6,14 @@ use App\Models\db\Barang\Barang;
 use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
+use App\Models\Katalog;
 use App\Models\Wilayah;
 use App\Services\WaStatus;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -184,4 +186,96 @@ class HomeController extends Controller
         // Download file hasil gabungan
         return response()->download($finalPath)->deleteFileAfterSend(true);
     }
+
+    public function katalog(Request $request)
+    {
+        $filter = $request->only(['nama', 'slug']);
+
+        $data = Katalog::filter($filter)->get();
+
+        return view('katalog.index', [
+            'data' => $data,
+            'filter' => $filter,
+        ]);
+    }
+
+    public function katalog_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required|string|max:255|unique:katalogs,nama',
+            'file' => 'nullable|file|mimes:pdf|max:2048', // Maksimal 2MB
+        ]);
+
+        $data['slug'] = Str::slug($data['nama']);
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->storeAs('katalogs', $data['slug'] . '.pdf', 'public');
+            $data['file'] = $path;
+        } else {
+            $data['file'] = null; // Atau bisa di-set ke string kosodng jika tidak ada file
+        }
+
+        Katalog::create($data);
+
+        return redirect()->back()->with('success', 'Katalog berhasil ditambahkan.');
+    }
+
+    public function katalog_update(Katalog $katalog, Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required|string|max:255|unique:katalogs,nama,' . $katalog->id,
+            'file' => 'nullable|file|mimes:pdf|max:2048', // Maksimal 2MB
+        ]);
+
+        $data['slug'] = Str::slug($data['nama']);
+
+        if ($request->hasFile('file')) {
+            // Hapus file lama jika ada
+            if ($katalog->file) {
+                Storage::disk('public')->delete($katalog->file);
+            }
+            $file = $request->file('file');
+            $path = $file->storeAs('katalogs', $data['slug'] . '.pdf', 'public');
+            $data['file'] = $path;
+        } else {
+            $data['file'] = $katalog->file; // Tetap gunakan file lama jika tidak ada file baru
+        }
+
+        $katalog->update($data);
+
+        return redirect()->back()->with('success', 'Katalog berhasil diperbarui.');
+    }
+
+    public function katalog_destroy(Katalog $katalog)
+    {
+        // Hapus file dari storage
+        if ($katalog->file) {
+            Storage::disk('public')->delete($katalog->file);
+        }
+
+        // Hapus data katalog
+        $katalog->delete();
+
+        return redirect()->back()->with('success', 'Katalog berhasil dihapus.');
+    }
+
+    public function katalog_download(Katalog $katalog)
+    {
+        if (!$katalog->file) {
+            return redirect()->back()->with('error', 'File katalog tidak ditemukan.');
+        }
+
+        $filePath = storage_path('app/public/' . $katalog->file);
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File katalog tidak ditemukan di server.');
+        }
+
+        return response()->download($filePath, $katalog->nama . '.pdf');
+    }
+
+    
+
+
 }

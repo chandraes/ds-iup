@@ -17,6 +17,9 @@ Route::get('/', function () {
     return redirect('/login')->with('status', 'Please login to continue.');
 });
 
+Route::get('/katalog/download/{katalog}', [App\Http\Controllers\HomeController::class, 'katalog_download'])
+    ->name('katalog.download');
+
 Auth::routes([
     'register' => false,
 ]);
@@ -514,6 +517,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:su,admin,user']], function () {
 
         Route::get('/db/barang-unit/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
+
+        Route::prefix('katalog')->group(function() {
+            Route::get('/', [App\Http\Controllers\HomeController::class, 'katalog'])->name('katalog');
+            Route::post('/', [App\Http\Controllers\HomeController::class, 'katalog_store'])->name('katalog.store');
+            Route::patch('/{katalog}', [App\Http\Controllers\HomeController::class, 'katalog_update'])->name('katalog.update');
+            Route::delete('/{katalog}', [App\Http\Controllers\HomeController::class, 'katalog_destroy'])->name('katalog.delete');
+        });
+
 
         Route::prefix('po')->group(function () {
             Route::get('/', [App\Http\Controllers\PoController::class, 'index'])->name('po');

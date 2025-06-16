@@ -6,7 +6,6 @@
 <div class="container mt-3">
     @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su' || auth()->user()->role == 'user')
     <div class="row justify-content-left">
-
         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('db')}}" class="text-decoration-none">
@@ -33,8 +32,6 @@
                 <h4 class="mt-2">PURCHASE<br>ORDER</h4>
             </a>
         </div>
-    </div>
-    <div class="row justify-content-left">
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('inventaris.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/inventaris-menu.svg')}}" alt="" width="70">
@@ -54,7 +51,6 @@
                 <h4 class="mt-2">LAPORAN<br>KEUANGAN</h4>
             </a>
         </div>
-
         @endif
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('statistik')}}" class="text-decoration-none">
@@ -62,8 +58,6 @@
                 <h4 class="mt-2">STATISTIK</h4>
             </a>
         </div>
-    </div>
-    <div class="row justify-content-left">
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('legalitas')}}" class="text-decoration-none">
                 <img src="{{asset('images/legalitas.svg')}}" alt="" width="70">
@@ -95,12 +89,20 @@
                 <h4 class="mt-2">STRUKTUR<br>SKALA UPAH</h4>
             </a>
         </div>
-         <div class="col-md-3 text-center mb-5 mt-3">
+        @endif
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('checklist-sales')}}" class="text-decoration-none">
                 <img src="{{asset('images/checklist-sales.svg')}}" alt="" width="70">
                 <h4 class="mt-2">CHECKLIST<br>SALES</h4>
             </a>
         </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('katalog')}}" class="text-decoration-none">
+                <img src="{{asset('images/katalog.svg')}}" alt="" width="70">
+                <h4 class="mt-2">KATALOG</h4>
+            </a>
+        </div>
+        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengaturan.svg')}}" alt="" width="70">
@@ -108,22 +110,13 @@
             </a>
         </div>
         @endif
-        @if (auth()->user()->role == 'user')
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('checklist-sales')}}" class="text-decoration-none">
-                <img src="{{asset('images/checklist-sales.svg')}}" alt="" width="70">
-                <h4 class="mt-2">CHECKLIST<br>SALES</h4>
-            </a>
-        </div>
+        @endif
+        @if (auth()->user()->role == 'sales')
+        @include('dashboard-sales')
+        @endif
+        @if (auth()->user()->role == 'perusahaan')
+        @include('dashboard-perusahaan')
         @endif
     </div>
-    @endif
-    @if (auth()->user()->role == 'sales')
-    @include('dashboard-sales')
-    @endif
-    @if (auth()->user()->role == 'perusahaan')
-    @include('dashboard-perusahaan')
-    @endif
 </div>
 @endsection
-
