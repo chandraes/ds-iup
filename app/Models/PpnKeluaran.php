@@ -12,6 +12,8 @@ class PpnKeluaran extends Model
 
     protected $guarded = ['id'];
 
+    protected $appends = ['tanggal', 'nf_nominal', 'nf_saldo'];
+
     public function saldoTerakhir()
     {
         return $this->orderBy('id', 'desc')->first()->saldo ?? 0;
