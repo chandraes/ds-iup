@@ -102,8 +102,10 @@
                         @endif
 
                     </td>
-                    <td class="text-center align-middle">{{$d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->nama :
-                        $d->invoiceJual->konsumen_temp->nama}}</td>
+                    <td class="text-center align-middle">
+                        {{$d->invoiceJual->konsumen ? ($d->invoiceJual->konsumen->kode_toko ? $d->invoiceJual->konsumen->kode_toko->kode. ' ' : '' ).$d->invoiceJual->konsumen->nama :
+                        $d->invoiceJual->konsumen_temp->nama}}
+                        </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
                     </td>
@@ -225,7 +227,7 @@
         $('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,
-            "searching": false,
+            "searching": true,
             "scrollCollapse": true,
             "scrollY": "400px",
             // default order column 1
