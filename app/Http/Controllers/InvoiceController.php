@@ -255,4 +255,20 @@ class InvoiceController extends Controller
             'kabupaten' => $kabupaten,
         ]);
     }
+
+    public function invoice_konsumen_all_download(Request $request)
+    {
+        // dd('Fitur sedang dalam perbaikan, Silahkan hubungi admin untuk manual download sementara waktu.', $request->all());
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
+        $filters = $request->only(['expired', 'apa_ppn', 'karyawan_id', 'konsumen_id', 'kecamatan_id', 'kabupaten_id']);
+        $data = InvoiceJual::gabung($filters);
+
+        $pdf = Pdf::loadview('billing.invoice-konsumen.pdf-all', [
+            'data' => $data,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Invoice-Konsumen-Tempo.pdf');
+    }
 }

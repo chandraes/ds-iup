@@ -18,7 +18,13 @@
                                 width="30">
                             Billing</a></td>
                     <td><a target="_blank"
-                            href="{{route('billing.invoice-konsumen.pdf', ['expired' => request()->has('expired') ? request('expired') : '', 'kas_ppn' => 1, 'titipan' => isset($titipan) && $titipan == 1 ? 1 : 0])}}"><img
+                            href="{{route('billing.invoice-konsumen.pdf-all', [
+                                'expired' => request('expired'),
+                                'apa_ppn' => request('apa_ppn'),
+                                'karyawan_id' => request('karyawan_id'),
+                                'kabupaten_id' => request('kabupaten_id'),
+                                'kecamatan_id' => request('kecamatan_id'),
+                            ])}}"><img
                                 src="{{asset('images/print.svg')}}" alt="dokumen" width="30">
                             Print</a></td>
                 </tr>
@@ -121,7 +127,7 @@
                     <td class="text-center align-middle">{{$d->karyawan ? $d->karyawan->nama : '' }}</td>
                      <td class="text-start align-middle">
                             {{$d->konsumen->kabupaten_kota ? $d->konsumen->kabupaten_kota->nama_wilayah.', ' : ''}}
-                            {{$d->konsumen->kecamatan ? $d->konsumen->kecamatan->nama_wilayah : ''}}</strong></li>
+                            {{$d->konsumen->kecamatan ? $d->konsumen->kecamatan->nama_wilayah : ''}}
                     </td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' :
                         '' }}{{$d->konsumen->nama}}</td>

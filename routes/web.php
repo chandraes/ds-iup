@@ -696,6 +696,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/all', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_all'])->name('billing.invoice-konsumen.all');
 
                 Route::get('/pdf', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_download'])->name('billing.invoice-konsumen.pdf');
+                Route::get('/pdf', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_all_download'])->name('billing.invoice-konsumen.pdf-all');
             });
 
             Route::prefix('nota-ppn-masukan')->group(function () {
