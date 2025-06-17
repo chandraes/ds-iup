@@ -224,6 +224,17 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
+
+            <a href="{{route('billing.invoice-konsumen.all')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-konsumen-all.svg')}}" alt="" width="70">
+                <h4 class="mt-3">INVOICE KONSUMEN ALL
+                    {{-- @if ($ikn > 0)
+                    <span class="text-danger">({{$ikn}})</span>
+                    @endif --}}
+                </h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DASHBOARD

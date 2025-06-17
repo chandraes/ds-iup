@@ -162,6 +162,11 @@ class InvoiceJual extends Model
         return $this->belongsTo(KonsumenTemp::class);
     }
 
+    public function karyawan()
+    {
+        return $this->belongsTo(Karyawan::class);
+    }
+
     public function invoice_detail()
     {
         return $this->hasMany(InvoiceJualDetail::class);
@@ -571,6 +576,47 @@ class InvoiceJual extends Model
 
         return $data;
 
+    }
+
+    public function scopeGabung($query, $filters)
+    {
+        $data = $query->with(['konsumen.kode_toko', 'konsumen.kecamatan', 'konsumen.kabupaten_kota','invoice_jual_cicil', 'karyawan'])
+            ->where('void', 0)
+            ->where('titipan', 0)
+            ->where('lunas', 0);
+
+        if (isset($filters['expired']) && $filters['expired'] != '') {
+            $data->where('jatuh_tempo', $filters['expired'] == 'no' ? '>' : '<=', Carbon::now());
+        }
+
+        if (isset($filters['konsumen_id']) && $filters['konsumen_id'] != ''){
+            $data->where('konsumen_id', $filters['konsumen_id']);
+        }
+
+        if (isset($filters['karyawan_id']) && $filters['karyawan_id'] != ''){
+            $data->where('karyawan_id', $filters['karyawan_id']);
+        }
+
+        if (isset($filters['kecamatan_id']) && $filters['kecamatan_id'] != '') {
+            $data->whereHas('konsumen', function ($query) use ($filters) {
+                $query->where('kecamatan_id', $filters['kecamatan_id']);
+            });
+        }
+
+        if(isset($filters['kabupaten_id']) && $filters['kabupaten_id'] != ''){
+            $data->whereHas('konsumen', function ($query) use ($filters) {
+                $query->where('kabupaten_kota_id', $filters['kabupaten_id']);
+            });
+        }
+
+        if(isset($filters['apa_ppn']) && $filters['apa_ppn'] != ''){
+            $ppn = $filters['apa_ppn'] == 'yes' ? 1 : 0;
+            $data->where('kas_ppn', $ppn);
+        }
+
+        $data = $data->get();
+
+        return $data;
     }
 
     private function ppn_keluaran($invoice_id, $ppn, $dipungut)

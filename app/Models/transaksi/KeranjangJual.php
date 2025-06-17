@@ -10,6 +10,7 @@ use App\Models\db\Pajak;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KasKonsumen;
+use App\Models\Katalog;
 use App\Models\KonsumenTemp;
 use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
@@ -673,6 +674,18 @@ class KeranjangJual extends Model
             }
 
             $pesan .= "\nNo Kantor: *0853-3939-3918* \n";
+
+            // tambahkn katalog
+            // $katalog = Katalog::get();
+
+            // if ($katalog->count() > 0) {
+            //     $pesan .= "Katalog: \n";
+            //     foreach ($katalog as $item) {
+            //         $pesan .= $item->nama."\n";
+            //     }
+            // }
+
+
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);

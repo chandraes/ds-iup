@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Karyawan;
+use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\Wilayah;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -217,5 +220,39 @@ class InvoiceController extends Controller
         $res = $db->cicil($data);
 
         return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function invoice_konsumen_all(Request $request)
+    {
+        $filters = $request->only(['expired', 'apa_ppn', 'karyawan_id', 'konsumen_id', 'kecamatan_id', 'kabupaten_id']);
+        $data = InvoiceJual::gabung($filters);
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                    $query->where('is_sales', 1);
+                })->select('id', 'nama')->get();
+
+        // Get unique kecamatan_id and kabupaten_kota_id directly as arrays to minimize memory usage
+        $kecamatanIds = Konsumen::distinct()->pluck('kecamatan_id')->filter()->all();
+        $kabupatenIds = Konsumen::distinct()->pluck('kabupaten_kota_id')->filter()->all();
+
+        // Fetch only needed Wilayah records
+        $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
+        $kecamatan = Wilayah::whereIn('id', $kecamatanIds)
+                    ->when(
+                        ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
+                        function ($query) use ($request) {
+                            $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
+                            return $query->where('id_induk_wilayah', $wilayah);
+                        }
+                    )->get();
+
+
+        return view('billing.invoice-konsumen.all', [
+            'data' => $data,
+            'ppn' => $ppn,
+            'sales' => $sales,
+            'kecamatan' => $kecamatan,
+            'kabupaten' => $kabupaten,
+        ]);
     }
 }

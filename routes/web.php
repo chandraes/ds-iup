@@ -693,6 +693,8 @@ Route::group(['middleware' => ['auth']], function () {
 
                 Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_cicil'])->name('billing.invoice-konsumen.cicil');
 
+                Route::get('/all', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_all'])->name('billing.invoice-konsumen.all');
+
                 Route::get('/pdf', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_download'])->name('billing.invoice-konsumen.pdf');
             });
 
