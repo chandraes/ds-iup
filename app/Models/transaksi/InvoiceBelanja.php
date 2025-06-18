@@ -34,6 +34,8 @@ class InvoiceBelanja extends Model
         'id_jatuh_tempo',
         'kode',
         'tanggal',
+        'tanggal_en',
+        'en_jatuh_tempo',
         'dpp',
         'raw_dpp',
         'dpp_setelah_diskon',
@@ -138,11 +140,23 @@ class InvoiceBelanja extends Model
         return Carbon::parse($this->created_at)->format('d-m-Y');
     }
 
+    public function getTanggalEnAttribute()
+    {
+        return Carbon::parse($this->created_at)->format('Y-m-d');
+    }
+
     public function getIdJatuhTempoAttribute()
     {
         // use Carbon\Carbon;
         return $this->jatuh_tempo ? Carbon::parse($this->jatuh_tempo)->format('d-m-Y') : '';
     }
+
+    public function getEnJatuhTempoAttribute()
+    {
+        // use Carbon\Carbon;
+        return $this->jatuh_tempo ? Carbon::parse($this->jatuh_tempo)->format('Y-m-d') : '';
+    }
+
 
     public function dataTahun()
     {

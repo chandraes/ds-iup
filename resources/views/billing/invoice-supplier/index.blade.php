@@ -68,7 +68,7 @@
                 @endphp
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-center align-middle">{{$d->tanggal_en}}</td>
                     <td class="text-center align-middle">{{$d->supplier->nama}}</td>
                     <td class="text-center align-middle">
                         <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d])}}">
@@ -117,7 +117,7 @@
                         {{$d->nf_sisa}}
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->id_jatuh_tempo}}
+                        {{$d->en_jatuh_tempo}}
                     </td>
                     <td class="text-center align-middle">
                         <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post"
