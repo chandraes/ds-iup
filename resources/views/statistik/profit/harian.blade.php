@@ -70,7 +70,10 @@ $selectedTahun = request('year') ?? date('Y');
                 @foreach ($data['invoice'] as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal_en}}</td>
-                    <td class="text-start align-middle text-nowrap">{{$d->kode}}</td>
+                    <td class="text-start align-middle text-nowrap">
+                        <a href="{{route('rekap.invoice-penjualan.detail', ['invoice'=>$d->id])}}"> {{$d->kode}}</a>
+
+                    </td>
                     <td class="text-start align-middle">
                         {{$d->konsumen ? ($d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' : '' ). $d->konsumen->nama : $d->konsumen_temp->nama}}
                     </td>
@@ -84,7 +87,11 @@ $selectedTahun = request('year') ?? date('Y');
                 @foreach ($data['invoice_void'] as $void)
                  <tr class="table-danger">
                     <td class="text-center align-middle">{{ \Carbon\Carbon::parse($void->updated_at)->format('Y-m-d') }}</td>
-                    <td class="text-start align-middle text-nowrap">{{$void->kode}}</td>
+                    <td class="text-start align-middle text-nowrap">
+                         <a href="{{route('rekap.invoice-penjualan.detail', ['invoice'=>$d->id])}}">
+                            {{$void->kode}}
+                        </a>
+                    </td>
                     <td class="text-start align-middle">
                         {{$void->konsumen ? ($void->konsumen->kode_toko ? $void->konsumen->kode_toko->kode.' ' : '' ). $void->konsumen->nama : $void->konsumen_temp->nama}}
                     </td>
@@ -134,7 +141,7 @@ $selectedTahun = request('year') ?? date('Y');
             "scrollY": "60vh", // Set scrollY to 50% of the viewport height
             "scrollCollapse": true,
             "scrollX": true,
-            
+
         });
 
     });
