@@ -99,11 +99,11 @@ $selectedTahun = request('year') ?? date('Y');
             <tfoot>
                 <tr>
                     <th class="text-center align-middle" colspan="3">Grand Total</th>
-                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('total'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('total_beli'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('diskon'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('add_fee'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('profit'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('total') - $data['invoice_void']->sum('total') , 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('total_beli') - $data['invoice_void']->sum('total_beli'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('diskon') - $data['invoice_void']->sum('diskon'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('add_fee') - $data['invoice_void']->sum('add_fee'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data['invoice']->sum('profit') + $data['invoice_void']->sum('profit') , 0, ',', '.')}}</th>
                 </tr>
             </tfoot>
         </table>
