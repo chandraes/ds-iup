@@ -1160,8 +1160,6 @@ class InvoiceJual extends Model
 
         }
 
-
-
         return [
             "invoice" => $invoices,
             'invoice_void' => $invoices_void,

@@ -74,11 +74,11 @@ $selectedTahun = request('year') ?? date('Y');
                     <td class="text-start align-middle">
                         {{$d->konsumen ? ($d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' : '' ). $d->konsumen->nama : $d->konsumen_temp->nama}}
                     </td>
-                    <td class="text-end align-middle">{{$d->dpp}}</td>
-                    <td class="text-end align-middle">{{number_format($d->total_beli, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{$d->nf_diskon}}</td>
-                    <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
-                    <td class="text-end align-middle">{{number_format($d->profit, 0, ',','.')}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->total}}">{{$d->dpp}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->total_beli}}">{{number_format($d->total_beli, 0, ',','.')}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->diskon}}">{{$d->nf_diskon}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->add_fee}}">{{$d->nf_add_fee}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->profit}}">{{number_format($d->profit, 0, ',','.')}}</td>
                 </tr>
                 @endforeach
                 @foreach ($data['invoice_void'] as $void)
@@ -88,11 +88,11 @@ $selectedTahun = request('year') ?? date('Y');
                     <td class="text-start align-middle">
                         {{$void->konsumen ? ($void->konsumen->kode_toko ? $void->konsumen->kode_toko->kode.' ' : '' ). $void->konsumen->nama : $void->konsumen_temp->nama}}
                     </td>
-                    <td class="text-end align-middle">{{$void->dpp}}</td>
-                    <td class="text-end align-middle">{{number_format($void->total_beli, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{$void->nf_diskon}}</td>
-                    <td class="text-end align-middle">{{$void->nf_add_fee}}</td>
-                    <td class="text-end align-middle">{{number_format($void->profit, 0, ',','.')}}</td>
+                    <td class="text-end align-middle" data-order="{{$void->total}}">{{$void->dpp}}</td>
+                    <td class="text-end align-middle" data-order="{{$void->total_beli}}">{{number_format($void->total_beli, 0, ',','.')}}</td>
+                    <td class="text-end align-middle" data-order="{{$void->diskon}}">{{$void->nf_diskon}}</td>
+                    <td class="text-end align-middle" data-order="{{$void->add_fee}}">{{$void->nf_add_fee}}</td>
+                    <td class="text-end align-middle" data-order="{{$void->profit}}">{{number_format($void->profit, 0, ',','.')}}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -134,7 +134,7 @@ $selectedTahun = request('year') ?? date('Y');
             "scrollY": "60vh", // Set scrollY to 50% of the viewport height
             "scrollCollapse": true,
             "scrollX": true,
-
+            
         });
 
     });
