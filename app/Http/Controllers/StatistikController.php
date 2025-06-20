@@ -74,4 +74,40 @@ class StatistikController extends Controller
             'karyawan' => $karyawan,
         ]);
     }
+
+    public function profit_harian(Request $request)
+    {
+        $month = $request->input('month') ?? date('m');
+        $year = $request->input('year') ?? date('Y');
+
+        $db = new InvoiceJual();
+
+        $dataTahun = $db->dataTahun();
+
+        // create array of month in indonesian with key 1-12
+        $dataBulan = [
+            '1' => 'Januari',
+            '2' => 'Februari',
+            '3' => 'Maret',
+            '4' => 'April',
+            '5' => 'Mei',
+            '6' => 'Juni',
+            '7' => 'Juli',
+            '8' => 'Agustus',
+            '9' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember'
+        ];
+
+        $data = $db->profit_harian($month, $year);
+
+        // dd($data);
+
+        return view('statistik.profit.harian', [
+            'data' => $data,
+            'dataTahun' => $dataTahun,
+            'dataBulan' => $dataBulan,
+        ]);
+    }
 }

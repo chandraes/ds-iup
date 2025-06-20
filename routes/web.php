@@ -431,6 +431,10 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/detail', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales_detail'])->name('statistik.omset-harian-sales.detail');
             });
 
+            Route::prefix('profit')->group(function(){
+                Route::get('/harian', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit.harian');
+            });
+
         });
 
         Route::get('rekap', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap');

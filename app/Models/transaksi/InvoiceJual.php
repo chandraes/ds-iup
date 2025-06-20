@@ -1103,4 +1103,69 @@ class InvoiceJual extends Model
 
         return $data;
     }
+
+    public function profit_harian($month, $year, $konsumen = null)
+    {
+        $startDate = Carbon::create($year, $month, 1);
+        $endDate = $startDate->copy()->endOfMonth();
+
+         $dates = collect();
+
+
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dates->push($date->format('Y-m-d'));
+        }
+        // dd($dates, $month, $year);
+        // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
+        $invoices = $this->select('id','created_at', 'total', 'konsumen_id', 'kode', 'konsumen_temp_id', 'diskon', 'add_fee')
+                        ->with(['konsumen.kode_toko', 'konsumen_temp','invoice_detail.stok'])
+                        ->whereMonth('created_at', $month)
+                        ->whereYear('created_at', $year)
+                        ->get();
+
+        $invoices_void = $this->where('void', 1)
+                        ->select('id', 'total', 'konsumen_id', 'kode', 'konsumen_temp_id', 'diskon', 'add_fee', 'updated_at')
+                        ->with(['konsumen.kode_toko', 'konsumen_temp','invoice_detail.stok'])
+                        ->whereMonth('updated_at', $month)
+                        ->whereYear('updated_at', $year)
+                        ->get();
+
+        foreach ($invoices as $invoice) {
+            $total_beli = 0;
+            if ($invoice->invoice_detail) {
+                foreach ($invoice->invoice_detail as $detail) {
+                    if ($detail->stok) {
+                        $total_beli += $detail->stok->harga_beli * $detail->jumlah;
+                    }
+                }
+            }
+
+            $invoice->total_beli = $total_beli;
+            $invoice->profit = $invoice->total - $total_beli - $invoice->diskon + $invoice->add_fee;
+
+        }
+
+        foreach ($invoices_void as $invoice) {
+            $total_beli = 0;
+            if ($invoice->invoice_detail) {
+                foreach ($invoice->invoice_detail as $detail) {
+                    if ($detail->stok) {
+                        $total_beli += $detail->stok->harga_beli * $detail->jumlah;
+                    }
+                }
+            }
+
+            $invoice->total_beli = $total_beli;
+            $invoice->profit = ($invoice->total - $total_beli - $invoice->diskon + $invoice->add_fee) * -1; // Profit void adalah negatif dari profit sebenarnya
+
+        }
+
+
+
+        return [
+            "invoice" => $invoices,
+            'invoice_void' => $invoices_void,
+        ];
+
+    }
 }

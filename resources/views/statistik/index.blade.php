@@ -26,6 +26,15 @@
         </div>
     </div>
     <hr>
+     <div class="row justify-content-left">
+        <h4 class="mt-3">PROFIT INVOICE</h4>
+         <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('statistik.profit.harian')}}" class="text-decoration-none">
+                <img src="{{asset('images/profit-harian.svg')}}" alt="" width="70">
+                <h4 class="mt-3">HARIAN</h4>
+            </a>
+        </div>
+     </div>
     {{-- <div class="row justify-content-left">
         <h4 class="mt-3">REKAP</h4>
         <div class="col-md-3 text-center mb-5 mt-3">
