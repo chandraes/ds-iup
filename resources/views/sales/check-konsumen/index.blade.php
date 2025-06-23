@@ -98,7 +98,7 @@
                             '<th>No</th>' +
                             '<th>Invoice</th>' +
                             '<th>Tanggal Jatuh Tempo</th>' +
-                            '<th>Total</th>' +
+                            '<th>Sisa Tagihan</th>' +
                             '</tr>' +
                             '</thead>' +
                             '<tbody>';
