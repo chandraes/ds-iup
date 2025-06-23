@@ -67,7 +67,7 @@ $selectedTahun = request('year') ?? date('Y');
                 <tr>
                     <td class="text-center align-middle">{{ \Carbon\Carbon::parse($row['tanggal'])->format('d') }}</td>
                     @foreach ($karyawans as $karyawan)
-                    <td class="text-end align-middle">
+                    <td class="text-end align-middle" data-order="{{ $row[$karyawan->id] ?? 0 }}">
                          @if ($row[$karyawan->id] > 0)
                         <a href="{{route('statistik.omset-harian-sales.detail', ['tanggal' => $row['tanggal'], 'karyawan_id' => $karyawan->id])}}" />
                         @endif
