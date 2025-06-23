@@ -92,7 +92,7 @@
                                     class="fa fa-credit-card me-1"></i> Lanjutkan</button>
                         </div>
                         <div class="row p-2">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="voidOrder({{$d}})"><i
+                            <button type="button" class="btn btn-danger btn-sm" onclick="voidOrder({{$d->id}})"><i
                                     class="fa fa-exclamation-circle me-1"></i> Void</button>
                         </div>
                     </td>
