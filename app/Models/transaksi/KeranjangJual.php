@@ -524,6 +524,42 @@ class KeranjangJual extends Model
         $stok_update = null;
         $status = null;
 
+        $konsumen = Konsumen::find($data['konsumen_id']);
+
+        $data['lunas'] = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
+
+        // kalau sistem pembayaran konsumen adalah tempo dan sistem pembayaran invoice bukan tunai
+        // maka cek sisa plafon konsumen
+        if ($konsumen->pembayaran == 2 && $data['pembayaran'] != 1) {
+            // $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+            // if ($sisaTerakhir + $data['grand_total'] > $konsumen->plafon) {
+            //     return [
+            //         'status' => 'error',
+            //         'message' => 'Plafon konsumen sudah melebihi batas.',
+            //     ];
+            // }
+
+            // jika invoice pembayaran adalah tempo, cek apakah konsumen memiliki tagihan yang jatuh tempo
+            if ($data['pembayaran'] == 2) {
+                $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                    ->where('titipan', 0)
+                    ->where('lunas', 0)
+                    ->where('void', 0)
+                    ->where('jatuh_tempo', '<', today())
+                    ->exists();
+
+                if ($checkInvoice) {
+                    return [
+                        'status' => 'error',
+                        'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.',
+                    ];
+                }
+            }
+
+            // $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
+
+        }
+
         try {
             DB::beginTransaction();
 
@@ -550,8 +586,6 @@ class KeranjangJual extends Model
                     'message' => 'User belum memiliki karyawan id. Silahkan menghubungi Admin.',
                 ];
             }
-
-            $konsumen = Konsumen::find($data['konsumen_id']);
 
             $data['lunas'] = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
 
