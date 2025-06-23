@@ -551,7 +551,7 @@ class KeranjangJual extends Model
                 if ($checkInvoice) {
                     return [
                         'status' => 'error',
-                        'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.',
+                        'message' => 'Tidak Bisa melanjutkan Proses karena Konsumen memiliki tagihan yang telah jatuh tempo.',
                     ];
                 }
             }
