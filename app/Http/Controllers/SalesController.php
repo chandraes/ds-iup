@@ -541,4 +541,47 @@ class SalesController extends Controller
     }
 
 
+    public function check_konsumen()
+    {
+        $konsumen = Konsumen::with(['kode_toko'])->where('active', 1)->where('karyawan_id', auth()->user()->karyawan_id)->get();
+
+        if ($konsumen->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada konsumen yang ditemukan');
+        }
+
+        return view('sales.check-konsumen.index', [
+            'konsumen' => $konsumen,
+        ]);
+    }
+
+    public function check_konsumen_invoice(Request $request)
+    {
+        $req = $request->validate([
+            'konsumen_id' => 'required|exists:konsumens,id',
+        ]);
+
+        $konsumen = Konsumen::find($req['konsumen_id']);
+
+        if ($konsumen == null) {
+            return response()->json(['success' => false, 'message' => 'Konsumen tidak ditemukan'], 404);
+        }
+
+        $db = new InvoiceJual;
+        $data = InvoiceJual::where('konsumen_id', $konsumen->id)
+                    ->where('titipan', 0)
+                    ->where('lunas', 0)
+                    ->where('void', 0)
+                    ->where('jatuh_tempo', '<', today())
+                    ->get();
+
+        // Return JSON for AJAX
+        return response()->json([
+            'success' => true,
+            'total' => $data->count(),
+            'data' => $data,
+            'konsumen' => $konsumen,
+        ]);
+    }
+
+
 }

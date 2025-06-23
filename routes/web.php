@@ -49,6 +49,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::prefix('sales')->group(function () {
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
 
+            Route::prefix('check-konsumen')->group(function(){
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'check_konsumen'])->name('sales.check-konsumen');
+                Route::post('/invoice', [App\Http\Controllers\SalesController::class, 'check_konsumen_invoice'])->name('sales.check-konsumen.invoice');
+            });
+
             Route::prefix('keranjang')->group(function () {
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'keranjang'])->name('sales.stok.keranjang');
                 Route::post('/delete/{keranjang}', [App\Http\Controllers\SalesController::class, 'keranjang_delete'])->name('sales.stok.keranjang.delete');
