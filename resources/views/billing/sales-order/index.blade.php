@@ -70,7 +70,7 @@
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal_en}}</td>
                     <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
-                    <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
+                    <td class="text-center align-middle">{{$d->konsumen->kode_toko->kode}} {{$d->konsumen->nama}}</td>
                     <td class="text-center align-middle">{{$d->sistem_pembayaran_word}}</td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
                     <td class="text-end align-middle">{{$d->nf_diskon}}</td>

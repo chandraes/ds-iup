@@ -453,7 +453,7 @@ class BillingController extends Controller
             'karyawan_id' => 'nullable|exists:karyawans,id',
         ]);
 
-        $data = InvoiceJualSales::with(['karyawan'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn']);
+        $data = InvoiceJualSales::with(['karyawan', 'konsumen.kode_toko'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn']);
 
         if (isset($req['karyawan_id']) && $req['karyawan_id'] != '') {
             $data->where('karyawan_id', $req['karyawan_id']);

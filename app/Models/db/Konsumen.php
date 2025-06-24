@@ -46,7 +46,9 @@ class Konsumen extends Model
 
     public function kode_toko()
     {
-        return $this->belongsTo(KodeToko::class);
+        return $this->belongsTo(KodeToko::class)->withDefault(
+            ['kode' => '']
+        );
     }
 
     public function generateKode()
