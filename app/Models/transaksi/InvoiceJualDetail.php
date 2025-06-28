@@ -70,7 +70,7 @@ class InvoiceJualDetail extends Model
         //     $query->whereBetween('created_at', [$filters['tanggal_awal'], $filters['tanggal_akhir']]);
         // }
         $data_void = $this->with(['invoice' => function ($q) {
-                $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode');
+                $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode', 'kas_ppn');
             }, 'invoice.konsumen' => function ($q) {
                 $q->select('id', 'kode_toko_id', 'nama', 'alamat', 'kabupaten_kota_id', 'kode');
             }, 'barang' => function ($q) {
@@ -86,7 +86,7 @@ class InvoiceJualDetail extends Model
         })->get();
 
         $data_jual = $this->with(['invoice' => function ($q) {
-                $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode');
+                $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode', 'kas_ppn');
             }, 'invoice.konsumen' => function ($q) {
                 $q->select('id', 'kode_toko_id', 'nama', 'alamat', 'kabupaten_kota_id', 'kode');
             }, 'barang' => function ($q) {

@@ -7,7 +7,7 @@ $selectedTahun = request('year') ?? date('Y');
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-              @php
+            @php
             use Carbon\Carbon;
             $bulanNama = Carbon::create()->month($selectedBulan)->locale('id')->isoFormat('MMMM');
             @endphp
@@ -17,39 +17,43 @@ $selectedTahun = request('year') ?? date('Y');
     @include('swal')
 
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-12">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                </tr>
-            </table>
-        </div>
-        <div class="col-md-6">
-            <form action="{{url()->current()}}" method="get">
-                {{-- select bulan dan tanggal --}}
-                <div class="row mt-1">
-                    <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table">
+                    <tr class="text-center">
+                        <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
+                                    width="30"> Dashboard</a></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <form action="{{url()->current()}}" method="get">
+                    {{-- select bulan dan tanggal --}}
+                    <div class="row mt-1">
+                        <div class="col-md-6">
 
-                        <select name="month" id="month" class="form-select" onchange="this.form.submit()">
-                            @foreach ($dataBulan as $key => $value)
-                            <option value="{{ $key }}" {{ $key==$selectedBulan ? 'selected' : '' }}>{{ $value }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
+                            <select name="month" id="month" class="form-select" onchange="this.form.submit()">
+                                @foreach ($dataBulan as $key => $value)
+                                <option value="{{ $key }}" {{ $key==$selectedBulan ? 'selected' : '' }}>{{ $value }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
 
-                        <select name="year" id="year" class="form-select" onchange="this.form.submit()">
-                            @foreach ($dataTahun as $tahun)
-                            <option value="{{ $tahun->tahun }}" {{ $tahun->tahun==$selectedTahun ? 'selected' : '' }}>{{
-                                $tahun->tahun }}</option>
-                            @endforeach
-                        </select>
+                            <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+                                @foreach ($dataTahun as $tahun)
+                                <option value="{{ $tahun->tahun }}" {{ $tahun->tahun==$selectedTahun ? 'selected' : ''
+                                    }}>{{
+                                    $tahun->tahun }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
+
     </div>
 </div>
 <div class="container-fluid mt-5 table-responsive ">
@@ -75,60 +79,77 @@ $selectedTahun = request('year') ?? date('Y');
             </tr>
         </thead>
         @php
-            $total = 0;
+        $total = 0;
         @endphp
         <tbody>
             @foreach ($data['data_jual'] as $d)
-                <tr>
-                    <td class="text-center align-middle">{{$d->invoice->tanggal_en}}</td>
-                    <td class="text-center align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->full_kode : ''}}</td>
-                    <td class="text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->kode_toko->kode.' '.$d->invoice->konsumen->nama : $d->invoice->konsumen_temp->nama}}</td>
-                    <td class="text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->alamat : $d->invoice->konsumen_temp->alamat}}</td>
-                    <td class="text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->kabupaten_kota->nama_wilayah : ''}}</td>
-                    <td class="text-center align-middle"></td>
-                    <td class="text-center align-middle">{{$d->invoice->karyawan->nama}}</td>
-                    <td class="text-center align-middle">{{$d->barang->kode}}</td>
-                    <td class="text-center align-middle">{{$d->barang->barang_nama->nama}}</td>
-                    <td class="text-center align-middle">{{$d->barang->kategori->nama}}</td>
-                    <td class="text-center align-middle"></td>
-                    <td class="text-center align-middle"></td>
-                    {{-- <td class="text-center align-middle">{{$d->total}}</td> --}}
-                    <td class="text-center align-middle" data-order="{{floor($d->total+($d->total*$ppn/100))}}">
-                        {{number_format(floor($d->total+($d->total*$ppn/100)), 0 ,',','.')}}
-                        @php
-                            $total += floor($d->total+($d->total*$ppn/100));
-                        @endphp
-                    </td>
-                    <td class="text-center align-middle">{{$d->invoice->kode}}</td>
-                    <td class="text-center align-middle">{{$d->nf_jumlah}}</td>
-                    <td class="text-center align-middle" data-order="{{$d->total}}">{{$d->nf_total}}</td>
-                </tr>
+            @php
+            $total_harga = $d->invoice->kas_ppn ? $d->total + floor($d->total * $ppn / 100) : $d->total;
+            @endphp
+            <tr>
+                <td class="text-center align-middle">{{$d->invoice->tanggal_en}}</td>
+                <td class="text-center align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->full_kode : ''}}
+                </td>
+                <td class="text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->kode_toko->kode.'
+                    '.$d->invoice->konsumen->nama : $d->invoice->konsumen_temp->nama}}</td>
+                <td class="text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->alamat :
+                    $d->invoice->konsumen_temp->alamat}}</td>
+                <td class="text-start align-middle">{{$d->invoice->konsumen ?
+                    $d->invoice->konsumen->kabupaten_kota->nama_wilayah : ''}}</td>
+                <td class="text-center align-middle"></td>
+                <td class="text-center align-middle">{{$d->invoice->karyawan->nama}}</td>
+                <td class="text-center align-middle">{{$d->barang->kode}}</td>
+                <td class="text-center align-middle">{{$d->barang->barang_nama->nama}}</td>
+                <td class="text-center align-middle">{{$d->barang->kategori->nama}}</td>
+                <td class="text-center align-middle"></td>
+                <td class="text-center align-middle"></td>
+                {{-- <td class="text-center align-middle">{{$d->total}}</td> --}}
+                <td class="text-center align-middle" data-order="{{$total_harga}}">
+                    {{number_format($total_harga, 0 ,',','.')}}
+                    @php
+                    $total += $total_harga;
+                    @endphp
+                </td>
+                <td class="text-center align-middle">{{$d->invoice->kode}}</td>
+                <td class="text-center align-middle">{{$d->nf_jumlah}}</td>
+                <td class="text-center align-middle" data-order="{{$d->total}}">{{$d->nf_total}}</td>
+            </tr>
             @endforeach
-             @foreach ($data['void'] as $d)
-                <tr class="">
-                    <td class="text-danger text-center align-middle">{{ \Carbon\Carbon::parse($d->invoice->updated_at)->format('Y-m-d') }}</td>
-                    <td class="text-danger text-center align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->full_kode : ''}}</td>
-                    <td class="text-danger text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->kode_toko->kode.' '.$d->invoice->konsumen->nama : $d->invoice->konsumen_temp->nama}}</td>
-                    <td class="text-danger text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->alamat : $d->invoice->konsumen_temp->alamat}}</td>
-                    <td class="text-danger text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->kabupaten_kota->nama_wilayah : ''}}</td>
-                    <td class="text-danger text-center align-middle"></td>
-                    <td class="text-danger text-center align-middle">{{$d->invoice->karyawan->nama}}</td>
-                    <td class="text-danger text-center align-middle">{{$d->barang->kode}}</td>
-                    <td class="text-danger text-center align-middle">{{$d->barang->barang_nama->nama}}</td>
-                    <td class="text-danger text-center align-middle">{{$d->barang->kategori->nama}}</td>
-                    <td class="text-danger text-center align-middle"></td>
-                    <td class="text-danger text-center align-middle"></td>
-                    {{-- <td class="text-center align-middle">{{$d->total}}</td> --}}
-                    <td class="text-danger text-center align-middle" data-order="{{floor($d->total+($d->total*$ppn/100)*-1)}}">
-                        {{number_format(floor($d->total+($d->total*$ppn/100)), 0 ,',','.')}}
-                        @php
-                            $total -= floor($d->total+($d->total*$ppn/100));
-                        @endphp
-                    </td>
-                    <td class="text-danger text-center align-middle">{{$d->invoice->kode}}</td>
-                    <td class="text-danger text-center align-middle" data-order="{{$d->jumlah * -1}}"> -{{$d->nf_jumlah}}</td>
-                    <td class="text-danger text-center align-middle" data-order="{{$d->total*-1}}">-{{$d->nf_total}}</td>
-                </tr>
+            @foreach ($data['void'] as $d)
+            @php
+            $total_harga = $d->invoice->kas_ppn ? ($d->total + floor($d->total * $ppn / 100))*-1 : $d->total*-1;
+            @endphp
+            <tr class="">
+                <td class="text-danger text-center align-middle">{{
+                    \Carbon\Carbon::parse($d->invoice->updated_at)->format('Y-m-d') }}</td>
+                <td class="text-danger text-center align-middle">{{$d->invoice->konsumen ?
+                    $d->invoice->konsumen->full_kode : ''}}</td>
+                <td class="text-danger text-start align-middle">{{$d->invoice->konsumen ?
+                    $d->invoice->konsumen->kode_toko->kode.' '.$d->invoice->konsumen->nama :
+                    $d->invoice->konsumen_temp->nama}}</td>
+                <td class="text-danger text-start align-middle">{{$d->invoice->konsumen ? $d->invoice->konsumen->alamat
+                    : $d->invoice->konsumen_temp->alamat}}</td>
+                <td class="text-danger text-start align-middle">{{$d->invoice->konsumen ?
+                    $d->invoice->konsumen->kabupaten_kota->nama_wilayah : ''}}</td>
+                <td class="text-danger text-center align-middle"></td>
+                <td class="text-danger text-center align-middle">{{$d->invoice->karyawan->nama}}</td>
+                <td class="text-danger text-center align-middle">{{$d->barang->kode}}</td>
+                <td class="text-danger text-center align-middle">{{$d->barang->barang_nama->nama}}</td>
+                <td class="text-danger text-center align-middle">{{$d->barang->kategori->nama}}</td>
+                <td class="text-danger text-center align-middle"></td>
+                <td class="text-danger text-center align-middle"></td>
+                {{-- <td class="text-center align-middle">{{$d->total}}</td> --}}
+                <td class="text-danger text-center align-middle" data-order="{{$total_harga}}">
+                    {{number_format($total_harga, 0 ,',','.')}}
+                    @php
+                    $total += $total_harga;
+                    @endphp
+                </td>
+                <td class="text-danger text-center align-middle">{{$d->invoice->kode}}</td>
+                <td class="text-danger text-center align-middle" data-order="{{$d->jumlah * -1}}"> -{{$d->nf_jumlah}}
+                </td>
+                <td class="text-danger text-center align-middle" data-order="{{$d->total*-1}}">-{{$d->nf_total}}</td>
+            </tr>
             @endforeach
         </tbody>
         <tfoot>
@@ -138,8 +159,10 @@ $selectedTahun = request('year') ?? date('Y');
                 <th class="text-end align-middle" colspan="10"></th>
                 <th class="text-center align-middle">{{number_format($total, 0, ',','.')}}</th>
                 <th></th>
-                <th class="text-center align-middle">{{number_format($data['data_jual']->sum('jumlah')-$data['void']->sum('jumlah'), 0, ',','.')}}</th>
-                <th class="text-center align-middle">{{number_format($data['data_jual']->sum('total')-$data['void']->sum('total'), 0, ',','.')}}</th>
+                <th class="text-center align-middle">
+                    {{number_format($data['data_jual']->sum('jumlah')-$data['void']->sum('jumlah'), 0, ',','.')}}</th>
+                <th class="text-center align-middle">
+                    {{number_format($data['data_jual']->sum('total')-$data['void']->sum('total'), 0, ',','.')}}</th>
             </tr>
         </tfoot>
     </table>
@@ -153,7 +176,6 @@ $selectedTahun = request('year') ?? date('Y');
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-
     $(document).ready(function() {
         $('#dataTable').DataTable({
             "paging": false,
