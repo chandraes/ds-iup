@@ -11,6 +11,8 @@ use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\transaksi\InvoiceJual;
+use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
 
@@ -210,6 +212,50 @@ class PerusahaanController extends Controller
             'selectBarangNama' => $selectBarangNama,
             'karyawan' => $karyawan,
 
+        ]);
+    }
+
+    public function selling_out(Request $request)
+    {
+        $filters = $request->only(['area', 'kabupaten_kota', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'month', 'year']);
+        $db = new InvoiceJualDetail();
+
+        $month = $request->input('month') ?? date('m');
+        $year = $request->input('year') ?? date('Y');
+
+        $perusahaan = auth()->user()->barang_unit_id;
+
+        if (empty($perusahaan) || $perusahaan == '') {
+            return redirect()->back()->with('error', 'Perusahaan tidak ditemukan atau tidak valid. Silahkan hubungi administrator sistem.');
+        }
+
+        $dataTahun = $db->dataTahun();
+
+        // create array of month in indonesian with key 1-12
+        $dataBulan = [
+            '1' => 'Januari',
+            '2' => 'Februari',
+            '3' => 'Maret',
+            '4' => 'April',
+            '5' => 'Mei',
+            '6' => 'Juni',
+            '7' => 'Juli',
+            '8' => 'Agustus',
+            '9' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember'
+        ];
+
+
+        $data = $db->sellingOut($month, $year, $perusahaan, $filters);
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        return view('perusahaan.selling-out.index', [
+            'data' => $data,
+            'ppn' => $ppn,
+            'dataTahun' => $dataTahun,
+            'dataBulan' => $dataBulan,
         ]);
     }
 }

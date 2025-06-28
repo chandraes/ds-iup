@@ -26,7 +26,9 @@ class Konsumen extends Model
 
     public function kabupaten_kota()
     {
-        return $this->belongsTo(Wilayah::class, 'kabupaten_kota_id', 'id');
+        return $this->belongsTo(Wilayah::class, 'kabupaten_kota_id', 'id')->withDefault(
+            ['nama_wilayah' => '']
+        );
     }
 
     public function kecamatan()

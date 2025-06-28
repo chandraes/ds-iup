@@ -41,6 +41,10 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::get('/stok-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_ppn'])->name('perusahaan.stok-ppn');
             Route::get('/stok-non-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_non_ppn'])->name('perusahaan.stok-non-ppn');
+
+            Route::prefix('selling-out')->group(function () {
+                Route::get('/', [App\Http\Controllers\PerusahaanController::class, 'selling_out'])->name('perusahaan.selling-out');
+            });
         });
 
     });
