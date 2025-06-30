@@ -217,7 +217,7 @@ class PerusahaanController extends Controller
 
     public function selling_out(Request $request)
     {
-        $filters = $request->only(['area', 'kabupaten_kota', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'month', 'year']);
+        $filters = $request->only(['area', 'kabupaten_kota', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'month', 'year', 'sales']);
         $db = new InvoiceJualDetail();
 
         $month = $request->input('month') ?? date('m');
@@ -230,6 +230,10 @@ class PerusahaanController extends Controller
         }
 
         $dataTahun = $db->dataTahun();
+
+        $kab_kot = Konsumen::select('kabupaten_kota_id')->distinct()->get();
+
+        $kabupaten_kota = Wilayah::select('id', 'nama_wilayah')->whereIn('id', $kab_kot->pluck('kabupaten_kota_id'))->get();
 
         // create array of month in indonesian with key 1-12
         $dataBulan = [
@@ -251,11 +255,17 @@ class PerusahaanController extends Controller
         $data = $db->sellingOut($month, $year, $perusahaan, $filters);
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
+        $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
+
         return view('perusahaan.selling-out.index', [
             'data' => $data,
             'ppn' => $ppn,
             'dataTahun' => $dataTahun,
             'dataBulan' => $dataBulan,
+            'sales' => $sales_area,
+            'kabupaten_kota' => $kabupaten_kota,
         ]);
     }
 }

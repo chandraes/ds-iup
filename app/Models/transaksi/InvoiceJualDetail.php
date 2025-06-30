@@ -69,37 +69,66 @@ class InvoiceJualDetail extends Model
         // if (isset($filters['tanggal_awal']) && isset($filters['tanggal_akhir'])) {
         //     $query->whereBetween('created_at', [$filters['tanggal_awal'], $filters['tanggal_akhir']]);
         // }
-        $data_void = $this->with(['invoice' => function ($q) {
-                $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode', 'kas_ppn');
-            }, 'invoice.konsumen' => function ($q) {
-                $q->select('id', 'kode_toko_id', 'nama', 'alamat', 'kabupaten_kota_id', 'kode');
-            }, 'barang' => function ($q) {
-                $q->select('id', 'barang_unit_id', 'barang_nama_id', 'barang_kategori_id', 'kode');
-            }, 'barang.barang_nama', 'barang.kategori',
-             'invoice.konsumen_temp', 'invoice.konsumen.kode_toko', 'invoice.konsumen.kabupaten_kota', 'invoice.karyawan'])
-            ->whereHas('barang', function ($q) use ($perusahaan) {
-                $q->where('barang_unit_id', $perusahaan);
-            })->whereHas('invoice', function ($q) use ($month, $year) {
-            $q->where('void', 1)
-              ->whereMonth('updated_at', $month)
-              ->whereYear('updated_at', $year);
-        })->get();
+        $relations = [
+            'invoice' => function ($q) {
+            $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode', 'kas_ppn');
+            },
+            'invoice.konsumen' => function ($q) {
+            $q->select('id', 'kode_toko_id', 'nama', 'alamat', 'kabupaten_kota_id', 'kode');
+            },
+            'barang' => function ($q) {
+            $q->select('id', 'barang_unit_id', 'barang_nama_id', 'barang_kategori_id', 'kode', 'merk');
+            },
+            'barang.barang_nama',
+            'barang.kategori',
+            'invoice.konsumen_temp',
+            'invoice.konsumen.kode_toko',
+            'invoice.konsumen.kabupaten_kota',
+            'invoice.karyawan'
+        ];
 
-        $data_jual = $this->with(['invoice' => function ($q) {
-                $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode', 'kas_ppn');
-            }, 'invoice.konsumen' => function ($q) {
-                $q->select('id', 'kode_toko_id', 'nama', 'alamat', 'kabupaten_kota_id', 'kode');
-            }, 'barang' => function ($q) {
-                $q->select('id', 'barang_unit_id', 'barang_nama_id', 'barang_kategori_id', 'kode');
-            }, 'barang.barang_nama', 'barang.kategori',
-             'invoice.konsumen_temp', 'invoice.konsumen.kode_toko', 'invoice.konsumen.kabupaten_kota', 'invoice.karyawan'])
+
+        $baseQuery = $this->with($relations)
             ->whereHas('barang', function ($q) use ($perusahaan) {
-                $q->where('barang_unit_id', $perusahaan);
-            })->whereHas('invoice', function ($q) use ($month, $year) {
+            $q->where('barang_unit_id', $perusahaan);
+            });
+
+        $data_jual = (clone $baseQuery)
+            ->whereHas('invoice', function ($q) use ($month, $year) {
             $q->where('void', 0)
               ->whereMonth('created_at', $month)
               ->whereYear('created_at', $year);
-        })->get();
+            });
+
+        $data_void = (clone $baseQuery)
+            ->whereHas('invoice', function ($q) use ($month, $year) {
+            $q->where('void', 1)
+              ->whereMonth('updated_at', $month)
+              ->whereYear('updated_at', $year);
+            });
+
+        if (isset($filters['sales']) && $filters['sales'] != '') {
+            $data_jual->whereHas('invoice', function ($q) use ($filters) {
+                $q->where('karyawan_id', $filters['sales']);
+            });
+
+            $data_void->whereHas('invoice', function ($q) use ($filters) {
+                $q->where('karyawan_id', $filters['sales']);
+            });
+        }
+
+        if (isset($filters['kabupaten_kota']) && $filters['kabupaten_kota'] != '') {
+            $data_jual->whereHas('invoice.konsumen', function ($q) use ($filters) {
+                $q->where('kabupaten_kota_id', $filters['kabupaten_kota']);
+            });
+            
+            $data_void->whereHas('invoice.konsumen', function ($q) use ($filters) {
+                $q->where('kabupaten_kota_id', $filters['kabupaten_kota']);
+            });
+        }
+
+        $data_jual = $data_jual->get();
+        $data_void = $data_void->get();
 
 
         return [
