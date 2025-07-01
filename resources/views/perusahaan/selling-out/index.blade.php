@@ -15,7 +15,6 @@ $selectedTahun = request('year') ?? date('Y');
         </div>
     </div>
     @include('swal')
-
     <div class="flex-row justify-content-between mt-3">
         <form action="{{url()->current()}}" method="get">
             <div class="row">
@@ -27,10 +26,7 @@ $selectedTahun = request('year') ?? date('Y');
                         </tr>
                     </table>
                 </div>
-
                 <div class="col-md-6">
-
-                    {{-- select bulan dan tanggal --}}
                     <div class="row mt-1">
                         <div class="col-md-6">
 
