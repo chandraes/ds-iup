@@ -908,6 +908,8 @@ class BarangController extends Controller
         ]);
 
         $this->storeDb(Subpg::class, $data);
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
     }
 
     public function subpg_update(Request $request, Subpg $subpg)

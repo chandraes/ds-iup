@@ -44,7 +44,7 @@
                         <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
                             data-bs-target="#editProject" onclick="editProject({{$d}}, {{$d->id}})"><i
                                 class="fa fa-edit"></i></button>
-                        <form action="{{ route('db.satuan.delete', $d->id) }}" method="post" id="deleteForm{{ $d->id }}"
+                        <form action="{{ route('db.subpg.destroy', $d->id) }}" method="post" id="deleteForm{{ $d->id }}"
                             class="delete-form" data-id="{{ $d->id }}">
                             @csrf
                             @method('delete')
@@ -86,7 +86,7 @@
 
     function editProject(data, id) {
         document.getElementById('edit_nama').value = data.nama;
-        document.getElementById('editForm').action = '/db/satuan/update/' + id;
+        document.getElementById('editForm').action = '/db/subpg/update/' + id;
     };
 
 

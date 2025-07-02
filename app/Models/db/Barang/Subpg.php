@@ -10,4 +10,9 @@ class Subpg extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
+
+    public function barang()
+    {
+        return $this->hasMany(Barang::class, 'subpg_id');
+    }
 }

@@ -124,7 +124,7 @@
             </a>
         </div>
          <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('db.barang-kategori')}}" class="text-decoration-none">
+            <a href="{{route('db.subpg')}}" class="text-decoration-none">
                 <img src="{{asset('images/subpg.svg')}}" alt="" width="70">
                 <h5 class="mt-2">SUBPG</h5>
             </a>
