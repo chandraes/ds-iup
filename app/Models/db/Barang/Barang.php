@@ -54,6 +54,13 @@ class Barang extends Model
         return $this->hasMany(BarangHistory::class, 'barang_id');
     }
 
+    public function subpg()
+    {
+        return $this->belongsTo(Subpg::class, 'subpg_id')->withDefault([
+            'nama' => '-',
+        ]);
+    }
+
     public function scopeFilterByKategori($query, $kategori)
     {
         if (! empty($kategori)) {

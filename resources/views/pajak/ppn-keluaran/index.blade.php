@@ -93,7 +93,7 @@
                             data-tagihan="{{$d->nominal}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}"
                             {{$d->is_faktur == 0 ? 'disabled' : ''}}>
                     </td>
-                    <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal : '-'}}</td>
+                    <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal_en : '-'}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceJual)
                         <a href="{{route('billing.invoice-konsumen.detail', ['invoice' => $d->invoice_jual_id])}}">

@@ -13,8 +13,14 @@ return new class extends Migration
     {
         Schema::create('subpgs', function (Blueprint $table) {
             $table->id();
+            $table->string('nama')->unique();
             $table->timestamps();
         });
+
+        Schema::table('barangs', function (Blueprint $table) {
+            $table->foreignId('subpg_id')->nullable()->after('barang_type_id')->constrained('subpgs')->onDelete('set null');
+        });
+
     }
 
     /**
@@ -22,6 +28,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('barangs', function (Blueprint $table) {
+            $table->dropForeign(['subpg_id']);
+            $table->dropColumn('subpg_id');
+        });
+        
         Schema::dropIfExists('subpgs');
     }
 };

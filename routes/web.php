@@ -265,6 +265,13 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::group(['middleware' => ['role:su,admin']], function () {
 
+            Route::prefix('subpg')->group(function () {
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'subpg'])->name('db.subpg');
+                Route::post('/store', [App\Http\Controllers\BarangController::class, 'subpg_store'])->name('db.subpg.store');
+                Route::patch('/update/{subpg}', [App\Http\Controllers\BarangController::class, 'subpg_update'])->name('db.subpg.update');
+                Route::delete('/destroy/{subpg}', [App\Http\Controllers\BarangController::class, 'subpg_destroy'])->name('db.subpg.destroy');
+            });
+
             Route::prefix('kreditor')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kreditor'])->name('db.kreditor');
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kreditor_store'])->name('db.kreditor.store');

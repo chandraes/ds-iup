@@ -8,6 +8,7 @@ use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
+use App\Models\db\Barang\Subpg;
 use App\Models\db\Karyawan;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
@@ -889,5 +890,45 @@ class BarangController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Berhasil menyembunyikan data stok!');
+    }
+
+    public function subpg(Request $request)
+    {
+        $data = Subpg::select('id', 'nama')->get();
+
+        return view('db.subpg.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function subpg_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required|unique:subpgs,nama',
+        ]);
+
+        $this->storeDb(Subpg::class, $data);
+    }
+
+    public function subpg_update(Request $request, Subpg $subpg)
+    {
+        $data = $request->validate([
+            'nama' => 'required|unique:subpgs,nama,'.$subpg->id.',id',
+        ]);
+
+        $subpg->update($data);
+
+        return redirect()->back()->with('success', 'Data berhasil diubah');
+    }
+
+    public function subpg_destroy(Subpg $subpg)
+    {
+        if ($subpg->barang->count() > 0) {
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih memiliki barang terkait');
+        }
+
+        $subpg->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 }
