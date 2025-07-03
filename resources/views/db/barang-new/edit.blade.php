@@ -64,15 +64,6 @@
                                 @endforeach
                             </select>
                         </div>
-                         <div class="col-lg-3 col-md-3 mb-3 mt-3">
-                            <label for="subpg_id" class="form-label">SUBPG</label>
-                            <select class="form-select" name="subpg_id" id="edit_subpg_id">
-                                <option value="" selected>-- Pilih Salah Satu --</option>
-                                @foreach ($subpg as $sub)
-                                <option value="{{$sub->id}}">{{$sub->nama}}</option>
-                                @endforeach
-                            </select>
-                        </div>
                         <div class="col-lg-6 col-md-6 mb-3 mt-3">
                             <label for="keterangan" class="form-label">KETERANGAN</label>
                             <input type="text" class="form-control" name="keterangan" id="edit_keterangan" aria-describedby="helpId"
@@ -86,7 +77,7 @@
                                 <option value="2">Barang Non PPN</option>
                             </select>
                         </div>
-
+                        
                         {{-- <div class="col-lg-12 col-md-12 mb-3 mt-3">
                             <label for="detail_type" class="form-label">KETERANGAN TYPE</label>
                             <select class="form-select" name="detail_type[]" id="edit_detail_type" multiple>

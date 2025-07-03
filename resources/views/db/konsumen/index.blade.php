@@ -275,6 +275,12 @@
             dropdownParent: $('#createInvestor'),
         });
 
+         $('#edit_subpg_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+        });
+
+
         $('#kecamatan_id').select2({
             theme: 'bootstrap-5',
             width: '100%',

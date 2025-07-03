@@ -33,7 +33,7 @@
         </div>
     </div>
 </div>
-<style>
+{{-- <style>
     .table-container {
         max-height: 500px;
         overflow-y: auto;
@@ -45,7 +45,7 @@
         background: white;
         z-index: 1;
     }
-</style>
+</style> --}}
 
 
 <div class="container-fluid mt-3 table-responsive ">
@@ -139,7 +139,101 @@
                 </tr>
             </thead>
             <tbody>
-                @php $number = 1; @endphp
+                @foreach ($data as $d)
+                    <tr>
+                        <td class="text-center align-middle">{{$loop->iteration}}</td>
+                        <td class="text-center align-middle">{{ $d->unit->nama }}</td>
+                        <td class="text-center align-middle">{{ $d->type->nama }}</td>
+                        <td class="text-center align-middle">{{ $d->kategori->nama }}</td>
+                        <td class="text-center align-middle">{{ $d->barang_nama->nama }}</td>
+                        <td class="text-center align-middle">{{ $d->kode }}</td>
+                        <td class="text-center align-middle">{{ $d->merk }}</td>
+                        <td class="text-center align-middle">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#keteranganModal"
+                                onclick="showKeterangan({{ $d }})">
+                                {{ $d->satuan ? $d->satuan->nama : '' }}
+                            </a>
+                        </td>
+                        <td class="text-start align-middle">
+                        @if ($d->foto != null)
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal{{ $d->id }}">
+                            <img src="{{ asset('storage/' . $d->foto) }}" alt="Foto Barang" class="img-fluid" width="100">
+                        </a>
+
+                        <div class="modal fade" id="imageModal{{ $d->id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ $d->id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="imageModalLabel{{ $d->id }}">Foto Barang</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-center">
+                                        <div class="image-container">
+                                            <img id="zoomableImage{{ $d->id }}" src="{{ asset('storage/' . $d->foto) }}" alt="Foto Barang" class="img-fluid">
+                                        </div>
+                                        <input type="range" id="zoomSlider{{ $d->id }}" class="form-range mt-3" min="1" max="3" step="0.1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const image = document.getElementById('zoomableImage{{ $d->id }}');
+                                const slider = document.getElementById('zoomSlider{{ $d->id }}');
+
+                                slider.addEventListener('input', function () {
+                                    const scale = slider.value;
+                                    image.style.transform = `scale(${scale})`;
+                                });
+                            });
+                        </script>
+                        <style>
+                            .image-container {
+                                overflow: hidden;
+                                display: inline-block;
+                            }
+
+                            .image-container img {
+                                transition: transform 0.2s ease;
+                            }
+                        </style>
+                        <div class="row px-3 text-nowrap mt-1">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$d->id}})" class="btn btn-success btn-sm">
+                                <i class="fa fa-upload"></i> Edit
+                            </button>
+                        </div>
+                        @else
+                        <div class="row px-3 text-nowrap">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$d->id}})" class="btn btn-primary btn-sm">
+                                <i class="fa fa-upload"></i> Upload
+                            </button>
+                        </div>
+                        @endif
+                    </td>
+                        <td class="text-center align-middle">
+                            @if ($d->jenis == 1)
+                            <i class="fa fa-check"></i>
+                            @endif
+                        </td>
+                        <td class="text-center align-middle">
+                            @if ($d->jenis == 2)
+                            <i class="fa fa-check"></i>
+                            @endif
+                        </td>
+                        <td class="text-center align-middle">
+                            <a href="#" class="btn btn-warning m-2" data-bs-toggle="modal" data-bs-target="#editModal"
+                                onclick="editFun({{ $d }})"><i class="fa fa-edit"></i></a>
+                            <form action="{{ route('db.barang.delete', $d->id) }}" method="post"
+                                class="d-inline delete-form" id="deleteForm{{ $d->id }}" data-id="{{ $d->id }}">
+                                @csrf
+                                @method('delete')
+                                <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+                {{-- @php $number = 1; @endphp
                 @foreach ($units as $unit)
                 @php $unitDisplayed = false; @endphp
                 @foreach ($unit->types as $type)
@@ -269,12 +363,13 @@
                     </td>
                 </tr>
                 @endif
-                @endforeach
+                @endforeach --}}
             </tbody>
             <tfoot>
 
             </tfoot>
         </table>
+
     </div>
 
 </div>
@@ -287,6 +382,16 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "scrollX": true,
+            "scrollY": "500px",
+            "order": [[0, 'asc']],
+            "columnDefs": [
+                { "orderable": false, "targets": [8, 9, 10] } // Disable sorting on Foto, PPN, and NON PPN columns
+            ]
+        });
+    });
     $('#detail_type').select2({
         theme: 'classic',
         width: '100%',
@@ -320,16 +425,6 @@
         width: '100%',
     });
 
-      $('#kategori').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
-
-    $('#type').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
-
     $('#barang_nama_id').select2({
         theme: 'bootstrap-5',
         width: '100%',
@@ -359,7 +454,6 @@
         document.getElementById('edit_merk').value = data.merk;
         document.getElementById('edit_keterangan').value = data.keterangan;
         document.getElementById('edit_satuan_id').value = data.satuan_id;
-        document.getElementById('edit_subpg_id').value = data.subpg_id;
 
         if (data.foto != null) {
             document.getElementById('edit_foto_preview').hidden = false;

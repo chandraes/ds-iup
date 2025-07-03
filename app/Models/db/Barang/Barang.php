@@ -26,22 +26,30 @@ class Barang extends Model
 
     public function unit()
     {
-        return $this->belongsTo(BarangUnit::class, 'barang_unit_id');
+        return $this->belongsTo(BarangUnit::class, 'barang_unit_id')->withDefault([
+            'nama' => '-',
+        ]);
     }
 
     public function type()
     {
-        return $this->belongsTo(BarangType::class, 'barang_type_id');
+        return $this->belongsTo(BarangType::class, 'barang_type_id')->withDefault([
+            'nama' => '-',
+        ]);
     }
 
     public function kategori()
     {
-        return $this->belongsTo(BarangKategori::class, 'barang_kategori_id');
+        return $this->belongsTo(BarangKategori::class, 'barang_kategori_id')->withDefault([
+            'nama' => '-',
+        ]);
     }
 
     public function barang_nama()
     {
-        return $this->belongsTo(BarangNama::class, 'barang_nama_id');
+        return $this->belongsTo(BarangNama::class, 'barang_nama_id')->withDefault([
+            'nama' => '-',
+        ]);
     }
 
     public function stok_harga()
@@ -80,5 +88,38 @@ class Barang extends Model
         } else {
             return '-';
         }
+    }
+
+    public function getBarang($filters)
+    {
+        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan']);
+
+        if (isset($filters['unit'])) {
+            $query->where('barang_unit_id', $filters['unit']);
+        }
+
+        if (isset($filters['type'])) {
+            $query->where('barang_type_id', $filters['type']);
+        }
+
+        if (isset($filters['kategori'])) {
+            $query->where('barang_kategori_id', $filters['kategori']);
+        }
+
+        if (isset($filters['nama'])) {
+            $query->where('barang_nama_id', $filters['nama']);
+        }
+
+        $query->orderBy('barang_unit_id')
+            ->orderBy('barang_type_id')
+            ->orderBy('barang_kategori_id')
+            ->orderBy('barang_nama_id');
+
+        if (isset($filters['pagination']) && $filters['pagination'] != '') {
+            return $query->paginate($filters['pagination']);
+        } else {
+            return $query->paginate(10);
+        }
+
     }
 }

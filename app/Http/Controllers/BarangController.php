@@ -206,8 +206,69 @@ class BarangController extends Controller
     public function barang(Request $request)
     {
         $kategoriDb = new BarangKategori;
-        // $data = BarangType::with(['unit', 'barangs'])->get();
+        $data = BarangType::with(['unit', 'barangs'])->get();
 
+        $unitFilter = $request->input('unit');
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+        $jenisFilter = $request->input('jenis');
+        $barangNamaFilter = $request->input('barang_nama');
+
+        if (! empty($unitFilter) && $unitFilter != '') {
+            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
+
+            $selectKategori = $kategoriDb->whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+        } else {
+            $selectType = BarangType::select('id', 'nama')->get();
+            $selectKategori = $kategoriDb->get();
+            $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
+        }
+
+        $db = new BarangUnit;
+
+        $units = $db->barangAll($unitFilter, $typeFilter, $kategoriFilter, $jenisFilter, $barangNamaFilter);
+        $kategori = $kategoriDb->with('barang_nama')->get();
+        $subpg = Subpg::select('id', 'nama')->get();
+        $satuan = Satuan::all();
+
+        // dd($data);
+
+        return view('db.barang.index', [
+            'data' => $data,
+            'subpg' => $subpg,
+            'kategori' => $kategori,
+            'units' => $units,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+            'jenisFilter' => $jenisFilter,
+            'barangNamaFilter' => $barangNamaFilter,
+            'selectType' => $selectType,
+            'selectKategori' => $selectKategori,
+            'selectBarangNama' => $selectBarangNama,
+            'satuan' => $satuan,
+        ]);
+    }
+
+    public function barang_new(Request $request)
+    {
+        $filter = $request->only(['unit', 'type', 'kategori', 'jenis', 'barang_nama', 'pagination']);
+
+        $pagination = $request->input('pagination', 10);
+
+        $db = new Barang();
+        $kategoriDb = new BarangKategori;
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
@@ -234,18 +295,19 @@ class BarangController extends Controller
             $selectKategori = $kategoriDb->get();
             $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
         }
+        $units = BarangUnit::all();
 
-        $db = new BarangUnit;
+        $data = $db->getBarang($filter);
 
-        $units = $db->barangAll($unitFilter, $typeFilter, $kategoriFilter, $jenisFilter, $barangNamaFilter);
         $kategori = $kategoriDb->with('barang_nama')->get();
 
         $satuan = Satuan::all();
 
         return view('db.barang.index', [
-            // 'data' => $data,
-            'kategori' => $kategori,
+            'data' => $data,
             'units' => $units,
+            'filter' => $filter,
+            'kategori' => $kategori,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
@@ -255,7 +317,9 @@ class BarangController extends Controller
             'selectKategori' => $selectKategori,
             'selectBarangNama' => $selectBarangNama,
             'satuan' => $satuan,
+            'pagination' => $pagination,
         ]);
+
     }
 
     public function barang_v2(Request $request)
@@ -274,6 +338,7 @@ class BarangController extends Controller
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'barang_nama_id' => 'required|exists:barang_namas,id',
             'satuan_id' => 'required|exists:satuans,id',
+            'subpg_id' => 'nullable|exists:subpgs,id',
             'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
             'merk' => [
@@ -344,6 +409,7 @@ class BarangController extends Controller
             'barang_kategori_id' => 'required|exists:barang_kategoris,id',
             'barang_nama_id' => 'required|exists:barang_namas,id',
             'satuan_id' => 'required|exists:satuans,id',
+            'subpg_id' => 'nullable|exists:subpgs,id',
             'jenis' => 'required|in:1,2',
             'kode' => 'nullable',
             'merk' => [
