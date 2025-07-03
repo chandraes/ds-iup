@@ -313,6 +313,21 @@
         width: '100%',
     });
 
+     $('#kategori').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
+
+      $('#type').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
+
+     $('#unit').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+    });
+
     $('#karyawan_id').select2({
         theme: 'bootstrap-5',
         width: '100%',
