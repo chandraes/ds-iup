@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseController extends Controller
 {
@@ -488,6 +489,7 @@ class DatabaseController extends Controller
 
         $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
             ->filter($filters) // Gunakan scope filter
+            // ->limit(10)
             ->get();
 
         $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
@@ -511,6 +513,32 @@ class DatabaseController extends Controller
         ]);
     }
 
+    public function konsumen_upload_ktp(Request $request, Konsumen $konsumen)
+    {
+        $data = $request->validate([
+            'upload_ktp' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:512',
+        ]);
+
+
+        if ($konsumen->upload_ktp && Storage::disk('public')->exists($konsumen->upload_ktp)) {
+            Storage::disk('public')->delete($konsumen->upload_ktp);
+        }
+
+        $file = $request->file('upload_ktp');
+        $filename = $konsumen->id.'_KTP'.'_'.time().'.'.$file->getClientOriginalExtension();
+
+        if (!Storage::disk('public')->exists('konsumen')) {
+            Storage::disk('public')->makeDirectory('konsumen');
+        }
+
+        $path = $file->storeAs('konsumen', $filename, 'public');
+        $data['upload_ktp'] = $path;
+
+        $konsumen->update($data);
+
+        return redirect()->back()->with('success', 'Berhasil mengubah KTP Konsumen!');
+    }
+
     public function konsumen_daftar_kunjungan(Konsumen $konsumen)
     {
         $pt = Config::where('untuk', 'resmi')->first();
@@ -529,6 +557,7 @@ class DatabaseController extends Controller
     {
         $data = $request->validate([
             'kode_toko_id' => 'required|exists:kode_tokos,id',
+            'nik' => 'nullable',
             'nama' => 'required',
             'cp' => 'required',
             'no_hp' => 'required',
@@ -559,6 +588,7 @@ class DatabaseController extends Controller
     {
         $data = $request->validate([
             'kode_toko_id' => 'required|exists:kode_tokos,id',
+            'nik' => 'nullable',
             'nama' => 'required',
             'cp' => 'required',
             'no_hp' => 'required',

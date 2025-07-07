@@ -33,6 +33,7 @@
 @include('db.konsumen.create')
 @include('db.konsumen.edit')
 @include('db.konsumen.kode-toko')
+@include('db.konsumen.upload-foto')
 
 <div class="container-fluid mt-5 table-responsive">
 
@@ -97,6 +98,8 @@
                 <th class="text-center align-middle">NAMA</th>
                 <th class="text-center align-middle">CP</th>
                 <th class="text-center align-middle">NPWP</th>
+                <th class="text-center align-middle">NIK</th>
+                <th class="text-center align-middle">KTP</th>
                 <th class="text-center align-middle">Sales Area</th>
                 <th class="text-center align-middle">Provinsi</th>
                 <th class="text-center align-middle">Kab/Kota</th>
@@ -139,6 +142,64 @@
                     </ul>
                 </td>
                 <td class="text-center align-middle">{{$d->npwp}}</td>
+                <td class="text-center align-middle">{{$d->nik}}</td>
+                <td class="text-center align-middle">
+                   @if ($d->upload_ktp != null)
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal{{ $d->id }}">
+                            <img src="{{ asset('storage/' . $d->upload_ktp) }}" alt="Foto KTP" class="img-fluid" width="100">
+                        </a>
+
+                        <div class="modal fade" id="imageModal{{ $d->id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ $d->id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="imageModalLabel{{ $d->id }}">Foto KTP</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-center">
+                                        <div class="image-container">
+                                            <img id="zoomableImage{{ $d->id }}" src="{{ asset('storage/' . $d->upload_ktp) }}" alt="Foto KTP" class="img-fluid">
+                                        </div>
+                                        <input type="range" id="zoomSlider{{ $d->id }}" class="form-range mt-3" min="1" max="3" step="0.1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const image = document.getElementById('zoomableImage{{ $d->id }}');
+                                const slider = document.getElementById('zoomSlider{{ $d->id }}');
+
+                                slider.addEventListener('input', function () {
+                                    const scale = slider.value;
+                                    image.style.transform = `scale(${scale})`;
+                                });
+                            });
+                        </script>
+                        <style>
+                            .image-container {
+                                overflow: hidden;
+                                display: inline-block;
+                            }
+
+                            .image-container img {
+                                transition: transform 0.2s ease;
+                            }
+                        </style>
+                        <div class="row px-3 text-nowrap mt-1">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$d->id}})" class="btn btn-success btn-sm">
+                                <i class="fa fa-upload"></i> Edit
+                            </button>
+                        </div>
+                        @else
+                        <div class="row px-3 text-nowrap">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$d->id}})" class="btn btn-primary btn-sm">
+                                <i class="fa fa-upload"></i> Upload
+                            </button>
+                        </div>
+                        @endif
+                </td>
                 <td class="text-center align-middle">{{$d->karyawan ? $d->karyawan->nama : ''}}</td>
                 <td class="text-start align-middle">
                     {{$d->provinsi ? $d->provinsi->nama_wilayah : ''}}
@@ -259,7 +320,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
-{{-- <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script> --}}
 <script>
 
 </script>
@@ -315,10 +375,13 @@
         });
 
    function editInvestor(data, id) {
+
+        document.getElementById('editForm').reset();
+
         $('#edit_kabupaten_kota_id').empty();
         $('#edit_kecamatan_id').empty();
         document.getElementById('edit_nama').value = data.nama;
-        document.getElementById('edit_kode_toko_id').value = data.kode_toko_id;
+        $('#edit_kode_toko_id').val(data.kode_toko_id || '').trigger('change');
         document.getElementById('edit_no_hp').value = data.no_hp;
         document.getElementById('edit_no_kantor').value = data.no_kantor;
         document.getElementById('edit_cp').value = data.cp;
@@ -405,6 +468,10 @@
                 });
             }
         });
+    }
+
+     function uploadFoto(id) {
+        document.getElementById('uploadFotoForm').action = `{{route('db.konsumen.upload-ktp', ':id')}}`.replace(':id', id);
     }
 
     function getEditKecamatan(selectedKecamatanId) {

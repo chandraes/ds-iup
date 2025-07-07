@@ -301,6 +301,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_store'])->name('db.konsumen.store');
                 Route::patch('/{konsumen}/update', [App\Http\Controllers\DatabaseController::class, 'konsumen_update'])->name('db.konsumen.update');
                 Route::delete('/{konsumen}/delete', [App\Http\Controllers\DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');
+
+                Route::post('/upload-ktp/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_upload_ktp'])->name('db.konsumen.upload-ktp');
             });
 
             Route::prefix('kode-toko')->group(function () {

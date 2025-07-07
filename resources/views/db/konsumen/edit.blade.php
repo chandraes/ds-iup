@@ -11,7 +11,7 @@
                 @method('patch')
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-4 col-sm-3 mb-3">
+                        <div class="col-md-2 col-sm-2 mb-3">
                             <label for="npwp" class="form-label">Kode Toko</label>
                             <select name="kode_toko_id" id="edit_kode_toko_id" required class="form-select">
                                 <option value="" disabled selected>-- Pilih Salah Satu --</option>
@@ -25,12 +25,12 @@
                             <input type="text" class="form-control" name="nama" id="edit_nama" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
-                        <div class="col-md-4 col-sm-6 mb-3">
+                        <div class="col-md-3 col-sm-6 mb-3">
                             <label for="cp" class="form-label">Contact Person</label>
                             <input type="text" class="form-control" name="cp" id="edit_cp" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
-                        <div class="col-md-4 col-sm-6 mb-3">
+                        <div class="col-md-3 col-sm-6 mb-3">
                             <label for="no_hp" class="form-label">No HP</label>
                             <input type="text" class="form-control" name="no_hp" id="edit_no_hp" aria-describedby="helpId"
                                 placeholder="" required>
@@ -43,6 +43,11 @@
                         <div class="col-md-4 col-sm-6 mb-3">
                             <label for="npwp" class="form-label">NPWP</label>
                             <input type="text" class="form-control" name="npwp" id="edit_npwp" aria-describedby="helpId"
+                                placeholder="" required>
+                        </div>
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <label for="nik" class="form-label">NIK</label>
+                            <input type="text" class="form-control" name="nik" id="edit_nik" aria-describedby="helpId"
                                 placeholder="" required>
                         </div>
                         <hr>
