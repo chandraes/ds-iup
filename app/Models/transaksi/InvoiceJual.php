@@ -1071,18 +1071,35 @@ class InvoiceJual extends Model
                 return $item;
             });
 
+        $invoice_void = $this->where('void', 1)
+            ->selectRaw('DATE(updated_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
+            ->whereMonth('updated_at', $month)
+            ->whereYear('updated_at', $year)
+            ->whereNotNull('karyawan_id')
+            ->groupBy('tanggal_raw', 'karyawan_id')
+            ->get()
+            ->map(function($item) {
+                $item->tanggal = Carbon::parse($item->tanggal_raw)->format('Y-m-d');
+                return $item;
+            });
         // Buat array hasil [tanggal][karyawan_id] = total
         $result = [];
 
         foreach ($dates as $date) {
             $row = ['tanggal' => $date];
+
             foreach ($karyawans as $karyawan) {
                 $found = $invoices->first(function ($item) use ($date, $karyawan) {
+                    return $item->tanggal_raw === $date && $item->karyawan_id == $karyawan->id;
+                });
 
+                $found_void = $invoice_void->first(function ($item) use ($date, $karyawan) {
                     return $item->tanggal_raw === $date && $item->karyawan_id == $karyawan->id;
                 });
 
                 $row[$karyawan->id] = $found ? $found->total : 0;
+
+                $row[$karyawan->id] = $found_void ? $row[$karyawan->id] - $found_void->total : $row[$karyawan->id];
             }
             $result[] = $row;
         }

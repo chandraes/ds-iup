@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -217,7 +218,7 @@ class PerusahaanController extends Controller
 
     public function selling_out(Request $request)
     {
-        $filters = $request->only(['area', 'kabupaten_kota', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'month', 'year', 'sales']);
+        $filters = $request->only(['area', 'kabupaten_kota', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'month', 'year', 'sales', 'barang_nama_id']);
         $db = new InvoiceJualDetail();
 
         $month = $request->input('month') ?? date('m');
@@ -259,6 +260,13 @@ class PerusahaanController extends Controller
             $query->where('is_sales', 1);
         })->select('id', 'nama')->get();
 
+        $barang_nama = Barang::select('barang_nama_id')->distinct()->get();
+
+        $filterBarangNama = BarangNama::select('id', 'nama')
+            ->whereIn('id', $barang_nama->pluck('barang_nama_id'))
+            ->orderBy('nama')
+            ->get();
+
         return view('perusahaan.selling-out.index', [
             'data' => $data,
             'ppn' => $ppn,
@@ -266,6 +274,7 @@ class PerusahaanController extends Controller
             'dataBulan' => $dataBulan,
             'sales' => $sales_area,
             'kabupaten_kota' => $kabupaten_kota,
+            'filterBarangNama' => $filterBarangNama,
         ]);
     }
 }

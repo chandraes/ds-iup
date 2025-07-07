@@ -66,7 +66,15 @@ $selectedTahun = request('year') ?? date('Y');
                         @endforeach
                     </select>
                 </div>
-
+                <div class="col-md-2">
+                    <select name="barang_nama_id" id="barang_nama_id" class="form-select select2" onchange="this.form.submit()">
+                        <option value="">Semua Nama Barang</option>
+                        @foreach ($filterBarangNama as $fb)
+                        <option value="{{$fb->id}}" {{ request('barang_nama_id')==$fb->id ? 'selected' : '' }}>
+                            {{$fb->nama}}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </form>
     </div>
@@ -118,7 +126,9 @@ $selectedTahun = request('year') ?? date('Y');
                     <td class="text-center align-middle">{{$d->barang->barang_nama->nama}}</td>
                     <td class="text-center align-middle">{{$d->barang->merk}}</td>
                     <td class="text-center align-middle">{{$d->barang->kategori->nama}}</td>
-                    <td class="text-center align-middle"></td>
+                    <td class="text-center align-middle">
+                        {{ $d->barang->subpg->nama }}
+                    </td>
                     {{-- <td class="text-center align-middle">{{$d->total}}</td> --}}
                     <td class="text-center align-middle" data-order="{{$total_harga}}">
                         {{number_format($total_harga, 0 ,',','.')}}
@@ -154,7 +164,9 @@ $selectedTahun = request('year') ?? date('Y');
                     <td class="text-danger text-center align-middle">{{$d->barang->barang_nama->nama}}</td>
                     <td class="text-danger text-center align-middle">{{$d->barang->merk}}</td>
                     <td class="text-danger text-center align-middle">{{$d->barang->kategori->nama}}</td>
-                    <td class="text-danger text-center align-middle"></td>
+                    <td class="text-danger text-center align-middle">
+                         {{ $d->barang->subpg->nama }}
+                    </td>
                     {{-- <td class="text-center align-middle">{{$d->total}}</td> --}}
                     <td class="text-danger text-center align-middle" data-order="{{$total_harga}}">
                         {{number_format($total_harga, 0 ,',','.')}}

@@ -58,17 +58,7 @@ class InvoiceJualDetail extends Model
 
     public function sellingOut($month, $year, $perusahaan, $filters = [])
     {
-        // if (isset($filters['barang_stok_harga_id'])) {
-        //     $query->where('barang_stok_harga_id', $filters['barang_stok_harga_id']);
-        // }
 
-        // if (isset($filters['invoice_jual_id'])) {
-        //     $query->where('invoice_jual_id', $filters['invoice_jual_id']);
-        // }
-
-        // if (isset($filters['tanggal_awal']) && isset($filters['tanggal_akhir'])) {
-        //     $query->whereBetween('created_at', [$filters['tanggal_awal'], $filters['tanggal_akhir']]);
-        // }
         $relations = [
             'invoice' => function ($q) {
             $q->select('id', 'created_at', 'updated_at', 'void', 'konsumen_id', 'konsumen_temp_id', 'karyawan_id', 'kode', 'kas_ppn');
@@ -107,6 +97,16 @@ class InvoiceJualDetail extends Model
               ->whereYear('updated_at', $year);
             });
 
+        if (isset($filters['barang_nama_id']) && $filters['barang_nama_id'] != '') {
+            $data_jual->whereHas('barang', function ($q) use ($filters) {
+                $q->where('barang_nama_id', $filters['barang_nama_id']);
+            });
+
+            $data_void->whereHas('barang', function ($q) use ($filters) {
+                $q->where('barang_nama_id', $filters['barang_nama_id']);
+            });
+        }
+
         if (isset($filters['sales']) && $filters['sales'] != '') {
             $data_jual->whereHas('invoice', function ($q) use ($filters) {
                 $q->where('karyawan_id', $filters['sales']);
@@ -121,7 +121,7 @@ class InvoiceJualDetail extends Model
             $data_jual->whereHas('invoice.konsumen', function ($q) use ($filters) {
                 $q->where('kabupaten_kota_id', $filters['kabupaten_kota']);
             });
-            
+
             $data_void->whereHas('invoice.konsumen', function ($q) use ($filters) {
                 $q->where('kabupaten_kota_id', $filters['kabupaten_kota']);
             });
