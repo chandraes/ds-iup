@@ -1061,6 +1061,7 @@ class InvoiceJual extends Model
         // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
         $invoices = $this
             ->selectRaw('DATE(created_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
+            ->where('titipan', 0)
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->whereNotNull('karyawan_id')
@@ -1073,6 +1074,7 @@ class InvoiceJual extends Model
 
         $invoice_void = $this->where('void', 1)
             ->selectRaw('DATE(updated_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
+            ->where('titipan', 0)
             ->whereMonth('updated_at', $month)
             ->whereYear('updated_at', $year)
             ->whereNotNull('karyawan_id')
@@ -1115,11 +1117,13 @@ class InvoiceJual extends Model
         $tanggal = Carbon::parse($tanggal)->format('Y-m-d');
 
         $data = $this->with(['invoice_detail', 'konsumen.kode_toko', 'konsumen.kabupaten_kota', 'konsumen.kecamatan'])
+            ->where('titipan', 0)
             ->where('karyawan_id', $karyawan_id)
             ->whereDate('created_at', $tanggal)
             ->get();
 
         $void = $this->with(['invoice_detail', 'konsumen.kode_toko','konsumen.kabupaten_kota', 'konsumen.kecamatan'])
+            ->where('titipan', 0)
             ->where('void', 1)
             ->where('karyawan_id', $karyawan_id)
             ->whereDate('updated_at', $tanggal)
