@@ -68,6 +68,7 @@
                     <th rowspan="2" class="text-center align-middle">Tanggal Input</th>
                     <th rowspan="2" class="text-center align-middle">Nota</th>
                     <th rowspan="2" class="text-center align-middle">Konsumen</th>
+                    <th rowspan="2" class="text-center align-middle">NIK/NPWP</th>
                     <th rowspan="2" class="text-center align-middle">Uraian</th>
                     {{-- <th class="text-center align-middle">Tanggal Bayar</th> --}}
                     <th colspan="2" class="text-center align-middle">Sebelum Terbit Faktur</th>
@@ -102,10 +103,19 @@
                         @endif
 
                     </td>
-                    <td class="text-center align-middle">
+                    <td class="text-start align-middle">
                         {{$d->invoiceJual->konsumen ? ($d->invoiceJual->konsumen->kode_toko ? $d->invoiceJual->konsumen->kode_toko->kode. ' ' : '' ).$d->invoiceJual->konsumen->nama :
                         $d->invoiceJual->konsumen_temp->nama}}
                         </td>
+                    <td class="text-start align-middle text-nowrap">
+                        NIK : {{$d->invoiceJual->konsumen ? $d->invoiceJual->konsumen->nik : '-'}}<br>
+                        NPWP :
+                        @if ($d->invoiceJual->konsumen)
+                        {{ str_replace(['.', '-'], '', $d->invoiceJual->konsumen->npwp) }}
+                        @else
+                        {{ str_replace(['.', '-'], '', $d->invoiceJual->konsumen_temp->npwp) }}
+                        @endif
+                    </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
                     </td>
@@ -165,7 +175,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle" colspan="6">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($totalNonNpwp, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($totalNpwp, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($totalFaktur, 0, ',','.')}}</th>
