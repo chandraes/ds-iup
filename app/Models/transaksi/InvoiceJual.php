@@ -1059,7 +1059,7 @@ class InvoiceJual extends Model
         }
         // dd($dates, $month, $year);
         // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
-        $invoices = $this->where('void', 0)
+        $invoices = $this
             ->selectRaw('DATE(created_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
