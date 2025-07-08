@@ -33,7 +33,9 @@ class Konsumen extends Model
 
     public function kecamatan()
     {
-        return $this->belongsTo(Wilayah::class, 'kecamatan_id', 'id');
+        return $this->belongsTo(Wilayah::class, 'kecamatan_id', 'id')->withDefault(
+            ['nama_wilayah' => '']
+        );
     }
 
     public function sales_area()

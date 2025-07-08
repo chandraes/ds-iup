@@ -30,6 +30,9 @@
                     <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Kode<br>Toko</th>
                     <th class="text-center align-middle">Nama Toko</th>
+                    <th class="text-center align-middle">Kab/Kota</th>
+                    <th class="text-center align-middle">Kecamatan</th>
+                    <th class="text-center align-middle">Invoice</th>
                     <th class="text-center align-middle">Nominal</th>
                 </tr>
             </thead>
@@ -42,6 +45,9 @@
                     <td class="text-center align-middle">{{$no++}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode : ''}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
+                    <td class="text-center align-middle">{{$d->konsumen->kabupaten_kota->nama_wilayah}}</td>
+                    <td class="text-center align-middle">{{$d->konsumen->kecamatan->nama_wilayah}}</td>
+                    <td class="text-start align-middle">{{$d->kode}}</td>
                     <td class="text-end align-middle" data-order="{{$d->grand_total}}">{{$d->nf_grand_total}}</td>
                 </tr>
                 @endforeach
@@ -50,6 +56,9 @@
                     <td class="text-center align-middle">{{$no++}}</td>
                     <td class="text-center align-middle">{{$v->konsumen->kode_toko ? $v->konsumen->kode_toko->kode : ''}}</td>
                     <td class="text-center align-middle">{{$v->konsumen->nama}}</td>
+                     <td class="text-center align-middle">{{$v->konsumen->kabupaten_kota->nama_wilayah}}</td>
+                    <td class="text-center align-middle">{{$v->konsumen->kecamatan->nama_wilayah}}</td>
+                    <td class="text-start align-middle">{{$v->kode}}</td>
                     <td class="text-end align-middle" data-order="{{$v->grand_total*-1}}">-{{$v->nf_grand_total}}</td>
                 </tr>
                 @endforeach

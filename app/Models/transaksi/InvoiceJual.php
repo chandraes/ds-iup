@@ -1114,12 +1114,12 @@ class InvoiceJual extends Model
     {
         $tanggal = Carbon::parse($tanggal)->format('Y-m-d');
 
-        $data = $this->with(['invoice_detail', 'konsumen.kode_toko'])
+        $data = $this->with(['invoice_detail', 'konsumen.kode_toko', 'konsumen.kabupaten_kota', 'konsumen.kecamatan'])
             ->where('karyawan_id', $karyawan_id)
             ->whereDate('created_at', $tanggal)
             ->get();
 
-        $void = $this->with(['invoice_detail', 'konsumen.kode_toko'])
+        $void = $this->with(['invoice_detail', 'konsumen.kode_toko','konsumen.kabupaten_kota', 'konsumen.kecamatan'])
             ->where('void', 1)
             ->where('karyawan_id', $karyawan_id)
             ->whereDate('updated_at', $tanggal)
