@@ -85,8 +85,7 @@ class InvoiceJualDetail extends Model
 
         $data_jual = (clone $baseQuery)
             ->whereHas('invoice', function ($q) use ($month, $year) {
-            $q->where('void', 0)
-              ->whereMonth('created_at', $month)
+            $q->whereMonth('created_at', $month)
               ->whereYear('created_at', $year);
             });
 
@@ -129,7 +128,6 @@ class InvoiceJualDetail extends Model
 
         $data_jual = $data_jual->get();
         $data_void = $data_void->get();
-
 
         return [
             'data_jual' => $data_jual,
