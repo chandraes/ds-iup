@@ -76,7 +76,7 @@
                     <th rowspan="2" class="text-center align-middle">ACT</th>
                 </tr>
                 <tr>
-                    <th class="text-center align-middle">Non NPWP</th>
+                    <th class="text-center align-middle">NIK</th>
                     <th class="text-center align-middle">NPWP</th>
                 </tr>
             </thead>
