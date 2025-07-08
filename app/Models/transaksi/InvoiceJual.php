@@ -1120,7 +1120,16 @@ class InvoiceJual extends Model
             ->whereDate('created_at', $tanggal)
             ->get();
 
-        return $data;
+        $void = $this->with(['invoice_detail', 'konsumen.kode_toko'])
+            ->where('void', 1)
+            ->where('karyawan_id', $karyawan_id)
+            ->whereDate('updated_at', $tanggal)
+            ->get();
+
+        return [
+            'data' => $data,
+            'void' => $void
+        ];
     }
 
     public function profit_harian($month, $year, $konsumen = null)

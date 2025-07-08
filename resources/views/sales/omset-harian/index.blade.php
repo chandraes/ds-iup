@@ -69,7 +69,7 @@ $selectedTahun = request('year') ?? date('Y');
                     @foreach ($karyawans as $karyawan)
                     <td class="text-end align-middle" data-order="{{ $row[$karyawan->id] ?? 0 }}">
                         {{-- Jika nilai lebih dari 0, buat link ke detail omset harian --}}
-                        @if ($row[$karyawan->id] > 0)
+                        @if ($row[$karyawan->id] != 0)
                         <a href="{{route('sales.omset-harian.detail', ['tanggal' => $row['tanggal'], 'karyawan_id' => $karyawan->id])}}" />
                         @endif
                         {{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}

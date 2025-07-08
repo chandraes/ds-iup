@@ -34,7 +34,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($data as $d)
+                @foreach ($data['data'] as $d)
                 <tr>
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode : ''}}</td>
@@ -42,11 +42,19 @@
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                 </tr>
                 @endforeach
+                 @foreach ($data['void'] as $v)
+                <tr>
+                    <td class="text-center align-middle">{{$loop->iteration}}</td>
+                    <td class="text-center align-middle">{{$v->konsumen->kode_toko ? $v->konsumen->kode_toko->kode : ''}}</td>
+                    <td class="text-center align-middle">{{$v->konsumen->nama}}</td>
+                    <td class="text-end align-middle">-{{$v->nf_grand_total}}</td>
+                </tr>
+                @endforeach
             </tbody>
             <tfoot>
                 <tr>
                     <th class="text-end align-middle" colspan="3">Grand Total</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('grand_total'), 0,',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data['data']->sum('grand_total')+($data['void']->sum('grand_total')*-1), 0,',','.')}}</th>
                 </tr>
             </tfoot>
         </table>
