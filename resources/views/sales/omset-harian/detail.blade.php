@@ -34,20 +34,23 @@
                 </tr>
             </thead>
             <tbody>
+                  @php
+                    $no = 1;
+                @endphp
                 @foreach ($data['data'] as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$loop->iteration}}</td>
+                    <td class="text-center align-middle">{{$no++}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode : ''}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
-                    <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->grand_total}}">{{$d->nf_grand_total}}</td>
                 </tr>
                 @endforeach
                  @foreach ($data['void'] as $v)
                 <tr>
-                    <td class="text-center align-middle">{{$loop->iteration}}</td>
+                    <td class="text-center align-middle">{{$no++}}</td>
                     <td class="text-center align-middle">{{$v->konsumen->kode_toko ? $v->konsumen->kode_toko->kode : ''}}</td>
                     <td class="text-center align-middle">{{$v->konsumen->nama}}</td>
-                    <td class="text-end align-middle">-{{$v->nf_grand_total}}</td>
+                     <td class="text-end align-middle" data-order="{{$v->grand_total*-1}}">-{{$v->nf_grand_total}}</td>
                 </tr>
                 @endforeach
             </tbody>
