@@ -65,7 +65,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="3">Grand Total</th>
+                    <th class="text-end align-middle" colspan="6">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($data['data']->sum('grand_total')+($data['void']->sum('grand_total')*-1), 0,',','.')}}</th>
                 </tr>
             </tfoot>
