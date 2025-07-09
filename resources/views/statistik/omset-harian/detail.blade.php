@@ -47,7 +47,10 @@
                     <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kabupaten_kota->nama_wilayah}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kecamatan->nama_wilayah}}</td>
-                    <td class="text-start align-middle">{{$d->kode}}</td>
+                    <td class="text-start align-middle">
+                        <a href="{{route('rekap.invoice-penjualan.detail', ['invoice' => $d->id])}}" />
+                        {{$d->kode}}
+                    </td>
                     <td class="text-end align-middle" data-order="{{$d->grand_total}}">{{$d->nf_grand_total}}</td>
                 </tr>
                 @endforeach
@@ -58,7 +61,10 @@
                     <td class="text-center align-middle text-danger">{{$v->konsumen->nama}}</td>
                      <td class="text-center align-middle text-danger">{{$v->konsumen->kabupaten_kota->nama_wilayah}}</td>
                     <td class="text-center align-middle text-danger">{{$v->konsumen->kecamatan->nama_wilayah}}</td>
-                    <td class="text-start align-middle text-danger">{{$v->kode}}</td>
+                    <td class="text-start align-middle text-danger">
+                        <a href="{{route('rekap.invoice-penjualan.detail', ['invoice' => $v->id])}}" />
+                        {{$v->kode}}
+                    </td>
                     <td class="text-end align-middle text-danger" data-order="{{$v->grand_total*-1}}">-{{$v->nf_grand_total}}</td>
                 </tr>
                 @endforeach

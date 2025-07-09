@@ -20,6 +20,7 @@ use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
 use App\Models\transaksi\OrderIndenDetail;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 class SalesController extends Controller
@@ -537,6 +538,19 @@ class SalesController extends Controller
         return view('sales.omset-harian.detail', [
             'data' => $data,
             'karyawan' => $karyawan,
+        ]);
+    }
+
+    public function omset_harian_detail_invoice(InvoiceJual $invoice)
+    {
+        $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+        $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
+
+        return view('sales.omset-harian.detail-invoice', [
+            'data' => $data,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
         ]);
     }
 

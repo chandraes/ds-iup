@@ -31,7 +31,7 @@
                                 <td class="text-start align-middle">Konsumen</td>
                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                 <td class="text-start align-middle">
-                                    {{$data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama}}
+                                    {{$data->konsumen ? $data->konsumen->kode_toko->kode .' '. $data->konsumen->nama : $data->konsumen_temp->nama}}
                                 </td>
                             </tr>
                             <tr>

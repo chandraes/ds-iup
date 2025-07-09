@@ -91,6 +91,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('omset-harian')->group(function() {
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'omset_harian'])->name('sales.omset-harian');
                 Route::get('/detail', [App\Http\Controllers\SalesController::class, 'omset_harian_detail'])->name('sales.omset-harian.detail');
+                Route::get('/detail/invoice/{invoice}', [App\Http\Controllers\SalesController::class, 'omset_harian_detail_invoice'])->name('sales.omset-harian.detail.invoice');
             });
 
 
