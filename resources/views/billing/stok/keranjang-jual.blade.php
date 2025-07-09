@@ -71,7 +71,7 @@
                                                 </td>
                                             </tr>
                                             <tr style="height:50px">
-                                                <td class="text-start align-middle">NPWP</td>
+                                                <td class="text-start align-middle">NPWP/NIK</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
                                                     <input type="text" name="npwp" id="npwp" class="form-control"
