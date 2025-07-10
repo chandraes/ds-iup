@@ -119,6 +119,8 @@ class KeranjangJual extends Model
 
                 $data['lunas'] = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
 
+                $data['karyawan_id'] = $konsumen->karyawan_id;
+
                 // kalau sistem pembayaran konsumen adalah tempo dan sistem pembayaran invoice bukan tunai
                 // maka cek sisa plafon konsumen
                 if ($konsumen->pembayaran == 2 && $data['pembayaran'] != 1) {
