@@ -215,7 +215,7 @@ class FormJualController extends Controller
             'add_fee' => 'required',
             'nama' => 'required_if:konsumen_id,*',
             'no_hp' => 'required_if:konsumen_id,*',
-            'npwp' => 'nullable',
+            'npwp' => 'required_if:konsumen_id,*',
             'alamat' => 'nullable',
             'dp' => 'nullable',
             'dp_ppn' => 'nullable',

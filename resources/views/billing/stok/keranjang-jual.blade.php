@@ -635,6 +635,10 @@
         // remove disabled from alamat & npwp
         document.getElementById('alamat').disabled = false;
         document.getElementById('npwp').disabled = false;
+        document.getElementById('npwp').required = true;
+        // make npwp minlength 15
+        document.getElementById('npwp').setAttribute('minlength', '10');
+        
         document.getElementById('no_hp').disabled = false;
         document.getElementById('no_hp').value = '';
         document.getElementById('no_hp').required = true;
