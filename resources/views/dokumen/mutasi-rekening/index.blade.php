@@ -59,6 +59,7 @@
             <tr>
                 <th class="text-center align-middle" style="width: 7%">No</th>
                 <th class="text-center align-middle">Bulan</th>
+                <th class="text-center align-middle">Checklist</th>
                 <th class="text-center align-middle" style="width: 50%">Action</th>
             </tr>
         </thead>
@@ -71,6 +72,16 @@
                 <tr>
                     <td class="text-center align-middle">{{ $no++ }}</td>
                     <td class="text-center align-middle">{{ $data[$d]['bulan'] }}</td>
+                     <td class="text-center align-middle">
+                        @if ($data[$d]['id'])
+                        {{-- checklist fontawesome --}}
+                        @if ($data[$d]['checklist'])
+                            <i class="fa fa-check-square text-success" style="font-size: 2rem;" onclick="updateChecklist({{$data[$d]['id']}})"></i>
+                        @else
+                            <i class="fa fa-square text-secondary" style="font-size: 2rem;" onclick="updateChecklist({{$data[$d]['id']}})"></i>
+                        @endif
+                        @endif
+                     </td>
                     <td class="text-center align-middle">
                         <div class="d-flex justify-content-center flex-wrap gap-3">
                             @if ($data[$d]['file'] == null)
@@ -216,6 +227,44 @@
             // hide button
             $('#buttonJabatan-'+id).attr('hidden', true);
         }
+    }
+
+    function updateChecklist(id) {
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            text: "Anda akan mengubah status checklist!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, ubah!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/dokumen/mutasi-rekening/checklist/' + id,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Berhasil!',
+                            'Status checklist telah diubah.',
+                            'success'
+                        ).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire(
+                            'Gagal!',
+                            'Terjadi kesalahan saat mengubah status checklist.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
     }
 </script>
 @endpush

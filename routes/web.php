@@ -150,6 +150,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/store', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_store'])->name('dokumen.mutasi-rekening.store');
                 Route::delete('/destroy/{mutasi}', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_destroy'])->name('dokumen.mutasi-rekening.destroy');
                 Route::post('/kirim-wa/{mutasi}', [App\Http\Controllers\DokumenController::class, 'kirim_wa'])->name('dokumen.mutasi-rekening.kirim-wa');
+
+                Route::post('/checklist/{mutasi}', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_checklist'])->name('dokumen.mutasi-rekening.checklist');
             });
 
             Route::prefix('kontrak-tambang')->group(function () {

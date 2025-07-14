@@ -61,6 +61,7 @@ class DokumenController extends Controller
                 'tahun' => $tahun,
                 'bulan' => $bulan[$i],
                 'file' => $mutasiRekening ? $mutasiRekening->file : null,
+                'checklist' => $mutasiRekening ? $mutasiRekening->checklist : 0,
             ];
         }
 
@@ -70,6 +71,14 @@ class DokumenController extends Controller
             'data' => $data,
             'bulan' => $bulan,
         ]);
+    }
+
+    public function mutasi_rekening_checklist(MutasiRekening $mutasi)
+    {
+        $mutasi->checklist = !$mutasi->checklist; // Toggle checklist status
+        $mutasi->save();
+
+        return response()->json(['success' => true, 'checklist' => $mutasi->checklist]);
     }
 
     public function mutasi_rekening_store(Request $request)
