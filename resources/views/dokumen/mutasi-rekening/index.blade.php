@@ -6,7 +6,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>MUTASI REKENING</u></h1>
-            <h1><u>{{request('kas_ppn') === 1 ? 'PPN' : 'NON PPN'}} {{$tahun}}</u></h1>
+            <h1><u>{{request('kas_ppn') == 1 ? 'PPN' : 'NON PPN'}} {{$tahun}}</u></h1>
         </div>
     </div>
     @include('swal')
