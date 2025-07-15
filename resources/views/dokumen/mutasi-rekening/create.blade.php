@@ -11,8 +11,10 @@
             <form method="post" enctype="multipart/form-data" id="createForm">
                 @csrf
                 <div class="modal-body">
+
                     <div class="row">
                         <div class="col-md-12">
+                             <input type="hidden" name="kas_ppn" id="kas_ppn" value="{{request('kas_ppn')}}">
                             <input type="hidden" name="tahun" id="tahun">
                             <input type="hidden" name="bulan" id="bulan">
                             <div class="mb-3">

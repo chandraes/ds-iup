@@ -165,7 +165,7 @@ class StarSender
         curl_close($curl);
 
         $result = json_decode($response, true);
-
+        // dd($result);
         if (isset($result['status'])) {
             if ($result['status'] == true) {
                 return $result;
@@ -179,6 +179,54 @@ class StarSender
                 return false;
             }
 
+        }
+    }
+
+    public function sendMedia()
+    {
+        $apikey = $this->apikey;
+        $tujuan = $this->tujuan;
+        $pesan = $this->pesan;
+
+        $filePath = $this->file;
+
+        $pesan = [
+            'messageType' => 'media',
+            'to' => $tujuan,
+            'body' => $pesan,
+            'file' => $filePath,
+        ];
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL => 'https://api.starsender.online/api/send',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($pesan),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type:application/json',
+                'Authorization: '.$apikey,
+            ],
+        ]);
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+
+        $result = json_decode($response, true);
+
+        dd($result);
+
+        if ($result['success'] == true) {
+            return true;
+        } else {
+            return false;
         }
     }
 }

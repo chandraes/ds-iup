@@ -31,6 +31,10 @@ class DokumenController extends Controller
 
     public function mutasi_rekening(Request $request)
     {
+        $val = $request->validate([
+            'kas_ppn' => 'required'
+        ]);
+
         $tahun = $request->tahun ?? Carbon::now()->year;
 
         $dataTahun = MutasiRekening::select('tahun')->distinct()->get();
@@ -51,7 +55,7 @@ class DokumenController extends Controller
         ];
 
         // Fetch all records for the specified year in a single query
-        $mutasiRekenings = MutasiRekening::where('tahun', $tahun)->get()->keyBy('bulan');
+        $mutasiRekenings = MutasiRekening::where('kas_ppn', $val['kas_ppn'])->where('tahun', $tahun)->get()->keyBy('bulan');
 
         $data = [];
         for ($i = 1; $i <= 12; $i++) {
@@ -84,6 +88,7 @@ class DokumenController extends Controller
     public function mutasi_rekening_store(Request $request)
     {
         $request->validate([
+            'kas_ppn' => 'required|boolean',
             'tahun' => 'required|numeric',
             'bulan' => 'required|numeric',
             'file' => 'required|file|mimes:pdf|max:5120',
@@ -105,12 +110,13 @@ class DokumenController extends Controller
         $data['file'] = 'files/dokumen/mutasi-rekening/'.$filename;
 
         MutasiRekening::create([
+            'kas_ppn' => $request->kas_ppn,
             'tahun' => $request->tahun,
             'bulan' => $request->bulan,
             'file' => $data['file'],
         ]);
 
-        return redirect()->route('dokumen.mutasi-rekening')->with('success', 'Data berhasil disimpan');
+        return redirect()->back()->with('success', 'Data berhasil disimpan');
     }
 
     public function mutasi_rekening_destroy(MutasiRekening $mutasi)
@@ -123,7 +129,7 @@ class DokumenController extends Controller
 
         $mutasi->delete();
 
-        return redirect()->route('dokumen.mutasi-rekening')->with('success', 'Data berhasil dihapus');
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 
     public function kirim_wa(MutasiRekening $mutasi, Request $request)
@@ -138,7 +144,7 @@ class DokumenController extends Controller
         // dd($data);
         // baseurl + file
         $file = url($mutasi->file);
-
+        ini_set('max_execution_time', 300); // Set max execution time to 5 minutes
         ini_set('post_max_size', '15M');
         ini_set('upload_max_filesize', '15M');
         // dd($file, $data);

@@ -49,12 +49,13 @@
                 <h4 class="mt-3">SPH</h4>
             </a>
         </div>
-        {{-- KOLOM PERTAMA BULAN JANUARI  --}}
+
         <div class="col-md-3 text-center mb-5">
-            <a href="{{route('dokumen.mutasi-rekening')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#mutasiModal">
                 <img src="{{asset('images/mutasi-rekening.svg')}}" alt="" width="70">
                 <h4 class="mt-3">MUTASI REKENING</h4>
             </a>
+            @include('dokumen.modal-mutasi')
         </div>
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('home')}}" class="text-decoration-none">

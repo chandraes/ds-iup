@@ -6,7 +6,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>MUTASI REKENING</u></h1>
-            <h1>{{$tahun}}</h1>
+            <h1><u>{{request('kas_ppn') === 1 ? 'PPN' : 'NON PPN'}} {{$tahun}}</u></h1>
         </div>
     </div>
     @include('swal')
@@ -18,6 +18,8 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    <td><a href="{{route('dokumen')}}"><img src="{{asset('images/document.svg')}}" alt="dokumen"
+                                width="30"> Dokumen</a></td>
                     {{-- <td>
                         <a href="#" data-bs-toggle="modal" data-bs-target="#jabatan">
                             <img src="{{asset('images/jabatan.svg')}}" alt="dokumen" width="30"> Tambah Kategori
@@ -31,7 +33,8 @@
             </table>
         </div>
         <div class="col-md-6">
-            <form action="{{route('dokumen.mutasi-rekening')}}" method="get">
+            <form action="{{url()->current()}}" method="get">
+                <input type="hidden" name="kas_ppn" value="{{request('kas_ppn')}}">
                 <div class="row">
 
                     <div class="col-md-6 mb-3">
