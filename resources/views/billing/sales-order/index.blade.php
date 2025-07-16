@@ -34,21 +34,32 @@
         <div class="row text-end">
             <div class="col-md-3">
                 <select class="form-select" name="karyawan_id" id="karyawan_id" onchange="this.form.submit()">
-                    <option value="" selected>-- Semua Karyawan</option>
+                    <option value="" selected>-- Semua Karyawan --</option>
                     @foreach ($karyawan as $k)
-                    <option value="{{$k->id}}" @if (request()->get('karyawan_id') == $k->id) selected @endif>{{$k->nama}}</option>
+                    <option value="{{$k->id}}" @if (request()->get('karyawan_id') == $k->id) selected
+                        @endif>{{$k->nama}}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="kelompok_rute" id="kelompok_rute" onchange="this.form.submit()">
+                    <option value="" selected>-- Semua Kelompok Rute --</option>
+                    @foreach ($kelompokRute as $kel)
+                    <option value="{{$kel->id}}" @if (request()->get('kelompok_rute') == $kel->id) selected
+                        @endif>{{$kel->nama}}</option>
                     @endforeach
                 </select>
             </div>
         </div>
     </form>
     <div class="row mt-3">
-        <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%">
+        <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%; font-size: 0.8rem;">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Karyawan</th>
                     <th class="text-center align-middle">Konsumen</th>
+                    <th class="text-center align-middle">Kecamatan</th>
                     <th class="text-center align-middle">Pembayaran</th>
                     <th class="text-center align-middle">Nilai <br>DPP</th>
                     <th class="text-center align-middle">Diskon</th>
@@ -71,6 +82,7 @@
                     <td class="text-center align-middle">{{$d->tanggal_en}}</td>
                     <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko->kode}} {{$d->konsumen->nama}}</td>
+                    <td class="text-start align-middle">{{$d->konsumen->kecamatan->nama_wilayah}}</td>
                     <td class="text-center align-middle">{{$d->sistem_pembayaran_word}}</td>
                     <td class="text-end align-middle">{{$d->dpp}}</td>
                     <td class="text-end align-middle">{{$d->nf_diskon}}</td>
@@ -101,7 +113,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="4">Grand Toal</th>
+                    <th class="text-end align-middle" colspan="5">Grand Toal</th>
                     <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('diskon'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('ppn'), 0, ',', '.')}}</th>

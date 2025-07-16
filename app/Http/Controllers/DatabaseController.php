@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Config;
 use App\Models\db\CostOperational;
+use App\Models\db\DiskonUmum;
 use App\Models\db\InventarisJenis;
 use App\Models\db\InventarisKategori;
 use App\Models\db\Jabatan;
 use App\Models\db\Karyawan;
+use App\Models\db\KelompokRute;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\Kreditor;
@@ -808,4 +810,117 @@ class DatabaseController extends Controller
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
+
+    public function kelompok_rute()
+    {
+        $data = KelompokRute::with(['details.wilayah'])->get();
+
+        return view('db.kelompok-rute.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function kelompok_rute_store(Request $request)
+    {
+        // dd($request->all());
+        $data = $request->validate([
+            'nama' => 'required',
+            'wilayah_id' => 'required|array',
+            'wilayah_id.*' => 'required|exists:wilayahs,id',
+        ]);
+
+
+        try {
+            DB::beginTransaction();
+
+            $kelompok = KelompokRute::create([
+                'nama' => $data['nama'],
+            ]);
+
+            foreach ($data['wilayah_id'] as $detail) {
+                $kelompok->details()->create([
+                    'wilayah_id' => $detail,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data! ', $th->getMessage());
+        }
+    }
+
+    public function kelompok_rute_update(KelompokRute $kelompok, Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required|unique:kelompok_rutes,nama,'.$kelompok->id,
+            'wilayah_id' => 'required|array',
+            'wilayah_id.*' => 'required|exists:wilayahs,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $kelompok->update([
+                'nama' => $data['nama'],
+            ]);
+
+            $kelompok->details()->delete();
+
+            foreach ($data['wilayah_id'] as $detail) {
+                $kelompok->details()->create([
+                    'wilayah_id' => $detail,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Data berhasil diupdate');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengupdate data! ', $th->getMessage());
+        }
+    }
+
+    public function kelompok_rute_delete(KelompokRute $kelompok)
+    {
+        try {
+            DB::beginTransaction();
+            $kelompok->details()->delete();
+            $kelompok->delete();
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Data berhasil dihapus');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data! ', $th->getMessage());
+        }
+    }
+
+    public function diskon_umum()
+    {
+        $data = DiskonUmum::all();
+
+        return view('db.diskon-umum.index', [
+            'data' => $data,
+        ]);
+    }
+
+     public function diskon_umum_update(DiskonUmum $diskon, Request $request)
+    {
+        $data = $request->validate([
+            'persen' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $diskon->update($data);
+
+        return redirect()->back()->with('success', 'Data berhasil diupdate');
+    }
+
+
 }

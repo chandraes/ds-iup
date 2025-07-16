@@ -275,7 +275,7 @@ class HomeController extends Controller
         return response()->download($filePath, $katalog->nama . '.pdf');
     }
 
-    
+
 
 
 }

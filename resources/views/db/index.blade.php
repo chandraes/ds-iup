@@ -141,6 +141,18 @@
     <hr>
     <div class="row justify-content-left mt-4">
         <h2>Data Transaksi</h2>
+         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.kelompok-rute')}}" class="text-decoration-none">
+                <img src="{{asset('images/kelompok-rute.svg')}}" alt="" width="70">
+                <h5 class="mt-2">KELOMPOK RUTE PENGIRIMAN</h5>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.diskon-umum')}}" class="text-decoration-none">
+                <img src="{{asset('images/diskon-umum.svg')}}" alt="" width="70">
+                <h5 class="mt-2">DISKON UMUM</h5>
+            </a>
+        </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('db.stok-ppn')}}" class="text-decoration-none">
                 <img src="{{asset('images/stok-ppn.svg')}}" alt="" width="70">

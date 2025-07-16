@@ -36,7 +36,7 @@
                                                         <option value="" disabled selected>-- Pilih Konsumen --</option>
                                                         <option value="*">INPUT MANUAL</option>
                                                         @foreach ($konsumen as $k)
-                                                        <option value="{{$k->id}}">{{$k->nama}}</option>
+                                                        <option value="{{$k->id}}">{{$k->kode_toko->kode}} {{$k->nama}}</option>
                                                         @endforeach
                                                     </select>
                                                 </td>
@@ -638,7 +638,7 @@
         document.getElementById('npwp').required = true;
         // make npwp minlength 15
         document.getElementById('npwp').setAttribute('minlength', '10');
-        
+
         document.getElementById('no_hp').disabled = false;
         document.getElementById('no_hp').value = '';
         document.getElementById('no_hp').required = true;

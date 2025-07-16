@@ -29,6 +29,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::prefix('universal')->group(function () {
         Route::get('/get-konsumen', [App\Http\Controllers\UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
+        Route::get('/search-kecamatan', [App\Http\Controllers\UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
         Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
     });
 
@@ -359,6 +360,18 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('pajak')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'pajak'])->name('db.pajak');
                 Route::patch('/update/{pajak}', [App\Http\Controllers\DatabaseController::class, 'pajak_update'])->name('db.pajak.update');
+            });
+
+             Route::prefix('diskon-umum')->group(function () {
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'diskon_umum'])->name('db.diskon-umum');
+                Route::patch('/update/{diskon}', [App\Http\Controllers\DatabaseController::class, 'diskon_umum_update'])->name('db.diskon-umum.update');
+            });
+
+            Route::prefix('kelompok-rute')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute'])->name('db.kelompok-rute');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute_store'])->name('db.kelompok-rute.store');
+                Route::patch('/update/{kelompok}', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute_update'])->name('db.kelompok-rute.update');
+                Route::delete('/delete/{kelompok}', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute_delete'])->name('db.kelompok-rute.delete');
             });
 
             Route::prefix('staff')->group(function () {

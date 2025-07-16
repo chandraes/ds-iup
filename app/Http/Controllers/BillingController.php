@@ -9,6 +9,7 @@ use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\Karyawan;
+use App\Models\db\KelompokRute;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
 use App\Models\GantiRugi;
@@ -451,23 +452,36 @@ class BillingController extends Controller
         $req = $request->validate([
             'kas_ppn' => 'required|boolean',
             'karyawan_id' => 'nullable|exists:karyawans,id',
+            'kelompok_rute' => 'nullable|exists:kelompok_rutes,id',
         ]);
 
-        $data = InvoiceJualSales::with(['karyawan', 'konsumen.kode_toko'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn']);
+        $data = InvoiceJualSales::with(['karyawan', 'konsumen.kode_toko', 'konsumen.kecamatan'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn']);
 
         if (isset($req['karyawan_id']) && $req['karyawan_id'] != '') {
             $data->where('karyawan_id', $req['karyawan_id']);
         }
 
+        if (isset($req['kelompok_rute']) && $req['kelompok_rute'] != '') {
+            $data->whereHas('konsumen', function ($query) use ($req) {
+                $kec = KelompokRute::find($req['kelompok_rute']);
+                if ($kec) {
+                    $query->whereIn('kecamatan_id', $kec->details()->pluck('wilayah_id'));
+                }
+            });
+        }
+
+
         $data = $data->get();
 
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         $karyawan = Karyawan::where('jabatan_id', 3)->get();
+        $kelompokRute = KelompokRute::all();
 
         return view('billing.sales-order.index', [
             'data' => $data,
             'ppn' => $ppn,
             'karyawan' => $karyawan,
+            'kelompokRute' => $kelompokRute,
         ]);
 
     }

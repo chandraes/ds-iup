@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Traits\Terbilang;
 use App\Models\Config;
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\DiskonUmum;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\GroupWa;
@@ -180,8 +181,9 @@ class FormJualController extends Controller
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
         $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
         $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
-        $konsumen = Konsumen::where('active', 1)->get();
+        $konsumen = Konsumen::with(['kode_toko'])->where('active', 1)->get();
         $ppnStore = $nominalPpn > 0 ? 1 : 0;
+        $diskonUmum = DiskonUmum::select('untuk', 'persen', 'kode')->get();
         Carbon::setLocale('id');
 
         // Format the date
@@ -202,6 +204,7 @@ class FormJualController extends Controller
             'tanggal' => $tanggal,
             'jam' => $jam,
             'kode' => $kode,
+            'diskonUmum' => $diskonUmum,
             'ppnStore' => $ppnStore,
         ]);
     }
