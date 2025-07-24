@@ -131,7 +131,7 @@
                     </td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' :
                         '' }}{{$d->konsumen->nama}}</td>
-                    <td class="text-center align-middle text-nowrap">
+                    <td class="text-center align-middle text-nowrap" data-order="{{$d->nomor}}">
                         <a href="{{route('billing.invoice-konsumen.detail', $d)}}">
                             {{$d->kode}}
                         </a>
@@ -146,9 +146,9 @@
                         </ul>
 
                     </td>
-                    <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
-                    <td class="text-end align-middle">{{$d->nf_dp}}</td>
-                    <td class="text-end align-middle">{{$d->nf_dp_ppn}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->grand_total}}">{{$d->nf_grand_total}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->dp}}">{{$d->nf_dp}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->dp_ppn}}">{{$d->nf_dp_ppn}}</td>
                     <td class="text-end align-middle">
                         @if ($d->invoice_jual_cicil && $d->invoice_jual_cicil->count() > 0)
                         <a href="#" data-bs-toggle="modal"
@@ -164,7 +164,7 @@
                     </td>
                     <td class="text-end align-middle {{$d->ppn_dipungut ? '' : 'table-danger'}}">{{$d->nf_sisa_ppn}}
                     </td>
-                    <td class="text-end align-middle">{{$d->nf_sisa_tagihan}}</td>
+                    <td class="text-end align-middle" data-order="{{$d->sisa_tagihan}}">{{$d->nf_sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
                     <td class="text-end align-middle' text-nowrap">
                         <div class="row px-3">
