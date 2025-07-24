@@ -179,6 +179,13 @@ class InvoiceJual extends Model
         $kas = new KasBesar;
         $inv = $this->find($id);
 
+        if ($inv->lunas == 1) {
+            return [
+                'status' => 'error',
+                'message' => 'Invoice sudah lunas!!',
+            ];
+        }
+
         $kas_ppn = $inv->ppn > 0 ? 1 : 0;
         $kasMana = $kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
 
