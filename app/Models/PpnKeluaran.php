@@ -10,7 +10,7 @@ class PpnKeluaran extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'nf_nominal', 'nf_saldo'];
+    protected $appends = ['tanggal', 'tanggal_en', 'nf_nominal', 'nf_saldo'];
 
     public function saldoTerakhir()
     {
@@ -25,6 +25,11 @@ class PpnKeluaran extends Model
     public function getTanggalAttribute()
     {
         return date('d-m-Y', strtotime($this->created_at));
+    }
+
+    public function getTanggalEnAttribute()
+    {
+        return date('Y-m-d', strtotime($this->created_at));
     }
 
     public function getNfNominalAttribute()

@@ -22,7 +22,7 @@ class InvoiceJual extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon'];
+    protected $appends = ['tanggal', 'id_jatuh_tempo', 'dpp', 'nf_ppn', 'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'sisa_ppn', 'sisa_tagihan', 'dpp_setelah_diskon', 'tanggal_en'];
 
     public function dataTahun()
     {
@@ -46,6 +46,11 @@ class InvoiceJual extends Model
     public function getTanggalAttribute()
     {
         return Carbon::parse($this->created_at)->format('d-m-Y');
+    }
+
+    public function getTanggalEnAttribute()
+    {
+        return Carbon::parse($this->created_at)->format('Y-m-d');
     }
 
     public function getFullKodeAttribute()
