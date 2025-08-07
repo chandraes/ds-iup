@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\db\Barang\Barang;
+use App\Models\db\Barang\BarangGrosir;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Yajra\DataTables\Facades\DataTables;
 
 class BarangController extends Controller
 {
@@ -203,7 +205,150 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 
+    public function barang_get_grosir(Request $request)
+    {
+        $data = $request->validate([
+            'barang_id' => 'required|exists:barangs,id',
+        ]);
+
+        $grosir = BarangGrosir::with(['barang.satuan','satuan'])->where('barang_id',$data['barang_id'])->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $grosir,
+        ]);
+    }
+
+    public function barang_grosir_delete(Request $request)
+    {
+        $data = $request->validate([
+            'id' => 'required|exists:barang_grosirs,id',
+        ]);
+        try {
+            DB::beginTransaction();
+            $grosir = BarangGrosir::findOrFail($data['id']);
+            $barang = Barang::findOrFail($grosir->barang_id);
+
+            $grosir->delete();
+
+            // Cek apakah masih ada grosir lain untuk barang ini
+            $hasGrosir = BarangGrosir::where('barang_id', $barang->id)->exists();
+            
+            if (! $hasGrosir) {
+                // Jika tidak ada grosir lain, set is_grosir ke false
+                $barang->is_grosir = false;
+                $barang->save();
+            }
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menghapus data. '.$th->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data grosir berhasil dihapus',
+        ]);
+    }
+
+    public function barang_grosir_store(Request $request)
+    {
+    //    using ajax
+        $data = $request->validate([
+            'barang_id' => 'required|exists:barangs,id',
+            'qty_grosir' => 'required|numeric|max:100',
+            'satuan_id' => 'required|exists:satuans,id',
+            'diskon' => 'required|numeric|min:0|max:100',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            BarangGrosir::create($data);
+
+            $barang = Barang::findOrFail($data['barang_id']);
+            $barang->is_grosir = true;
+            $barang->save();
+
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menambahkan data. '.$th->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data grosir berhasil ditambahkan',
+        ]);
+
+
+    }
+
+    public function barang_data(Request $request)
+    {
+        $filters = $request->only(['barang_nama', 'kategori', 'jenis', 'type', 'unit']); // Ambil filter dari request
+
+        $data = Barang::query()->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan'])
+                ->filter($filters)
+                ->limit(10)
+;
+
+        return DataTables::of($data)
+            // add unique barang_unit_id becouse its ambiguous
+            ->addColumn('unit', function ($d) {
+                // Use the relation if loaded, fallback to direct attribute if not
+                return $d->unit ? $d->unit->nama : $d->barang_unit_id;
+            })
+            ->addColumn('upload_barang', function ($d) {
+                return view('db.barang._upload-foto', compact('d'))->render();
+            })
+            ->addColumn('diskon_view', function ($d){
+                return view('db.barang._diskon', compact('d'))->render();
+            })
+            ->addColumn('grosir_view', function ($d){
+                return view('db.barang._grosir', compact('d'))->render();
+            })
+            ->addColumn('aksi', function ($d) {
+                return view('db.barang._aksi', compact('d'))->render();
+            })
+            ->addColumn('satuan_view', function ($d) {
+                return view('db.barang._satuan', compact('d'))->render();
+            })
+            ->rawColumns(['foto', 'diskon_view','aksi', 'upload_barang', 'satuan_view', 'grosir_view'])
+            ->make(true);
+    }
+
     public function barang(Request $request)
+    {
+        $kategoriDb = new BarangKategori;
+
+        $db = new BarangUnit;
+        $units = $db->get();
+
+        $kategori = $kategoriDb->with('barang_nama')->get();
+        $subpg = Subpg::select('id', 'nama')->get();
+        $satuan = Satuan::all();
+
+        // dd($data);
+
+        return view('db.barang.index', [
+            'subpg' => $subpg,
+            'kategori' => $kategori,
+            'units' => $units,
+            'satuan' => $satuan,
+        ]);
+    }
+
+    public function barang_backup(Request $request)
     {
         $kategoriDb = new BarangKategori;
         $data = BarangType::with(['unit', 'barangs'])->get();
@@ -273,7 +418,7 @@ class BarangController extends Controller
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $jenisFilter = $request->input('jenis');
-        $barangNamaFilter = $request->input('barang_nama');
+        // $barangNamaFilter = $request->input('barang_nama');
 
         if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
@@ -284,16 +429,16 @@ class BarangController extends Controller
                 });
             })->get();
 
-            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
-                $query->whereHas('type', function ($query) use ($unitFilter) {
-                    $query->where('barang_unit_id', $unitFilter);
-                });
-            })->get();
+            // $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
+            //     $query->whereHas('type', function ($query) use ($unitFilter) {
+            //         $query->where('barang_unit_id', $unitFilter);
+            //     });
+            // })->get();
 
         } else {
             $selectType = BarangType::all();
             $selectKategori = $kategoriDb->get();
-            $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
+            // $selectBarangNama = BarangNama::select('nama')->distinct()->orderBy('nama')->get();
         }
         $units = BarangUnit::all();
 
@@ -312,10 +457,10 @@ class BarangController extends Controller
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,
             'jenisFilter' => $jenisFilter,
-            'barangNamaFilter' => $barangNamaFilter,
+            // 'barangNamaFilter' => $barangNamaFilter,
             'selectType' => $selectType,
             'selectKategori' => $selectKategori,
-            'selectBarangNama' => $selectBarangNama,
+            // 'selectBarangNama' => $selectBarangNama,
             'satuan' => $satuan,
             'pagination' => $pagination,
         ]);
@@ -510,7 +655,35 @@ class BarangController extends Controller
 
         $barang->update($data);
 
+        $previousUrl = $request->input('previous_url');
+        if ($previousUrl) {
+            return redirect()->to($previousUrl)->with('success', 'Berhasil mengubah foto barang!');
+        }
+
         return redirect()->back()->with('success', 'Berhasil mengubah foto barang!');
+    }
+
+    public function barang_diskon(Request $request, Barang $barang)
+    {
+        $data = $request->validate([
+            'diskon' => 'required|numeric|min:0|max:100',
+            'diskon_mulai' => 'required|date',
+            'diskon_selesai' => 'required|date|after_or_equal:diskon_mulai',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $barang->update($data);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi masalah saat mengubah diskon. '.$th->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Berhasil mengubah diskon barang!');
     }
 
     public function barang_delete(Barang $barang)
@@ -629,10 +802,30 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Data Berhasil Di update!!');
     }
 
+    public function stok_data(Request $request)
+    {
+        // $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
+
+        $data = BarangStokHarga::query()->with(['barang' => function ($query) {
+                $query->with(['type', 'kategori', 'barang_nama', 'satuan', 'unit']);
+            }])
+            ->where('hide', 0)
+            ->orderBy('barang_unit_id')
+            ->orderBy('barang_type_id')
+            ->orderBy('barang_kategori_id')
+            ->orderBy('barang_nama_id')
+            ->orderBy('barang_id')
+            ->orderBy('stok');
+
+        return DataTables::of($data)
+            ->make(true);
+
+    }
+
     public function stok_ppn(Request $request)
     {
-        // $kategori = BarangKategori::with(['barang_nama'])->get();
-        // $type = BarangType::with(['unit', 'barangs'])->get();
+        $kategori = BarangKategori::with(['barang_nama'])->get();
+        $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
@@ -671,9 +864,9 @@ class BarangController extends Controller
 
         return view('db.stok-ppn.index', [
             'data' => $data,
-            // 'kategori' => $kategori,
+            'kategori' => $kategori,
             'units' => $units,
-            // 'type' => $type,
+            'type' => $type,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
             'kategoriFilter' => $kategoriFilter,

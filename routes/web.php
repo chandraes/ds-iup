@@ -31,6 +31,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/get-konsumen', [App\Http\Controllers\UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
         Route::get('/search-kecamatan', [App\Http\Controllers\UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
         Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
+
+        Route::get('/search-barang-nama', [App\Http\Controllers\UniversalController::class, 'searchBarangNama'])->name('universal.search-barang-nama');
+        Route::get('/search-barang-kategori', [App\Http\Controllers\UniversalController::class, 'searchBarangKategori'])->name('universal.search-barang-kategori');
+        Route::get('/search-barang-type', [App\Http\Controllers\UniversalController::class, 'searchBarangType'])->name('universal.search-barang-type');
     });
 
     Route::group(['middleware' => ['role:perusahaan']], function(){
@@ -301,10 +305,13 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('konsumen')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'konsumen'])->name('db.konsumen');
+                Route::get('/data', [App\Http\Controllers\DatabaseController::class, 'konsumen_data'])->name('db.konsumen.data');
                 Route::get('/daftar-kunjungan/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_daftar_kunjungan'])->name('db.konsumen.daftar-kunjungan');
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_store'])->name('db.konsumen.store');
                 Route::patch('/{konsumen}/update', [App\Http\Controllers\DatabaseController::class, 'konsumen_update'])->name('db.konsumen.update');
                 Route::delete('/{konsumen}/delete', [App\Http\Controllers\DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');
+
+                Route::post('/diskon-khusus/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_diskon_khusus'])->name('db.konsumen.diskon-khusus');
 
                 Route::post('/upload-ktp/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_upload_ktp'])->name('db.konsumen.upload-ktp');
             });
@@ -421,11 +428,18 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('barang')->group(function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'barang'])->name('db.barang');
+                Route::get('/data', [App\Http\Controllers\BarangController::class, 'barang_data'])->name('db.barang.data');
+
+                Route::get('/get-grosir', [App\Http\Controllers\BarangController::class, 'barang_get_grosir'])->name('db.barang.get-grosir');
+                Route::post('/store-grosir', [App\Http\Controllers\BarangController::class, 'barang_grosir_store'])->name('db.barang.store-grosir');
+                Route::post('/delete-grosir', [App\Http\Controllers\BarangController::class, 'barang_grosir_delete'])->name('db.barang.delete-grosir');
+
                 Route::post('/store', [App\Http\Controllers\BarangController::class, 'barang_store'])->name('db.barang.store');
                 Route::patch('/update/{barang}', [App\Http\Controllers\BarangController::class, 'barang_update'])->name('db.barang.update');
                 Route::delete('/delete/{barang}', [App\Http\Controllers\BarangController::class, 'barang_delete'])->name('db.barang.delete');
 
                 Route::post('/upload/image/{barang}', [App\Http\Controllers\BarangController::class, 'barang_upload_foto'])->name('db.barang.upload-image');
+                Route::post('/diskon/{barang}', [App\Http\Controllers\BarangController::class, 'barang_diskon'])->name('db.barang.diskon');
 
                 Route::post('/kategori/store', [App\Http\Controllers\BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
                 Route::patch('/kategori/update/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
@@ -436,6 +450,8 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/hide/{barang}', [App\Http\Controllers\BarangController::class, 'hide_stok'])->name('db.hide');
 
             Route::patch('/stok/edit-stok-su/{stok}', [App\Http\Controllers\BarangController::class, 'edit_stok_su'])->name('db.stok.edit-stok-su');
+
+            Route::get('/stok-data', [App\Http\Controllers\BarangController::class, 'stok_data'])->name('db.stok-data');
 
             Route::prefix('stok-ppn')->group(function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');

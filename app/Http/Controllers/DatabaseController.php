@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class DatabaseController extends Controller
 {
@@ -485,14 +486,63 @@ class DatabaseController extends Controller
         }
     }
 
-    public function konsumen(Request $request)
+
+    public function konsumen_data(Request $request)
     {
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
-        $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
-            ->filter($filters) // Gunakan scope filter
-            // ->limit(10)
-            ->get();
+        $data = Konsumen::query()->with(['kode_toko', 'provinsi', 'kabupaten_kota', 'kecamatan', 'karyawan'])
+                ->filter($filters);
+
+        // Ambil semua no_hp yang duplikat sekaligus
+        $duplicateNoHp = Konsumen::select('no_hp')
+            ->groupBy('no_hp')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('no_hp')
+            ->toArray();
+
+        return DataTables::of($data)
+            ->addColumn('full_kode', fn($d) => $d->full_kode)
+            ->addColumn('limit_plafon', fn($d) => $d->nf_plafon)
+            ->addColumn('kode_toko', fn($d) => $d->kode_toko->kode ?? '')
+            // ->addColumn('nama', fn($d) => $d->nama)
+            ->addColumn('cp', function ($d) use ($duplicateNoHp) {
+                $noHpWarning = (substr_count($d->no_hp, ' ') > 0 || in_array($d->no_hp, $duplicateNoHp)) ? 'text-danger' : '';
+                return "
+                    <ul>
+                        <li>CP : $d->cp</li>
+                        <li class='$noHpWarning'>No.HP : $d->no_hp</li>
+                        <li>No.Kantor : $d->no_kantor</li>
+                    </ul>
+                ";
+            })
+            ->addColumn('pembayaran_raw', function ($d){
+                return "
+                    $d->sistem_pembayaran <br>
+                    (".($d->pembayaran == 2 ? $d->tempo_hari. ' Hari' : '').")
+                ";
+            })
+            ->addColumn('ktp', function ($d) {
+                return view('db.konsumen._ktp', compact('d'))->render();
+            })
+            ->addColumn('diskon', function ($d){
+                return view('db.konsumen._diskon', compact('d'))->render();
+            })
+            ->addColumn('aksi', function ($d) {
+                return view('db.konsumen._aksi', compact('d'))->render();
+            })
+            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon'])
+            ->make(true);
+    }
+
+    public function konsumen(Request $request)
+    {
+        // $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
+
+        // $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
+        //     ->filter($filters) // Gunakan scope filter
+        //     // ->limit(10)
+        //     ->get();
 
         $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
             $query->select('id_wilayah')
@@ -507,7 +557,7 @@ class DatabaseController extends Controller
         })->select('id', 'nama')->get();
 
         return view('db.konsumen.index', [
-            'data' => $data,
+            // 'data' => $data,
             'provinsi' => $provinsi,
             'sales_area' => $sales_area,
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
@@ -515,6 +565,19 @@ class DatabaseController extends Controller
         ]);
     }
 
+    public function konsumen_diskon_khusus(Konsumen $konsumen, Request $request)
+    {
+        $data = $request->validate([
+            'diskon_khusus' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $konsumen->update([
+            'diskon_khusus' => $data['diskon_khusus'],
+        ]);
+
+        return redirect()->back()->with('success', 'Diskon khusus berhasil diubah!');
+    }
+    
     public function konsumen_upload_ktp(Request $request, Konsumen $konsumen)
     {
         $data = $request->validate([
@@ -560,6 +623,7 @@ class DatabaseController extends Controller
         $data = $request->validate([
             'kode_toko_id' => 'required|exists:kode_tokos,id',
             'nik' => 'nullable',
+            'diskon_khusus' => 'required',
             'nama' => 'required',
             'cp' => 'required',
             'no_hp' => 'required',

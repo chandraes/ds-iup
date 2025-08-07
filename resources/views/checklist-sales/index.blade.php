@@ -97,15 +97,15 @@
 
             <tr>
                 <td class="text-center align-middle">
-                    {{$d->kode_toko ? $d->kode_toko->kode : ''}}
+                    {{$d->full_kode}}
                 </td>
                 <td class="text-start align-middle text-wrap">
-                    {{$d->nama}}
+                    {{$d->kode_toko->kode. ' ' .$d->nama}}
                 </td>
                 <td class="text-start align-middle">
-                    {{$d->kecamatan ? $d->kecamatan->nama_wilayah : ''}}
+                    {{$d->kecamatan ? str_replace('Kec. ','',$d->kecamatan->nama_wilayah) : ''}}
                 </td>
-                <td class="text-center align-middle">{{$d->karyawan ? $d->karyawan->nama : ''}}</td>
+                <td class="text-center align-middle">{{$d->karyawan ? $d->karyawan->nickname : ''}}</td>
                 @foreach ($months as $item => $month)
                 <td></td>
                 @endforeach

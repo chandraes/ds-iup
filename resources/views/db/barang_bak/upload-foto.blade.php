@@ -12,7 +12,6 @@
                 @csrf
             <div class="modal-body">
                 <div class="row">
-                     <input type="hidden" name="previous_url" value="{{ request()->fullUrl() }}">
                     <div class="col-lg-12 col-md-12 mb-3 mt-3">
                         <input type="file" class="form-control" name="foto" id="edit_foto" aria-describedby="helpId"
                             placeholder="" accept="image/*">

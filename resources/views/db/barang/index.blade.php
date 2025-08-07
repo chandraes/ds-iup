@@ -12,6 +12,8 @@
     @include('db.barang.edit')
     @include('db.barang.keterangan')
     @include('db.barang.upload-foto')
+    @include('db.barang.diskon')
+    @include('db.barang.grosir')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
@@ -33,19 +35,6 @@
         </div>
     </div>
 </div>
-<style>
-    .table-container {
-        max-height: 500px;
-        overflow-y: auto;
-    }
-
-    thead th {
-        position: sticky;
-        top: 0;
-        background: white;
-        z-index: 1;
-    }
-</style>
 
 
 <div class="container-fluid mt-3 table-responsive ">
@@ -53,7 +42,7 @@
         <div class="row">
             <div class="col-md-2">
                 <label for="unit">Kategori Perusahaan</label>
-                <select name="unit" id="unit" class="form-select">
+                <select name="unit" id="filter_unit" class="form-select">
                     <option value=""> ---------- </option>
                     @foreach($units as $unit)
                     <option value="{{ $unit->id }}" {{ request('unit')==$unit->id ? 'selected' : '' }}>
@@ -64,53 +53,33 @@
             </div>
             <div class="col-md-2">
                 <label for="type">Bidang</label>
-                <select name="type" id="type" class="form-select">
-                    <option value=""> ---------- </option>
-                    @foreach($selectType as $type)
-                    <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
-                        {{ $type->nama }}
-                    </option>
-                    @endforeach
+                <select name="type" class="form-select" id="filter_type">
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="kategori">Kelompok Barang</label>
-                <select name="kategori" id="kategori" class="form-select">
-                    <option value=""> ---------- </option>
-                    @foreach($selectKategori as $kat)
-                    <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
-                        {{ $kat->nama }}
-                    </option>
-                    @endforeach
+                <select name="kategori" id="filter_kategori" class="form-select">
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="nama">Nama Barang</label>
                 <select class="form-select" name="barang_nama" id="filter_barang_nama">
-                    <option value=""> ---------- </option>
-                    @foreach ($selectBarangNama as $bn)
-                    <option value="{{ $bn->nama }}" {{ request('barang_nama')==$bn->nama ? 'selected' : '' }}>
-                        {{ $bn->nama }}
-                        @endforeach
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="nama">PPN/Non PPN</label>
                 <select class="form-select" name="jenis" id="filter_jenis">
                     <option value=""> ---------- </option>
-                    <option value="1" {{ request('jenis')==1 ? 'selected' : '' }}>Barang PPN</option>
-                    <option value="2" {{ request('jenis')==2 ? 'selected' : '' }}>Barang Non PPN</option>
+                    <option value="1" >Barang PPN</option>
+                    <option value="2" >Barang Non PPN</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="nama">
                     ---------------
                 </label>
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">Apply Filter</button>
-                    {{-- reset filter button --}}
+                    <br>
                     <a href="{{ route('db.barang') }}" class="btn btn-danger">Reset Filter</a>
-                </div>
 
             </div>
         </div>
@@ -119,157 +88,28 @@
         </div>
     </form>
     <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable">
+        <table class="table table-bordered" id="data" style="font-size: 12px">
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 15px">No</th>
                     <th class="text-center align-middle">Perusahaan</th>
                     <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Kelompok<br>Barang</th>
-                    <th class="text-center align-middle">Nama<br>Barang</th>
+                  <th class="text-center align-middle">Nama<br>Barang</th>
 
-                    <th class="text-center align-middle">Kode<br>Barang</th>
+                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Satuan</th>
+                    <th class="text-center align-middle">Diskon</th>
+                    <th class="text-center align-middle">Grosir</th>
                     <th class="text-center align-middle">Foto</th>
-                    {{-- <th class="text-center align-middle">Ket<br></th> --}}
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
                     <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
             <tbody>
-                @php $number = 1; @endphp
-                @foreach ($units as $unit)
-                @php $unitDisplayed = false; @endphp
-                @foreach ($unit->types as $type)
-                @php $typeDisplayed = false; @endphp
-                @foreach ($type->groupedBarangs as $kategoriNama => $barangs)
-                @php $kategoriDisplayed = false; @endphp
-                @foreach ($barangs->groupBy('barang_nama.nama') as $namaBarang => $namaBarangs)
-                @php $namaDisplayed = false; @endphp
-                @foreach ($namaBarangs as $barang)
-                <tr>
-                    @if (!$unitDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $number++ }}</td>
-                    <td class="text-center align-middle" rowspan="{{ $unit->unitRowspan }}">{{ $unit->nama }}</td>
-                    @php $unitDisplayed = true; @endphp
-                    @endif
-                    @if (!$typeDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $type->typeRowspan }}">{{ $type->nama }}</td>
-                    @php $typeDisplayed = true; @endphp
-                    @endif
-                    @if (!$kategoriDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $barang->kategoriRowspan }}">{{ $kategoriNama }}
-                    </td>
-                    @php $kategoriDisplayed = true; @endphp
-                    @endif
-                    @if (!$namaDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $barang->namaRowspan }}">{{ $namaBarang }}</td>
-                    @php $namaDisplayed = true; @endphp
-                    @endif
 
-                    <td class="text-center align-middle">{{ $barang->kode }}</td>
-                    <td class="text-center align-middle">{{ $barang->merk }}</td>
-                    <td class="text-center align-middle">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#keteranganModal"
-                            onclick="showKeterangan({{ $barang }})">
-                            {{ $barang->satuan ? $barang->satuan->nama : '' }}
-                        </a>
-
-                    </td>
-                    <td class="text-start align-middle">
-                        @if ($barang->foto != null)
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal{{ $barang->id }}">
-                            <img src="{{ asset('storage/' . $barang->foto) }}" alt="Foto Barang" class="img-fluid" width="100">
-                        </a>
-
-                        <div class="modal fade" id="imageModal{{ $barang->id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ $barang->id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="imageModalLabel{{ $barang->id }}">Foto Barang</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body text-center">
-                                        <div class="image-container">
-                                            <img id="zoomableImage{{ $barang->id }}" src="{{ asset('storage/' . $barang->foto) }}" alt="Foto Barang" class="img-fluid">
-                                        </div>
-                                        <input type="range" id="zoomSlider{{ $barang->id }}" class="form-range mt-3" min="1" max="3" step="0.1" value="1">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const image = document.getElementById('zoomableImage{{ $barang->id }}');
-                                const slider = document.getElementById('zoomSlider{{ $barang->id }}');
-
-                                slider.addEventListener('input', function () {
-                                    const scale = slider.value;
-                                    image.style.transform = `scale(${scale})`;
-                                });
-                            });
-                        </script>
-                        <style>
-                            .image-container {
-                                overflow: hidden;
-                                display: inline-block;
-                            }
-
-                            .image-container img {
-                                transition: transform 0.2s ease;
-                            }
-                        </style>
-                        <div class="row px-3 text-nowrap mt-1">
-                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$barang->id}})" class="btn btn-success btn-sm">
-                                <i class="fa fa-upload"></i> Edit
-                            </button>
-                        </div>
-                        @else
-                        <div class="row px-3 text-nowrap">
-                            <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal" onclick="uploadFoto({{$barang->id}})" class="btn btn-primary btn-sm">
-                                <i class="fa fa-upload"></i> Upload
-                            </button>
-                        </div>
-                        @endif
-                    </td>
-                    <td class="text-center align-middle">
-                        @if ($barang->jenis == 1)
-                        <i class="fa fa-check"></i>
-                        @endif
-
-                    </td>
-                    <td class="text-center align-middle">
-                        @if ($barang->jenis == 2)
-                        <i class="fa fa-check"></i>
-                        @endif
-
-                    </td>
-                    <td class="text-center align-middle">
-                        <a href="#" class="btn btn-warning m-2" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{ $barang }}, {{ $type->id }}, {{ $unit->id }})"><i
-                                class="fa fa-edit"></i></a>
-                        <form action="{{ route('db.barang.delete', $barang->id) }}" method="post"
-                            class="d-inline delete-form" id="deleteForm{{ $barang->id }}" data-id="{{ $barang->id }}">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-                @endforeach
-                @endforeach
-                @endforeach
-                @if (!$loop->last)
-                <tr>
-                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent">
-                    </td>
-                </tr>
-                @endif
-                @endforeach
             </tbody>
             <tfoot>
 
@@ -281,12 +121,253 @@
 
 @endsection
 @push('css')
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.1.1/css/scroller.dataTables.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet" />
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
+<script src="{{asset('assets/js/cleave.min.js')}}"></script>
+<script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+<script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
 <script>
+    $(document).on('submit', 'form[action*="upload-image"]', function() {
+    const filterState = {
+        unit: $('#filter_unit').val(),
+        type: $('#filter_type').val(),
+        kategori: $('#filter_kategori').val(),
+        barang_nama: $('#filter_barang_nama').val(),
+        jenis: $('#filter_jenis').val()
+    };
+    sessionStorage.setItem('barang_filter_state', JSON.stringify(filterState));
+});
+
+// Restore state setelah page load
+$(document).ready(function() {
+    const savedState = sessionStorage.getItem('barang_filter_state');
+    if (savedState) {
+        const filterState = JSON.parse(savedState);
+
+        // Set nilai filter
+        if (filterState.unit) $('#filter_unit').val(filterState.unit).trigger('change');
+        if (filterState.jenis) $('#filter_jenis').val(filterState.jenis).trigger('change');
+
+        // Untuk select2 dengan AJAX, perlu load data dulu
+        if (filterState.type) {
+            // Load dan set type
+            // Implementasi tergantung struktur data
+        }
+
+        // Clear session storage setelah restore
+        sessionStorage.removeItem('barang_filter_state');
+    }
+});
+</script>
+<script>
+    $(document).ready(function() {
+
+    let table = $('#data').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("db.barang.data") }}',
+            data: function (d) {
+                d.barang_nama = $('#filter_barang_nama').val();
+                d.kategori = $('#filter_kategori').val();
+                d.jenis = $('#filter_jenis').val();
+                d.type = $('#filter_type').val();
+                d.unit = $('#filter_unit').val();
+            }
+        },
+        scrollY: '70vh', // tinggi area scroll, bisa disesuaikan
+        scrollX: true,
+        stateSave: true,
+        scroller: {
+            loadingIndicator: true
+        },
+        deferRender: true,
+        columns: [
+            {
+                data: null,
+                name: 'no',
+                className: 'text-center align-middle',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row, meta) {
+                    return meta.row + meta.settings._iDisplayStart + 1;
+                }
+            },
+            { data: 'unit', name: 'unit', className: 'text-center align-middle text-wrap' },
+            { data: 'type.nama', name: 'barang_type_id', className: 'text-center align-middle text-wrap', sortable: false},
+            { data: 'kategori.nama', name: 'kategori.nama', className: 'text-center align-middle text-wrap' },
+            { data: 'barang_nama.nama', name: 'barang_nama.nama', className: 'text-center align-middle text-wrap' },
+            { data: 'kode', name: 'kode', className: 'text-center align-middle text-wrap' },
+            { data: 'merk', name: 'merk', className: 'text-center align-middle text-wrap' },
+            { data: 'satuan_view', name: 'satuan_view', className: 'text-center align-middle text-wrap' },
+            { data: 'diskon_view', name: 'diskon', className: 'text-center align-middle text-wrap' },
+            { data: 'grosir_view', name: 'grosir_view', className: 'text-center align-middle text-wrap', sortable:false},
+            {
+                data: 'upload_barang',
+                name: 'upload_barang',
+                className: 'text-center align-middle text-wrap',
+
+            },
+            // if jenis is 1 the show checked, if jenis is 2 show unchecked
+            {
+                data: 'jenis',
+                name: 'jenis',
+                className: 'text-center align-middle text-wrap',
+                render: function(data, type, row) {
+                    return data == 1 ? '<i class="fa fa-check text-success"></i>' : '';
+                }
+            },
+            {
+                data: 'jenis',
+                name: 'jenis',
+                className: 'text-center align-middle text-wrap',
+                render: function(data, type, row) {
+                    return data == 2 ? '<i class="fa fa-check text-success"></i>' : '';
+                }
+            },
+            { data: 'aksi', name: 'aksi', orderable: false, searchable: false, className: 'text-center align-middle text-wrap' }
+        ]
+    });
+
+    // const filters = $('#filter_barang_nama');
+
+    //  filters.select2({
+    //     theme: 'bootstrap-5',
+    //     width: '100%'
+    // }).on('change', function () {
+    //     table.draw();
+    // });
+     $('#filter_unit').select2({
+        placeholder: 'Pilih Perusahaan',
+        width: '100%',
+        allowClear: true,
+        theme: 'bootstrap-5', // tambahkan theme di sini
+    }).on('change', function () {
+        table.draw(); // tambahkan event handler di sini
+    });
+
+    $('#filter_type').select2({
+        placeholder: 'Pilih Bidang',
+        minimumInputLength: 3,
+        width: '100%',
+        allowClear: true,
+        theme: 'bootstrap-5', // tambahkan theme di sini
+        ajax: {
+            url: '{{ route("universal.search-barang-type") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term,
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.nama
+                        };
+                    })
+                };
+            },
+            cache: true
+        }
+    }).on('change', function () {
+        table.draw(); // tambahkan event handler di sini
+    });
+
+    $('#filter_barang_nama').select2({
+        placeholder: 'Pilih Barang Nama',
+        minimumInputLength: 3,
+        width: '100%',
+        allowClear: true,
+        theme: 'bootstrap-5', // tambahkan theme di sini
+        ajax: {
+            url: '{{ route("universal.search-barang-nama") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term,
+                    kategori: $('#filter_kategori').val()
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.nama
+                        };
+                    })
+                };
+            },
+            cache: true
+        }
+    }).on('change', function () {
+        table.draw(); // tambahkan event handler di sini
+    });
+
+    $('#filter_kategori').select2({
+        placeholder: 'Pilih Kelompok Barang',
+        minimumInputLength: 3,
+        width: '100%',
+        allowClear: true,
+        theme: 'bootstrap-5', // tambahkan theme di sini
+        ajax: {
+            url: '{{ route("universal.search-barang-kategori") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term,
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.nama
+                        };
+                    })
+                };
+            },
+            cache: true
+        }
+    }).on('change', function () {
+         $('#filter_barang_nama').val(null).trigger('change');
+        table.draw();
+    });
+
+    $('#filter_jenis').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    }).on('change', function () {
+        table.draw();
+    });
+
+   $('#resetFilter').on('click', function () {
+        $('#filter_barang_nama, #filter_kategori, #filter_jenis')
+            .val('')
+            .trigger('change');
+
+    });
+});
+
+</script>
+<script>
+
+
+
     $('#detail_type').select2({
         theme: 'classic',
         width: '100%',
@@ -344,6 +425,25 @@
 
     function uploadFoto(id) {
         document.getElementById('uploadFotoForm').action = `{{route('db.barang.upload-image', ':id')}}`.replace(':id', id);
+    }
+
+    function setDiskon(id, diskon, diskon_mulai, diskon_selesai) {
+        // reset diskon form
+        document.getElementById('diskonForm').reset();
+        document.getElementById('diskon').value = diskon;
+        // Set diskon_mulai (input type="date" expects yyyy-mm-dd)
+        if (diskon_mulai) {
+            document.getElementById('diskon_mulai').value = diskon_mulai;
+        } else {
+            document.getElementById('diskon_mulai').value = '';
+        }
+        // Set diskon_selesai (input type="date" expects yyyy-mm-dd)
+        if (diskon_selesai) {
+            document.getElementById('diskon_selesai').value = diskon_selesai;
+        } else {
+            document.getElementById('diskon_selesai').value = '';
+        }
+        document.getElementById('diskonForm').action = `{{route('db.barang.diskon', ':id')}}`.replace(':id', id);
     }
 
 
@@ -405,8 +505,53 @@
 
     }
 
+    function setGrosir(id, satuan) {
+        document.getElementById('sat_barang').innerText = satuan.nama;
+        document.getElementById('grosirBarangId').value = id;
+
+        // ajax request to get grosir data
+        $.ajax({
+            url: "{{ route('db.barang.get-grosir') }}",
+            type: "GET",
+            data: {
+                barang_id: id
+            },
+            success: function(response) {
+                if (response.status === 'success' && response.data.length > 0) {
+                    // Populate the grosir table with the data
+                    let grosirTableBody = document.getElementById('grosirTableBody');
+                    grosirTableBody.innerHTML = ''; // Clear existing rows
+                    response.data.forEach(function(grosir) {
+                        let row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="text-center">${grosirTableBody.children.length + 1}</td>
+                            <td class="text-center">${grosir.qty_grosir} ${grosir.barang.satuan.nama} / ${grosir.satuan.nama}</td>
+                            <td class="text-center">${grosir.qty_grosir} %</td>
+                            <td class="text-center">
+                                <button class="btn btn-danger btn-sm" onclick="deleteGrosir(${grosir.id})">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        grosirTableBody.appendChild(row);
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan saat mengambil data grosir.',
+                });
+            }
+        });
+
+
+    }
+
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
     confirmAndSubmit("#createForm", "Apakah anda yakin untuk menambah data ini?");
+    confirmAndSubmit("#diskonForm", "Apakah data yang anda masukan sudah benar?");
 
     function toggleNamaJabatan(id) {
 
@@ -442,4 +587,5 @@
         });
     });
 </script>
+
 @endpush

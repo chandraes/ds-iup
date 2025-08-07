@@ -17,6 +17,6 @@ class PesanWa extends Model
 
     public function short_pesan()
     {
-        return substr($this->pesan, 0, 100).'.............';
+        return substr($this->pesan, 0, 1000).'.............';
     }
 }

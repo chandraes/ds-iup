@@ -134,26 +134,3 @@
         </div>
     </div>
 </div>
-@push('js')
-<script>
-     var edit_plafon = new Cleave('#edit_plafon', {
-        numeral: true,
-        numeralThousandsGroupStyle: 'thousand',
-        numeralDecimalMark: ',',
-        delimiter: '.'
-    });
-
-    var edit_no_kantor = new Cleave('#edit_no_kantor', {
-        delimiter: '-',
-        blocks: [4, 4, 8]
-    });
-
-    var edit_no_hp = new Cleave('#edit_no_hp', {
-        delimiter: '-',
-        blocks: [4, 4, 8]
-    });
-
-
-
-</script>
-@endpush

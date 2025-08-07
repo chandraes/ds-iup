@@ -92,7 +92,7 @@ class HomeController extends Controller
     {
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
-        $data = Konsumen::select('id','kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id')
+        $data = Konsumen::select('id','kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
             ->filter($filters) // Gunakan scope filter
             ->with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
             // ->limit(10)
@@ -145,7 +145,7 @@ class HomeController extends Controller
         $chunkIndex = 1;
         $totalProcessed = 0;
 
-        Konsumen::select('id','kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id')
+        Konsumen::select('id','kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
                 ->filter($filters)
                 ->with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
                 ->orderBy('kecamatan_id')

@@ -2,6 +2,7 @@
 
 namespace App\Models\db\Barang;
 
+use App\Models\db\Satuan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,6 +45,11 @@ class BarangStokHarga extends Model
     public function barang_nama()
     {
         return $this->belongsTo(BarangNama::class, 'barang_nama_id');
+    }
+
+    public function satuan()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_id');
     }
 
     public function getNfHargaAttribute()

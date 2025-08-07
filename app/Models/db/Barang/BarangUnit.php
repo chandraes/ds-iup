@@ -77,7 +77,7 @@ class BarangUnit extends Model
             $query->where('id', $unitFilter);
         }
 
-        $units = $query->get();
+        $units = $query->limit(100)->get();
 
         // Simplify the calculation of rowspan values using collection methods
         $units->each(function ($unit) {

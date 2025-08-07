@@ -19,6 +19,11 @@ class Barang extends Model
         return $this->belongsTo(Satuan::class, 'satuan_id');
     }
 
+    public function grosir()
+    {
+        return $this->hasMany(BarangGrosir::class, 'barang_id');
+    }
+
     public function detail_types()
     {
         return $this->hasMany(BarangDetailType::class, 'barang_id');
@@ -121,5 +126,31 @@ class Barang extends Model
             return $query->paginate(10);
         }
 
+    }
+
+    public function scopeFilter($query, $filters)
+    {
+
+        if (isset($filters['unit']) && $filters['unit'] != '') {
+            $query->where('barang_unit_id', $filters['unit']);
+        }
+
+        if (isset($filters['type']) && $filters['type'] != '') {
+            $query->where('barang_type_id', $filters['type']);
+        }
+
+        if (isset($filters['barang_nama']) && $filters['barang_nama'] !='') {
+            $query->where('barang_nama_id', $filters['barang_nama']);
+        }
+
+        if (isset($filters['kategori']) && $filters['kategori'] !='') {
+            $query->where('barang_kategori_id', $filters['kategori']);
+        }
+
+        if (isset($filters['jenis']) && $filters['jenis'] !='') {
+            $query->where('jenis', $filters['jenis']);
+        }
+
+        return $query;
     }
 }

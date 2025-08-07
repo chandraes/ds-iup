@@ -4,7 +4,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="uploadFotoModalTitle">
-                    Upload Foto Barang
+                    Upload Foto KTP
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -12,9 +12,8 @@
                 @csrf
             <div class="modal-body">
                 <div class="row">
-                     <input type="hidden" name="previous_url" value="{{ request()->fullUrl() }}">
                     <div class="col-lg-12 col-md-12 mb-3 mt-3">
-                        <input type="file" class="form-control" name="foto" id="edit_foto" aria-describedby="helpId"
+                        <input type="file" class="form-control" name="upload_ktp" id="edit_foto" aria-describedby="helpId"
                             placeholder="" accept="image/*">
                         <small class="text-danger">* Maksimal 500kb</small>
                         <small class="text-danger">* Format file jpg, jpeg, png</small>

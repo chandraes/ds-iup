@@ -16,7 +16,8 @@
         "riskihajar/terbilang": "^2.0",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6",
-        "spatie/browsershot": "^4.1"
+        "spatie/browsershot": "^4.1",
+        "yajra/laravel-datatables": "^10.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.9",
