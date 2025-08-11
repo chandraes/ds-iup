@@ -400,7 +400,7 @@ class SalesController extends Controller
 
         $diskon_pembayaran = DiskonUmum::where('kode', $info->pembayaran)->first()->persen ?? 0;
         $diskon_konsumen = $info->konsumen->diskon ?? 0;
-
+        dd($diskon_konsumen);
         $diskon_barang = Barang::where('id', $product->barang_id)
                             ->whereNotNull('diskon_mulai')
                             ->whereNotNull('diskon_selesai')
