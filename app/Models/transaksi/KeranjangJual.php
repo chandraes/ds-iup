@@ -7,6 +7,7 @@ use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\db\Satuan;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KasKonsumen;
@@ -27,11 +28,18 @@ class KeranjangJual extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['nf_harga', 'nf_jumlah', 'nf_total'];
+    protected $appends = ['nf_harga', 'nf_jumlah', 'nf_total', 'nf_diskon', 'nf_ppn', 'harga_diskon_dpp', 'nf_harga_satuan_akhir'];
 
     public function barang()
     {
         return $this->belongsTo(Barang::class);
+    }
+
+    public function satuan_grosir()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_grosir_id')->withDefault([
+            'nama' => '-'
+        ]);
     }
 
     public function stok()
@@ -49,6 +57,26 @@ class KeranjangJual extends Model
         return number_format($this->jumlah, 0, ',', '.');
     }
 
+    public function getNfDiskonAttribute()
+    {
+        return number_format($this->diskon, 0, ',', '.');
+    }
+
+    public function getNfPpnAttribute()
+    {
+        return number_format($this->ppn, 0, ',', '.');
+    }
+
+    public function getHargaDiskonDppAttribute()
+    {
+        return number_format($this->harga_satuan - $this->diskon, 0, ',', '.');
+    }
+
+    public function getNfHargaSatuanAkhirAttribute()
+    {
+        return number_format($this->harga_satuan_akhir, 0, ',', '.');
+    }
+
     public function getNfTotalAttribute()
     {
         return number_format($this->total, 0, ',', '.');
@@ -60,7 +88,7 @@ class KeranjangJual extends Model
             DB::beginTransaction();
 
             // dd($data);
-            $keranjang = $this->where('user_id', auth()->user()->id)->get();
+            $keranjang = $this->where('user_id',)->get();
 
             if ($keranjang->isEmpty()) {
                 return [
@@ -526,6 +554,245 @@ class KeranjangJual extends Model
         $stok_update = null;
         $status = null;
 
+        $master = KeranjangJualKonsumen::find($data['keranjang_jual_konsumen_id']);
+
+        $data['konsumen_id'] = $master['konsumen_id'];
+        $konsumen = Konsumen::find($master['konsumen_id']);
+
+        $data['lunas'] = $konsumen->pembayaran == 1 || $master['pembayaran'] == 1 ? 1 : 0;
+        // dd($data);
+        // kalau sistem pembayaran konsumen adalah tempo dan sistem pembayaran invoice bukan tunai
+        // maka cek sisa plafon konsumen
+        if ($konsumen->pembayaran == 2 && $master['pembayaran'] != 1) {
+            // $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+            // if ($sisaTerakhir + $data['grand_total'] > $konsumen->plafon) {
+            //     return [
+            //         'status' => 'error',
+            //         'message' => 'Plafon konsumen sudah melebihi batas.',
+            //     ];
+            // }
+
+            // jika invoice pembayaran adalah tempo, cek apakah konsumen memiliki tagihan yang jatuh tempo
+            if ($master['pembayaran'] == 2) {
+                $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                    ->where('titipan', 0)
+                    ->where('lunas', 0)
+                    ->where('void', 0)
+                    ->where('jatuh_tempo', '<', today())
+                    ->exists();
+
+                if ($checkInvoice) {
+                    return [
+                        'status' => 'error',
+                        'message' => 'Tidak Bisa melanjutkan Proses karena Konsumen memiliki tagihan yang telah jatuh tempo.',
+                    ];
+                }
+            }
+
+            // $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
+
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // dd($data);
+            $keranjang = $this->where('keranjang_jual_konsumen_id', $master['id'])->get();
+
+            $keranjang_ppn = $keranjang->where('barang_ppn', 1);
+            $keranjang_non_ppn = $keranjang->where('barang_ppn', 0);
+
+            if ($keranjang->isEmpty()) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Keranjang masih kosong',
+                ];
+            }
+
+            $data['karyawan_id'] = auth()->user()->karyawan_id;
+            $data['titipan'] = $master['pembayaran'] == 3 ? 1 : 0;
+            $data['sistem_pembayaran'] = $master['pembayaran'];
+
+            if ($data['karyawan_id'] == null) {
+                return [
+                    'status' => 'error',
+                    'message' => 'User belum memiliki karyawan id. Silahkan menghubungi Admin.',
+                ];
+            }
+
+            $data['lunas'] = $konsumen->pembayaran == 1 || $master['pembayaran'] == 1 ? 1 : 0;
+
+            if ($keranjang_ppn->count() > 0) {
+                $store_ppn = $this->keranjangPpn($keranjang_ppn, $data);
+
+                if (isset($store_ppn['status']) && $store_ppn['status'] == false) {
+                     $stok_update = $store_ppn;
+                    throw new \Exception('Terdapat stok yang kurang dari barang yang dijual');
+                }
+            }
+
+            if ($keranjang_non_ppn->count() > 0) {
+                $store_non_ppn = $this->keranjangNonPpn($keranjang_non_ppn, $data);
+
+                if (isset($store_non_ppn['status']) && $store_non_ppn['status'] == false) {
+                    $stok_update = $store_non_ppn;
+                    throw new \Exception('Terdapat stok yang kurang dari barang yang dijual');
+                }
+            }
+
+            // $this->where('user_id', auth()->user()->id)->delete();
+            KeranjangJualKonsumen::where('id', $master['id'])->delete();
+
+            $inden = KeranjangInden::where('user_id', auth()->user()->id)->get();
+            $pesanInden = '';
+
+            if ($inden->count() > 0) {
+                $jumlah_inden = $inden->count();
+
+                $createInden = OrderInden::create([
+                    'karyawan_id' => auth()->user()->karyawan_id,
+                    'konsumen_id' => $master['konsumen_id'],
+                    'jumlah' => $jumlah_inden,
+                    'is_finished' => 0,
+                ]);
+
+                foreach ($inden as $barangInden) {
+                    $createInden->detail()->create([
+                        'barang_id' => $barangInden->barang_id,
+                        'jumlah' => $barangInden->jumlah,
+                    ]);
+
+                    $barangInden->delete();
+                }
+
+
+                $nInden = 1;
+                $pesanInden .= "==========================\n";
+                $pesanInden .= "*Pre order*: \n";
+
+                foreach ($createInden->load('detail.barang.barang_nama', 'detail.barang.satuan')->detail as $d) {
+                    $pesanInden .= $nInden++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+                }
+            }
+
+            DB::commit();
+
+            $dbWa = new GroupWa;
+            $dbInvoice = new InvoiceJualSales;
+            $grandTotal = 0;
+            $dp = 0;
+            $sisa = 0;
+            $kota = $konsumen->kabupaten_kota ? $konsumen->kabupaten_kota->nama_wilayah : '';
+
+            $pesan = "*".$konsumen->kode_toko->kode. ' '.$konsumen->nama."*\n".
+                    $konsumen->alamat."\n".
+                    $kota."\n\n";
+
+            $tanggal = Carbon::now()->translatedFormat('d F Y');
+
+            $pesan .= "*Order* : ".$tanggal."\n";
+
+            if (isset($store_ppn['pesan'])) {
+                $pesan .= $store_ppn['pesan'];
+                $grandTotal += $store_ppn['grand_total'];
+                $dp += $store_ppn['dp'];
+                $sisa += $store_ppn['sisa_tagihan'];
+            }
+
+            if (isset($store_non_ppn['pesan'])) {
+                $pesan .= $store_non_ppn['pesan'];
+                $grandTotal += $store_non_ppn['grand_total'];
+                $dp += $store_non_ppn['dp'];
+                $sisa += $store_non_ppn['sisa_tagihan'];
+            }
+
+            if ($inden->count() > 0) {
+                $pesan .= $pesanInden;
+            }
+
+            $pesan .= "==========================\n";
+
+            $sales = Karyawan::find(auth()->user()->karyawan_id);
+
+            switch ($data['pembayaran']) {
+                case 1:
+                    $pembayaran = 'Cash';
+                    break;
+                case 2:
+                    $pembayaran = 'Tempo : '.$konsumen->tempo_hari.' Hari';
+                    break;
+                case 3:
+                    $pembayaran = 'Titipan';
+                    break;
+                default:
+                    $pembayaran = '';
+            }
+
+            // $pembayaran = $data['pembayaran'] == 1 ? 'Cash' :  $dbInvoice->pembayaran($data['sistem_pembayaran']).": ".$konsumen->tempo_hari . ' Hari';
+            $pesan .= "Note: \n".
+                    "•⁠ ".$pembayaran."\n".
+                    "•⁠ Sales: *".$sales->nama."*\n"
+                    ."•⁠ CP: *".$sales->no_hp."*\n";
+
+            $pesan .= "•⁠ Order: *Rp. ".number_format($grandTotal, 0, ',','.')."*\n";
+
+            if ($dp > 0) {
+                $pesan .= "•⁠ DP: *Rp. ".number_format($dp, 0, ',','.')."*\n";
+                $pesan .= "•⁠ Sisa Tagihan: *Rp. ".number_format($sisa, 0, ',','.')."*\n";
+            }
+
+            $pesan .= "\nNo Kantor: *0853-3939-3918* \n";
+
+            // tambahkn katalog
+            // $katalog = Katalog::get();
+
+            // if ($katalog->count() > 0) {
+            //     $pesan .= "Katalog: \n";
+            //     foreach ($katalog as $item) {
+            //         $pesan .= $item->nama."\n";
+            //     }
+            // }
+
+            // dd($pesan);
+            $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
+
+            $dbWa->sendWa($tujuan, $pesan);
+
+            $no_konsumen = $konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            if (isset($stok_update['status']) && $stok_update['status'] == false) {
+                KeranjangJual::where('id', $stok_update['id'])->update([
+                    'stok_kurang' => 1,
+                ]);
+            }
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'message' => 'Transaksi berhasil',
+        ];
+    }
+
+    public function checkoutSalesBackup($data)
+    {
+        $stok_update = null;
+        $status = null;
+
+
         $konsumen = Konsumen::find($data['konsumen_id']);
 
         $data['lunas'] = $konsumen->pembayaran == 1 || $data['pembayaran'] == 1 ? 1 : 0;
@@ -764,22 +1031,23 @@ class KeranjangJual extends Model
         $dbPajak = new Pajak;
 
         $data['total'] = $keranjang->sum('total');
-        $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
+        $data['diskon'] = $keranjang->sum('total_diskon');
         $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
 
         $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
-        $dppSetelahDiskon = $data['total'] - $data['diskon'];
+        // $dppSetelahDiskon = $data['total'] - $data['diskon'];
 
-        $data['ppn'] = floor($dppSetelahDiskon * $ppnVal / 100);
+        $data['ppn'] = $keranjang->sum('total_ppn');
 
         $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
-
-        $data['dp_ppn'] = isset($data['dp_ppn']) ? str_replace('.', '', $data['dp_ppn']) : 0;
+        $dp = $data['dp'];
+        $data['dp_ppn'] = isset($data['dp']) && $data['dp'] > 0 ? floor($data['dp'] * $ppnVal / 100) : 0;
+        $data['dp'] = $dp - $data['dp_ppn'];
 
         if ($dipungut == 1) {
-            $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
+            $data['grand_total'] = $keranjang->sum('total') + $data['add_fee'];
         } else {
-            $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
+            $data['grand_total'] = $keranjang->sum('total') - $data['ppn'] + $data['add_fee'];
         }
 
         $data['ppn_dipungut'] = $dipungut;
@@ -799,6 +1067,11 @@ class KeranjangJual extends Model
 
         foreach ($keranjang as $item) {
             $invoice->invoice_detail()->create([
+                'is_grosir' => $item->is_grosir,
+                'jumlah_grosir' => $item->jumlah_grosir,
+                'satuan_grosir_id' => $item->satuan_grosir_id,
+                'diskon' => $item->diskon,
+                'ppn' => $item->ppn,
                 'barang_id' => $item->barang_id,
                 'barang_stok_harga_id' => $item->barang_stok_harga_id,
                 'jumlah' => $item->jumlah,
@@ -840,15 +1113,15 @@ class KeranjangJual extends Model
         $dipungut = 1;
 
         $data['total'] = $keranjang->sum('total');
-        $data['diskon'] = isset($data['diskon_non_ppn']) ? str_replace('.', '', $data['diskon_non_ppn']) : 0;
+        $data['diskon'] = $keranjang->sum('total_diskon');
         $data['add_fee'] = isset($data['add_fee_non_ppn']) ? str_replace('.', '', $data['add_fee_non_ppn']) : 0;
 
-        $dppSetelahDiskon = $data['total'] - $data['diskon'];
+        // $dppSetelahDiskon = $data['total'] - $data['diskon'];
 
         $data['dp'] = isset($data['dp_non_ppn']) ? str_replace('.', '', $data['dp_non_ppn']) : 0;
         $data['dp_ppn'] = 0;
 
-        $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
+        $data['grand_total'] = $keranjang->sum('total') + $data['add_fee'];
         $data['ppn_dipungut'] = $dipungut;
 
         if ($data['lunas'] != 1) {
@@ -861,14 +1134,24 @@ class KeranjangJual extends Model
             $data['sisa_ppn'] = 0;
             # code...
         }
-        $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
-        $data['sisa_ppn'] = 0;
+
+        // $data['sisa_tagihan'] = $data['ppn_dipungut'] == 1 ? $data['grand_total'] - ($data['dp'] + $data['dp_ppn']) : $data['grand_total'] - $data['dp'];
+        // $data['sisa_ppn'] = 0;
 
         $dbInvoice = new InvoiceJualSales;
         $invoice = $dbInvoice->create($data);
 
         foreach ($keranjang as $item) {
             $invoice->invoice_detail()->create([
+                // 'barang_id' => $item->barang_id,
+                // 'barang_stok_harga_id' => $item->barang_stok_harga_id,
+                // 'jumlah' => $item->jumlah,
+                // 'harga_satuan' => $item->harga_satuan,
+                // 'total' => $item->total,
+                'is_grosir' => $item->is_grosir,
+                'jumlah_grosir' => $item->jumlah_grosir,
+                'satuan_grosir_id' => $item->satuan_grosir_id,
+                'diskon' => $item->diskon,
                 'barang_id' => $item->barang_id,
                 'barang_stok_harga_id' => $item->barang_stok_harga_id,
                 'jumlah' => $item->jumlah,

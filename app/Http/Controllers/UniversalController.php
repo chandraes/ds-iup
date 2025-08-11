@@ -23,6 +23,20 @@ class UniversalController extends Controller
         return response()->json($konsumen);
     }
 
+    public function searchKonsumen(Request $request)
+    {
+        $search = $request->search;
+        $data = Konsumen::with(['kode_toko', 'kecamatan'])->where('nama', 'like', '%' . $search . '%')
+            ->where('active', 1)
+            ->select('id', 'nama', 'kode_toko_id', 'pembayaran', 'kecamatan_id')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
+    }
+
     public function searchKecamatan(Request $request)
     {
         $search = $request->search;

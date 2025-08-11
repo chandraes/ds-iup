@@ -525,8 +525,9 @@ $(document).ready(function() {
                         let row = document.createElement('tr');
                         row.innerHTML = `
                             <td class="text-center">${grosirTableBody.children.length + 1}</td>
-                            <td class="text-center">${grosir.qty_grosir} ${grosir.barang.satuan.nama} / ${grosir.satuan.nama}</td>
-                            <td class="text-center">${grosir.qty_grosir} %</td>
+                            <td class="text-center">${grosir.qty} ${grosir.satuan.nama}</td>
+                            <td class="text-center">${grosir.qty_grosir} ${grosir.barang.satuan.nama}</td>
+                            <td class="text-center">${grosir.diskon} %</td>
                             <td class="text-center">
                                 <button class="btn btn-danger btn-sm" onclick="deleteGrosir(${grosir.id})">
                                     <i class="fa fa-trash"></i>

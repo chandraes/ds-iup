@@ -211,11 +211,17 @@ class BarangController extends Controller
             'barang_id' => 'required|exists:barangs,id',
         ]);
 
-        $grosir = BarangGrosir::with(['barang.satuan','satuan'])->where('barang_id',$data['barang_id'])->get();
+        $grosir = BarangGrosir::with(['barang.satuan','satuan'])->where('barang_id',$data['barang_id'])
+                    ->orderBy('qty')->get();
+
+        // distinc satuan_id
+        $satuanIds = $grosir->pluck('satuan_id')->unique();
+        $satuans = Satuan::whereIn('id', $satuanIds)->get();
 
         return response()->json([
             'status' => 'success',
             'data' => $grosir,
+            'satuans' => $satuans,
         ]);
     }
 
@@ -233,7 +239,7 @@ class BarangController extends Controller
 
             // Cek apakah masih ada grosir lain untuk barang ini
             $hasGrosir = BarangGrosir::where('barang_id', $barang->id)->exists();
-            
+
             if (! $hasGrosir) {
                 // Jika tidak ada grosir lain, set is_grosir ke false
                 $barang->is_grosir = false;
@@ -261,7 +267,8 @@ class BarangController extends Controller
     //    using ajax
         $data = $request->validate([
             'barang_id' => 'required|exists:barangs,id',
-            'qty_grosir' => 'required|numeric|max:100',
+            'qty' => 'required|integer|min:1',
+            'qty_grosir' => 'required|numeric',
             'satuan_id' => 'required|exists:satuans,id',
             'diskon' => 'required|numeric|min:0|max:100',
         ]);

@@ -4,6 +4,7 @@ namespace App\Models\transaksi;
 
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Satuan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,6 +24,11 @@ class InvoiceJualSalesDetail extends Model
     public function invoiceJualSales()
     {
         return $this->belongsTo(InvoiceJualSales::class, 'invoice_jual_sales_id');
+    }
+
+    public function satuan_grosir()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_grosir_id');
     }
 
     public function barang()

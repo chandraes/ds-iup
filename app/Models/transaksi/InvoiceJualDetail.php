@@ -4,6 +4,7 @@ namespace App\Models\transaksi;
 
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangStokHarga;
+use App\Models\db\Satuan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -54,6 +55,11 @@ class InvoiceJualDetail extends Model
     public function barang()
     {
         return $this->belongsTo(Barang::class, 'barang_id');
+    }
+
+     public function satuan_grosir()
+    {
+        return $this->belongsTo(Satuan::class, 'satuan_grosir_id');
     }
 
     public function sellingOut($month, $year, $perusahaan, $filters = [])

@@ -13,7 +13,13 @@
                     <div class="col-md-12">
 
                         <div class="row">
-                            <div class="col-md-3">
+                             <div class="col-md-2">
+                                <input type="hidden" id="grosirBarangId" name="grosirBarangId" value="">
+                                    <label for="grosirBarangJumlah">Min Qty</label>
+                                        <input type="text" class="form-control" name="qty" id="qty" required
+                                            data-thousands=".">
+                            </div>
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="grosirBarangNama">Satuan Grosir</label>
                                     <select class="form-select" id="grosirSatuan" name="grosirSatuan" required>
@@ -31,7 +37,7 @@
                             <div class="col-md-3">
                                 <input type="hidden" id="grosirBarangId" name="grosirBarangId" value="">
                                 <div class="form-group">
-                                    <label for="grosirBarangJumlah">Jumlah Grosir</label>
+                                    <label for="grosirBarangJumlah">Qty Satuan Retail</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control" name="qty_grosir" id="jumlah" required
                                             data-thousands=".">
@@ -50,7 +56,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-2">
                                 <button class="btn btn-primary btn-sm btn-block mt-4" id="addRowBtnGrosir" onclick="grosirStore()">
                                    <i class="fa fa-plus me-2"></i> Tambah Grosir
                                 </button>
@@ -61,7 +67,8 @@
                                 <thead>
                                     <tr>
                                         <th class="text-center align-middle">No</th>
-                                        <th class="text-center align-middle">Jumlah</th>
+                                        <th class="text-center align-middle">Min Qty Grosir</th>
+                                        <th class="text-center align-middle">Qty Retail</th>
                                         <th class="text-center align-middle">Diskon</th>
                                         <th class="text-center align-middle">Aksi</th>
                                     </tr>
@@ -75,9 +82,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Batalkan
+                    Tutup
                 </button>
-                <button type="button" class="btn btn-primary">Simpan</button>
             </div>
         </div>
     </div>
@@ -97,6 +103,7 @@
         let grosirSatuan = document.getElementById('grosirSatuan').value;
         let qtyGrosir = document.getElementById('jumlah').value;
         let diskonGrosir = document.getElementById('diskon_grosir').value;
+        let qty = document.getElementById('qty').value;
         let satId
 
         if (!barangId || !grosirSatuan || !qtyGrosir || !diskonGrosir) {
@@ -115,6 +122,7 @@
                 _token: "{{ csrf_token() }}",
                 barang_id: barangId,
                 satuan_id: grosirSatuan,
+                qty: qty,
                 qty_grosir: qtyGrosir,
                 diskon: diskonGrosir
             },
@@ -129,6 +137,7 @@
                     document.getElementById('grosirSatuan').value = '';
                     document.getElementById('jumlah').value = '';
                     document.getElementById('diskon_grosir').value = '';
+                    document.getElementById('qty').value = '';
                     // Reload the grosir table
                     loadGrosirTable(barangId);
 
@@ -165,11 +174,13 @@
                     let grosirTableBody = document.getElementById('grosirTableBody');
                     grosirTableBody.innerHTML = ''; // Clear existing rows
                     response.data.forEach(function(grosir) {
+                        console.log(grosir);
                         let row = document.createElement('tr');
                         row.innerHTML = `
                             <td class="text-center">${grosirTableBody.children.length + 1}</td>
-                            <td class="text-center">${grosir.qty_grosir} ${grosir.barang.satuan.nama} / ${grosir.satuan.nama}</td>
-                            <td class="text-center">${grosir.qty_grosir} %</td>
+                            <td class="text-center">${grosir.qty} ${grosir.satuan.nama} </td>
+                            <td class="text-center">${grosir.qty_grosir} ${grosir.barang.satuan.nama} </td>
+                            <td class="text-center">${grosir.diskon} %</td>
                             <td class="text-center">
                                 <button class="btn btn-danger btn-sm" onclick="deleteGrosir(${grosir.id})">
                                     <i class="fa fa-trash"></i>

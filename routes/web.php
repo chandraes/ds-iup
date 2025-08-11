@@ -32,6 +32,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/search-kecamatan', [App\Http\Controllers\UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
         Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
 
+        Route::get('/search-konsumen', [App\Http\Controllers\UniversalController::class, 'searchKonsumen'])->name('universal.search-konsumen');
         Route::get('/search-barang-nama', [App\Http\Controllers\UniversalController::class, 'searchBarangNama'])->name('universal.search-barang-nama');
         Route::get('/search-barang-kategori', [App\Http\Controllers\UniversalController::class, 'searchBarangKategori'])->name('universal.search-barang-kategori');
         Route::get('/search-barang-type', [App\Http\Controllers\UniversalController::class, 'searchBarangType'])->name('universal.search-barang-type');
@@ -57,6 +58,21 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
+
+            Route::prefix('jual')->group(function () {
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'jual'])->name('sales.jual');
+                Route::post('/store', [App\Http\Controllers\SalesController::class, 'jual_store'])->name('sales.jual.store');
+
+                Route::get('/get-grosir', [App\Http\Controllers\SalesController::class, 'barang_get_grosir'])->name('sales.jual.get-grosir');
+
+                Route::get('/keranjang/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang'])->name('sales.jual.keranjang');
+                Route::post('/keranjang/empty/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang_empty'])->name('sales.jual.keranjang.empty');
+                Route::post('/keranjang/delete/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang_delete'])->name('sales.jual.keranjang.delete');
+
+                Route::get('/keranjang-review/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang_review'])->name('sales.jual.keranjang.review');
+                Route::post('/keranjang/grosir/store', [App\Http\Controllers\SalesController::class, 'jual_keranjang_grosir_store'])->name('sales.jual.keranjang.grosir.store');
+            });
+
 
             Route::prefix('check-konsumen')->group(function(){
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'check_konsumen'])->name('sales.check-konsumen');
