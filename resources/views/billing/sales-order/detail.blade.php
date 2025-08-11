@@ -152,29 +152,49 @@
                         <table class="table table-bordered">
                             <thead class="table-success">
                                 <tr>
-                                    <th class="text-center align-middle">Kelompok Barang</th>
-                                    <th class="text-center align-middle">Nama Barang</th>
-                                    <th class="text-center align-middle">Kode Barang</th>
-                                    <th class="text-center align-middle">Merk Barang</th>
-                                    <th class="text-center align-middle">Banyak</th>
-                                    <th class="text-center align-middle">Satuan</th>
-                                    <th class="text-center align-middle">Harga Satuan</th>
-                                    <th class="text-center align-middle">Total</th>
+                                    <th class="text-center align-middle">NO</th>
+                                    <th class="text-center align-middle">NAMA BARANG/MEREK</th>
+                                    <th class="text-center align-middle">QTY</th>
+                                    <th class="text-center align-middle">SAT</th>
+                                    <th class="text-center align-middle">HARGA SATUAN
+                                        {{$order->kas_ppn ? '(DPP)' : ''}}
+                                    </th>
+                                    <th class="text-center align-middle">
+                                        Diskon
+                                        {{$order->kas_ppn ? '(DPP)' : ''}}
+                                    </th>
+                                    <th class="text-center align-middle">HARGA DISKON
+                                        {{$order->kas_ppn ? '(DPP)' : ''}}</th>
+                                    @if ($order->kas_ppn == 1)
+                                        <th class="text-center align-middle">
+                                            HARGA DISKON
+                                            (PPN)
+                                        </th>
+                                    @endif
+                                    <th class="text-center align-middle">TOTAL HARGA</th>
                                     <th class="text-center align-middle">Act</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($order->invoice_detail as $b)
                                 <tr class="{{$b->deleted == 1 ? 'table-danger' : ''}}">
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->kategori->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->barang_nama->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->barang->kode}}</td>
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->barang->merk}}</td>
+                                    <td class="text-center align-middle">{{$loop->iteration}}</td>
+                                    <td class="text-start align-middle">{{$b->barangStokHarga->barang_nama->nama}}, {{$b->barangStokHarga->barang->kode}},
+                                        {{$b->barangStokHarga->barang->merk}}
+                                    </td>
                                     <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
                                     <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
                                         : '-'}}</td>
                                     <td class="text-center align-middle">{{$b->nf_harga_satuan}}</td>
-                                    <td class="text-end align-middle">{{$b->nf_total}}
+                                     <td class="text-end align-middle">
+                                        {{$b->nf_diskon}}
+                                    </td>
+                                    @if ($order->kas_ppn == 1)
+                                    <td class="text-end align-middle">{{number_format($b->harga_satuan - $b->diskon, 0, ',','.')}}</td>
+                                    @endif
+                                    <td class="text-end align-middle">{{number_format($b->harga_satuan - $b->diskon + $b->ppn, 0, ',','.')}}</td>
+                                    <td class="text-end align-middle">
+                                        {{$b->nf_total}}
                                     </td>
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-{{$b->deleted ? 'primary' : 'danger'}} btn-sm" onclick="deleteKeranjang({{$b->id}})">
@@ -189,63 +209,63 @@
                                 $diskon = $order->diskon;
                                 $dpp_setelah_diskon = $total - $diskon;
                                 $ppn_val_ = $order->kas_ppn ? floor($dpp_setelah_diskon * $ppn / 100) : 0;
-                                $grand_total = $dpp_setelah_diskon + $ppn_val_;
+                                $grand_total = $total;
                                 @endphp
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">DPP :</th>
+                                {{-- <tr>
+                                    <th colspan="8" class="text-end align-middle">DPP :</th>
                                     <th class="text-end align-middle" id="dppTh">{{number_format($total, 0,
                                         ',','.')}}</th>
                                     <td></td>
-                                </tr>
-                                <tr id="trDiskon">
-                                    <th colspan="7" class="text-end align-middle">Diskon :</th>
+                                </tr> --}}
+                                {{-- <tr id="trDiskon">
+                                    <th colspan="8" class="text-end align-middle">Diskon :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="diskon" id="diskon" value="{{$diskon}}"
                                             onkeyup="addDiskon()" />
                                     </th>
                                     <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
+                                </tr> --}}
+                                {{-- <tr>
+                                    <th colspan="8" class="text-end align-middle">DPP Setelah Diskon :</th>
                                     <th class="text-end align-middle" id="thDppDiskon">{{number_format($dpp_setelah_diskon, 0,
                                         ',','.')}}</th>
                                         <td></td>
                                 </tr>
                                 @if ($order->kas_ppn == 1)
                                 <tr>
-                                    <th colspan="7" class="text-end align-middle">Ppn :</th>
+                                    <th colspan="8" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($ppn_val_), 0,
                                         ',','.')}}</th>
                                         <td></td>
                                 </tr>
-                                @endif
+                                @endif --}}
 
                                 {{-- <tr>
-                                    <th colspan="7" class="text-end align-middle">Pph :</th>
+                                    <th colspan="8" class="text-end align-middle">Pph :</th>
                                     <th class="text-end align-middle" id="pphTh">0</th>
                                 </tr> --}}
                                 <tr>
-                                    <th colspan="7" class="text-end align-middle">Grand Total :</th>
+                                    <th colspan="8" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format($grand_total, 0, ',','.')}}</th>
                                         <td></td>
                                 </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
+                                {{-- <tr>
+                                    <th colspan="8" class="text-end align-middle">Penyesuaian:</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
                                             value="0" />
                                     </th>
                                     <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Total Tagihan :</th>
+                                </tr> --}}
+                                <tr hidden>
+                                    <th colspan="8" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format($grand_total, 0, ',','.')}}</th>
                                         <td></td>
                                 </tr>
                                 <tr id="trJumlahDp" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">Masukan Nominal DP :</th>
+                                    <th colspan="8" class="text-end align-middle">Masukan Nominal DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
                                             onkeyup="addDp()" />
@@ -253,7 +273,7 @@
                                     <td></td>
                                 </tr>
                                 <tr id="trDp" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">DP :</th>
+                                    <th colspan="8" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp" id="dp" value="{{$order->nf_dp}}" readonly/>
                                     </th>
@@ -261,7 +281,7 @@
                                 </tr>
                                 @if ($order->kas_ppn == 1)
                                 <tr id="trDpPpn" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">DP PPn :</th>
+                                    <th colspan="8" class="text-end align-middle">DP PPn :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="{{$order->nf_dp_ppn}}"
                                             readonly />
@@ -271,7 +291,7 @@
                                 @endif
 
                                 <tr id="trSisa" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">Sisa Tagihan :</th>
+                                    <th colspan="8" class="text-end align-middle">Sisa Tagihan :</th>
                                     <th class="text-end align-middle" id="thSisa">
                                         {{$order->nf_sisa_tagihan}}</th>
                                     <td></td>
@@ -326,8 +346,8 @@
         delimiter: '.',
         negative: true
     };
-    new Cleave('#add_fee', cleaveOptions);
-    new Cleave('#diskon', cleaveOptions);
+    // new Cleave('#add_fee', cleaveOptions);
+    // new Cleave('#diskon', cleaveOptions);
 
     // Helper untuk menghapus format angka
     function parseNumber(value) {
@@ -391,9 +411,8 @@
 
     function calculateTotalTagihan() {
         var gt = document.getElementById('grandTotalTh').innerText;
-        var add_fee = document.getElementById('add_fee').value;
+        var add_fee = 0;
         gt = gt.replace(/\./g, '');
-        add_fee = add_fee.replace(/\./g, '');
 
         var addFeeNumber = parseFloat(add_fee);
         var gtNumber = parseFloat(gt);

@@ -51,9 +51,14 @@ class InvoiceJualSalesDetail extends Model
         return number_format($this->harga_satuan, 0, ',', '.');
     }
 
+    public function getNfDiskonAttribute()
+    {
+        return number_format($this->diskon, 0, ',', '.');
+    }
+
     public function getTotalAttribute()
     {
-        return $this->jumlah * $this->harga_satuan;
+        return $this->jumlah * ($this->harga_satuan-$this->diskon+$this->ppn);
     }
 
     public function getNfTotalAttribute()
