@@ -126,7 +126,7 @@
                     {{$d->nf_diskon}}
                 </td>
                  @if ($data->kas_ppn == 1)
-                <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
+                <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon, 0, ',','.')}}</td>
                 @endif
                   <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
                 <td style="text-align: right; padding-left:0.5rem">
