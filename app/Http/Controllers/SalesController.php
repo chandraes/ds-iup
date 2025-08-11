@@ -198,7 +198,7 @@ class SalesController extends Controller
         // start Get data diskon
 
         $diskon_pembayaran = DiskonUmum::where('kode', $info->pembayaran)->first()->persen ?? 0;
-        $diskon_konsumen = $info->konsumen->diskon ?? 0;
+        $diskon_konsumen = $info->konsumen->diskon_khusus ?? 0;
 
         $diskon_barang = Barang::where('id', $barang_id)
                             ->whereNotNull('diskon_mulai')
@@ -399,8 +399,8 @@ class SalesController extends Controller
         $product = BarangStokHarga::find($data['barang_stok_harga_id']);
 
         $diskon_pembayaran = DiskonUmum::where('kode', $info->pembayaran)->first()->persen ?? 0;
-        $diskon_konsumen = $info->konsumen->diskon ?? 0;
-        dd($diskon_konsumen);
+        $diskon_konsumen = $info->konsumen->diskon_khusus ?? 0;
+
         $diskon_barang = Barang::where('id', $product->barang_id)
                             ->whereNotNull('diskon_mulai')
                             ->whereNotNull('diskon_selesai')
