@@ -17,6 +17,11 @@ class InvoiceJualDetail extends Model
         'nf_jumlah',
         'nf_harga_satuan',
         'nf_total',
+        'nf_diskon',
+        'nf_ppn',
+        'harga_diskon_dpp',
+        'nf_harga_satuan_akhir',
+        
     ];
 
     public function dataTahun()
@@ -60,6 +65,26 @@ class InvoiceJualDetail extends Model
      public function satuan_grosir()
     {
         return $this->belongsTo(Satuan::class, 'satuan_grosir_id');
+    }
+
+     public function getNfDiskonAttribute()
+    {
+        return number_format($this->diskon, 0, ',', '.');
+    }
+
+    public function getNfPpnAttribute()
+    {
+        return number_format($this->ppn, 0, ',', '.');
+    }
+
+    public function getHargaDiskonDppAttribute()
+    {
+        return number_format($this->harga_satuan - $this->diskon, 0, ',', '.');
+    }
+
+    public function getNfHargaSatuanAkhirAttribute()
+    {
+        return number_format($this->harga_satuan_akhir, 0, ',', '.');
     }
 
     public function sellingOut($month, $year, $perusahaan, $filters = [])

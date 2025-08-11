@@ -20,7 +20,8 @@
                         <td style="width: 20%">Konsumen</td>
                         <td style="width: 15px">:</td>
                         <td style="width: 150px">
-                            <strong>{{$data->konsumen ? $data->konsumen->kode_toko->kode.' '.$data->konsumen->nama : $data->konsumen_temp->nama}}</strong>
+                            <strong>{{$data->konsumen ? $data->konsumen->kode_toko->kode.' '.$data->konsumen->nama :
+                                $data->konsumen_temp->nama}}</strong>
                         </td>
                         <td style="width: 80px">&nbsp;</td>
                         <td style="width: 20%">Invoice</td>
@@ -79,15 +80,28 @@
     </table>
 </div>
 <div class="po-items">
-    <table class="table-items" style="font-size: 10px">
+    <table class="table-items" style="font-size: 12px">
         <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">NAMA BARANG/MEREK</th>
                 <th class="text-center align-middle">QTY</th>
                 <th class="text-center align-middle">SAT</th>
-                <th class="text-center align-middle">Harga Satuan</th>
-                <th class="text-center align-middle">Total</th>
+                <th class="text-center align-middle">HARGA SATUAN
+                    {{$data->kas_ppn == 1 ? '(DPP)' : ''}}
+                </th>
+                <th class="text-center align-middle">DISKON
+                    {{$data->kas_ppn == 1 ? '(DPP)' : ''}}
+                </th>
+                <th class="text-center align-middle">HARGA DISKON
+                    {{$data->kas_ppn == 1 ? '(DPP)' : ''}}
+                </th>
+                @if ($data->kas_ppn == 1)
+                <th class="text-center align-middle">HARGA DISKON
+                    (PPN)
+                </th>
+                @endif
+                <th class="text-center align-middle">TOTAL HARGA</th>
             </tr>
         </thead>
         <tbody>
@@ -96,7 +110,7 @@
                 <td style="text-align: center">
                     {{$loop->iteration}}
                 </td>
-                <td style="text-align: center">
+                <td style="text-align: left">
                     {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->merk}}
                 </td>
                 <td style="text-align: center">
@@ -108,6 +122,13 @@
                 <td style="text-align: right; padding-left:0.5rem">
                     {{$d->nf_harga_satuan}}
                 </td>
+                <td style="text-align: right;">
+                    {{$d->nf_diskon}}
+                </td>
+                 @if ($data->kas_ppn == 1)
+                <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
+                @endif
+                  <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
                 <td style="text-align: right; padding-left:0.5rem">
                     {{$d->nf_total}}
                 </td>
@@ -168,7 +189,7 @@
     <div style="page-break-inside: avoid; display: table; width: 100%; margin-top: 10px;">
         <div style="display: table-footer-group;">
             <table style="width: 100%; font-size: 10px; text-align: right;">
-                <tr>
+                {{-- <tr>
                     <th style="text-align: right; width:80%">Total DPP </th>
                     <th style="text-align: right; width:5%">:</th>
                     <th style="text-align: right; padding-left:0.5rem; width:12%">{{$data->dpp}}</th>
@@ -194,9 +215,9 @@
                     <th style="text-align: right">Penyesuaian</th>
                     <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
-                </tr>
+                </tr> --}}
                 <tr>
-                    <th style="text-align: right">Grand Total </th>
+                    <th style="text-align: right; width:80%">Grand Total </th>
                     <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
@@ -204,26 +225,23 @@
                 <tr>
                     <th style="text-align: right">DP </th>
                     <th style="text-align: right; padding-left:0.5rem">:</th>
-                    <th style="text-align: right">{{$data->nf_dp}}</th>
+                    <th style="text-align: right">{{number_format($data->dp + $data->dp_ppn, 0,',','.')}}</th>
                 </tr>
-                @if ($data->ppn > 0)
-                <tr>
-                    <th style="text-align: right">DP PPn </th>
-                    <th style="text-align: right; padding-left:0.5rem">:</th>
-                    <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
-                </tr>
-                @endif
                 <tr>
                     <th style="text-align: right">Sisa Tagihan </th>
                     <th style="text-align: right; padding-left:0.5rem">:</th>
                     <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
                 </tr>
-                <tr >
-                    <th colspan="3" style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem"><strong># {{$terbilang}} Rupiah #</strong></th>
+                <tr>
+                    <th colspan="3"
+                        style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem">
+                        <strong># {{$terbilang}} Rupiah #</strong></th>
                 </tr>
                 @else
                 <tr>
-                    <th colspan="3" style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem"><strong># {{$terbilang}} Rupiah #</strong></th>
+                    <th colspan="3"
+                        style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem">
+                        <strong># {{$terbilang}} Rupiah #</strong></th>
                 </tr>
                 @endif
             </table>

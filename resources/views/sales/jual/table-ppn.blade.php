@@ -33,10 +33,10 @@
                     </td>
                 <td class="text-end align-middle">{{$b->nf_harga}}</td>
                 <td class="text-end align-middle">{{$b->nf_diskon}}</td>
-                <td class="text-end align-middle">{{$b->harga_diskon_dpp}}</td>
-                <td class="text-end align-middle">{{$b->nf_harga_satuan_akhir}}</td>
-                <td class="text-end align-middle">{{$b->nf_total}}
-                </td>
+                    <td class="text-end align-middle">{{$b->harga_diskon_dpp}}</td>
+                    <td class="text-end align-middle">{{$b->nf_harga_satuan_akhir}}</td>
+                    <td class="text-end align-middle">{{$b->nf_total}}
+                    </td>
                 <td class="text-center align-middle">
                     <button type="button" class="btn btn-danger btn-sm" onclick="deleteKeranjang({{$b->id}})"><i
                             class="fa fa-trash"></i></button>
