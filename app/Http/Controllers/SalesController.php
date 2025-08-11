@@ -452,8 +452,9 @@ class SalesController extends Controller
         }
 
         $data['diskon'] = floor($total_diskon);
+        $harga_dpp_diskon = $data['harga_satuan'] - $data['diskon'];
 
-        $data['ppn'] = $data['barang_ppn'] == 1 ? floor(($ppnRate * $data['harga_satuan']) / 100) : 0;
+        $data['ppn'] = $data['barang_ppn'] == 1 ? floor(($ppnRate * $harga_dpp_diskon) / 100) : 0;
         $data['harga_satuan_akhir'] = $data['harga_satuan'] - $data['diskon'] + $data['ppn'];
         $data['total_ppn'] = $data['ppn'] * $data['jumlah'];
         $data['total_diskon'] = $data['diskon'] * $data['jumlah'];
