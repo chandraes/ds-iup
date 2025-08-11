@@ -742,6 +742,11 @@ class InvoiceJual extends Model
 
             foreach ($invoiceSales->invoice_detail as $item) {
                 $invoice->invoice_detail()->create([
+                    'is_grosir' => $item->is_grosir,
+                    'jumlah_grosir' => $item->jumlah_grosir,
+                    'satuan_grosir_id' => $item->satuan_grosir_id,
+                    'diskon' => $item->diskon,
+                    'ppn' => $item->ppn,
                     'barang_id' => $item->barang_id,
                     'barang_stok_harga_id' => $item->barang_stok_harga_id,
                     'jumlah' => $item->jumlah,

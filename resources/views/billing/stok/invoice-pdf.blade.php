@@ -20,7 +20,7 @@
                         <td style="width: 20%">Konsumen</td>
                         <td style="width: 15px">:</td>
                         <td style="width: 150px">
-                            <strong>{{$data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama}}</strong>
+                            <strong>{{$data->konsumen ? $data->konsumen->kode_toko->kode.' '.$data->konsumen->nama : $data->konsumen_temp->nama}}</strong>
                         </td>
                         <td style="width: 80px">&nbsp;</td>
                         <td style="width: 20%">Invoice</td>
@@ -83,11 +83,9 @@
         <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
-                <th class="text-center align-middle">Nama Barang</th>
-                <th class="text-center align-middle">Kode Barang</th>
-                <th class="text-center align-middle">Merk Barang</th>
-                <th class="text-center align-middle">Banyak</th>
-                <th class="text-center align-middle">Satuan</th>
+                <th class="text-center align-middle">NAMA BARANG/MEREK</th>
+                <th class="text-center align-middle">QTY</th>
+                <th class="text-center align-middle">SAT</th>
                 <th class="text-center align-middle">Harga Satuan</th>
                 <th class="text-center align-middle">Total</th>
             </tr>
@@ -99,13 +97,7 @@
                     {{$loop->iteration}}
                 </td>
                 <td style="text-align: center">
-                    {{$d->stok->barang_nama->nama}}
-                </td>
-                <td style="text-align: center">
-                    {{$d->stok->barang->kode}}
-                </td>
-                <td style="text-align: center">
-                    {{$d->stok->barang->merk}}
+                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->merk}}
                 </td>
                 <td style="text-align: center">
                     {{$d->nf_jumlah}}
