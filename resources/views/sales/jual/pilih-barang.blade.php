@@ -184,15 +184,19 @@
                     <td class="text-center align-middle">{{ $stokHarga->min_jual }}</td>
                     <td class="text-center align-middle">
                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
-                        <div class="input-group">
-                            <button class="btn btn-danger"
-                                onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
-                            <input type="text" class="form-control text-center"
-                                value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
-                                max="{{$stokHarga->stok}}" disabled>
-                            <button class="btn btn-success"
-                                onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
-                        </div>
+                            @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->is_grosir)
+                            {{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}
+                            @else
+                            <div class="input-group">
+                                <button class="btn btn-danger"
+                                    onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
+                                <input type="text" class="form-control text-center"
+                                    value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
+                                    max="{{$stokHarga->stok}}" disabled>
+                                <button class="btn btn-success"
+                                    onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
+                            </div>
+                            @endif
                         @else
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#keranjangModal"
                             onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">Jual Retail</button>
@@ -318,15 +322,19 @@
                     <td class="text-center align-middle">{{ $stokHarga->min_jual }}</td>
                     <td class="text-center align-middle">
                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
-                        <div class="input-group">
-                            <button class="btn btn-danger"
-                                onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
-                            <input type="text" class="form-control text-center"
-                                value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
-                                max="{{$stokHarga->stok}}" disabled>
-                            <button class="btn btn-success"
-                                onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
-                        </div>
+                          @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->is_grosir)
+                            {{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}
+                            @else
+                            <div class="input-group">
+                                <button class="btn btn-danger"
+                                    onclick="updateCart({{$stokHarga->id}}, -{{$stokHarga->min_jual}}, {{$stokHarga->stok}})">-</button>
+                                <input type="text" class="form-control text-center"
+                                    value="{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->jumlah}}"
+                                    max="{{$stokHarga->stok}}" disabled>
+                                <button class="btn btn-success"
+                                    onclick="updateCart({{$stokHarga->id}}, {{$stokHarga->min_jual}}, {{$stokHarga->stok}})">+</button>
+                            </div>
+                            @endif
                         @else
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#keranjangModal"
                             onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})">Jual Retail</button>
