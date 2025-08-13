@@ -27,9 +27,14 @@ class UniversalController extends Controller
     {
         $search = $request->search;
         $data = Konsumen::with(['kode_toko', 'kecamatan'])->where('nama', 'like', '%' . $search . '%')
-            ->where('active', 1)
-            ->select('id', 'nama', 'kode_toko_id', 'pembayaran', 'kecamatan_id')
-            ->get();
+                ->where('active', 1)
+                ->select('id', 'nama', 'kode_toko_id', 'pembayaran', 'kecamatan_id');
+
+        if (auth()->user()->role == 'sales') {
+            $data->where('karyawan_id', auth()->user()->karyawan_id);
+        }
+
+        $data = $data->get();
 
         return response()->json([
             'status' => 'success',
