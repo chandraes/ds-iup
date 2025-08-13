@@ -111,7 +111,7 @@
                     {{$loop->iteration}}
                 </td>
                 <td style="text-align: left">
-                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->merk}}
+                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}}, {{$d->stok->barang->merk}}
                 </td>
                 <td style="text-align: center">
                     {{$d->nf_jumlah}}

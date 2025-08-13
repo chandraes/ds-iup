@@ -141,12 +141,12 @@
                 <h4 class="mt-3">FORM BELI</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM JUAL</h4>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.sales-order', ['kas_ppn' => 1])}}" class="text-decoration-none">
                 <img src="{{asset('images/order-ppn.svg')}}" alt="" width="70">

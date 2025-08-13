@@ -46,11 +46,14 @@
                                                 <td class="text-start align-middle">Sistem Pembayaran</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <select type="text" name="pembayaran" id="pembayaran" onchange="checkPembayaran()"
-                                                        class="form-select" required>
-                                                        <option value="1" @if ($order->sistem_pembayaran == 1) selected @endif>Cash</option>
-                                                        <option value="2" @if ($order->sistem_pembayaran == 2) selected @endif>Tempo</option>
-                                                        <option value="3" @if ($order->sistem_pembayaran == 3) selected @endif>Titipan</option>
+                                                    <select type="text" name="pembayaran" id="pembayaran" class="form-select" required>
+                                                        @if ($order->sistem_pembayaran == 1)
+                                                            <option value="1" selected>Cash</option>
+                                                        @elseif ($order->sistem_pembayaran == 2)
+                                                            <option value="2" selected>Tempo</option>
+                                                        @elseif ($order->sistem_pembayaran == 3)
+                                                            <option value="3" selected>Titipan</option>
+                                                        @endif
                                                     </select>
                                                 </td>
                                             </tr>
@@ -185,7 +188,7 @@
                                     <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
                                     <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
                                         : '-'}}</td>
-                                    <td class="text-center align-middle">{{$b->nf_harga_satuan}}</td>
+                                    <td class="text-end align-middle">{{$b->nf_harga_satuan}}</td>
                                      <td class="text-end align-middle">
                                         {{$b->nf_diskon}}
                                     </td>
@@ -212,13 +215,13 @@
                                 $grand_total = $total;
                                 @endphp
                                 {{-- <tr>
-                                    <th colspan="8" class="text-end align-middle">DPP :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DPP :</th>
                                     <th class="text-end align-middle" id="dppTh">{{number_format($total, 0,
                                         ',','.')}}</th>
                                     <td></td>
                                 </tr> --}}
                                 {{-- <tr id="trDiskon">
-                                    <th colspan="8" class="text-end align-middle">Diskon :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Diskon :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="diskon" id="diskon" value="{{$diskon}}"
                                             onkeyup="addDiskon()" />
@@ -226,14 +229,14 @@
                                     <td></td>
                                 </tr> --}}
                                 {{-- <tr>
-                                    <th colspan="8" class="text-end align-middle">DPP Setelah Diskon :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DPP Setelah Diskon :</th>
                                     <th class="text-end align-middle" id="thDppDiskon">{{number_format($dpp_setelah_diskon, 0,
                                         ',','.')}}</th>
                                         <td></td>
                                 </tr>
                                 @if ($order->kas_ppn == 1)
                                 <tr>
-                                    <th colspan="8" class="text-end align-middle">Ppn :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($ppn_val_), 0,
                                         ',','.')}}</th>
                                         <td></td>
@@ -241,17 +244,17 @@
                                 @endif --}}
 
                                 {{-- <tr>
-                                    <th colspan="8" class="text-end align-middle">Pph :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Pph :</th>
                                     <th class="text-end align-middle" id="pphTh">0</th>
                                 </tr> --}}
                                 <tr>
-                                    <th colspan="8" class="text-end align-middle">Grand Total :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format($grand_total, 0, ',','.')}}</th>
                                         <td></td>
                                 </tr>
                                 {{-- <tr>
-                                    <th colspan="8" class="text-end align-middle">Penyesuaian:</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Penyesuaian:</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
                                             value="0" />
@@ -259,13 +262,13 @@
                                     <td></td>
                                 </tr> --}}
                                 <tr hidden>
-                                    <th colspan="8" class="text-end align-middle">Total Tagihan :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format($grand_total, 0, ',','.')}}</th>
                                         <td></td>
                                 </tr>
                                 <tr id="trJumlahDp" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="8" class="text-end align-middle">Masukan Nominal DP :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Masukan Nominal DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
                                             onkeyup="addDp()" />
@@ -273,7 +276,7 @@
                                     <td></td>
                                 </tr>
                                 <tr id="trDp" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="8" class="text-end align-middle">DP :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp" id="dp" value="{{$order->nf_dp}}" readonly/>
                                     </th>
@@ -281,7 +284,7 @@
                                 </tr>
                                 @if ($order->kas_ppn == 1)
                                 <tr id="trDpPpn" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="8" class="text-end align-middle">DP PPn :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DP PPn :</th>
                                     <th class="text-end align-middle">
                                         <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="{{$order->nf_dp_ppn}}"
                                             readonly />
@@ -291,7 +294,7 @@
                                 @endif
 
                                 <tr id="trSisa" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="8" class="text-end align-middle">Sisa Tagihan :</th>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Sisa Tagihan :</th>
                                     <th class="text-end align-middle" id="thSisa">
                                         {{$order->nf_sisa_tagihan}}</th>
                                     <td></td>

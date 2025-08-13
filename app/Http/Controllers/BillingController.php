@@ -38,6 +38,7 @@ class BillingController extends Controller
 {
     public function lihat_stok(Request $request)
     {
+        return redirect()->back()->with('error', 'Fitur ini sedang dalam pengembangan. Silakan coba lagi nanti.');
         // $kategori = BarangKategori::with(['barang_nama'])->get();
         // $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;

@@ -110,48 +110,50 @@
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
                 <tr>
-                    <th class="text-center align-middle">Perusahaan</th>
-                    <th class="text-center align-middle">Bidang</th>
-                    <th class="text-center align-middle">Kategori Barang</th>
-                    <th class="text-center align-middle">Nama Barang</th>
-                    <th class="text-center align-middle">Kode Barang</th>
-                    <th class="text-center align-middle">Merk Barang</th>
-                    <th class="text-center align-middle">Banyak</th>
-                    <th class="text-center align-middle">Satuan</th>
-                    <th class="text-center align-middle">Harga Satuan</th>
-                    <th class="text-center align-middle">Total</th>
+                   <th class="text-center align-middle">NO</th>
+                    <th class="text-center align-middle">NAMA BARANG/MEREK</th>
+                    <th class="text-center align-middle">QTY</th>
+                    <th class="text-center align-middle">SAT</th>
+                    <th class="text-center align-middle">HARGA SATUAN
+                        {{$data->kas_ppn ? '(DPP)' : ''}}
+                    </th>
+                    <th class="text-center align-middle">
+                        Diskon
+                        {{$data->kas_ppn ? '(DPP)' : ''}}
+                    </th>
+                    <th class="text-center align-middle">HARGA DISKON
+                        {{$data->kas_ppn ? '(DPP)' : ''}}</th>
+                    @if ($data->kas_ppn == 1)
+                        <th class="text-center align-middle">
+                            HARGA DISKON
+                            (PPN)
+                        </th>
+                    @endif
+                    <th class="text-center align-middle">TOTAL HARGA</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($data->invoice_detail as $d)
                 <tr>
-                    <td class="text-center align-middle">
-                        {{$d->stok->unit->nama}}
+                   <td class="text-center align-middle">
+                        {{$loop->iteration}}
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->stok->type->nama}}
-                    </td>
-                    <td class="text-center align-middle">
-                        {{$d->stok->kategori->nama}}
-                    </td>
-                    <td class="text-center align-middle">
-                        {{$d->stok->barang_nama->nama}}
-                    </td>
-                    <td class="text-center align-middle">
-                        {{$d->stok->barang->kode}}
-                    </td>
-                    <td class="text-center align-middle">
+                         {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}},
                         {{$d->stok->barang->merk}}
                     </td>
-                    <td class="text-center align-middle">
-                        {{$d->nf_jumlah}}
+                     <td class="text-center align-middle">{{$d->nf_jumlah}}</td>
+                    <td class="text-center align-middle">{{$d->barang->satuan ? $d->barang->satuan->nama
+                        : '-'}}</td>
+                    <td class="text-end align-middle">{{$d->nf_harga_satuan}}</td>
+                        <td class="text-end align-middle">
+                        {{$d->nf_diskon}}
                     </td>
-                    <td class="text-center align-middle">
-                        {{$d->stok->barang->satuan ? $d->stok->barang->satuan->nama : '-'}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$d->nf_harga_satuan}}
-                    </td>
+                    @if ($data->kas_ppn == 1)
+                    <td class="text-end align-middle">{{number_format($d->harga_satuan - $d->diskon, 0, ',','.')}}</td>
+                    @endif
+                    <td class="text-end align-middle">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
+
                     <td class="text-end align-middle">
                         {{$d->nf_total}}
                     </td>
@@ -159,51 +161,31 @@
                 @endforeach
             </tbody>
             <tfoot>
-                <tr>
-                    <th style="text-align: right" colspan="9">Total DPP : </th>
-                    <th style="text-align: right">{{$data->dpp}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="9">Diskon : </th>
-                    <th style="text-align: right">{{number_format($data->diskon, 0 ,',', '.')}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="9">DPP Setelah Diskon : </th>
-                    <th style="text-align: right">{{number_format($data->total-$data->diskon, 0 ,',', '.')}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="9">Ppn : </th>
-                    <th style="text-align: right">{{$data->nf_ppn}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="9">Penyesuaian : </th>
-                    <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right" colspan="9">Grand Total : </th>
+                   <tr>
+                    <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">Grand Total : </th>
                     <th style="text-align: right">{{$data->nf_grand_total}}</th>
                 </tr>
                 @if ($data->lunas == 0)
-                    @if ($data->konsumen && $data->konsumen->pembayaran == 2)
-                    <tr>
-                        <th style="text-align: right" colspan="9">DP : </th>
-                        <th style="text-align: right">{{$data->nf_dp}}</th>
-                    </tr>
-                    @if ($data->ppn > 0)
-                    <tr>
-                        <th style="text-align: right" colspan="9">DP PPn : </th>
-                        <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: right" colspan="9">Sisa PPN : </th>
-                        <th style="text-align: right">{{number_format($data->sisa_ppn, 0,',','.')}}</th>
-                    </tr>
-                    @endif
-                    <tr>
-                        <th style="text-align: right" colspan="9">Sisa Tagihan : </th>
-                        <th style="text-align: right">{{number_format($data->sisa_tagihan, 0,',','.')}}</th>
-                    </tr>
-                    @endif
+                @if ($data->konsumen && $data->konsumen->pembayaran == 2)
+                <tr>
+                    <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">DP : </th>
+                    <th style="text-align: right">{{$data->nf_dp}}</th>
+                </tr>
+                @if ($data->ppn > 0)
+                <tr>
+                    <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">DP PPn : </th>
+                    <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
+                </tr>
+                <tr>
+                    <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">Sisa PPN : </th>
+                    <th style="text-align: right">{{$data->nf_sisa_ppn}}</th>
+                </tr>
+                @endif
+                <tr>
+                    <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">Sisa Tagihan : </th>
+                    <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
+                </tr>
+                @endif
                 @endif
 
             </tfoot>
