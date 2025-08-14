@@ -19,7 +19,7 @@
             <tr class="{{$b->stok_kurang == 1 ? 'table-danger' : ''}}">
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                   <td class="text-start align-middle">
-                    {{$b->stok->barang_nama->nama}},
+                    {{$b->stok->barang_nama->nama}}, {{$b->stok->barang->kode}}
                     <br>
                     {{$b->stok->barang->merk}}
                 </td>
