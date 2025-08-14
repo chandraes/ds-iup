@@ -136,7 +136,6 @@
                 options += '<option value="">Pilih Pembayaran</option>';
                 options += '<option value="1">Cash</option>';
                 options += '<option value="2">Tempo</option>';
-                options += '<option value="3">Titipan</option>';
             } else if (pembayaran == 1) {
                 options += '<option value="1">Cash</option>';
             }
