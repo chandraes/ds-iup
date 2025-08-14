@@ -40,7 +40,7 @@
     }
 </style>
 <div class="container-fluid mt-3 table-responsive ">
-    <form method="GET" action="{{route('sales.jual.keranjang', ['keranjang', $id])}}" class="mt-3 mb-5">
+    <form method="GET" action="{{route('sales.jual.keranjang', ['keranjang'=> $id])}}" class="mt-3 mb-5">
         <div class="row">
 
             <div class="col-md-2">
