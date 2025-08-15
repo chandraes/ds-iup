@@ -23,6 +23,49 @@ class UniversalController extends Controller
         return response()->json($konsumen);
     }
 
+    public function konsumen_data(Request $request)
+    {
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        $search = $request->input('search.value');
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'kabupaten_kota', 'provinsi']);
+
+        $query = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
+            ->filter($filters);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%$search%")
+                ->orWhere('alamat', 'like', "%$search%");
+            });
+        }
+
+        $total = $query->count();
+        $data = $query->skip($start)->take($length)->get();
+
+        // Format data sesuai kebutuhan DataTables
+        $result = [];
+        foreach ($data as $d) {
+            $result[] = [
+                $d->full_kode,
+                $d->kode_toko ? $d->kode_toko->kode : '',
+                $d->nama,
+                $d->karyawan ? $d->karyawan->nama : '',
+                $d->provinsi ? $d->provinsi->nama_wilayah : '',
+                $d->kabupaten_kota ? $d->kabupaten_kota->nama_wilayah : '',
+                $d->kecamatan ? $d->kecamatan->nama_wilayah : '',
+                $d->alamat,
+            ];
+        }
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $total,
+            'recordsFiltered' => $total,
+            'data' => $result,
+        ]);
+    }
+
     public function searchKonsumen(Request $request)
     {
         $search = $request->search;

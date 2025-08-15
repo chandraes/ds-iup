@@ -11,6 +11,7 @@ use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\DiskonUmum;
 use App\Models\db\Karyawan;
+use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
@@ -24,6 +25,7 @@ use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\KeranjangJualKonsumen;
 use App\Models\transaksi\OrderInden;
 use App\Models\transaksi\OrderIndenDetail;
+use App\Models\Wilayah;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -942,6 +944,38 @@ class SalesController extends Controller
             'total' => $data->count(),
             'data' => $data,
             'konsumen' => $konsumen,
+        ]);
+    }
+
+    public function konsumen(Request $request)
+    {
+        $wilayah = Wilayah::whereIn('id_level_wilayah', [1, 2, 3])->get()->groupBy('id_level_wilayah');
+        $provinsi = $wilayah->get(1, collect());
+
+        if ($request->has('provinsi') && $request->input('provinsi') != '') {
+            $prov = Wilayah::find($request->input('provinsi'));
+            $kabupaten_kota = Wilayah::where('id_induk_wilayah', $prov->id_wilayah)->where('id_level_wilayah', 2)->get();
+        } else {
+            $kabupaten_kota = $wilayah->get(2, collect());
+        }
+
+        if ($request->has('kabupaten_kota') && $request->input('kabupaten_kota') != '') {
+            $kab = Wilayah::find($request->input('kabupaten_kota'));
+            $kecamatan_filter = Wilayah::where('id_induk_wilayah', $kab->id_wilayah )->where('id_level_wilayah', 3)->get();
+        } else {
+            $kecamatan_filter = $wilayah->get(3, collect());
+        }
+
+        $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
+
+        return view('sales.konsumen', [
+            'provinsi' => $provinsi,
+            'kabupaten_kota' => $kabupaten_kota,
+            'sales_area' => $sales_area,
+            'kode_toko' => KodeToko::select('id', 'kode')->get(),
+            'kecamatan_filter' => $kecamatan_filter,
         ]);
     }
 
