@@ -3,12 +3,13 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Invoice Penjualan</u></h1>
+            <h1><u>SALES ORDER</u></h1>
         </div>
     </div>
     <div class="row mb-3 d-flex">
         <div class="col-md-6">
-            <a href="{{route('sales.order', ['kas_ppn'=> $order->kas_ppn])}}" class="btn btn-secondary"><i class="fa fa-arrow-left"></i>
+            <a href="{{route('sales.order', ['kas_ppn'=> $order->kas_ppn])}}" class="btn btn-secondary"><i
+                    class="fa fa-arrow-left"></i>
                 Kembali</a>
         </div>
     </div>
@@ -31,26 +32,29 @@
                                                 <td class="text-start align-middle">Konsumen</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <input type="text" class="form-control" value="{{$order->konsumen->nama}}">
+                                                   <input type="text" class="form-control" value="{{$order->konsumen->kode_toko->kode.' '.$order->konsumen->nama}}" readonly>
                                                 </td>
                                             </tr>
                                             <tr id="namaTr" hidden style="height:50px">
                                                 <td class="text-start align-middle">Nama</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <input type="text" name="nama" id="nama"
-                                                        class="form-control">
+                                                    <input type="text" name="nama" id="nama" class="form-control">
                                                 </td>
                                             </tr>
                                             <tr style="height:50px">
                                                 <td class="text-start align-middle">Sistem Pembayaran</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <select type="text" name="pembayaran" id="pembayaran" onchange="checkPembayaran()"
-                                                        class="form-select" required>
-                                                        <option value="1" @if ($order->sistem_pembayaran == 1) selected @endif>Cash</option>
-                                                        <option value="2" @if ($order->sistem_pembayaran == 2) selected @endif>Tempo</option>
-                                                        <option value="3" @if ($order->sistem_pembayaran == 3) selected @endif>Titipan</option>
+                                                    <select type="text" name="pembayaran" id="pembayaran"
+                                                        onchange="checkPembayaran()" class="form-select" required>
+                                                        @if ($order->sistem_pembayaran == 1)
+                                                        <option value="1" selected>Cash</option>
+                                                        @elseif ($order->sistem_pembayaran == 2)
+                                                        <option value="2" selected>Tempo</option>
+                                                        @elseif ($order->sistem_pembayaran == 3)
+                                                        <option value="3" selected>Titipan</option>
+                                                        @endif
                                                     </select>
                                                 </td>
                                             </tr>
@@ -60,11 +64,11 @@
                                                 <td class="text-start align-middle">
                                                     <div class="input-group">
                                                         <input type="text" class="form-control" name="tempo_hari"
-                                                            id="tempo_hari"
-                                                            @if ($order->sistem_pembayaran == 2 || $order->sistem_pembayaran == 3)
-                                                            value="{{$order->konsumen->tempo_hari}}"
-                                                            @endif
-                                                            disabled>
+                                                            id="tempo_hari" @if ($order->sistem_pembayaran == 2 ||
+                                                        $order->sistem_pembayaran == 3)
+                                                        value="{{$order->konsumen->tempo_hari}}"
+                                                        @endif
+                                                        disabled>
                                                         <span class="input-group-text" id="basic-addon1">Hari</span>
                                                     </div>
                                                 </td>
@@ -73,8 +77,8 @@
                                                 <td class="text-start align-middle">NPWP</td>
                                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                                 <td class="text-start align-middle">
-                                                    <input type="text" name="npwp" id="npwp" class="form-control" value="{{$order->konsumen->npwp}}"
-                                                        disabled>
+                                                    <input type="text" name="npwp" id="npwp" class="form-control"
+                                                        value="{{$order->konsumen->npwp}}" disabled>
                                                 </td>
                                             </tr>
                                             <tr style="height:50px">
@@ -89,7 +93,7 @@
                                         </table>
                                     </div>
                                     <!-- /.col -->
-                                    <div class="col-md-6 invoice-col" >
+                                    <div class="col-md-6 invoice-col">
                                         <div class="row d-flex justify-content-end">
                                             <table style="width: 90%">
                                                 {{-- <tr style="height:50px">
@@ -104,8 +108,10 @@
                                                     <td class="text-start align-middle">Tanggal</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
-                                                        <input type="text" name="tanggal" id="tanggal" class="form-control"
-                                                        value="{{\Carbon\Carbon::parse($order->created_at)->format('d F Y')}}" disabled>
+                                                        <input type="text" name="tanggal" id="tanggal"
+                                                            class="form-control"
+                                                            value="{{\Carbon\Carbon::parse($order->created_at)->format('d F Y')}}"
+                                                            disabled>
                                                     </td>
                                                 </tr>
                                                 <tr style="height:50px">
@@ -113,26 +119,28 @@
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
                                                         <input type="text" name="jam" id="jam" class="form-control"
-                                                            value="{{\Carbon\Carbon::parse($order->created_at)->format('H:i')}}" disabled>
+                                                            value="{{\Carbon\Carbon::parse($order->created_at)->format('H:i')}}"
+                                                            disabled>
                                                     </td>
                                                 </tr>
                                                 <tr style="height:50px">
                                                     <td class="text-start align-middle">No WA</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
                                                     <td class="text-start align-middle">
-                                                        <input type="text" name="no_hp" id="no_hp" class="form-control" value="{{$order->konsumen->no_hp}}"
-                                                            disabled>
+                                                        <input type="text" name="no_hp" id="no_hp" class="form-control"
+                                                            value="{{$order->konsumen->no_hp}}" disabled>
                                                     </td>
                                                 </tr>
                                                 @if ($order->kas_ppn == 1)
-                                                <tr style="height:50px">
+                                                <tr style="height:50px" hidden>
                                                     <td class="text-start align-middle">PPn Disetor Oleh</td>
                                                     <td class="text-start align-middle" style="width: 10%">:</td>
-                                                    <td class="text-start align-middle">
-                                                        <select class="form-select" name="dipungut" id="dipungut" required
-                                                        onchange="ppnPungut()">
-                                                            <option value="1" @if ($order->ppn_dipungut == 1) selected @endif>Sendiri</option>
-                                                    </select>
+                                                    <td class="text-start align-middle" >
+                                                        <select class="form-select" name="dipungut" id="dipungut"
+                                                            required onchange="ppnPungut()">
+                                                            <option value="1" @if ($order->ppn_dipungut == 1) selected
+                                                                @endif>Sendiri</option>
+                                                        </select>
                                                     </td>
                                                 </tr>
                                                 @endif
@@ -149,6 +157,155 @@
                     <hr>
                     <div class="table-responsive">
                         <table class="table table-bordered">
+                            <thead class="table-success">
+                                <tr>
+                                    <th class="text-center align-middle">NO</th>
+                                    <th class="text-center align-middle">NAMA BARANG/MEREK</th>
+                                    <th class="text-center align-middle">QTY</th>
+                                    <th class="text-center align-middle">SAT</th>
+                                    <th class="text-center align-middle">HARGA SATUAN
+                                        {{$order->kas_ppn ? '(DPP)' : ''}}
+                                    </th>
+                                    <th class="text-center align-middle">
+                                        Diskon
+                                        {{$order->kas_ppn ? '(DPP)' : ''}}
+                                    </th>
+                                    <th class="text-center align-middle">HARGA DISKON
+                                        {{$order->kas_ppn ? '(DPP)' : ''}}</th>
+                                    @if ($order->kas_ppn == 1)
+                                        <th class="text-center align-middle">
+                                            HARGA DISKON
+                                            (PPN)
+                                        </th>
+                                    @endif
+                                    <th class="text-center align-middle">TOTAL HARGA</th>
+                                    <th class="text-center align-middle">Act</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($order->invoice_detail as $b)
+                                <tr class="{{$b->deleted == 1 ? 'table-danger' : ''}}">
+                                    <td class="text-center align-middle">{{$loop->iteration}}</td>
+                                    <td class="text-start align-middle">{{$b->barangStokHarga->barang_nama->nama}}, {{$b->barangStokHarga->barang->kode}},
+                                        {{$b->barangStokHarga->barang->merk}}
+                                    </td>
+                                    <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
+                                    <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
+                                        : '-'}}</td>
+                                    <td class="text-end align-middle">{{$b->nf_harga_satuan}}</td>
+                                     <td class="text-end align-middle">
+                                        {{$b->nf_diskon}}
+                                    </td>
+                                    @if ($order->kas_ppn == 1)
+                                    <td class="text-end align-middle">{{number_format($b->harga_satuan - $b->diskon, 0, ',','.')}}</td>
+                                    @endif
+                                    <td class="text-end align-middle">{{number_format($b->harga_satuan - $b->diskon + $b->ppn, 0, ',','.')}}</td>
+                                    <td class="text-end align-middle">
+                                        {{$b->nf_total}}
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <button type="button" class="btn btn-{{$b->deleted ? 'primary' : 'danger'}} btn-sm" onclick="deleteKeranjang({{$b->id}})">
+                                            <i class="fa fa-{{$b->deleted ? 'repeat' : 'trash'}}"></i></button>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                @php
+                                $total = $order->invoice_detail->where('deleted', 0)->sum('total');
+                                $diskon = $order->diskon;
+                                $dpp_setelah_diskon = $total - $diskon;
+                                $ppn_val_ = $order->kas_ppn ? floor($dpp_setelah_diskon * $ppn / 100) : 0;
+                                $grand_total = $total;
+                                @endphp
+                                {{-- <tr>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DPP :</th>
+                                    <th class="text-end align-middle" id="dppTh">{{number_format($total, 0,
+                                        ',','.')}}</th>
+                                    <td></td>
+                                </tr> --}}
+                                {{-- <tr id="trDiskon">
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Diskon :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="diskon" id="diskon" value="{{$diskon}}"
+                                            onkeyup="addDiskon()" />
+                                    </th>
+                                    <td></td>
+                                </tr> --}}
+                                {{-- <tr>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DPP Setelah Diskon :</th>
+                                    <th class="text-end align-middle" id="thDppDiskon">{{number_format($dpp_setelah_diskon, 0,
+                                        ',','.')}}</th>
+                                        <td></td>
+                                </tr>
+                                @if ($order->kas_ppn == 1)
+                                <tr>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Ppn :</th>
+                                    <th class="text-end align-middle" id="thPpn">{{number_format(($ppn_val_), 0,
+                                        ',','.')}}</th>
+                                        <td></td>
+                                </tr>
+                                @endif --}}
+
+                                {{-- <tr>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Pph :</th>
+                                    <th class="text-end align-middle" id="pphTh">0</th>
+                                </tr> --}}
+                                <tr>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Grand Total :</th>
+                                    <th class="text-end align-middle" id="grandTotalTh">
+                                        {{number_format($grand_total, 0, ',','.')}}</th>
+                                        <td></td>
+                                </tr>
+                                {{-- <tr>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Penyesuaian:</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
+                                            value="0" />
+                                    </th>
+                                    <td></td>
+                                </tr> --}}
+                                <tr hidden>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Total Tagihan :</th>
+                                    <th class="text-end align-middle" id="totalTagihanTh">
+                                        {{number_format($grand_total, 0, ',','.')}}</th>
+                                        <td></td>
+                                </tr>
+                                <tr id="trJumlahDp" @if($order->sistem_pembayaran != 2) hidden @endif>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Masukan Nominal DP :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
+                                            onkeyup="addDp()" />
+                                    </th>
+                                    <td></td>
+                                </tr>
+                                <tr id="trDp" @if($order->sistem_pembayaran != 2) hidden @endif>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DP :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="{{$order->nf_dp}}" readonly/>
+                                    </th>
+                                    <td></td>
+                                </tr>
+                                @if ($order->kas_ppn == 1)
+                                <tr id="trDpPpn" @if($order->sistem_pembayaran != 2) hidden @endif>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">DP PPn :</th>
+                                    <th class="text-end align-middle">
+                                        <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="{{$order->nf_dp_ppn}}"
+                                            readonly />
+                                    </th>
+                                    <td></td>
+                                </tr>
+                                @endif
+
+                                <tr id="trSisa" @if($order->sistem_pembayaran != 2) hidden @endif>
+                                    <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Sisa Tagihan :</th>
+                                    <th class="text-end align-middle" id="thSisa">
+                                        {{$order->nf_sisa_tagihan}}</th>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        {{-- <table class="table table-bordered">
                             <thead class="table-success">
                                 <tr>
                                     <th class="text-center align-middle">Kelompok Barang</th>
@@ -176,7 +333,9 @@
                                     <td class="text-end align-middle">{{$b->nf_total}}
                                     </td>
                                     <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-{{$b->deleted ? 'primary' : 'danger'}} btn-sm" onclick="deleteKeranjang({{$b->id}})">
+                                        <button type="button"
+                                            class="btn btn-{{$b->deleted ? 'primary' : 'danger'}} btn-sm"
+                                            onclick="deleteKeranjang({{$b->id}})">
                                             <i class="fa fa-{{$b->deleted ? 'repeat' : 'trash'}}"></i></button>
                                     </td>
                                 </tr>
@@ -199,41 +358,37 @@
                                 <tr id="trDiskon">
                                     <th colspan="7" class="text-end align-middle">Diskon :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="diskon" id="diskon" value="{{$diskon}}" readonly
-                                            onkeyup="addDiskon()" />
+                                        <input type="text" class="form-control text-end" name="diskon" id="diskon"
+                                            value="{{$diskon}}" readonly onkeyup="addDiskon()" />
                                     </th>
                                     <td></td>
                                 </tr>
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
-                                    <th class="text-end align-middle" id="thDppDiskon">{{number_format($dpp_setelah_diskon, 0,
+                                    <th class="text-end align-middle" id="thDppDiskon">
+                                        {{number_format($dpp_setelah_diskon, 0,
                                         ',','.')}}</th>
-                                        <td></td>
+                                    <td></td>
                                 </tr>
                                 @if ($order->kas_ppn == 1)
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Ppn :</th>
                                     <th class="text-end align-middle" id="thPpn">{{number_format(($ppn), 0,
                                         ',','.')}}</th>
-                                        <td></td>
+                                    <td></td>
                                 </tr>
                                 @endif
-
-                                {{-- <tr>
-                                    <th colspan="7" class="text-end align-middle">Pph :</th>
-                                    <th class="text-end align-middle" id="pphTh">0</th>
-                                </tr> --}}
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Grand Total :</th>
                                     <th class="text-end align-middle" id="grandTotalTh">
                                         {{number_format($grand_total, 0, ',','.')}}</th>
-                                        <td></td>
+                                    <td></td>
                                 </tr>
                                 <tr>
                                     <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee" onkeyup="addCheck()"
-                                            value="{{$order->nf_add_fee}}" />
+                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee"
+                                            onkeyup="addCheck()" value="{{$order->nf_add_fee}}" />
                                     </th>
                                     <td></td>
                                 </tr>
@@ -241,20 +396,21 @@
                                     <th colspan="7" class="text-end align-middle">Total Tagihan :</th>
                                     <th class="text-end align-middle" id="totalTagihanTh">
                                         {{number_format($grand_total, 0, ',','.')}}</th>
-                                        <td></td>
+                                    <td></td>
                                 </tr>
                                 <tr id="trJumlahDp" @if($order->sistem_pembayaran != 2) hidden @endif>
                                     <th colspan="7" class="text-end align-middle">Masukan Nominal DP :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
-                                            onkeyup="addDp()" />
+                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp"
+                                            value="0" onkeyup="addDp()" />
                                     </th>
                                     <td></td>
                                 </tr>
                                 <tr id="trDp" @if($order->sistem_pembayaran != 2) hidden @endif>
                                     <th colspan="7" class="text-end align-middle">DP :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp" id="dp" value="{{$order->nf_dp}}" readonly/>
+                                        <input type="text" class="form-control text-end" name="dp" id="dp"
+                                            value="{{$order->nf_dp}}" readonly />
                                     </th>
                                     <td></td>
                                 </tr>
@@ -262,8 +418,8 @@
                                 <tr id="trDpPpn" @if($order->sistem_pembayaran != 2) hidden @endif>
                                     <th colspan="7" class="text-end align-middle">DP PPn :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn" value="{{$order->nf_dp_ppn}}"
-                                            readonly />
+                                        <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn"
+                                            value="{{$order->nf_dp_ppn}}" readonly />
                                     </th>
                                     <td></td>
                                 </tr>
@@ -276,7 +432,7 @@
                                     <td></td>
                                 </tr>
                             </tfoot>
-                        </table>
+                        </table> --}}
                     </div>
                     <div class="row ">
                         <div class="col-md-6"></div>
@@ -305,7 +461,6 @@
 {{-- <script src="{{asset('assets/js/cleave.min.js')}}"></script> --}}
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-
     var tempTempo = {{ $order->konsumen->tempo_hari }};
 
 
@@ -326,8 +481,8 @@
         delimiter: '.',
         negative: true
     };
-    new Cleave('#add_fee', cleaveOptions);
-    new Cleave('#diskon', cleaveOptions);
+    new Cleave('#jumlah_dp', cleaveOptions);
+
 
     // Helper untuk menghapus format angka
     function parseNumber(value) {
@@ -391,7 +546,7 @@
 
     function calculateTotalTagihan() {
         var gt = document.getElementById('grandTotalTh').innerText;
-        var add_fee = document.getElementById('add_fee').value;
+        var add_fee = document.getElementById('add_fee')?.value || '0';
         gt = gt.replace(/\./g, '');
         add_fee = add_fee.replace(/\./g, '');
 
