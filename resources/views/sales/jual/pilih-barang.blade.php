@@ -209,7 +209,7 @@
 
                         @else
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#grosirModal"
-                            onclick="setModalGrosir({{$stokHarga}}, {{$stokHarga->id}})">Grosir</button>
+                            onclick="setModalGrosir({{$stokHarga}}, {{$stokHarga->id}})">Jual Grosir</button>
                         @endif
                         @endif
 
@@ -392,6 +392,7 @@
     function setModalGrosir(data, id)
     {
          document.getElementById('barang_stok_harga_id_grosir').value = id;
+         document.getElementById('nm_barang_merk').value = data.barang_nama.nama + ', ' + data.barang.kode + ', ' + data.barang.merk;
 
         if (data.barang.jenis == 1) {
             document.getElementById('barang_ppn_grosir').value = 1;
@@ -456,49 +457,38 @@
             document.getElementById('barang_ppn').value = 0;
         }
 
-        if (data.barang.is_grosir == 1) {
+        document.getElementById('rowGrosirRetail').hidden = false;
+        let grosirTbody = document.getElementById('grosirTableBodyRetail');
+        grosirTbody.innerHTML = ''; // Clear previous rows
 
-            document.getElementById('rowGrosir').hidden = false;
-            let grosirTbody = document.getElementById('grosirTableBody');
-            grosirTbody.innerHTML = ''; // Clear previous rows
-
-            // ajax request to get grosir data
-            $.ajax({
-                url: '{{ route("sales.jual.get-grosir") }}',
-                method: 'GET',
-                data: {
-                    barang_id: data.barang.id
-                },
-                success: function(response) {
-                    if (response.status === 'success' && response.data.length > 0) {
-                    let grosirTableBody = document.getElementById('grosirTableBody');
+        // ajax request to get grosir data
+        $.ajax({
+            url: '{{ route("sales.jual.get-grosir") }}',
+            method: 'GET',
+            data: {
+                barang_id: data.barang.id
+            },
+            success: function(response) {
+                if (response.status === 'success' && response.data.length > 0) {
+                    let grosirTableBody = document.getElementById('grosirTableBodyRetail');
                     grosirTableBody.innerHTML = ''; // Clear existing rows
                     response.data.forEach(function(grosir) {
                         let row = document.createElement('tr');
                         row.innerHTML = `
                             <td class="text-center">${grosirTableBody.children.length + 1}</td>
-                            <td class="text-center">${grosir.qty}  ${grosir.satuan.nama}</td>
+                            <th class="text-center">${grosir.qty} ${grosir.satuan.nama}</th>
                             <td class="text-center">${grosir.qty_grosir} ${grosir.barang.satuan.nama}</td>
                             <td class="text-center">${grosir.diskon} %</td>
-                            <td class="text-center">
-                                <button class="btn btn-primary btn-sm" onclick="pilihGrosir(${grosir.id})">
-                                    <i class="fa fa-check"></i>
-                                </button>
-                            </td>
                         `;
                         grosirTableBody.appendChild(row);
                     });
-                }
-                },
-                error: function() {
-                    alert('Terjadi kesalahan saat memuat data grosir.');
-                }
-            });
 
-        } else {
-            document.getElementById('rowGrosir').hidden = true;
-
-        }
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat memuat data grosir.');
+            }
+        });
     }
 
     function updateCart(productId, quantity, maxStock) {

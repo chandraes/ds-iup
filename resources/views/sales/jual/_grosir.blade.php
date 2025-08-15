@@ -18,16 +18,19 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <label for="satuan_grosir_id" class="form-label">Pilih Satuan Grosir</label>
-                                    <select class="form-select" name="satuan_grosir_id" id="satuan_grosir_id">
-                                    </select>
+                                <div class="col-md-12 mb-2">
+                                    <input type="text" id="nm_barang_merk" class="form-control" disabled></input>
                                 </div>
+
                                 <div class="col-md-6">
                                     <label for="" class="form-label">Qty</label>
                                     <input type="text" class="form-control" name="jumlah_grosir" id="jumlah_grosir"
                                         aria-describedby="helpId" placeholder="masukan qty grosir" />
-
+                                </div>
+                                 <div class="col-md-6">
+                                    <label for="satuan_grosir_id" class="form-label">Pilih Satuan Grosir</label>
+                                    <select class="form-select" name="satuan_grosir_id" id="satuan_grosir_id">
+                                    </select>
                                 </div>
                             </div>
                         </div>

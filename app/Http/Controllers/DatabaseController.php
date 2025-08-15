@@ -577,7 +577,7 @@ class DatabaseController extends Controller
 
         return redirect()->back()->with('success', 'Diskon khusus berhasil diubah!');
     }
-    
+
     public function konsumen_upload_ktp(Request $request, Konsumen $konsumen)
     {
         $data = $request->validate([
@@ -623,7 +623,6 @@ class DatabaseController extends Controller
         $data = $request->validate([
             'kode_toko_id' => 'required|exists:kode_tokos,id',
             'nik' => 'nullable',
-            'diskon_khusus' => 'required',
             'nama' => 'required',
             'cp' => 'required',
             'no_hp' => 'required',

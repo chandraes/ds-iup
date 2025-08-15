@@ -18,18 +18,42 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="">Masukan Jumlah Jual</label>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control text-end" name="jumlah" id="jumlah" required
-                                    data-thousands=".">
-                                <span class="input-group-text" id="jumlah_satuan"></span>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label for="">Masukan Jumlah Jual</label>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control text-end" name="jumlah" id="jumlah"
+                                            required data-thousands=".">
+                                        <span class="input-group-text" id="jumlah_satuan"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label for="">Minimum Kelipatan Satuan Jual</label>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control text-end" name="minJual" id="minJual"
+                                            disabled>
+                                        <span class="input-group-text" id="minJualSatuan"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
                         <div class="col-md-6">
-                            <label for="">Minimum Kelipatan Satuan Jual</label>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control text-end" name="minJual" id="minJual" disabled>
-                                <span class="input-group-text" id="minJualSatuan"></span>
+                             <div class="row" id="rowGrosirRetail" hidden>
+                                {{-- grosir --}}
+                                <div class="col-md-12">
+                                    <table class="table table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center align-middle">No</th>
+                                                <th class="text-center align-middle">MIN Qty Grosir</th>
+                                                <th class="text-center align-middle">Qty</th>
+                                                <th class="text-center align-middle">Diskon</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="grosirTableBodyRetail"></tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
