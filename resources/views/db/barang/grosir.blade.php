@@ -104,7 +104,6 @@
         let qtyGrosir = document.getElementById('jumlah').value;
         let diskonGrosir = document.getElementById('diskon_grosir').value;
         let qty = document.getElementById('qty').value;
-        let satId
 
         if (!barangId || !grosirSatuan || !qtyGrosir || !diskonGrosir) {
             Swal.fire({
@@ -141,6 +140,10 @@
                     // Reload the grosir table
                     loadGrosirTable(barangId);
 
+                    // Refresh DataTable if initialized
+                    if ($.fn.DataTable.isDataTable('#data')) {
+                        $('#data').DataTable().ajax.reload(null, false);
+                    }
                 } else {
                     Swal.fire({
                         icon: 'error',

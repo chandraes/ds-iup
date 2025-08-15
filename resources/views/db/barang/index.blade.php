@@ -508,7 +508,8 @@ $(document).ready(function() {
     function setGrosir(id, satuan) {
         document.getElementById('sat_barang').innerText = satuan.nama;
         document.getElementById('grosirBarangId').value = id;
-
+        let grosT = document.getElementById('grosirTableBody');
+        grosT.innerHTML = ''; // Clear existing rows
         // ajax request to get grosir data
         $.ajax({
             url: "{{ route('db.barang.get-grosir') }}",
