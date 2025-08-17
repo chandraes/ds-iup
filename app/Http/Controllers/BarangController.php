@@ -674,9 +674,21 @@ class BarangController extends Controller
     {
         $data = $request->validate([
             'diskon' => 'required|numeric|min:0|max:100',
-            'diskon_mulai' => 'required|date',
-            'diskon_selesai' => 'required|date|after_or_equal:diskon_mulai',
+            'diskon_mulai' => 'required',
+            'diskon_selesai' => 'required',
         ]);
+
+        // d-m-Y format to Y-m-d
+        $data['diskon_mulai'] = date('Y-m-d', strtotime($data['diskon_mulai']));
+        $data['diskon_selesai'] = date('Y-m-d', strtotime($data['diskon_selesai']));
+
+        // Cek apakah diskon_mulai dan diskon_selesai valid
+        if ($data['diskon_mulai'] >= $data['diskon_selesai']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tanggal mulai diskon harus sebelum tanggal selesai diskon.',
+            ]);
+        }
 
         try {
             DB::beginTransaction();
@@ -687,10 +699,16 @@ class BarangController extends Controller
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            return redirect()->back()->with('error', 'Terjadi masalah saat mengubah diskon. '.$th->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi masalah saat mengubah diskon. '.$th->getMessage(),
+            ]);
         }
 
-        return redirect()->back()->with('success', 'Berhasil mengubah diskon barang!');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berhasil mengubah diskon barang!',
+        ]);
     }
 
     public function barang_delete(Barang $barang)

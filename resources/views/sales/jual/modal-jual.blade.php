@@ -19,6 +19,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="row">
+                                 <div class="col-md-12 mb-2">
+                                    <input type="text" id="nm_barang_merk_retail" class="form-control" disabled></input>
+                                </div>
                                 <div class="col-md-12">
                                     <label for="">Masukan Jumlah Jual</label>
                                     <div class="input-group mb-3">

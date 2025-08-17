@@ -451,6 +451,8 @@
         document.getElementById('minJual').value = data.nf_min_jual;
         document.getElementById('barang_stok_harga_id').value = id;
 
+        document.getElementById('nm_barang_merk_retail').value = data.barang_nama.nama + ', ' + data.barang.kode + ', ' + data.barang.merk;
+
         if (data.barang.jenis == 1) {
             document.getElementById('barang_ppn').value = 1;
         } else {

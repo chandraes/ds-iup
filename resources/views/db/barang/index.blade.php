@@ -126,11 +126,13 @@
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.1.1/css/scroller.dataTables.min.css">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet" />
+<link href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
 <script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
 <script>
@@ -427,23 +429,73 @@ $(document).ready(function() {
         document.getElementById('uploadFotoForm').action = `{{route('db.barang.upload-image', ':id')}}`.replace(':id', id);
     }
 
-    function setDiskon(id, diskon, diskon_mulai, diskon_selesai) {
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const month = ('0' + (d.getMonth() + 1)).slice(-2);
+        const day = ('0' + d.getDate()).slice(-2);
+        return day + '-' + month + '-' + d.getFullYear();
+        // return d.getFullYear() + '-' + month + '-' + day;
+    }
+
+    function setDiskon(id, diskon, diskon_mulai, diskon_selesai, nama_barang, kode, merk) {
         // reset diskon form
         document.getElementById('diskonForm').reset();
         document.getElementById('diskon').value = diskon;
-        // Set diskon_mulai (input type="date" expects yyyy-mm-dd)
-        if (diskon_mulai) {
-            document.getElementById('diskon_mulai').value = diskon_mulai;
-        } else {
-            document.getElementById('diskon_mulai').value = '';
-        }
-        // Set diskon_selesai (input type="date" expects yyyy-mm-dd)
-        if (diskon_selesai) {
-            document.getElementById('diskon_selesai').value = diskon_selesai;
-        } else {
-            document.getElementById('diskon_selesai').value = '';
-        }
+        document.getElementById('nm_barang_merk_diskon').value = `${nama_barang}, ${kode}, ${merk}`;
+
+        document.getElementById('diskon_mulai').flatpickr({
+            dateFormat: "d-m-Y",
+            defaultDate: diskon_mulai ? formatDateForInput(diskon_mulai) : ''
+        });
+        document.getElementById('diskon_selesai').flatpickr({
+            dateFormat: "d-m-Y",
+            defaultDate: diskon_selesai ? formatDateForInput(diskon_selesai) : ''
+        });
         document.getElementById('diskonForm').action = `{{route('db.barang.diskon', ':id')}}`.replace(':id', id);
+
+        // Bind AJAX submit
+        $('#diskonForm').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            let form = $(this);
+            let url = form.attr('action');
+            let data = form.serialize();
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: data,
+                beforeSend: function() {
+                    form.find('button[type="submit"]').prop('disabled', true);
+                },
+                success: function(response) {
+                    // Tampilkan notifikasi sukses, reload datatable jika perlu
+
+                    Swal.fire({
+                        icon: response.status,
+                        title: (response.status).toUpperCase(),
+                        text: response.message || 'Diskon berhasil disimpan!'
+                    });
+                    $('#diskonModal').modal('hide');
+                    $('#data').DataTable().ajax.reload(null, false); // reload datatable
+                },
+                error: function(xhr) {
+                    let msg = 'Terjadi kesalahan.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: msg
+                    });
+                },
+                complete: function() {
+                    form.find('button[type="submit"]').prop('disabled', false);
+                }
+            });
+        });
     }
 
 
