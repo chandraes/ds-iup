@@ -557,9 +557,11 @@ $(document).ready(function() {
 
     }
 
-    function setGrosir(id, satuan) {
+    function setGrosir(id, satuan, nama, kode, merk) {
+        // reset grosir form
         document.getElementById('sat_barang').innerText = satuan.nama;
         document.getElementById('grosirBarangId').value = id;
+        document.getElementById('nm_barang_grosir').value = `${nama}, ${kode}, ${merk}`;
         let grosT = document.getElementById('grosirTableBody');
         grosT.innerHTML = ''; // Clear existing rows
         // ajax request to get grosir data
