@@ -36,18 +36,6 @@
                 </select>
             </div>
             <div class="col-md-3 mb-2">
-                <label for="filterSalesArea" class="form-label">Sales Area</label>
-
-                <select id="filterSalesArea" name="area" class="form-select" onchange="this.form.submit()">
-                    <option value="" selected>-- Semua Sales Area --</option>
-                    @foreach ($sales_area as $salesArea)
-                    <option value="{{ $salesArea->id }}" {{ request('area')==$salesArea->id ? 'selected' : '' }}>
-                        {{ $salesArea->nama }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3 mb-2">
                 <label for="filterProvinsi" class="form-label">Provinsi</label>
                 <select id="filterProvinsi" name="provinsi" class="form-select" onchange="this.form.submit()">
                     <option value="">-- Semua Provinsi --</option>
@@ -104,7 +92,6 @@
                     <th class="text-center align-middle">KODE</th>
                     <th class="text-center align-middle">KODE <br>TOKO</th>
                     <th class="text-center align-middle">NAMA</th>
-                    <th class="text-center align-middle">Sales Area</th>
                     <th class="text-center align-middle">Provinsi</th>
                     <th class="text-center align-middle">Kab/Kota</th>
                     <th class="text-center align-middle">Kecamatan</th>
@@ -131,10 +118,6 @@
 <script src="https://cdn.datatables.net/scroller/2.4.3/js/scroller.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script>
 <script>
-    $('#filterSalesArea').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
 
     $('#filterKodeToko').select2({
         theme: 'bootstrap-5',
@@ -159,7 +142,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     function getFilters() {
         return {
-            area: document.getElementById('filterSalesArea').value,
             kecamatan: document.getElementById('filterKecamatan').value,
             kode_toko: document.getElementById('filterKodeToko').value,
             kabupaten_kota: document.getElementById('filterKota').value,
@@ -173,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('universal.konsumen-data') }}",
+            url: "{{ route('sales.konsumen.data') }}",
             data: function(d) {
                 // Tambahkan filter ke parameter AJAX
                 var filters = getFilters();
@@ -193,11 +175,10 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 0, className: "text-center align-middle" },
             { data: 1, className: "text-center align-middle" },
             { data: 2, className: "text-start align-middle text-wrap" },
-            { data: 3, className: "text-center align-middle text-wrap" },
+            { data: 3, className: "text-start align-middle" },
             { data: 4, className: "text-start align-middle" },
             { data: 5, className: "text-start align-middle" },
-            { data: 6, className: "text-start align-middle" },
-            { data: 7, className: "text-start align-middle text-wrap" },
+            { data: 6, className: "text-start align-middle text-wrap" },
         ]
     });
 

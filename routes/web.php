@@ -60,6 +60,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
 
+            Route::get('/konsumen/data', [App\Http\Controllers\SalesController::class, 'konsumen_data'])->name('sales.konsumen.data');
             Route::get('/konsumen', [App\Http\Controllers\SalesController::class, 'konsumen'])->name('sales.konsumen');
 
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
