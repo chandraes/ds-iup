@@ -85,22 +85,11 @@
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">NAMA BARANG/MEREK</th>
+                <th class="text-center align-middle">MEREK</th>
                 <th class="text-center align-middle">QTY</th>
                 <th class="text-center align-middle">SAT</th>
-                <th class="text-center align-middle">HARGA SATUAN
-                    {{$data->kas_ppn == 1 ? '(DPP)' : ''}}
-                </th>
-                <th class="text-center align-middle">DISKON
-                    {{$data->kas_ppn == 1 ? '(DPP)' : ''}}
-                </th>
-                <th class="text-center align-middle">HARGA DISKON
-                    {{$data->kas_ppn == 1 ? '(DPP)' : ''}}
-                </th>
-                @if ($data->kas_ppn == 1)
-                <th class="text-center align-middle">HARGA DISKON
-                    (PPN)
-                </th>
-                @endif
+                <th class="text-center align-middle">HARGA SATUAN</th>
+                <th class="text-center align-middle">HARGA DISKON</th>
                 <th class="text-center align-middle">TOTAL HARGA</th>
             </tr>
         </thead>
@@ -111,24 +100,33 @@
                     {{$loop->iteration}}
                 </td>
                 <td style="text-align: left">
-                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}}, {{$d->stok->barang->merk}}
+                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}}
+                </td>
+                <td style="text-align: left">
+                    {{$d->stok->barang->merk}}
                 </td>
                 <td style="text-align: center">
                     {{$d->nf_jumlah}}
+                    @if ($d->is_grosir == 1)
+                    <br>
+                    ({{$d->nf_jumlah_grosir}})
+                    @endif
                 </td>
                 <td style="text-align: center">
                     {{$d->stok->barang->satuan ? $d->stok->barang->satuan->nama : '-'}}
+                    @if ($d->is_grosir == 1)
+                    <br>
+                    ({{$d->satuan_grosir ? $d->satuan_grosir->nama : '-'}})
+                    @endif
                 </td>
                 <td style="text-align: right; padding-left:0.5rem">
+                    @if ($data->kas_ppn == 1)
+                    {{number_format($d->harga_satuan + floor($ppn / 100 * $d->harga_satuan), 0, ',','.')}}
+                    @else
                     {{$d->nf_harga_satuan}}
+                    @endif
                 </td>
-                <td style="text-align: right;">
-                    {{$d->nf_diskon}}
-                </td>
-                 @if ($data->kas_ppn == 1)
-                <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon, 0, ',','.')}}</td>
-                @endif
-                  <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
+                <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
                 <td style="text-align: right; padding-left:0.5rem">
                     {{$d->nf_total}}
                 </td>
@@ -262,7 +260,7 @@
             </p>
         </td>
         <td style="width: 50%; text-align: center; vertical-align: top;">
-            <p><strong>{{ $data->konsumen ? $data->konsumen->nama : $data->konsumen_temp->nama }}</strong></p>
+            <p><strong>{{ $data->konsumen ? $data->konsumen->kode_toko->kode.' '.$data->konsumen->nama : $data->konsumen_temp->nama }}</strong></p>
             <div style="height: 60px;"></div>
             <p style="margin-bottom: 0;">
                 <strong>_________________________</strong>

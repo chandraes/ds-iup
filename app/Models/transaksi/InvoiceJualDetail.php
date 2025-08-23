@@ -19,9 +19,10 @@ class InvoiceJualDetail extends Model
         'nf_total',
         'nf_diskon',
         'nf_ppn',
+        'nf_jumlah_grosir',
         'harga_diskon_dpp',
         'nf_harga_satuan_akhir',
-        
+
     ];
 
     public function dataTahun()
@@ -40,6 +41,11 @@ class InvoiceJualDetail extends Model
     public function getNfHargaSatuanAttribute()
     {
         return number_format($this->harga_satuan, 0, ',', '.');
+    }
+
+    public function getNfJumlahGrosirAttribute()
+    {
+        return number_format($this->jumlah_grosir, 0, ',', '.');
     }
 
     public function getNfTotalAttribute()

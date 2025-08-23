@@ -12,19 +12,6 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    {{-- <td><a href="{{route('billing')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
-                                width="30">
-                            Billing</a></td> --}}
-                    {{-- <td><a target="_blank"
-                            href="{{route('billing.invoice-konsumen.pdf-all', [
-                                'expired' => request('expired'),
-                                'apa_ppn' => request('apa_ppn'),
-                                'karyawan_id' => request('karyawan_id'),
-                                'kabupaten_id' => request('kabupaten_id'),
-                                'kecamatan_id' => request('kecamatan_id'),
-                            ])}}"><img
-                                src="{{asset('images/print.svg')}}" alt="dokumen" width="30">
-                            Print</a></td> --}}
                 </tr>
             </table>
         </div>

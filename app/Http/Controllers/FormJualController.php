@@ -279,6 +279,7 @@ class FormJualController extends Controller
         $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
 
         $kas = $invoice->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $rekening = Rekening::where('untuk', $kas)->first();
 
@@ -294,6 +295,7 @@ class FormJualController extends Controller
                 'invoice_detail.stok.kategori',
                 'invoice_detail.stok.barang_nama',
             ]),
+            'ppn' => $ppn,
             'pt' => $pt,
             'tanggal_tempo' => $tanggal_tempo,
             'tanggal' => $tanggal,
@@ -367,25 +369,27 @@ class FormJualController extends Controller
 
             $nama_konsumen = $invoice->konsumen_id ? $konsumen->kode_toko->kode." ".$konsumen->nama : $konsumen->nama;
 
-            $pesan .= 'Konsumen : *'.$nama_konsumen."*\n\n".
-                    'Nilai DPP    : Rp '.number_format($invoice->total, 0, ',', '.')."\n";
+            $pesan .= 'Konsumen : *'.$nama_konsumen."*\n\n";
+                    // 'Nilai DPP    : Rp '.number_format($invoice->total, 0, ',', '.')."\n";
+            $pesan .= 'Total Tagihan : Rp '.number_format($invoice->grand_total, 0, ',', '.')."\n\n";
 
-            if ($invoice->kas_ppn == 1) {
-                $pesan .= 'PPN         : Rp '.number_format($invoice->ppn, 0, ',', '.')."\n";
-            } else {
-                $pesan .= "\n";
-            }
+            // if ($invoice->kas_ppn == 1) {
+            //     $pesan .= 'PPN         : Rp '.number_format($invoice->ppn, 0, ',', '.')."\n";
+            // } else {
+            //     $pesan .= "\n";
+            // }
 
-            if ($invoice->lunas == 1) {
-                $pesan .= 'Total Bayar : Rp '.number_format($invoice->grand_total, 0, ',', '.')."\n\n";
-            } else {
-                if ($invoice->dp > 0) {
-                    $pesan .= 'DP      : Rp '.number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.')."\n\n".
-                            'Sisa Tagihan : *Rp '.number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.')."*\n\n";
-                } else {
-                    $pesan .= 'Sisa Tagihan : *Rp '.number_format($invoice->grand_total, 0, ',', '.')."*\n\n";
-                }
+            // if ($invoice->lunas == 1) {
+
+            // } else {
+            if ($invoice->dp > 0) {
+                $pesan .= 'DP      : Rp '.number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.')."\n\n".
+                        'Sisa Tagihan : *Rp '.number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.')."*\n\n";
             }
+                // else {
+                //     $pesan .= 'Sisa Tagihan : *Rp '.number_format($invoice->grand_total, 0, ',', '.')."*\n\n";
+                // }
+            // }
 
             $pesan .= "==========================\n";
 
