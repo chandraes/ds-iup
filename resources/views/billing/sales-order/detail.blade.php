@@ -185,9 +185,20 @@
                                     <td class="text-start align-middle">{{$b->barangStokHarga->barang_nama->nama}}, {{$b->barangStokHarga->barang->kode}},
                                         {{$b->barangStokHarga->barang->merk}}
                                     </td>
-                                    <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
+                                    <td class="text-center align-middle">
+                                        {{$b->nf_jumlah}}
+                                        @if ($b->is_grosir == 1)
+                                        <br>
+                                        ({{$b->nf_jumlah_grosir}})
+                                        @endif
+                                    </td>
                                     <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
-                                        : '-'}}</td>
+                                        : '-'}}
+                                         @if ($b->is_grosir == 1)
+                                        <br>
+                                        ({{$b->satuan_grosir->nama}})
+                                        @endif
+                                    </td>
                                     <td class="text-end align-middle">{{$b->nf_harga_satuan}}</td>
                                      <td class="text-end align-middle">
                                         {{$b->nf_diskon}}

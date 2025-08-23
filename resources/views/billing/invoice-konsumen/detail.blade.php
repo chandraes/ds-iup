@@ -142,10 +142,24 @@
                          {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}},
                         {{$d->stok->barang->merk}}
                     </td>
-                     <td class="text-center align-middle">{{$d->nf_jumlah}}</td>
+                     <td class="text-center align-middle">
+                        {{$d->nf_jumlah}}
+                        @if ($d->is_grosir == 1)
+                        <br>
+                        ({{$d->nf_jumlah_grosir}})
+                        @endif
+                    </td>
                     <td class="text-center align-middle">{{$d->barang->satuan ? $d->barang->satuan->nama
-                        : '-'}}</td>
-                    <td class="text-end align-middle">{{$d->nf_harga_satuan}}</td>
+                        : '-'}}
+                        @if ($d->is_grosir == 1)
+                        <br>
+                        ({{$d->satuan_grosir ? $d->satuan_grosir->nama : '-'}})
+                        @endif
+                    </td>
+                    <td class="text-end align-middle">
+                        {{$d->nf_harga_satuan}}
+
+                    </td>
                         <td class="text-end align-middle">
                         {{$d->nf_diskon}}
                     </td>

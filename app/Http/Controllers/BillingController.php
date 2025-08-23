@@ -493,7 +493,7 @@ class BillingController extends Controller
         $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
 
         return view('billing.sales-order.detail', [
-            'order' => $order->load('konsumen', 'invoice_detail.barang', 'invoice_detail.barangStokHarga'),
+            'order' => $order->load('konsumen', 'invoice_detail.barang', 'invoice_detail.barangStokHarga', 'invoice_detail.satuan_grosir', 'invoice_detail.barang.satuan'),
             'ppn' => $ppn,
             'penyesuaian' => $penyesuaian,
         ]);

@@ -1093,7 +1093,8 @@ class KeranjangJual extends Model
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-             $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+             $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")";
+             $pesan .= $d->is_grosir == 1 ? " / ". $d->jumlah_grosir . ' ('.$d->satuan_grosir->nama .')'."\n\n" : "\n\n";
         }
 
         return [
@@ -1173,7 +1174,8 @@ class KeranjangJual extends Model
 
         $n = 1;
         foreach ($invoice->load('invoice_detail.barang.barang_nama', 'invoice_detail.barang.satuan')->invoice_detail as $d) {
-            $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")\n\n";
+            $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->jumlah.' ('.$d->barang->satuan->nama.")";
+            $pesan .= $d->is_grosir == 1 ? " / ". $d->jumlah_grosir . ' ('.$d->satuan_grosir->nama .')'."\n\n" : "\n\n";
         }
 
         return [

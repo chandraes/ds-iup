@@ -620,10 +620,6 @@ class SalesController extends Controller
 
     public function keranjang_checkout(Request $request)
     {
-
-
-
-
         $rules = [
             // 'konsumen_id' => 'required',
             // 'pembayaran' => 'required',

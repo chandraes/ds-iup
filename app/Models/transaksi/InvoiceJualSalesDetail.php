@@ -17,6 +17,7 @@ class InvoiceJualSalesDetail extends Model
     protected $appends = [
         'nf_jumlah',
         'nf_harga_satuan',
+        'nf_jumlah_grosir',
         'total',
         'nf_total',
     ];
@@ -28,7 +29,7 @@ class InvoiceJualSalesDetail extends Model
 
     public function satuan_grosir()
     {
-        return $this->belongsTo(Satuan::class, 'satuan_grosir_id');
+        return $this->belongsTo(Satuan::class, 'satuan_grosir_id')->withDefault(['nama' => '-']);
     }
 
     public function barang()
@@ -49,6 +50,11 @@ class InvoiceJualSalesDetail extends Model
     public function getNfHargaSatuanAttribute()
     {
         return number_format($this->harga_satuan, 0, ',', '.');
+    }
+
+    public function getNfJumlahGrosirAttribute()
+    {
+        return number_format($this->jumlah_grosir, 0, ',', '.');
     }
 
     public function getNfDiskonAttribute()
