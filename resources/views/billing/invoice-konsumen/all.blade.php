@@ -104,7 +104,9 @@
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Sales</th>
                     <th class="text-center align-middle">Daerah</th>
+                    <th class="text-center align-middle">Kode</th>
                     <th class="text-center align-middle">Konsumen</th>
+                    <th class="text-center align-middle">Plafon</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai</th>
                     <th class="text-center align-middle">Total <br>Belanja</th>
@@ -129,9 +131,11 @@
                             {{$d->konsumen->kabupaten_kota ? $d->konsumen->kabupaten_kota->nama_wilayah.', ' : ''}}
                             {{$d->konsumen->kecamatan ? $d->konsumen->kecamatan->nama_wilayah : ''}}
                     </td>
-                    <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' :
+                    <td class="text-center align-middle" data-order="{{$d->konsumen->kode}}">{{$d->konsumen->full_kode}}</td>
+                    <td class="text-start align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' :
                         '' }}{{$d->konsumen->nama}}</td>
-                    <td class="text-center align-middle text-nowrap" data-order="{{$d->nomor}}">
+                    <td class="text-end align-middle" data-order="{{$d->konsumen->plafon}}">{{$d->konsumen->nf_plafon}}</td>
+                    <td class="text-start align-middle text-nowrap" data-order="{{$d->nomor}}">
                         <a href="{{route('billing.invoice-konsumen.detail', $d)}}">
                             {{$d->kode}}
                         </a>
@@ -214,7 +218,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle" colspan="7">Grand Total</th>
                     <th class="text-start text-nowrap align-middle">
 
                         <ul style="margin: 0; padding: 0; list-style: none;">
