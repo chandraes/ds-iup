@@ -65,6 +65,10 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
 
+            Route::prefix('invoice-konsumen')->group(function() {
+                Route::get('/', [App\Http\Controllers\SalesController::class, 'invoice_konsumen'])->name('sales.invoice-konsumen');
+            });
+
             Route::prefix('jual')->group(function () {
                 Route::get('/', [App\Http\Controllers\SalesController::class, 'jual'])->name('sales.jual');
                 Route::post('/store', [App\Http\Controllers\SalesController::class, 'jual_store'])->name('sales.jual.store');

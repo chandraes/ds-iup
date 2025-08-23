@@ -1022,5 +1022,42 @@ class SalesController extends Controller
         ]);
     }
 
+    public function invoice_konsumen(Request $request)
+    {
+        $filters = $request->only(['expired', 'apa_ppn', 'konsumen_id', 'kecamatan_id', 'kabupaten_id']);
+
+        $filters['karyawan_id'] = auth()->user()->karyawan_id;
+
+        $data = InvoiceJual::gabung($filters);
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                    $query->where('is_sales', 1);
+                })->select('id', 'nama')->get();
+
+        // Get unique kecamatan_id and kabupaten_kota_id directly as arrays to minimize memory usage
+        $kecamatanIds = Konsumen::distinct()->pluck('kecamatan_id')->filter()->all();
+        $kabupatenIds = Konsumen::distinct()->pluck('kabupaten_kota_id')->filter()->all();
+
+        // Fetch only needed Wilayah records
+        $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
+        $kecamatan = Wilayah::whereIn('id', $kecamatanIds)
+                    ->when(
+                        ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
+                        function ($query) use ($request) {
+                            $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
+                            return $query->where('id_induk_wilayah', $wilayah);
+                        }
+                    )->get();
+
+        return view('sales.invoice.index',
+        [
+              'data' => $data,
+            'ppn' => $ppn,
+            'sales' => $sales,
+            'kecamatan' => $kecamatan,
+            'kabupaten' => $kabupaten,
+        ]);
+    }
+
 
 }
