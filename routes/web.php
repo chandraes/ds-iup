@@ -486,6 +486,10 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
             });
 
+            Route::prefix('stok-all')->group(function () {
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_all'])->name('db.stok-all');
+            });
+
             Route::post('/stok-hilang/{stok}', [App\Http\Controllers\BarangController::class, 'ganti_rugi'])->name('db.stok-hilang');
 
             Route::prefix('stok-non-ppn')->group(function () {
