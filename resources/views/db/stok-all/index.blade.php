@@ -27,11 +27,11 @@
                             <input type="hidden" name="type" value="{{request('type')}}">
                             <input type="hidden" name="kategori" value="{{request('kategori')}}">
                             <input type="hidden" name="barang_nama" value="{{request('barang_nama')}}">
-                            <div class="row">
+                            {{-- <div class="row">
                                 <button type="submit" class="btn"><img src="{{asset('images/print.svg')}}" alt="dokumen"
                                         width="30">
                                     PDF</button>
-                            </div>
+                            </div> --}}
 
                         </form>
                     </td>
