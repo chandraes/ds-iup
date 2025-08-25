@@ -97,7 +97,7 @@ class PerusahaanController extends Controller
 
     public function sales(Request $request)
     {
-         $data = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+         $data = Karyawan::with('jabatan')->where('status', 1)->whereHas('jabatan', function ($query) {
                     $query->where('is_sales', 1);
                 })->get();
 

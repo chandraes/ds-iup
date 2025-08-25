@@ -2,12 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\db\Karyawan;
-use App\Models\Transaksi;
 use App\Models\transaksi\InvoiceJual;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class StatistikController extends Controller

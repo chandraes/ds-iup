@@ -1059,7 +1059,7 @@ class InvoiceJual extends Model
         if ($karyawan_id) {
             $karyawans = Karyawan::where('jabatan_id', 3)->where('id', $karyawan_id)->get();
         } else {
-            $karyawans = Karyawan::where('jabatan_id', 3)->get();
+            $karyawans = Karyawan::where('status', 1)->where('jabatan_id', 3)->get();
         }
 
         // Buat array tanggal
