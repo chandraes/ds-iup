@@ -93,6 +93,20 @@ class KasBesar extends Model
         return $this->where('ppn_kas', $ppn)->whereMonth('created_at', $month)->whereYear('created_at', $year)->get();
     }
 
+    public function costOperational($month, $year, $co = '')
+    {
+        $data = $this->where('ppn_kas', 1)
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->where('cost_operational', 1)
+            ->when($co != '', function ($query) use ($co) {
+                $query->where('uraian', 'like', '%'.$co.'%');
+            })
+            ->get();
+
+        return $data;
+    }
+
     public function kasBesarByMonth($month, $year, $ppn)
     {
         $data = $this->where('ppn_kas', $ppn)

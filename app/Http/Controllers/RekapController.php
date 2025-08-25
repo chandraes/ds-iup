@@ -768,4 +768,33 @@ class RekapController extends Controller
             'kas_ppn' => $request->kas_ppn,
         ]);
     }
+
+     public function cost_operational(Request $request)
+    {
+        $kas = new KasBesar;
+
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        $dataTahun = $kas->dataTahun();
+
+        $data = $kas->costOperational($bulan, $tahun);
+
+        $bulanSebelumnya = $bulan - 1;
+        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
+        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+
+        return view('rekap.cost-operational.index', [
+            'data' => $data,
+            'dataTahun' => $dataTahun,
+            'stringBulan' => $stringBulan,
+            'tahun' => $tahun,
+            'tahunSebelumnya' => $tahunSebelumnya,
+            'bulan' => $bulan,
+            'stringBulanNow' => $stringBulanNow,
+        ]);
+    }
 }
