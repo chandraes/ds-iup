@@ -271,8 +271,8 @@ class BarangStokHarga extends Model
             ->orderBy('barang_id')
             ->orderBy('created_at', 'asc');
 
-        if (! is_null($unitFilter)) {
-            $query->where('barang_unit_id', $unitFilter);
+        if (!empty($unitFilter)) {
+            $query->whereIn('barang_unit_id', $unitFilter);
         }
 
         if (! is_null($typeFilter)) {

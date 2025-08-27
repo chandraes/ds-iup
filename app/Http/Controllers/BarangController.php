@@ -1230,17 +1230,17 @@ class BarangController extends Controller
         $barangNamaFilter = $request->input('barang_nama');
 
         if (! empty($unitFilter) && $unitFilter != '') {
-            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
+            $selectType = BarangType::whereIn('barang_unit_id', $unitFilter)->get();
 
             $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
                 $query->whereHas('type', function ($query) use ($unitFilter) {
-                    $query->where('barang_unit_id', $unitFilter);
+                    $query->whereIn('barang_unit_id', $unitFilter);
                 });
             })->get();
 
             $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
                 $query->whereHas('type', function ($query) use ($unitFilter) {
-                    $query->where('barang_unit_id', $unitFilter);
+                    $query->whereIn('barang_unit_id', $unitFilter);
                 });
             })->get();
 

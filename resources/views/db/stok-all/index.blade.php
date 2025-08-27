@@ -23,7 +23,7 @@
                             Database</a></td>
                     <td class="text-center align-middle">
                         <form action="{{route('db.stok-ppn.download')}}" method="get" target="_blank">
-                            <input type="hidden" name="unit" value="{{request('unit')}}">
+                            {{-- <input type="hidden" name="unit" value="{{request('unit')}}"> --}}
                             <input type="hidden" name="type" value="{{request('type')}}">
                             <input type="hidden" name="kategori" value="{{request('kategori')}}">
                             <input type="hidden" name="barang_nama" value="{{request('barang_nama')}}">
@@ -56,12 +56,12 @@
 <div class="container-fluid mt-3 table-responsive ">
     <form method="GET" action="{{url()->current()}}" class="mt-3 mb-5">
         <div class="row">
-            <div class="col-md-2">
+            <div class="col-md-12 mb-2">
                 <label for="unit">Perusahaan</label>
-                <select name="unit" id="unit" class="form-select">
+                <select name="unit[]" id="unit" class="form-select form-select-sm" multiple>
                     <option value=""> ---------- </option>
                     @foreach($units as $unit)
-                    <option value="{{ $unit->id }}" {{ request('unit')==$unit->id ? 'selected' : '' }}>
+                    <option value="{{ $unit->id }}" {{ (is_array(request('unit')) && in_array($unit->id, request('unit'))) ? 'selected' : '' }}>
                         {{ $unit->nama }}
                     </option>
                     @endforeach
@@ -69,7 +69,7 @@
             </div>
             <div class="col-md-2">
                 <label for="type">Bidang</label>
-                <select name="type" id="type" class="form-select">
+                <select name="type" id="type" class="form-select form-select-sm">
                     <option value=""> ---------- </option>
                     @foreach($selectType as $type)
                     <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
@@ -80,7 +80,7 @@
             </div>
             <div class="col-md-2">
                 <label for="kategori">Kelompok Barang</label>
-                <select name="kategori" id="kategori" class="form-select">
+                <select name="kategori" id="kategori" class="form-select form-select-sm">
                     <option value=""> ---------- </option>
                     @foreach($selectKategori as $kat)
                     <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
@@ -91,7 +91,7 @@
             </div>
             <div class="col-md-4">
                 <label for="nama">Nama Barang</label>
-                <select class="form-select" name="barang_nama" id="filter_barang_nama">
+                <select class="form-select form-select-sm" name="barang_nama" id="filter_barang_nama">
                     <option value=""> ---------- </option>
                     @foreach ($selectBarangNama as $bn)
                     <option value="{{ $bn->id }}" {{ request('barang_nama')==$bn->id ? 'selected' : '' }}>
@@ -104,9 +104,9 @@
                     ---------------
                 </label>
                 <div class="btn-group">
-                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Apply Filter</button>
                     {{-- reset filter button --}}
-                    <a href="{{route('db.stok-all')}}" class="btn btn-danger">Reset Filter</a>
+                    <a href="{{route('db.stok-all')}}" class="btn btn-danger btn-sm">Reset Filter</a>
                 </div>
 
             </div>
@@ -314,8 +314,8 @@
 
 @endsection
 @push('css')
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
@@ -338,6 +338,8 @@
      $('#unit').select2({
         theme: 'bootstrap-5',
         width: '100%',
+        placeholder: "-- Semua Perusahaan --",
+        multiple: true,
     });
 
     $('#karyawan_id').select2({
