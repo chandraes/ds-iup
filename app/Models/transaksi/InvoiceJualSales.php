@@ -233,26 +233,28 @@ class InvoiceJualSales extends Model
             $dbInvoice = new InvoiceJualSales;
 
             $data['total'] = $invoice->invoice_detail->where('deleted', 0)->sum('total');
-
-            $data['diskon'] = isset($data['diskon']) ? str_replace('.', '', $data['diskon']) : 0;
-            $data['add_fee'] = isset($data['add_fee']) ? str_replace('.', '', $data['add_fee']) : 0;
+            $data['ppn'] = 0;
+            $data['diskon'] = 0;
+            $data['add_fee'] = 0;
 
             $data['titipan'] = $data['pembayaran'] == 3 ? 1 : 0;
 
-            $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
+            // $ppnVal = $dbPajak->where('untuk', 'ppn')->first()->persen;
 
-            $dppSetelahDiskon = $data['total'] - $data['diskon'];
-
-            $data['ppn'] = $invoice->kas_ppn == 1 ? ($dppSetelahDiskon * $ppnVal / 100) : 0;
+            // $dppSetelahDiskon = $data['total'] - $data['diskon'];
+            foreach ($invoice->invoice_detail->where('deleted', 0) as $detail) {
+                $data['ppn'] += $detail->ppn * $detail->jumlah;
+                $data['diskon'] += $detail->diskon * $detail->jumlah;
+            }
 
             $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
 
             $data['dp_ppn'] = isset($data['dp_ppn']) ? str_replace('.', '', $data['dp_ppn']) : 0;
 
             if ($dipungut == 1) {
-                $data['grand_total'] = $dppSetelahDiskon + $data['ppn'] + $data['add_fee'];
+                $data['grand_total'] = $data['total'];
             } else {
-                $data['grand_total'] = $dppSetelahDiskon + $data['add_fee'];
+                $data['grand_total'] = $data['total'];
             }
 
             $data['ppn_dipungut'] = $dipungut;
@@ -261,6 +263,8 @@ class InvoiceJualSales extends Model
             $data['sisa_ppn'] = $data['ppn'] - $data['dp_ppn'];
 
             $data['sistem_pembayaran'] = $data['pembayaran'];
+
+            DB::beginTransaction();
 
             $invoice->update($data);
 
@@ -327,7 +331,7 @@ class InvoiceJualSales extends Model
 
             return [
                 'status' => 'error',
-                'message' => 'Sales Order gagal diupdate',
+                'message' => 'Sales Order gagal diupdate. '. $th->getMessage(),
             ];
         }
 

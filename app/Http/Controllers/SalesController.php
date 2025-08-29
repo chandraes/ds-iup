@@ -742,8 +742,8 @@ class SalesController extends Controller
     {
         $data = $request->validate([
             'pembayaran' => 'required',
-            'diskon' => 'required',
-            'add_fee' => 'required',
+            // 'diskon' => 'required',
+            // 'add_fee' => 'required',
             'dp' => 'nullable',
             'dp_ppn' => 'nullable',
             'dipungut' => 'nullable',

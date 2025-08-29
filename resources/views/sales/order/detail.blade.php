@@ -274,7 +274,7 @@
                                 <tr id="trJumlahDp" @if($order->sistem_pembayaran != 2) hidden @endif>
                                     <th colspan="{{$order->kas_ppn ? '8' : '7'}}" class="text-end align-middle">Masukan Nominal DP :</th>
                                     <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="0"
+                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp" value="{{number_format($order->dp+$order->dp_ppn, 0, ',','.')}}"
                                             onkeyup="addDp()" />
                                     </th>
                                     <td></td>
@@ -305,143 +305,12 @@
                                 </tr>
                             </tfoot>
                         </table>
-                        {{-- <table class="table table-bordered">
-                            <thead class="table-success">
-                                <tr>
-                                    <th class="text-center align-middle">Kelompok Barang</th>
-                                    <th class="text-center align-middle">Nama Barang</th>
-                                    <th class="text-center align-middle">Kode Barang</th>
-                                    <th class="text-center align-middle">Merk Barang</th>
-                                    <th class="text-center align-middle">Banyak</th>
-                                    <th class="text-center align-middle">Satuan</th>
-                                    <th class="text-center align-middle">Harga Satuan</th>
-                                    <th class="text-center align-middle">Total</th>
-                                    <th class="text-center align-middle">Act</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($order->invoice_detail as $b)
-                                <tr class="{{$b->deleted == 1 ? 'table-danger' : ''}}">
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->kategori->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->barang_nama->nama}}</td>
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->barang->kode}}</td>
-                                    <td class="text-center align-middle">{{$b->barangStokHarga->barang->merk}}</td>
-                                    <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
-                                    <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama
-                                        : '-'}}</td>
-                                    <td class="text-center align-middle">{{$b->nf_harga_satuan}}</td>
-                                    <td class="text-end align-middle">{{$b->nf_total}}
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button"
-                                            class="btn btn-{{$b->deleted ? 'primary' : 'danger'}} btn-sm"
-                                            onclick="deleteKeranjang({{$b->id}})">
-                                            <i class="fa fa-{{$b->deleted ? 'repeat' : 'trash'}}"></i></button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                @php
-                                $total = $order->invoice_detail->where('deleted', 0)->sum('total');
-                                $diskon = $order->diskon;
-                                $dpp_setelah_diskon = $total - $diskon;
-                                $ppn = $order->kas_ppn ? floor($dpp_setelah_diskon * $ppn / 100) : 0;
-                                $grand_total = $dpp_setelah_diskon + $ppn;
-                                @endphp
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">DPP :</th>
-                                    <th class="text-end align-middle" id="dppTh">{{number_format($total, 0,
-                                        ',','.')}}</th>
-                                    <td></td>
-                                </tr>
-                                <tr id="trDiskon">
-                                    <th colspan="7" class="text-end align-middle">Diskon :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="diskon" id="diskon"
-                                            value="{{$diskon}}" readonly onkeyup="addDiskon()" />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">DPP Setelah Diskon :</th>
-                                    <th class="text-end align-middle" id="thDppDiskon">
-                                        {{number_format($dpp_setelah_diskon, 0,
-                                        ',','.')}}</th>
-                                    <td></td>
-                                </tr>
-                                @if ($order->kas_ppn == 1)
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Ppn :</th>
-                                    <th class="text-end align-middle" id="thPpn">{{number_format(($ppn), 0,
-                                        ',','.')}}</th>
-                                    <td></td>
-                                </tr>
-                                @endif
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Grand Total :</th>
-                                    <th class="text-end align-middle" id="grandTotalTh">
-                                        {{number_format($grand_total, 0, ',','.')}}</th>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Penyesuaian:</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="add_fee" id="add_fee"
-                                            onkeyup="addCheck()" value="{{$order->nf_add_fee}}" />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <th colspan="7" class="text-end align-middle">Total Tagihan :</th>
-                                    <th class="text-end align-middle" id="totalTagihanTh">
-                                        {{number_format($grand_total, 0, ',','.')}}</th>
-                                    <td></td>
-                                </tr>
-                                <tr id="trJumlahDp" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">Masukan Nominal DP :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="jumlah_dp" id="jumlah_dp"
-                                            value="0" onkeyup="addDp()" />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                <tr id="trDp" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">DP :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp" id="dp"
-                                            value="{{$order->nf_dp}}" readonly />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                @if ($order->kas_ppn == 1)
-                                <tr id="trDpPpn" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">DP PPn :</th>
-                                    <th class="text-end align-middle">
-                                        <input type="text" class="form-control text-end" name="dp_ppn" id="dp_ppn"
-                                            value="{{$order->nf_dp_ppn}}" readonly />
-                                    </th>
-                                    <td></td>
-                                </tr>
-                                @endif
-
-                                <tr id="trSisa" @if($order->sistem_pembayaran != 2) hidden @endif>
-                                    <th colspan="7" class="text-end align-middle">Sisa Tagihan :</th>
-                                    <th class="text-end align-middle" id="thSisa">
-                                        {{$order->nf_sisa_tagihan}}</th>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table> --}}
                     </div>
                     <div class="row ">
                         <div class="col-md-6"></div>
                         <div class="col-md-6 text-end">
                             <button type="submit" class="btn btn-success"><i class="fa fa-credit-card"></i>
                                 Lanjutkan</button>
-                            {{-- <button type="button" class="btn btn-info text-white"
-                                onclick="javascript:window.print();"><i class="fa fa-print"></i> Print Invoice</button>
-                            --}}
                         </div>
                     </div>
                 </div>
@@ -592,8 +461,9 @@
 
 
     function addDp(){
-        console.log('add dp');
+
         var jumlah_dp = document.getElementById('jumlah_dp').value;
+        var kas_ppn = {{$order->kas_ppn}};
 
         var dp = document.getElementById('dp');
 
@@ -616,13 +486,14 @@
             });
             document.getElementById('dp').value = 0;
             document.getElementById('dp_ppn').value = 0;
+            document.getElementById('jumlah_dp').value = 0;
             return;
         }
 
         var thPpnElement = document.getElementById('thPpn');
         var thPpn = thPpnElement ? thPpnElement.innerText : 0;
                         // remove . in ppnVal
-        if (thPpn != '0') {
+        if (kas_ppn == 1) {
             var ppn = {{$ppn}};
 
             var dpPpn = Math.floor(dpNumber * ppn / 100);
