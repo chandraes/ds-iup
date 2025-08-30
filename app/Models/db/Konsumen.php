@@ -19,6 +19,11 @@ class Konsumen extends Model
 
     protected $appends = ['sistem_pembayaran', 'nf_plafon', 'full_kode'];
 
+    public function docs()
+    {
+        return $this->hasMany(KonsumenDoc::class, 'konsumen_id');
+    }
+
     public function provinsi()
     {
         return $this->belongsTo(Wilayah::class, 'provinsi_id', 'id');

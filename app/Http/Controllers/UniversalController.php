@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangType;
+use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Konsumen;
 use App\Models\Wilayah;
 use App\Services\WaStatus;
@@ -158,5 +159,15 @@ class UniversalController extends Controller
         $result = $service->getStatusWa();
 
         return response()->json($result);
+    }
+
+    public function getUnit()
+    {
+        $data = BarangUnit::select('id','nama')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
     }
 }

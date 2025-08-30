@@ -12,6 +12,7 @@ use App\Models\db\Karyawan;
 use App\Models\db\KelompokRute;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
+use App\Models\db\KonsumenDoc;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
 use App\Models\db\SalesArea;
@@ -492,6 +493,7 @@ class DatabaseController extends Controller
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
         $data = Konsumen::query()->with(['kode_toko', 'provinsi', 'kabupaten_kota', 'kecamatan', 'karyawan'])
+                ->withCount('docs')
                 ->filter($filters);
 
         // Ambil semua no_hp yang duplikat sekaligus
@@ -531,8 +533,84 @@ class DatabaseController extends Controller
             ->addColumn('aksi', function ($d) {
                 return view('db.konsumen._aksi', compact('d'))->render();
             })
-            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon'])
+            ->addColumn('dokumen', function ($d) {
+                return view('db.konsumen._dokumen', compact('d'))->render();
+            })
+            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen'])
             ->make(true);
+    }
+
+    public function konsumen_dokumen(Request $request)
+    {
+        $konsumen = Konsumen::withCount('docs')->find($request->konsumen_id);
+
+        if (!$konsumen) {
+            return response()->json(['status' => 'error', 'message' => 'Konsumen tidak ditemukan'], 404);
+        }
+
+        $docs = $konsumen->docs->load('barang_unit');
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $docs,
+            'konsumen' => $konsumen,
+        ]);
+    }
+
+    public function konsumen_dokumen_destroy(KonsumenDoc $dokumen)
+    {
+        try {
+            DB::beginTransaction();
+
+            if (Storage::disk('public')->exists($dokumen->file_path)) {
+                Storage::disk('public')->delete($dokumen->file_path);
+            }
+
+            $dokumen->delete();
+
+            DB::commit();
+
+            return response()->json(['status' => 'success', 'message' => 'Dokumen berhasil dihapus']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menghapus dokumen. '. $e->getMessage() ], 500);
+        }
+    }
+
+    public function konsumen_dokumen_store(Request $request)
+    {
+        $data = $request->validate([
+            'konsumen_id' => 'required|exists:konsumens,id',
+            'nama' => 'required|string|max:255',
+            'barang_unit_id' => 'nullable|exists:barang_units,id',
+            'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120', // Maks 5MB
+        ]);
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filename = $data['konsumen_id'].'_'.$data['nama'].'_'.time().'.'.$file->getClientOriginalExtension();
+
+            if (!Storage::disk('public')->exists('konsumen_docs')) {
+                Storage::disk('public')->makeDirectory('konsumen_docs');
+            }
+
+            $path = $file->storeAs('konsumen_docs', $filename, 'public');
+            $data['file_path'] = $path;
+            unset($data['file']);
+        }
+
+        DB::beginTransaction();
+        try {
+            KonsumenDoc::create($data);
+            DB::commit();
+
+            return response()->json(['status' => 'success', 'message' => 'Dokumen berhasil diunggah']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menyimpan dokumen. '. $e->getMessage() ], 500);
+        }
     }
 
     public function konsumen(Request $request)

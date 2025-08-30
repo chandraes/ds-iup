@@ -35,6 +35,7 @@
 @include('db.konsumen.kode-toko')
 @include('db.konsumen.upload-foto')
 @include('db.konsumen.diskon-khusus')
+@include('db.konsumen.dokumen')
 
 <div class="container-fluid mt-5 table-responsive">
     <div class="row mb-3">
@@ -93,10 +94,12 @@
                 <th class="text-center align-middle">KODE</th>
                 <th class="text-center align-middle">KODE TOKO</th>
                 <th class="text-center align-middle">NAMA</th>
+                <th class="text-center align-middle">DOKUMEN</th>
                 <th class="text-center align-middle">CP</th>
                 <th class="text-center align-middle">NPWP</th>
                 <th class="text-center align-middle">NIK</th>
                 <th class="text-center align-middle">KTP</th>
+
                 <th class="text-center align-middle">Sales Area</th>
                 <th class="text-center align-middle">Provinsi</th>
                 <th class="text-center align-middle">Kab/Kota</th>
@@ -152,6 +155,7 @@
             { data: 'full_kode', name: 'kode', className: 'text-center' },
             { data: 'kode_toko', name: 'kode_toko.kode', className: 'text-center' },
             { data: 'nama', name: 'nama', className: 'text-wrap' },
+            { data: 'dokumen', name: 'dokumen', searchable: false, orderable: false },
             { data: 'cp', name: 'cp', searchable: false, },
             { data: 'npwp', name: 'npwp' },
             { data: 'nik', name: 'nik' },
@@ -497,5 +501,130 @@ $('#edit_karyawan_id').select2({
         });
 
 
+</script>
+<script>
+
+
+    function dokumen(id, nama, kode)
+    {
+        document.getElementById('dokumen_konsumen_nama').value = kode + ' ' + nama;
+        document.getElementById('dokumenTableBody').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        $.ajax({
+            url: '{{route('db.konsumen.dokumen')}}',
+            type: 'GET',
+            data: {
+                konsumen_id: id
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    let rows = '';
+                    data.data.forEach((doc, index) => {
+                        rows += `
+                            <tr>
+                                <td class="text-center">${index + 1}</td>
+                                <td>${doc.nama}</td>
+                                <td>${doc.barang_unit ? doc.barang_unit.nama : '-'}</td>
+                                <td><a href="{{'${doc.file_url}' }}" target="_blank">Lihat File</a></td>
+                                <td class="text-center">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="deleteDokumen(${doc.id})">
+                                        <i class="fa fa-trash"></i> Hapus
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    document.getElementById('dokumenTableBody').innerHTML = rows || `
+                        <tr>
+                            <td colspan="5" class="text-center">Tidak ada dokumen.</td>
+                        </tr>
+                    `;
+                    if (data.data.length === 0) {
+                        document.getElementById('dokumenTableBody').innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center">Tidak ada dokumen.</td>
+                            </tr>
+                        `;
+                    } else {
+                        if ($.fn.DataTable.isDataTable('#dokumenTable')) {
+                            $('#dokumenTable').DataTable().destroy();
+                        }
+
+                        $('#dokumenTable').DataTable({
+                            paging: true,
+                            lengthChange: false,
+                            pageLength: 5,
+                            columnDefs: [
+                                { orderable: false, targets: 4 }
+                            ]
+                        });
+                    }
+                    // initialize datatables for dokumen table
+
+
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: textStatus+' '+errorThrown
+                });
+            }
+        });
+
+        document.getElementById('dokumen_konsumen_id').value = id;
+        $('#dokumen_barang_unit_id').empty();
+        $('#dokumen_barang_unit_id').append('<option value="" selected> -- Pilih Perusahaan -- </option>');
+        $.ajax({
+            url: '{{route('universal.get-unit')}}',
+            type: 'GET',
+            success: function(data) {
+                if (data.status === 'success') {
+                    $.each(data.data, function(index, value){
+                        $('#dokumen_barang_unit_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
+                    });
+
+                    $('#dokumen_barang_unit_id').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        dropdownParent: $('#dokumenModal'),
+                    });
+
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: textStatus+' '+errorThrown
+                });
+            }
+        });
+
+    }
+
+    
 </script>
 @endpush

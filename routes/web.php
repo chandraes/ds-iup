@@ -29,6 +29,8 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::prefix('universal')->group(function () {
         Route::get('/get-konsumen', [App\Http\Controllers\UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
+        Route::get('/get-unit', [App\Http\Controllers\UniversalController::class, 'getUnit'])->name('universal.get-unit');
+
         Route::get('/search-kecamatan', [App\Http\Controllers\UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
         Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
 
@@ -332,6 +334,11 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('konsumen')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'konsumen'])->name('db.konsumen');
                 Route::get('/data', [App\Http\Controllers\DatabaseController::class, 'konsumen_data'])->name('db.konsumen.data');
+
+                Route::get('/dokumen', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen'])->name('db.konsumen.dokumen');
+                Route::post('/dokumen/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen_store'])->name('db.konsumen.dokumen.store');
+                Route::delete('/dokumen/destroy/{dokumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen_destroy'])->name('db.konsumen.dokumen.destroy');
+
                 Route::get('/daftar-kunjungan/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_daftar_kunjungan'])->name('db.konsumen.daftar-kunjungan');
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_store'])->name('db.konsumen.store');
                 Route::patch('/{konsumen}/update', [App\Http\Controllers\DatabaseController::class, 'konsumen_update'])->name('db.konsumen.update');
