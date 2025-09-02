@@ -199,7 +199,7 @@
                     @php $barangDisplayed = true; @endphp
                     @endif
                     <td class="text-center align-middle">
-                        @if ($stokHarga->stok > 0 && auth()->user()->role == 'su')
+                        @if (auth()->user()->role == 'su')
                         <a href="#" data-bs-toggle="modal" data-bs-target="#eModal"
                             onclick="editStok({{$stokHarga}})">{{ $stokHarga->nf_stok_awal }}</a>
                         @else
