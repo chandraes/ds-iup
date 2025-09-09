@@ -628,4 +628,15 @@ class BillingController extends Controller
 
         return response()->json(['status' => 'success', 'message' => 'Preorder berhasil diselesaikan']);
     }
+
+    public function form_retur(Request $request)
+    {
+        $data = $request->validate([
+            'tipe' => 'required|in:1,2',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'konsumen_id' => 'required_if:tipe,2|exists:konsumens,id',
+        ]);
+
+        
+    }
 }

@@ -131,7 +131,7 @@
                     <td class="text-end align-middle {{$d->ppn_dipungut ? '' : 'table-danger'}}">{{$d->nf_sisa_ppn}}
                     </td>
                     <td class="text-end align-middle" data-order="{{$d->sisa_tagihan}}">{{$d->nf_sisa_tagihan}}</td>
-                    <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
+                    <td class="text-end align-middle {{date($d->jatuh_tempo) < now() ? 'text-danger' : ''}}">{{$d->jatuh_tempo}}</td>
                 </tr>
                 @endforeach
             </tbody>

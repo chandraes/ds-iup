@@ -229,9 +229,8 @@
                         @endif
                         </td>
                     @php
-                    $totalHargaBeli = ($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) *
-                    $stokHarga->stok;
-                    $totalHargaJual = ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok;
+                    $totalHargaBeli = $stokHarga->barang->jenis == 1 ?($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) * $stokHarga->stok : $stokHarga->harga_beli * $stokHarga->stok;
+                    $totalHargaJual = $stokHarga->barang->jenis == 1 ? ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok : $stokHarga->harga * $stokHarga->stok;
                     $sumTotalHargaJual += $totalHargaJual;
                     $sumTotalHargaBeli += $totalHargaBeli;
                     if ($stokHarga->harga_beli == 0) {
@@ -243,15 +242,15 @@
 
                     @endphp
                     <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
-                    <td class="text-center align-middle">{{ number_format(($stokHarga->harga_beli +
-                        ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') }}</td>
+                    <td class="text-center align-middle">{{ $stokHarga->barang->jenis == 1 ? number_format(($stokHarga->harga_beli +
+                        ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') : number_format($stokHarga->harga_beli, 0, ',', '.')}}</td>
                     <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
                         <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{$stokHarga}})">
                         {{ $stokHarga->nf_harga }}
                     </td>
                     <td class="text-end align-middle">
-                        {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
+                        {{  $stokHarga->barang->jenis == 1 ? number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') : number_format($stokHarga->harga, 0, ',','.') }}
                     </td>
 
                     <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
