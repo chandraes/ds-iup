@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BarangRetur;
+use App\Models\BarangReturDetail;
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -10,6 +13,7 @@ use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\Karyawan;
 use App\Models\db\KelompokRute;
+use App\Models\db\Konsumen;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
 use App\Models\GantiRugi;
@@ -122,12 +126,15 @@ class BillingController extends Controller
 
         $gr = GantiRugi::where('lunas', 0)->count();
 
+        $br = BarangRetur::where('status', 1)->count();
+
         return view('billing.index', [
             'is' => $is,
             'ik' => $invoiceJualCounts->ik,
             'isn' => $isn,
             'ikn' => $invoiceJualCounts->ikn,
             'gr' => $gr,
+            'br' => $br,
             'ikt' => $invoiceJualCounts->ikt,
             'iktn' => $invoiceJualCounts->iktn,
             'sales_order_ppn' => $salesOrderCounts->sales_order_ppn,
@@ -629,14 +636,230 @@ class BillingController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Preorder berhasil diselesaikan']);
     }
 
-    public function form_retur(Request $request)
+    public function form_barang_retur(Request $request)
+    {
+
+        $d = $request->validate([
+            'tipe' => 'required|in:1,2',
+        ]);
+
+        $data = BarangRetur::where('status', 0)->where('tipe', $d['tipe'])->get();
+        $supplier = BarangUnit::select('id', 'nama')->get();
+
+        $konsumen = $d['tipe'] == 1 ? null : Konsumen::where('active', 1)
+                                            ->with(['kode_toko'])
+                                            ->get();
+
+        return view('billing.form-barang-retur.index', [
+            'data' => $data,
+            'supplier' => $supplier,
+            'konsumen' => $konsumen,
+            'tipe' => $d['tipe'],
+        ]);
+    }
+
+    public function form_barang_retur_store(Request $request)
     {
         $data = $request->validate([
             'tipe' => 'required|in:1,2',
-            'supplier_id' => 'required|exists:suppliers,id',
+            'barang_unit_id' => 'required|exists:barang_units,id',
             'konsumen_id' => 'required_if:tipe,2|exists:konsumens,id',
         ]);
 
-        
+        try {
+            DB::beginTransaction();
+
+            $b = BarangRetur::updateOrCreate([
+                'tipe' => $data['tipe'],
+                'barang_unit_id' => $data['barang_unit_id'],
+                'konsumen_id' => $data['konsumen_id'] ?? null,
+            ]);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+
+            DB::rollback();
+
+            return redirect()->back()->with('error', 'Gagal Membuat Form Barang Retur, '.$th->getMessage());
+        }
+
+
+        return redirect()->route('billing.form-barang-retur.detail', ['retur' => $b->id]);
+    }
+
+    public function form_barang_retur_delete(BarangRetur $retur)
+    {
+        $retur->delete();
+
+        return redirect()->back()->with('success', 'Data retur berhasil dihapus');
+    }
+
+    public function form_barang_retur_detail(BarangRetur $retur, Request $request)
+    {
+
+        $keranjang = $retur->details;
+
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        $unitFilter = $retur->barang_unit_id;
+        $typeFilter = $request->input('type');
+        $kategoriFilter = $request->input('kategori');
+        $barangNamaFilter = $request->input('barang_nama');
+
+        if (! empty($unitFilter) && $unitFilter != '') {
+            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
+
+            $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
+                $query->whereHas('type', function ($query) use ($unitFilter) {
+                    $query->where('barang_unit_id', $unitFilter);
+                });
+            })->get();
+
+        } else {
+            $selectType = BarangType::all();
+            $selectKategori = BarangKategori::all();
+            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+        }
+
+        $db = new BarangStokHarga;
+
+        $jenis = 1;
+
+        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $units = BarangUnit::all();
+
+        return view('billing.form-barang-retur.detail', [
+            'b' => $retur,
+            'keranjang' => $keranjang,
+            'data' => $data,
+            'nonPpn' => $nonPpn,
+            'units' => $units,
+            'unitFilter' => $unitFilter,
+            'typeFilter' => $typeFilter,
+            'kategoriFilter' => $kategoriFilter,
+            'selectType' => $selectType,
+            'selectKategori' => $selectKategori,
+            'ppnRate' => $ppnRate,
+            'barangNamaFilter' => $barangNamaFilter,
+            'selectBarangNama' => $selectBarangNama,
+        ]);
+    }
+
+    public function form_barang_retur_detail_empty(BarangRetur $retur)
+    {
+        $retur->details()->delete();
+
+        return redirect()->back()->with('success', 'Item berhasil dihapus dari daftar retur');
+    }
+
+    public function form_barang_retur_detail_store(BarangRetur $retur, Request $request)
+    {
+        $data = $request->validate([
+            'barang_stok_harga_id' => 'required|exists:barang_stok_hargas,id',
+            'jumlah' => 'required|numeric|min:0',
+        ]);
+
+        $db = new BarangReturDetail;
+
+        $stok = BarangStokHarga::find($data['barang_stok_harga_id'])->stok;
+
+        if ($data['jumlah'] > $stok) {
+            return redirect()->back()->with('error', 'Jumlah retur melebihi stok yang tersedia (Stok: '.$stok.')');
+        }
+
+        if ($data['jumlah'] == 0) {
+            $res = $db->where('barang_retur_id', $retur->id)
+                ->where('barang_stok_harga_id', $data['barang_stok_harga_id'])
+                ->delete();
+
+            $res = ['status' => 'success', 'message' => 'Item berhasil dihapus dari daftar retur'];
+        } else {
+
+            $res = $db->updateOrCreate([
+                'barang_retur_id' => $retur->id,
+                'barang_stok_harga_id' => $data['barang_stok_harga_id'],
+            ],[
+                'barang_retur_id' => $retur->id,
+                'barang_stok_harga_id' => $data['barang_stok_harga_id'],
+                'qty' => $data['jumlah'],
+            ]);
+
+            $res = ['status' => 'success', 'message' => 'Item berhasil ditambahkan ke daftar retur'];
+        }
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function form_barang_retur_detail_preview(BarangRetur $retur)
+    {
+        $keranjang = $retur->details->load(['stok.barang_nama', 'stok.barang.satuan']);
+        $konsumen = $retur->konsumen_id ? $retur->konsumen->load('kode_toko') : null;
+
+        return view('billing.form-barang-retur.keranjang', [
+            'b' => $retur,
+            'keranjang' => $keranjang,
+            'konsumen' => $konsumen,
+        ]);
+    }
+
+    public function form_barang_retur_detail_lanjutkan(BarangRetur $retur)
+    {
+        if ($retur->details->isEmpty()) {
+            return redirect()->back()->with('error', 'Daftar retur kosong, silahkan tambahkan item terlebih dahulu');
+        }
+
+        $db = new BarangRetur;
+
+        $res = $db->checkout_retur($retur->id);
+
+
+        if ($res['status'] == 'success') {
+            return redirect()->route('billing')->with($res['status'], $res['message']);
+        }
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function form_barang_retur_detail_preview_delete(Request $request)
+    {
+        $data = $request->validate([
+            'id' => 'required|exists:barang_retur_details,id',
+        ]);
+
+        BarangReturDetail::find($data['id'])->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Item berhasil dihapus dari daftar retur']);
+    }
+
+    public function barang_retur(Request $request)
+    {
+        $data = BarangRetur::with(['barang_unit', 'konsumen.kode_toko'])->where('status', 1);
+
+        if ($request->filled('tipe')) {
+            $data->where('tipe', $request->tipe);
+        }
+
+        $data = $data->get();
+
+        return view('billing.barang-retur.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function barang_retur_detail(BarangRetur $retur)
+    {
+        $detail = $retur->load(['details.stok.barang.satuan', 'details.stok.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
+
+        return view('billing.barang-retur.detail', [
+            'data' => $detail,
+        ]);
     }
 }

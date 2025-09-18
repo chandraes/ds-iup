@@ -638,6 +638,28 @@ Route::group(['middleware' => ['auth']], function () {
         Route::prefix('billing')->group(function () {
             Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');
 
+            Route::prefix('form-barang-retur')->group(function () {
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_barang_retur'])->name('billing.form-barang-retur');
+                Route::post('/store', [App\Http\Controllers\BillingController::class, 'form_barang_retur_store'])->name('billing.form-barang-retur.store');
+                Route::post('/delete/{retur}', [App\Http\Controllers\BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
+
+                Route::get('/detail/{retur}', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail'])->name('billing.form-barang-retur.detail');
+                Route::post('/detail/{retur}/store', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_store'])->name('billing.form-barang-retur.detail.store');
+                Route::post('/detail/{retur}/empty', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_empty'])->name('billing.form-barang-retur.detail.empty');
+                Route::post('/detail/{retur}/lanjutkan', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_lanjutkan'])->name('billing.form-barang-retur.detail.lanjutkan');
+
+                Route::get('/detail/{retur}/preview', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_preview'])->name('billing.form-barang-retur.detail.preview');
+                Route::post('/detail/preview/delete', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_preview_delete'])->name('billing.form-barang-retur.detail.preview.delete');
+
+                Route::delete('/delete/{retur}', [App\Http\Controllers\BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
+            });
+
+            Route::prefix('barang-retur')->group(function () {
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'barang_retur'])->name('billing.barang-retur');
+                Route::get('/detail/{retur}', [App\Http\Controllers\BillingController::class, 'barang_retur_detail'])->name('billing.barang-retur.detail');
+                Route::post('/void/{retur}', [App\Http\Controllers\BillingController::class, 'barang_retur_void'])->name('billing.barang-retur.void');
+            });
+
             // Routing Sales Order
             Route::prefix('sales-order')->group(function () {
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'sales_order'])->name('billing.sales-order');

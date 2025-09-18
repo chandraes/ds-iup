@@ -1,0 +1,66 @@
+<div class="modal fade" id="keranjangModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+    role="dialog" aria-labelledby="keranjangTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="keranjangTitle">
+                    Jumlah <span id="titleJumlah"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="keranjangForm" action="{{route('billing.form-barang-retur.detail.store', $b->id)}}">
+                @csrf
+
+                <div class="modal-body">
+                    <input type="hidden" name="barang_retur_id" value="{{ $b->id }}">
+                    <input type="hidden" name="barang_stok_harga_id" id="barang_stok_harga_id">
+                    <input type="hidden" name="detail_id" id="detail_id">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row">
+                                 <div class="col-md-12 mb-2">
+                                    <input type="text" id="nm_barang_merk_retail" class="form-control" disabled></input>
+                                </div>
+                                <div class="col-md-12 mt-2">
+                                    <label for="">Masukan Jumlah Retur</label>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control text-end" name="jumlah" id="jumlah"
+                                            required data-thousands=".">
+                                        <span class="input-group-text" id="jumlah_satuan"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                             <div class="row" id="rowGrosirRetail" hidden>
+                                {{-- grosir --}}
+                                <div class="col-md-12">
+                                    <table class="table table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center align-middle">No</th>
+                                                <th class="text-center align-middle">MIN Qty Grosir</th>
+                                                <th class="text-center align-middle">Qty</th>
+                                                <th class="text-center align-middle">Diskon</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="grosirTableBodyRetail"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
