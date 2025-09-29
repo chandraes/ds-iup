@@ -83,7 +83,7 @@
                     <td class="text-end align-middle">{{$d->nf_dp_ppn}}</td>
                     <td class="text-end align-middle">{{$d->sisa_ppn}}</td>
                     <td class="text-end align-middle">{{$d->sisa_tagihan}}</td>
-                    <td class="text-end align-middle">{{$d->id_jatuh_tempo}}</td>
+                    <td class="text-end align-middle">{{$d->en_jatuh_tempo}}</td>
                     <td class="text-end align-middle">
                         <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
                             class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->sisa_tagihan}}">
