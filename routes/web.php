@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\RekapController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -524,86 +525,91 @@ Route::group(['middleware' => ['auth']], function () {
 
         });
 
-        Route::get('rekap', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap');
+        Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
 
             Route::prefix('bunga-investor')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
+                Route::get('/', [RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
             });
 
             Route::prefix('kas-besar/{ppn_kas}')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
-                Route::get('/print/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'kas_besar_print'])->name('rekap.kas-besar.print');
+                Route::get('/', [RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
+                Route::get('/print/{bulan}/{tahun}', [RekapController::class, 'kas_besar_print'])->name('rekap.kas-besar.print');
             });
 
             Route::prefix('kas-kecil')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');
-                Route::get('/print/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'kas_kecil_print'])->name('rekap.kas-kecil.print');
-                Route::get('/{kas}/void', [App\Http\Controllers\RekapController::class, 'void_kas_kecil'])->name('rekap.kas-kecil.void');
+                Route::get('/', [RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');
+                Route::get('/print/{bulan}/{tahun}', [RekapController::class, 'kas_kecil_print'])->name('rekap.kas-kecil.print');
+                Route::get('/{kas}/void', [RekapController::class, 'void_kas_kecil'])->name('rekap.kas-kecil.void');
+            });
+
+            Route::prefix('barang-retur')->group(function() {
+                Route::get('/', [RekapController::class, 'barang_retur'])->name('rekap.barang-retur');
+                Route::get('/data', [RekapController::class, 'barang_retur_data'])->name('rekap.barang-retur.data');
             });
 
             // Route::get('/statistik/{customer}', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik.index');
             // Route::get('/statistik/{customer}/print', [App\Http\Controllers\StatistikController::class, 'print'])->name('statistik.print');
 
-            Route::get('kas-project', [App\Http\Controllers\RekapController::class, 'kas_project'])->name('rekap.kas-project');
-            Route::post('/kas-project/void/{kasProject}', [App\Http\Controllers\RekapController::class, 'void_kas_project'])->name('rekap.kas-project.void');
-            Route::get('/kas-project/print/{project}/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'kas_project_print'])->name('rekap.kas-project.print');
+            Route::get('kas-project', [RekapController::class, 'kas_project'])->name('rekap.kas-project');
+            Route::post('/kas-project/void/{kasProject}', [RekapController::class, 'void_kas_project'])->name('rekap.kas-project.void');
+            Route::get('/kas-project/print/{project}/{bulan}/{tahun}', [RekapController::class, 'kas_project_print'])->name('rekap.kas-project.print');
 
             Route::prefix('kas-investor')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'rekap_investor'])->name('rekap.kas-investor');
-                Route::get('/show/{investor}', [App\Http\Controllers\RekapController::class, 'rekap_investor_show'])->name('rekap.kas-investor.show');
-                Route::get('/detail/{investor}', [App\Http\Controllers\RekapController::class, 'rekap_investor_detail'])->name('rekap.kas-investor.detail');
-                Route::get('/detail-deviden/{investor}/show', [App\Http\Controllers\RekapController::class, 'rekap_investor_detail_deviden_show'])->name('rekap.kas-investor.detail-deviden.show');
-                Route::get('/detail-deviden/{investor}', [App\Http\Controllers\RekapController::class, 'rekap_investor_detail_deviden'])->name('rekap.kas-investor.detail-deviden');
+                Route::get('/', [RekapController::class, 'rekap_investor'])->name('rekap.kas-investor');
+                Route::get('/show/{investor}', [RekapController::class, 'rekap_investor_show'])->name('rekap.kas-investor.show');
+                Route::get('/detail/{investor}', [RekapController::class, 'rekap_investor_detail'])->name('rekap.kas-investor.detail');
+                Route::get('/detail-deviden/{investor}/show', [RekapController::class, 'rekap_investor_detail_deviden_show'])->name('rekap.kas-investor.detail-deviden.show');
+                Route::get('/detail-deviden/{investor}', [RekapController::class, 'rekap_investor_detail_deviden'])->name('rekap.kas-investor.detail-deviden');
             });
 
             Route::prefix('kas-konsumen')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'konsumen'])->name('rekap.kas-konsumen');
+                Route::get('/', [RekapController::class, 'konsumen'])->name('rekap.kas-konsumen');
             });
 
             Route::prefix('invoice-penjualan')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
-                Route::get('/pdf', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_download'])->name('rekap.invoice-penjualan.pdf');
-                Route::get('/{invoice}/detail', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
+                Route::get('/', [RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
+                Route::get('/pdf', [RekapController::class, 'invoice_penjualan_download'])->name('rekap.invoice-penjualan.pdf');
+                Route::get('/{invoice}/detail', [RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
             });
 
             Route::prefix('pph-masa')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'pph_masa'])->name('rekap.pph-masa');
-                Route::get('/detail/{month}/{year}', [App\Http\Controllers\RekapController::class, 'pph_masa_detail'])->name('rekap.pph-masa.detail');
+                Route::get('/', [RekapController::class, 'pph_masa'])->name('rekap.pph-masa');
+                Route::get('/detail/{month}/{year}', [RekapController::class, 'pph_masa_detail'])->name('rekap.pph-masa.detail');
             });
 
             Route::prefix('gaji')->group(function () {
                 Route::view('/', 'rekap.gaji.index')->name('rekap.gaji');
-                Route::get('/detail', [App\Http\Controllers\RekapController::class, 'gaji_detail'])->name('rekap.gaji.detail');
+                Route::get('/detail', [RekapController::class, 'gaji_detail'])->name('rekap.gaji.detail');
             });
 
             Route::prefix('pph-badan')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'pph_badan'])->name('rekap.pph-badan');
+                Route::get('/', [RekapController::class, 'pph_badan'])->name('rekap.pph-badan');
             });
 
             Route::prefix('inventaris')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'inventaris'])->name('rekap.inventaris');
-                Route::get('/{jenis}', [App\Http\Controllers\RekapController::class, 'inventaris_detail'])->name('rekap.inventaris.detail');
+                Route::get('/', [RekapController::class, 'inventaris'])->name('rekap.inventaris');
+                Route::get('/{jenis}', [RekapController::class, 'inventaris_detail'])->name('rekap.inventaris.detail');
             });
 
             Route::prefix('invoice-penjualan')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
-                Route::get('/detail/{invoice}', [App\Http\Controllers\RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
+                Route::get('/', [RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
+                Route::get('/detail/{invoice}', [RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
             });
 
             Route::prefix('invoice-pembelian')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'invoice_pembelian'])->name('rekap.invoice-pembelian');
-                Route::get('/pdf', [App\Http\Controllers\RekapController::class, 'invoice_pembelian_download'])->name('rekap.invoice-pembelian.pdf');
-                Route::get('/detail/{invoice}', [App\Http\Controllers\RekapController::class, 'invoice_pembelian_detail'])->name('rekap.invoice-pembelian.detail');
+                Route::get('/', [RekapController::class, 'invoice_pembelian'])->name('rekap.invoice-pembelian');
+                Route::get('/pdf', [RekapController::class, 'invoice_pembelian_download'])->name('rekap.invoice-pembelian.pdf');
+                Route::get('/detail/{invoice}', [RekapController::class, 'invoice_pembelian_detail'])->name('rekap.invoice-pembelian.detail');
             });
 
             Route::prefix('pricelist')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'pricelist'])->name('rekap.pricelist');
-                Route::get('/pdf', [App\Http\Controllers\RekapController::class, 'pricelist_pdf'])->name('rekap.pricelist.pdf');
+                Route::get('/', [RekapController::class, 'pricelist'])->name('rekap.pricelist');
+                Route::get('/pdf', [RekapController::class, 'pricelist_pdf'])->name('rekap.pricelist.pdf');
             });
 
             Route::prefix('cost-operational')->group(function () {
-                Route::get('/', [App\Http\Controllers\RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
+                Route::get('/', [RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
             });
         });
     });
@@ -636,66 +642,72 @@ Route::group(['middleware' => ['auth']], function () {
         });
 
         Route::prefix('billing')->group(function () {
-            Route::get('/', [App\Http\Controllers\BillingController::class, 'index'])->name('billing');
+            Route::get('/', [BillingController::class, 'index'])->name('billing');
 
             Route::prefix('form-barang-retur')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_barang_retur'])->name('billing.form-barang-retur');
-                Route::post('/store', [App\Http\Controllers\BillingController::class, 'form_barang_retur_store'])->name('billing.form-barang-retur.store');
-                Route::post('/delete/{retur}', [App\Http\Controllers\BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
+                Route::get('/', [BillingController::class, 'form_barang_retur'])->name('billing.form-barang-retur');
+                Route::post('/store', [BillingController::class, 'form_barang_retur_store'])->name('billing.form-barang-retur.store');
+                Route::post('/delete/{retur}', [BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
 
-                Route::get('/detail/{retur}', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail'])->name('billing.form-barang-retur.detail');
-                Route::post('/detail/{retur}/store', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_store'])->name('billing.form-barang-retur.detail.store');
-                Route::post('/detail/{retur}/empty', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_empty'])->name('billing.form-barang-retur.detail.empty');
-                Route::post('/detail/{retur}/lanjutkan', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_lanjutkan'])->name('billing.form-barang-retur.detail.lanjutkan');
+                Route::get('/detail/{retur}', [BillingController::class, 'form_barang_retur_detail'])->name('billing.form-barang-retur.detail');
+                Route::post('/detail/{retur}/store', [BillingController::class, 'form_barang_retur_detail_store'])->name('billing.form-barang-retur.detail.store');
+                Route::post('/detail/{retur}/empty', [BillingController::class, 'form_barang_retur_detail_empty'])->name('billing.form-barang-retur.detail.empty');
+                Route::post('/detail/{retur}/lanjutkan', [BillingController::class, 'form_barang_retur_detail_lanjutkan'])->name('billing.form-barang-retur.detail.lanjutkan');
 
-                Route::get('/detail/{retur}/preview', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_preview'])->name('billing.form-barang-retur.detail.preview');
-                Route::post('/detail/preview/delete', [App\Http\Controllers\BillingController::class, 'form_barang_retur_detail_preview_delete'])->name('billing.form-barang-retur.detail.preview.delete');
+                Route::get('/detail/{retur}/preview', [BillingController::class, 'form_barang_retur_detail_preview'])->name('billing.form-barang-retur.detail.preview');
+                Route::post('/detail/preview/delete', [BillingController::class, 'form_barang_retur_detail_preview_delete'])->name('billing.form-barang-retur.detail.preview.delete');
 
-                Route::delete('/delete/{retur}', [App\Http\Controllers\BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
+                Route::delete('/delete/{retur}', [BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
             });
 
             Route::prefix('barang-retur')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'barang_retur'])->name('billing.barang-retur');
-                Route::get('/detail/{retur}', [App\Http\Controllers\BillingController::class, 'barang_retur_detail'])->name('billing.barang-retur.detail');
-                Route::post('/void/{retur}', [App\Http\Controllers\BillingController::class, 'barang_retur_void'])->name('billing.barang-retur.void');
+                Route::get('/', [BillingController::class, 'barang_retur'])->name('billing.barang-retur');
+                Route::get('/data', [BillingController::class, 'barang_retur_data'])->name('billing.barang-retur.data');
+                Route::get('/detail/{retur}', [BillingController::class, 'barang_retur_detail'])->name('billing.barang-retur.detail');
+                Route::post('/void/{retur}', [BillingController::class, 'barang_retur_void'])->name('billing.barang-retur.void');
+
+                Route::post('/kirim/{retur}', [BillingController::class, 'barang_retur_kirim'])->name('billing.barang-retur.kirim');
+                Route::get('/cetak/{retur}', [BillingController::class, 'barang_retur_cetak'])->name('billing.barang-retur.cetak');
+                Route::get('/preview/{retur}', [BillingController::class, 'barang_retur_preview'])->name('billing.barang-retur.preview');
+                Route::post('/selesaikan/{retur}', [BillingController::class, 'barang_retur_selesaikan'])->name('billing.barang-retur.selesaikan');
             });
 
             // Routing Sales Order
             Route::prefix('sales-order')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'sales_order'])->name('billing.sales-order');
-                Route::get('/detail/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_detail'])->name('billing.sales-order.detail');
-                Route::post('/void/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_void'])->name('billing.sales-order.void');
+                Route::get('/', [BillingController::class, 'sales_order'])->name('billing.sales-order');
+                Route::get('/detail/{order}', [BillingController::class, 'sales_order_detail'])->name('billing.sales-order.detail');
+                Route::post('/void/{order}', [BillingController::class, 'sales_order_void'])->name('billing.sales-order.void');
 
-                Route::get('/lanjutkan/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_lanjutkan'])->name('billing.sales-order.lanjutkan');
+                Route::get('/lanjutkan/{order}', [BillingController::class, 'sales_order_lanjutkan'])->name('billing.sales-order.lanjutkan');
 
-                Route::post('/detail/update/{order}', [App\Http\Controllers\BillingController::class, 'sales_order_update'])->name('billing.sales-order.detail.update');
-                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\BillingController::class, 'sales_order_delete'])->name('billing.sales-order.detail.delete');
+                Route::post('/detail/update/{order}', [BillingController::class, 'sales_order_update'])->name('billing.sales-order.detail.update');
+                Route::post('/detail/delete/{orderDetail}', [BillingController::class, 'sales_order_delete'])->name('billing.sales-order.detail.delete');
             });
 
               Route::prefix('pre-order')->group(function() {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'preorder'])->name('billing.pre-order');
-                Route::get('/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_detail'])->name('billing.pre-order.detail');
-                Route::post('/update/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_detail_update'])->name('billing.pre-order.update');
-                Route::post('/void/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_void'])->name('billing.pre-order.void');
-                Route::post('/finish/{preorder}', [App\Http\Controllers\BillingController::class, 'preorder_finish'])->name('billing.pre-order.finish');
-                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\BillingController::class, 'preorder_detail_delete'])->name('billing.pre-order.detail.delete');
+                Route::get('/', [BillingController::class, 'preorder'])->name('billing.pre-order');
+                Route::get('/{preorder}', [BillingController::class, 'preorder_detail'])->name('billing.pre-order.detail');
+                Route::post('/update/{preorder}', [BillingController::class, 'preorder_detail_update'])->name('billing.pre-order.update');
+                Route::post('/void/{preorder}', [BillingController::class, 'preorder_void'])->name('billing.pre-order.void');
+                Route::post('/finish/{preorder}', [BillingController::class, 'preorder_finish'])->name('billing.pre-order.finish');
+                Route::post('/detail/delete/{orderDetail}', [BillingController::class, 'preorder_detail_delete'])->name('billing.pre-order.detail.delete');
             });
 
             Route::prefix('bunga-investor')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
-                Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
+                Route::get('/', [BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
+                Route::post('/store', [BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
             });
 
             Route::prefix('ganti-rugi')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'ganti_rugi'])->name('billing.ganti-rugi');
-                Route::post('/bayar/{rugi}', [App\Http\Controllers\BillingController::class, 'ganti_rugi_bayar'])->name('billing.ganti-rugi.bayar');
-                Route::post('/void/{rugi}', [App\Http\Controllers\BillingController::class, 'ganti_rugi_void'])->name('billing.ganti-rugi.void');
+                Route::get('/', [BillingController::class, 'ganti_rugi'])->name('billing.ganti-rugi');
+                Route::post('/bayar/{rugi}', [BillingController::class, 'ganti_rugi_bayar'])->name('billing.ganti-rugi.bayar');
+                Route::post('/void/{rugi}', [BillingController::class, 'ganti_rugi_void'])->name('billing.ganti-rugi.void');
             });
 
-            Route::get('/lihat-stok', [App\Http\Controllers\BillingController::class, 'lihat_stok'])->name('billing.lihat-stok');
+            Route::get('/lihat-stok', [BillingController::class, 'lihat_stok'])->name('billing.lihat-stok');
 
             Route::prefix('form-inventaris')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_inventaris'])->name('billing.form-inventaris');
+                Route::get('/', [BillingController::class, 'form_inventaris'])->name('billing.form-inventaris');
                 Route::get('/get-jenis', [App\Http\Controllers\FormInventaris::class, 'getJenis'])->name('billing.form-inventaris.get-jenis');
                 Route::get('/beli', [App\Http\Controllers\FormInventaris::class, 'index'])->name('billing.form-inventaris.beli');
                 Route::post('/beli/store', [App\Http\Controllers\FormInventaris::class, 'store'])->name('billing.form-inventaris.beli.store');
@@ -709,13 +721,13 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('form-cost-operational')->group(function () {
                 Route::view('/', 'billing.form-cost-operational.index')->name('billing.form-cost-operational');
                 Route::prefix('cost-operational')->group(function () {
-                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
+                    Route::get('/', [BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
+                    Route::post('/store', [BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
                 });
 
                 Route::prefix('form-gaji')->group(function () {
-                    Route::get('/', [App\Http\Controllers\BillingController::class, 'gaji'])->name('billing.form-cost-operational.gaji');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'gaji_store'])->name('billing.form-cost-operational.gaji.store');
+                    Route::get('/', [BillingController::class, 'gaji'])->name('billing.form-cost-operational.gaji');
+                    Route::post('/store', [BillingController::class, 'gaji_store'])->name('billing.form-cost-operational.gaji.store');
                 });
             });
 
@@ -744,8 +756,8 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::prefix('form-dividen')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_dividen'])->name('billing.form-dividen');
-                Route::post('/store', [App\Http\Controllers\BillingController::class, 'form_dividen_store'])->name('billing.form-dividen.store');
+                Route::get('/', [BillingController::class, 'form_dividen'])->name('billing.form-dividen');
+                Route::post('/store', [BillingController::class, 'form_dividen_store'])->name('billing.form-dividen.store');
             });
 
             Route::prefix('form-beli')->group(function () {
@@ -817,23 +829,23 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::prefix('nota-ppn-masukan')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'nota_ppn_masukan'])->name('nota-ppn-masukan');
-                Route::post('/claim/{invoice}', [App\Http\Controllers\BillingController::class, 'claim_ppn'])->name('nota-ppn-masukan.claim');
+                Route::get('/', [BillingController::class, 'nota_ppn_masukan'])->name('nota-ppn-masukan');
+                Route::post('/claim/{invoice}', [BillingController::class, 'claim_ppn'])->name('nota-ppn-masukan.claim');
 
             });
 
             Route::prefix('invoice-tagihan')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'invoice_tagihan'])->name('invoice-tagihan');
+                Route::get('/', [BillingController::class, 'invoice_tagihan'])->name('invoice-tagihan');
             });
 
             Route::prefix('invoice-ppn')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'invoice_ppn'])->name('invoice-ppn');
-                Route::post('/bayar/{invoice}', [App\Http\Controllers\BillingController::class, 'invoice_ppn_bayar'])->name('invoice-ppn.bayar');
+                Route::get('/', [BillingController::class, 'invoice_ppn'])->name('invoice-ppn');
+                Route::post('/bayar/{invoice}', [BillingController::class, 'invoice_ppn_bayar'])->name('invoice-ppn.bayar');
             });
 
             Route::prefix('ppn-susulan')->group(function () {
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'ppn_masuk_susulan'])->name('ppn-susulan');
-                Route::post('/store', [App\Http\Controllers\BillingController::class, 'ppn_masuk_susulan_store'])->name('ppn-susulan.store');
+                Route::get('/', [BillingController::class, 'ppn_masuk_susulan'])->name('ppn-susulan');
+                Route::post('/store', [BillingController::class, 'ppn_masuk_susulan_store'])->name('ppn-susulan.store');
             });
 
         });

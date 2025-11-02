@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BarangRetur;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -27,6 +28,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class RekapController extends Controller
 {
@@ -796,5 +798,107 @@ class RekapController extends Controller
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
         ]);
+    }
+
+    public function barang_retur(Request $request)
+    {
+        // Ambil data untuk dropdown filter (sama seperti fungsi index)
+        $konsumens = Konsumen::where('active', 1)->orderBy('nama', 'asc')->get();
+        $barang_units = BarangUnit::orderBy('nama', 'asc')->get();
+
+        // Kirim data bulan dan tahun saat ini ke view untuk default filter
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        return view('rekap.barang-retur.index', [
+            'konsumens' => $konsumens,
+            'barang_units' => $barang_units,
+            'currentMonth' => $currentMonth,
+            'currentYear' => $currentYear,
+        ]);
+    }
+
+    /**
+     * Menyediakan data AJAX untuk halaman rekap.
+     */
+    public function barang_retur_data(Request $request)
+    {
+        // 1. Mulai query dasar
+        $query = BarangRetur::with(['barang_unit', 'konsumen.kode_toko']);
+
+        // 2. Terapkan Filter (Konsumen, Supplier, Tipe, Status)
+        if ($request->filled('konsumen_id')) {
+            $query->where('konsumen_id', $request->konsumen_id);
+        }
+        if ($request->filled('barang_unit_id')) {
+            $query->where('barang_unit_id', $request->barang_unit_id);
+        }
+        if ($request->filled('tipe')) {
+            $query->where('tipe', $request->tipe);
+        }
+        // !! PENTING: Hapus filter status default agar bisa menampilkan semua
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        // Jika tidak ada filter status, tampilkan SEMUA (1, 2, 3, 4)
+
+        // 3. Terapkan Filter Bulan dan Tahun (BARU)
+        // created_at adalah kolom tanggal Anda
+        if ($request->filled('bulan') && $request->filled('tahun')) {
+            $query->whereMonth('created_at', $request->bulan)
+                ->whereYear('created_at', $request->tahun);
+        } else {
+            // Default: Tampilkan data bulan dan tahun ini
+            $query->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year);
+        }
+
+        // 4. Proses dengan DataTables
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('kode', function ($row) { // Link ke detail
+                $url = route('billing.barang-retur.detail', ['retur' => $row->id]);
+                return '<a href="'.$url.'" class="btn btn-primary btn-sm">'.$row->kode.'</a>';
+            })
+            ->addColumn('supplier', function ($row) { // Nama Supplier
+                return $row->barang_unit ? $row->barang_unit->nama : '-';
+            })
+            ->addColumn('konsumen_nama', function ($row) { // Nama Konsumen
+                if (!$row->konsumen) return '-';
+                $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode : '';
+                return $kode . ' ' . $row->konsumen->nama;
+            })
+            ->addColumn('status_badge', function ($row) { // Badge Status
+                if ($row->status == 1) return '<span class="badge bg-warning">Diajukan</span>';
+                if ($row->status == 2) return '<span class="badge bg-primary">Diproses</span>';
+                if ($row->status == 3) return '<span class="badge bg-success">Selesai</span>';
+                if ($row->status == 4) return '<span class="badge bg-danger">Dibatalkan</span>';
+                return '';
+            })
+            ->addColumn('tanggal_en', function ($row) { // Format tanggal
+                return Carbon::parse($row->created_at)->format('d-m-Y');
+            })
+
+            // ===================================================================
+            // KOLOM AKSI (HANYA TOMBOL PDF)
+            // ===================================================================
+            ->addColumn('action', function ($row) {
+                // Hanya tampilkan tombol PDF jika status 2 (Diproses) atau 3 (Selesai)
+                // karena PDF baru dibuat setelah diproses (status 2)
+                if ($row->status == 2 || $row->status == 3) {
+                    $urlCetak = route('billing.barang-retur.cetak', ['retur' => $row->id]);
+                    return '<a href="'.$urlCetak.'" target="_blank" class="btn btn-secondary btn-sm me-1"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat PDF">
+                            <i class="fa fa-print"></i>
+                            </a>';
+                }
+                // Status 1 (Diajukan) atau 4 (Void) tidak memiliki PDF
+                return '-';
+            })
+            ->rawColumns(['kode', 'status_badge', 'action'])
+            ->order(function ($query) {
+                $query->orderBy('created_at', 'desc');
+            })
+            ->make(true);
     }
 }

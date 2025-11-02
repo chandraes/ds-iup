@@ -137,7 +137,7 @@
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.1.1/css/scroller.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net//2.1.1/css/scroller.dataTables.min.css">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>

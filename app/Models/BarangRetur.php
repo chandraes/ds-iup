@@ -15,7 +15,18 @@ class BarangRetur extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
-    protected $appends = ['tipe_text', 'status_text', 'tanggal_en'];
+    protected $appends = ['tipe_text', 'status_text', 'tanggal_en', 'kode'];
+
+    public function generateNomor()
+    {
+        $lastNomor = self::max('nomor');
+        return $lastNomor ? $lastNomor + 1 : 1;
+    }
+
+    public function getKodeAttribute()
+    {
+        return 'BR-' . str_pad($this->nomor, 3, '0', STR_PAD_LEFT);
+    }
 
     public function getTanggalEnAttribute()
     {
@@ -152,5 +163,116 @@ class BarangRetur extends Model
         }
 
         return ['status' => 'success', 'message' => 'Retur berhasil diproses'];
+    }
+
+    public function void_retur($id)
+    {
+        $data = $this->where('id', $id)->first();
+
+        if ($data->status == 3) {
+            return ['status' => 'error', 'message' => 'Retur sudah selesai, tidak dapat di void'];
+        }
+
+        $detail = $data->details;
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($detail as $item) {
+                $barang = BarangStokHarga::find($item->barang_stok_harga_id);
+
+                $barang->stok += $item->qty;
+                $barang->save();
+            }
+
+            $data->update([
+                'status' => 4,
+            ]);
+
+            DB::commit();
+
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+
+        return ['status' => 'success', 'message' => 'Retur berhasil di void'];
+
+    }
+
+    public function kirim_retur($id)
+    {
+        $data = $this->find($id);
+
+        if ($data->status != 1) {
+            return ['status' => 'error', 'message' => 'Retur harus dalam status diajukan'];
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $data->update([
+                'status' => 2
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return ['status' => 'error', 'message' => 'Terjadi Kesalahan. Silahkan refresh dan coba lagi!'];
+        }
+
+        return ['status' => 'success', 'message' => 'Barang Berhasil Diproses. Silahkan Cetak Bukti Kirim!'];
+
+    }
+
+    public function selesaikan_retur($id)
+    {
+        $data = $this->with('details')->find($id);
+
+        if ($data->status != 2) {
+            return ['status' => 'error', 'message' => 'Hanya retur yang "Diproses" yang bisa diselesaikan.'];
+        }
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($data->details as $item) {
+                $barang = BarangStokHarga::find($item->barang_stok_harga_id);
+                if (!$barang) {
+                    throw new \Exception("Stok barang (ID: ".$item->barang_stok_harga_id.") tidak ditemukan.");
+                }
+
+                // if ($data->tipe == 1) {
+                //     // Tipe 1 = Retur ke Supplier (Barang KELUAR)
+                //     $barang->stok -= $item->qty;
+                // } else {
+                    // Tipe 2 = Retur dari Konsumen (Barang MASUK)
+                $barang->stok += $item->qty;
+                $barang->hide = 0;
+                // }
+
+                $barang->save();
+            }
+
+            $data->update([
+                'status' => 3, // 3 = Selesai
+            ]);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return ['status' => 'error', 'message' => $th->getMessage()];
+        }
+
+        return ['status' => 'success', 'message' => 'Retur berhasil diselesaikan. Stok telah diperbarui.'];
     }
 }

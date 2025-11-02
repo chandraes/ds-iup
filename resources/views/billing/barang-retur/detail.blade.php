@@ -8,7 +8,7 @@
     </div>
     <div class="row mb-3 d-flex">
         <div class="col-md-6">
-            <a href="{{route('billing.barang-retur')}}" class="btn btn-secondary"><i
+            <a href="{{url()->previous()}}" class="btn btn-secondary"><i
                     class="fa fa-arrow-left"></i>
                 Kembali</a>
         </div>
@@ -26,12 +26,21 @@
                                 <div class="col-md-6 invoice-col">
                                     <table style="width: 90%">
                                         <tr style="height:50px">
+                                            <td class="text-start align-middle">Kode</td>
+                                            <td class="text-start align-middle" style="width: 10%">:</td>
+                                            <td class="text-start align-middle">
+                                                <input type="text" name="konsumen" id="konsumen" class="form-control"
+                                                    value="{{ $data->kode  }}" disabled>
+                                            </td>
+                                        </tr>
+                                        <tr style="height:50px">
                                             <td class="text-start align-middle">Supplier</td>
                                             <td class="text-start align-middle" style="width: 10%">:</td>
                                             <td class="text-start align-middle">
                                                 <input type="text" name="konsumen" id="konsumen" class="form-control"
                                                     value="{{ $data->barang_unit->nama  }}" disabled>
                                             </td>
+                                        </tr>
                                         @if ($data->tipe == 2)
                                         <tr style="height:50px">
                                             <td class="text-start align-middle">Konsumen</td>
