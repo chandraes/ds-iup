@@ -4,38 +4,54 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="keranjangTitle">
-                    Jumlah <span id="titleJumlah"></span>
+                    <i class="bi bi-pencil-square me-2"></i> Input Jumlah Retur
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form method="post" id="keranjangForm" action="{{route('billing.form-barang-retur.detail.store', $b->id)}}">
                 @csrf
 
+                <input type="hidden" name="barang_retur_id" value="{{ $b->id }}">
+                <input type="hidden" name="barang_stok_harga_id" id="barang_stok_harga_id">
+                <input type="hidden" name="detail_id" id="detail_id">
+
                 <div class="modal-body">
-                    <input type="hidden" name="barang_retur_id" value="{{ $b->id }}">
-                    <input type="hidden" name="barang_stok_harga_id" id="barang_stok_harga_id">
-                    <input type="hidden" name="detail_id" id="detail_id">
                     <div class="row">
-                        <div class="col-md-12">
-                            <div class="row">
-                                 <div class="col-md-12 mb-2">
-                                    <input type="text" id="nm_barang_merk_retail" class="form-control" disabled></input>
-                                </div>
-                                <div class="col-md-12 mt-2">
-                                    <label for="">Masukan Jumlah Retur</label>
-                                    <div class="input-group mb-3">
-                                        <input type="text" class="form-control text-end" name="jumlah" id="jumlah"
-                                            required data-thousands=".">
-                                        <span class="input-group-text" id="jumlah_satuan"></span>
-                                    </div>
-                                </div>
+
+                        <div class="col-12 mb-3">
+                            <label for="nm_barang_merk_retail" class="form-label">Nama Barang</label>
+                            <input type="text" id="nm_barang_merk_retail" class="form-control" disabled
+                                   style="background-color: #e9ecef; opacity: 1;">
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info d-flex justify-content-between align-items-center mb-0" role="alert">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    Stok Tersedia:
+                                </h6>
+                                <span id="stok_tersedia" class="badge bg-primary rounded-pill" style="font-size: 1.05rem;">0</span>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12">
+                            <label for="jumlah" class="form-label fw-bold">Masukan Jumlah Retur</label>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control text-end" name="jumlah" id="jumlah"
+                                    required data-thousands="." placeholder="0" style="font-size: 1.1rem;">
+                                <span class="input-group-text" id="jumlah_satuan_group">
+                                    <i class="bi bi-box-seam me-2"></i>
+                                    <span id="jumlah_satuan"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
                              <div class="row" id="rowGrosirRetail" hidden>
                                 {{-- grosir --}}
                                 <div class="col-md-12">
+                                     <h6 class="mt-2 text-muted">Info Harga Grosir</h6>
                                     <table class="table table-bordered table-hover">
                                         <thead>
                                             <tr>
@@ -51,14 +67,17 @@
                             </div>
                         </div>
                     </div>
-
-
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>
                         Batal
                     </button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>
+                        Simpan
+                    </button>
                 </div>
             </form>
         </div>

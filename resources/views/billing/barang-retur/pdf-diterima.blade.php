@@ -1,7 +1,7 @@
 @extends('layouts.doc')
 
 @push('header')
-{{-- Bagian header ini sengaja tidak diubah sesuai permintaan Anda --}}
+{{-- Bagian ini sengaja tidak diubah sesuai permintaan Anda --}}
 @if ($pt->logo !== null && file_exists(public_path('uploads/logo/'.$pt->logo)))
 <img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
 @endif
@@ -16,7 +16,7 @@
 @section('content')
 <style>
     /* * PERUBAHAN CSS:
-     * Semua style untuk PDF ini ada di sini
+     * Semua style untuk PDF baru ada di sini
      */
     body {
         font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
@@ -54,9 +54,11 @@
     }
     .info-table {
         width: 100%;
+
     }
     .info-table td {
         padding: 2px 0; /* Jarak vertikal antar baris info */
+        vertical-align: top;
     }
     .info-table td:nth-child(1) { width: 30%; } /* Label (mis: Kode Retur) */
     .info-table td:nth-child(2) { width: 5%; }  /* Titik dua (:) */
@@ -70,13 +72,13 @@
         margin-bottom: 20px;
     }
     .data-table thead {
-        /* Latar belakang header tabel (abu-abu muda profesional) */
+        /* Latar belakang header tabel */
         background-color: #e9ecef;
     }
     .data-table th,
     .data-table td {
         /* Border yang lebih bersih */
-        border: 1px solid #0d0d0d;
+        border: 1px solid #000000;
         padding: 6px 8px; /* Padding sel */
     }
     .data-table th {
@@ -111,7 +113,7 @@
         height: 70px;
     }
     .signature-label {
-        /* Garis bawah untuk tanda tangan (lebih rapi) */
+        /* Garis bawah untuk tanda tangan */
         border-top: 1px solid #333;
         padding-top: 5px;
         display: inline-block; /* Agar garis tidak full-width */
@@ -125,7 +127,7 @@
 </style>
 
 <div class="content-wrapper">
-    <h4 class="title">Barang Retur</h4>
+    <h4 class="title">Bukti Terima Barang Retur</h4>
 
     <div class="info-section">
         <div class="info-left">
@@ -138,43 +140,36 @@
                 <tr>
                     <td>Tipe Retur</td>
                     <td>:</td>
-                    <td>{{$data->tipe == 1 ? 'Retur ke Supplier' : 'Retur dari Konsumen'}}</td>
+                    <td><strong>{{$data->tipe_text}}</strong></td>
                 </tr>
-
-                @if ($data->tipe == 1)
-                {{-- Tipe 1 = Retur ke Supplier --}}
                 <tr>
-                    <td style="vertical-align: top;">Supplier</td>
-                    <td style="vertical-align: top;">:</td>
-                    <td style="vertical-align: top;"><strong>{{$data->barang_unit->nama}}</strong></td>
-                </tr>
-                @else
-                {{-- Tipe 2 = Retur dari Konsumen --}}
-                <tr>
-                    <td style="vertical-align: top;">Konsumen</td>
-                    <td style="vertical-align: top;">:</td>
-                    <td style="vertical-align: top;">
-                        <strong>{{$data->konsumen ? $data->konsumen->kode_toko?->kode.' '.$data->konsumen->nama : ''}}</strong>
-                        <br>
-                        {{-- Dibuat lebih kecil agar tidak terlalu dominan --}}
-                        <small style="color: #555;">{{$data->konsumen->alamat ?? ''}}</small>
+                    <td>{{ $data->tipe == 1 ? 'Supplier' : 'Konsumen' }}</td>
+                    <td>:</td>
+                    <td>
+                        @if ($data->tipe == 1)
+                            {{ $data->barang_unit->nama ?? 'N/A' }}
+                        @else
+                            <strong>{{ $data->konsumen->kode_toko->kode.' '.$data->konsumen->nama ?? 'N/A' }}</strong>
+                            <br>
+                            {{$data->konsumen->alamat ?? ''}}
+                        @endif
                     </td>
                 </tr>
-                @endif
             </table>
         </div>
         <div class="info-right">
             <table class="info-table">
-                <tr>
+                    <tr>
                     <td>Tanggal</td>
                     <td>:</td>
                     <td><strong>{{$tanggal}}</strong></td>
                 </tr>
+
             </table>
         </div>
         <div class="clearfix"></div>
     </div>
-     <table class="data-table">
+    <table class="data-table">
         <thead>
             <tr>
                 <th style="width: 5%;">No</th>
@@ -202,17 +197,19 @@
 
     </table>
 
+   
+
     <table class="signature-table">
         <tr>
-            <td style="width: 50%;">
-                <p><strong>{{ $pt->nama }}</strong></p>
+            <td>
+                <p><strong>{{ $data->karyawan?->nama ?? 'Sales' }}</strong></p>
                 <div class="signature-space"></div>
                 <p class="signature-label">
                     <strong>PENGIRIM</strong>
                 </p>
             </td>
-            <td style="width: 50%;">
-                <p><strong>{{ $data->konsumen ? $data->konsumen->kode_toko->kode.' '.$data->konsumen->nama : $data->konsumen_temp->nama }}</strong></p>
+            <td>
+                <p><strong>{{ $pt->nama ?? 'Penerima' }}</strong></p>
                 <div class="signature-space"></div>
                 <p class="signature-label">
                     <strong>PENERIMA</strong>
@@ -220,5 +217,6 @@
             </td>
         </tr>
     </table>
+
 </div>
 @endsection

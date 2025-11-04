@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>FORM BARANG RETUR<br>PILIH BARANG<br>{{$b->barang_unit->nama}}
+            <h1><u>FORM BARANG RETUR<br>PILIH BARANG<br>{{$b->karyawan->nama}}
             <br>{{$b->konsumen ? $b->konsumen->kode_toko->kode.' '.$b->konsumen->nama : ''}}</u></h1>
         </div>
     </div>
@@ -96,10 +96,9 @@
     </div>
 
     <center>
-        <h2>Barang PPn</h2>
+        <h2>PILIH BARANG</h2>
     </center>
     <div class="table-container mt-4">
-
         <table class="table table-bordered" id="dataTable">
             <thead class="table-success">
                 <tr>
@@ -108,8 +107,115 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    {{-- <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
-                    <th class="text-center align-middle">PPN<br>Keluaran</th> --}}
+
+                    <th class="text-center align-middle">Stok<br>Barang</th>
+                    <th class="text-center align-middle">Satuan<br>Barang</th>
+                    <th class="text-center align-middle">PPN</th>
+                    <th class="text-center align-middle">NON PPN</th>
+
+                    <th class="text-center align-middle">ACT</th>
+
+                </tr>
+            </thead>
+            @php
+            $number = 1;
+            $sumTotalHargaBeli = 0;
+            $sumTotalHargaJual = 0;
+            @endphp
+
+            <tbody>
+                @foreach ($data as $unitId => $types)
+                @php $unitDisplayed = false; @endphp
+                @foreach ($types as $typeId => $categories)
+                @php $typeDisplayed = false; @endphp
+                @foreach ($categories as $kategoriId => $barangs)
+                @php $kategoriDisplayed = false; @endphp
+                @foreach ($barangs as $namaId => $items)
+                @php $namaDisplayed = false; @endphp
+                @foreach ($items as $barangId => $stokHargas)
+                @php $barangDisplayed = false; @endphp
+                @foreach ($stokHargas as $stokHarga)
+                <tr>
+                    @if (!$kategoriDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->kategoriRowspan }}">{{ $number++ }}
+                    <td class="text-start align-middle" rowspan="{{ $stokHarga->kategoriRowspan }}">{{
+                        $stokHarga->kategori->nama }}</td>
+                    @php $kategoriDisplayed = true; @endphp
+                    @endif
+                    @if (!$namaDisplayed)
+                    <td class="text-start align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
+                        {{$stokHarga->barang_nama->nama }}</a>
+                    </td>
+                    @php $namaDisplayed = true; @endphp
+                    @endif
+                    @if (!$barangDisplayed)
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
+                            onclick="getHistori({{$stokHarga->barang->id}})">
+                            {{ $stokHarga->barang->kode }}
+                        </a>
+                    </td>
+                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
+                            onclick="getHistori({{$stokHarga->barang->id}})">
+                            {{ $stokHarga->barang->merk }}
+                        </a>
+                    </td>
+                    @php $barangDisplayed = true; @endphp
+                    @endif
+                    <td class="text-center align-middle">
+                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a> --}}
+
+                        {{ $stokHarga->nf_stok }}
+
+                    </td>
+                    <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
+                        $stokHarga->barang->satuan->nama : '-' }}</td>
+                    <td class="text-center align-middle">
+                        @if ($stokHarga->barang->jenis == 1)
+                        <i class="fa fa-check"></i>
+                        @endif
+                    </td>
+                        <td class="text-center align-middle">
+                             @if ($stokHarga->barang->jenis == 2)
+                        <i class="fa fa-check"></i>
+                        @endif
+                        </td>
+                    <td class="text-center align-middle">
+                         @if ($keranjang->where('barang_stok_harga_id', $stokHarga->id)->first())
+                           <button type="text" class="form-control text-center" onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}},
+                                    {{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->qty}},
+                                    {{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->id}})" data-bs-toggle="modal" data-bs-target="#keranjangModal">{{$keranjang->where('barang_stok_harga_id', $stokHarga->id)->first()->nf_qty}}</button>
+                        @else
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#keranjangModal"
+                            onclick="setModalJumlah({{$stokHarga}}, {{$stokHarga->id}})"><i class="fa fa-cart-arrow-down mx-2" style="font-size: 1.2rem"></i></button>
+                        @endif
+                    </td>
+                </tr>
+                {{-- @endif --}}
+                @endforeach
+                @endforeach
+                @endforeach
+                @endforeach
+                @endforeach
+                @if (!$loop->last)
+                <tr>
+                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent">
+                    </td>
+                </tr>
+                @endif
+                @endforeach
+            </tbody>
+        </table>
+        {{-- <table class="table table-bordered" id="dataTable">
+            <thead class="table-success">
+                <tr>
+                    <th class="text-center align-middle" style="width: 15px">No</th>
+                    <th class="text-center align-middle">Kelompok<br>Barang</th>
+                    <th class="text-center align-middle">Nama<br>Barang</th>
+                    <th class="text-center align-middle">Kode<br>Barang</th>
+                    <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Harga<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
@@ -165,12 +271,6 @@
                     </td>
                     @php $barangDisplayed = true; @endphp
                     @endif
-                    {{-- <td class="text-end align-middle">
-                        {{$stokHarga->nf_harga}}
-                    </td>
-                    <td class="text-end align-middle">
-                        {{ number_format($stokHarga->harga*$ppnRate/100, 0, ',','.') }}
-                    </td> --}}
                     <td class="text-end align-middle">
                         {{ number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') }}
                     </td>
@@ -202,13 +302,13 @@
                 @endif
                 @endforeach
             </tbody>
-        </table>
+        </table> --}}
     </div>
     <br>
     <hr>
     <br>
 
-    <center>
+    {{-- <center>
         <h2>Barang Non PPN</h2>
     </center>
     <div class="table-container mt-4">
@@ -221,8 +321,7 @@
                     <th class="text-center align-middle">Nama<br>Barang</th>
                     <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
-                    {{-- <th class="text-center align-middle">Harga DPP<br>Jual Barang</th>
-                    <th class="text-center align-middle">PPN<br>Keluaran</th> --}}
+
                     <th class="text-center align-middle">Harga<br>Jual Barang</th>
                     <th class="text-center align-middle">Stok<br>Barang</th>
                     <th class="text-center align-middle">Satuan<br>Barang</th>
@@ -280,13 +379,6 @@
                     <td class="text-end align-middle">
                         {{$stokHarga->nf_harga}}
                     </td>
-
-                    {{-- <td class="text-end align-middle">
-                        0
-                    </td>
-                    <td class="text-end align-middle">
-                        {{$stokHarga->nf_harga}}
-                    </td> --}}
                     <td class="text-center align-middle">{{ $stokHarga->nf_stok }}</td>
                     <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
                         $stokHarga->barang->satuan->nama : '-' }}</td>
@@ -319,7 +411,7 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
+    </div> --}}
 </div>
 
 @endsection
@@ -327,6 +419,7 @@
 
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 @endpush
 @push('js')
 <script src="{{asset('assets/js/bootstrap-bundle.js')}}"></script>
@@ -337,21 +430,33 @@
         width: '100%',
     });
 
+      var nominal = new Cleave('#jumlah', {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: '.',
+        });
+
     confirmAndSubmit("#keranjangEmpty", "Apakah anda yakin untuk mengosongkan keranjang?");
     confirmAndSubmit("#grosirForm", "Apakah anda yakin?");
 
     function setModalJumlah(data, id, qty = 0, detailId = null)
     {
-        console.log(qty, detailId);
-        document.getElementById('titleJumlah').innerText = data.barang_nama.nama;
         document.getElementById('jumlah_satuan').innerText = data.barang.satuan ? data.barang.satuan.nama : '';
         document.getElementById('barang_stok_harga_id').value = id;
-
+        document.getElementById('stok_tersedia').textContent = data.nf_stok;
         document.getElementById('nm_barang_merk_retail').value = data.barang_nama.nama + ', ' + data.barang.kode + ', ' + data.barang.merk;
         document.getElementById('jumlah').value = '';
 
         if (qty > 0) {
-            document.getElementById('jumlah').value = qty;
+
+            const formatter = new Intl.NumberFormat('id-ID');
+
+            // 2. Format angkanya
+            const formattedQty = formatter.format(qty); // Misal: 1500 -> "1.500"
+
+            // 3. Masukkan ke input
+            document.getElementById('jumlah').value = formattedQty;
             document.getElementById('detail_id').value = detailId;
         }
 

@@ -670,6 +670,9 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/cetak/{retur}', [BillingController::class, 'barang_retur_cetak'])->name('billing.barang-retur.cetak');
                 Route::get('/preview/{retur}', [BillingController::class, 'barang_retur_preview'])->name('billing.barang-retur.preview');
                 Route::post('/selesaikan/{retur}', [BillingController::class, 'barang_retur_selesaikan'])->name('billing.barang-retur.selesaikan');
+
+                Route::post('/terima/{retur}', [BillingController::class, 'barang_retur_terima'])->name('billing.barang-retur.terima');
+                Route::get('/cetak-diterima/{retur}', [BillingController::class, 'barang_retur_cetak_diterima'])->name('billing.barang-retur.cetak_diterima');
             });
 
             // Routing Sales Order

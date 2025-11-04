@@ -646,9 +646,11 @@ class BillingController extends Controller
             'tipe' => 'required|in:1,2',
         ]);
 
-        $data = BarangRetur::where('status', 0)->where('tipe', $d['tipe'])->get();
+        $data = BarangRetur::with(['karyawan', 'konsumen.kode_toko'])->where('status', 0)->where('tipe', $d['tipe'])->get();
         $supplier = BarangUnit::select('id', 'nama')->get();
-
+         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                    $query->where('is_sales', 1);
+                })->select('id', 'nama')->get();
         $konsumen = $d['tipe'] == 1 ? null : Konsumen::where('active', 1)
                                             ->with(['kode_toko'])
                                             ->get();
@@ -657,6 +659,7 @@ class BillingController extends Controller
             'data' => $data,
             'supplier' => $supplier,
             'konsumen' => $konsumen,
+            'sales' => $sales,
             'tipe' => $d['tipe'],
         ]);
     }
@@ -665,7 +668,8 @@ class BillingController extends Controller
     {
         $data = $request->validate([
             'tipe' => 'required|in:1,2',
-            'barang_unit_id' => 'required|exists:barang_units,id',
+            'barang_unit_id' => 'required_if:tipe,1|exists:barang_units,id',
+            'karyawan_id' => 'required|exists:karyawans,id',
             'konsumen_id' => 'required_if:tipe,2|exists:konsumens,id',
         ]);
 
@@ -676,9 +680,9 @@ class BillingController extends Controller
             $b = $db->create([
                 'nomor' => $db->generateNomor(),
                 'tipe' => $data['tipe'],
-                'barang_unit_id' => $data['barang_unit_id'],
+                'barang_unit_id' => $data['barang_unit_id'] ?? null,
                 'konsumen_id' => $data['konsumen_id'] ?? null,
-
+                'karyawan_id' => $data['karyawan_id'] ?? null,
             ]);
 
             DB::commit();
@@ -704,11 +708,11 @@ class BillingController extends Controller
     public function form_barang_retur_detail(BarangRetur $retur, Request $request)
     {
 
-        $keranjang = $retur->details;
+        $keranjang = $retur->load('karyawan')->details;
 
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
-        $unitFilter = $retur->barang_unit_id;
+        $unitFilter = null;
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
@@ -738,15 +742,15 @@ class BillingController extends Controller
 
         $jenis = 1;
 
-        $data = $db->barangStok($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
-        $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStokAll($unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        // $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
 
         return view('billing.form-barang-retur.detail', [
             'b' => $retur,
             'keranjang' => $keranjang,
             'data' => $data,
-            'nonPpn' => $nonPpn,
+            // 'nonPpn' => $nonPpn,
             'units' => $units,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
@@ -770,16 +774,22 @@ class BillingController extends Controller
     {
         $data = $request->validate([
             'barang_stok_harga_id' => 'required|exists:barang_stok_hargas,id',
-            'jumlah' => 'required|numeric|min:0',
+            'jumlah' => 'required',
         ]);
+
+        $data['jumlah'] = str_replace('.', '', $data['jumlah']);
+
+        if ($data['jumlah'] < 0) {
+            return redirect()->back()->with('error', 'Jumlah Tidak Boleh dibawah 0!');
+        }
 
         $db = new BarangReturDetail;
 
-        $stok = BarangStokHarga::find($data['barang_stok_harga_id'])->stok;
+        // $stok = BarangStokHarga::find($data['barang_stok_harga_id'])->stok;
 
-        if ($data['jumlah'] > $stok) {
-            return redirect()->back()->with('error', 'Jumlah retur melebihi stok yang tersedia (Stok: '.$stok.')');
-        }
+        // if ($data['jumlah'] > $stok) {
+        //     return redirect()->back()->with('error', 'Jumlah retur melebihi stok yang tersedia (Stok: '.$stok.')');
+        // }
 
         if ($data['jumlah'] == 0) {
             $res = $db->where('barang_retur_id', $retur->id)
@@ -849,8 +859,12 @@ class BillingController extends Controller
     {
         $konsumens = Konsumen::with(['kode_toko'])->where('active', 1)->orderBy('nama', 'asc')->get();
         $barang_units = BarangUnit::orderBy('nama', 'asc')->get(); // Asumsi ini adalah supplier
+         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                    $query->where('is_sales', 1);
+                })->select('id', 'nama')->get();
 
         return view('billing.barang-retur.index', [
+            'sales' => $sales,
             'konsumens' => $konsumens,       // Kirim data konsumen ke view
             'barang_units' => $barang_units, // Kirim data barang unit ke view
         ]);
@@ -858,7 +872,9 @@ class BillingController extends Controller
 
     public function barang_retur_data(Request $request)
     {
-        $query = BarangRetur::with(['barang_unit', 'konsumen.kode_toko']);
+        $query = BarangRetur::with(['barang_unit', 'konsumen.kode_toko', 'karyawan' => function($q){
+            $q->select('id', 'nama');
+        }]);
 
         // 2. Terapkan Filter dari request AJAX
         if ($request->filled('konsumen_id')) {
@@ -873,21 +889,21 @@ class BillingController extends Controller
             $query->where('tipe', $request->tipe);
         }
 
+        if ($request->filled('sales')) {
+            $query->where('karyawan_id', $request->sales);
+        }
+
         // Jika filter status tidak diisi, tampilkan yg default (Diajukan & Diproses)
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('barang_returs.status', $request->status);
         } else {
-            $query->whereIn('status', [1, 2]);
+            $query->whereIn('barang_returs.status', [1, 2, 3]);
         }
 
         // 3. Gunakan DataTables untuk memproses
         return DataTables::of($query)
             ->addIndexColumn() // Menambahkan kolom DT_RowIndex
 
-            // Format Tanggal
-            // ->editColumn('tanggal_en', function ($row) {
-            //     return Carbon::parse($row->created_at)->format('d-m-Y'); // Format tanggal
-            // })
 
             // Buat Link di Kode
             ->editColumn('kode', function ($row) {
@@ -895,6 +911,9 @@ class BillingController extends Controller
                 return '<a href="'.$url.'" class="btn btn-primary btn-sm">'.$row->kode.'</a>';
             })
 
+             ->addColumn('sales', function ($row) {
+                return $row->karyawan ? $row->karyawan->nama : '-';
+            })
             // Ambil Nama Supplier
             ->addColumn('supplier', function ($row) {
                 return $row->barang_unit ? $row->barang_unit->nama : '-';
@@ -908,70 +927,31 @@ class BillingController extends Controller
                 $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode : '';
                 return $kode . ' ' . $row->konsumen->nama;
             })
-
-            // Buat Badge Status
-            ->addColumn('status_badge', function ($row) {
-                if ($row->status == 1) {
-                    return '<span class="badge bg-warning">Diajukan</span>';
-                } elseif ($row->status == 2) {
-                    return '<span class="badge bg-primary">Diproses</span>';
-                } elseif ($row->status == 3) {
-                    return '<span class="badge bg-success">Selesai</span>';
-                } elseif ($row->status == 4) {
-                    return '<span class="badge bg-danger">Dibatalkan</span>';
-                }
-                return '';
+            ->addColumn('status_badge', function($row){
+                return $row->status_badge; // Memanggil accessor
             })
 
-            // Buat Tombol Aksi
-            ->addColumn('action', function ($row) {
-                $btns = '';
-
-                if ($row->status == 1) {
-                    // ===== STATUS 1: DIAJUKAN =====
-                    // Tombol Lanjutkan (Kirim)
-                    $btns .= '<button type="button" onclick="lanjutkanOrder('.$row->id.')" class="btn btn-success btn-sm me-1"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Lanjutkan Proses (Kirim)">
-                                <i class="fa fa-credit-card"></i>
-                              </button>';
-
-                    // Tombol Void
-                    $btns .= '<button type="button" class="btn btn-danger btn-sm" onclick="voidOrder('.$row->id.')"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Void Retur">
-                                <i class="fa fa-exclamation-circle"></i>
-                              </button>';
-
-                } elseif ($row->status == 2) {
-                    // ===== STATUS 2: DIPROSES =====
-                    // Tombol Cetak Ulang
-                    $urlCetak = route('billing.barang-retur.cetak', ['retur' => $row->id]);
-                    $btns .= '<a href="'.$urlCetak.'" target="_blank" class="btn btn-secondary btn-sm me-1"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Ulang Bukti">
-                                <i class="fa fa-print"></i>
-                              </a>';
-
-                    // Tombol Selesaikan (BARU)
-                    $btns .= '<button type="button" onclick="selesaikanOrder('.$row->id.')" class="btn btn-primary btn-sm me-1"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Selesaikan Retur (Update Stok)">
-                                <i class="fa fa-check-circle"></i>
-                              </button>';
-
-                } else {
-                    // ===== STATUS 3 (Selesai) & 4 (Void) =====
-                    $btns = '-'; // Tidak ada aksi
-                }
-
-                return '<div class="text-nowrap">'.$btns.'</div>';
+            ->addColumn('action', function($row){
+                return $row->action; // Memanggil accessor
             })
+
 
             // Izinkan HTML di kolom ini
             ->rawColumns(['kode', 'status_badge', 'action'])
 
-            // Urutkan default
-            // ->order(function ($query) {
-            //     $query->orderBy('tanggal', 'desc');
-            // })
             ->make(true);
+    }
+
+    public function barang_retur_terima(BarangRetur $retur)
+    {
+        $res = $retur->terima_retur($retur->id);
+
+        if ($res['status'] == 'success') {
+            // Berhasil, siapkan URL untuk PDF baru
+            $res['preview_url'] = route('billing.barang-retur.cetak_diterima', $retur->id);
+        }
+
+        return response()->json($res);
     }
 
     public function barang_retur_detail(BarangRetur $retur)
@@ -1005,14 +985,27 @@ class BillingController extends Controller
         ]);
     }
 
+    // public function barang_retur_kirim(BarangRetur $retur)
+    // {
+    //     $db = new BarangRetur;
+    //     $res = $db->kirim_retur($retur->id);
+
+    //     // Jika sukses, tambahkan URL preview ke JSON response
+    //     if ($res['status'] == 'success') {
+    //         $res['preview_url'] = route('billing.barang-retur.preview', ['retur' => $retur->id]);
+    //     }
+
+    //     return response()->json($res);
+    // }
+
     public function barang_retur_kirim(BarangRetur $retur)
     {
-        $db = new BarangRetur;
-        $res = $db->kirim_retur($retur->id);
+        // Panggil fungsi model yang sudah diubah namanya menjadi 'proses_retur'
+        $res = $retur->proses_retur($retur->id);
 
-        // Jika sukses, tambahkan URL preview ke JSON response
         if ($res['status'] == 'success') {
-            $res['preview_url'] = route('billing.barang-retur.preview', ['retur' => $retur->id]);
+            // Berhasil, siapkan URL untuk PDF LAMA (sesuai permintaan)
+            $res['preview_url'] = route('billing.barang-retur.cetak', $retur->id);
         }
 
         return response()->json($res);
@@ -1030,20 +1023,15 @@ class BillingController extends Controller
 
     public function barang_retur_void(BarangRetur $retur)
     {
-        $this->hapusPdfRetur($retur);
-
-        $db = new BarangRetur;
-
-        $res = $db->void_retur($retur->id);
-
-        // return json response
+        // Panggil fungsi 'void_retur' yang logikanya sudah disesuaikan
+        $res = $retur->void_retur($retur->id);
         return response()->json($res);
     }
 
     public function barang_retur_selesaikan(BarangRetur $retur)
     {
-        $db = new BarangRetur;
-        $res = $db->selesaikan_retur($retur->id);
+        // Panggil fungsi 'selesaikan_retur' yang logikanya sudah disesuaikan
+        $res = $retur->selesaikan_retur($retur->id);
         return response()->json($res);
     }
 
@@ -1052,17 +1040,13 @@ class BillingController extends Controller
         $fileName = 'retur-'.$retur->kode.'.pdf';
         $filePath = 'public/pdf/barang_retur/'.$fileName;
 
-        // 1. Cek & Buat PDF jika tidak ada
         if (!Storage::exists($filePath)) {
             try {
                 $retur->load(['details.stok.barang.satuan', 'details.stok.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
-
                 $pt = Config::where('untuk', 'resmi' )->first();
+                $tanggal = Carbon::parse($retur->waktu_diproses)->format('d-m-Y');
 
-                // PERBAIKAN: Gunakan created_at (karena kolom 'tanggal' tidak ada)
-                $tanggal = Carbon::parse($retur->created_at)->format('d/m/Y');
-
-                $pdf = PDF::loadView('billing.barang-retur.pdf', [ // Pastikan ini path view PDF Anda
+                $pdf = PDF::loadView('billing.barang-retur.pdf', [ // PDF LAMA
                     'data' => $retur,
                     'pt' => $pt,
                     'tanggal' => $tanggal,
@@ -1075,13 +1059,51 @@ class BillingController extends Controller
             }
         }
 
-        // 2. Kirim file yang sudah ada (atau baru dibuat)
+        // ... (Logika download/inline Anda tetap sama)
         if ($request->has('download')) {
-            // Jika ada parameter ?download=true
             return Storage::download($filePath, $fileName);
         } else {
-            // Tampilkan inline (untuk iframe/tab baru)
-            return Storage::response($filePath);
+            return Storage::response($filePath, $fileName);
+        }
+    }
+
+    public function barang_retur_cetak_diterima(BarangRetur $retur, Request $request)
+    {
+        $fileName = 'retur-diterima-'.$retur->kode.'.pdf';
+        $filePath = 'public/pdf/barang_retur_diterima/'.$fileName; // Folder baru agar tidak tumpang tindih
+
+        // Buat folder jika belum ada
+        if (!Storage::exists('public/pdf/barang_retur_diterima')) {
+            Storage::makeDirectory('public/pdf/barang_retur_diterima');
+        }
+
+        // PDF ini sebaiknya selalu dibuat ulang (atau hapus file lama jika ada)
+        if (Storage::exists($filePath)) {
+            Storage::delete($filePath);
+        }
+
+        try {
+            $retur->load(['details.stok.barang.satuan', 'details.stok.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
+            $pt = Config::where('untuk', 'resmi' )->first();
+            $tanggal = Carbon::parse($retur->waktu_diterima)->format('d-m-Y');
+
+            // PANGGIL BLADE PDF BARU ANDA
+            $pdf = PDF::loadView('billing.barang-retur.pdf-diterima', [ // <-- Nama blade PDF baru Anda
+                'data' => $retur,
+                'pt' => $pt,
+                'tanggal' => $tanggal,
+            ]);
+
+            Storage::put($filePath, $pdf->output());
+
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Gagal membuat PDF Diterima: '.$th->getMessage());
+        }
+
+        if ($request->has('download')) {
+            return Storage::download($filePath, $fileName);
+        } else {
+            return Storage::response($filePath, $fileName);
         }
     }
 }

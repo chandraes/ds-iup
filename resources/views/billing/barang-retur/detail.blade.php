@@ -33,14 +33,6 @@
                                                     value="{{ $data->kode  }}" disabled>
                                             </td>
                                         </tr>
-                                        <tr style="height:50px">
-                                            <td class="text-start align-middle">Supplier</td>
-                                            <td class="text-start align-middle" style="width: 10%">:</td>
-                                            <td class="text-start align-middle">
-                                                <input type="text" name="konsumen" id="konsumen" class="form-control"
-                                                    value="{{ $data->barang_unit->nama  }}" disabled>
-                                            </td>
-                                        </tr>
                                         @if ($data->tipe == 2)
                                         <tr style="height:50px">
                                             <td class="text-start align-middle">Konsumen</td>
