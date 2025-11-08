@@ -129,7 +129,7 @@ class BillingController extends Controller
 
         $gr = GantiRugi::where('lunas', 0)->count();
 
-        $br = BarangRetur::whereIn('status', [1,2])->count();
+        $br = BarangRetur::whereIn('status', [1,2,3])->count();
 
         return view('billing.index', [
             'is' => $is,
