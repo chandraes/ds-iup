@@ -168,11 +168,18 @@
                 </h5>
             </a>
         </div>
+
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.pre-order')}}" class="text-decoration-none">
                 <img src="{{asset('images/order-inden.svg')}}" alt="" width="70">
                 <h5 class="mt-3">PRE ORDER</h5>
             </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+
+        </div>
+        <div class="col-md-2 text-center mt-5">
+
         </div>
         @include('billing.modal-form-retur')
         <div class="col-md-2 text-center mt-5">
@@ -184,7 +191,7 @@
          <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.barang-retur')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-retur.svg')}}" alt="" width="70">
-                <h5 class="mt-3">BARANG RETUR
+                <h5 class="mt-3">TERIMA RETUR
                     @if ($br > 0)
                     <span class="text-danger">({{$br}})</span>
                     @endif
