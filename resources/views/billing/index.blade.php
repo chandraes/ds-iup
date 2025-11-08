@@ -198,6 +198,16 @@
                 </h5>
             </a>
         </div>
+         <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h5 class="mt-3">KIRIM RETUR
+                    @if ($br > 0)
+                    <span class="text-danger">({{$br}})</span>
+                    @endif
+                </h5>
+            </a>
+        </div>
     </div>
     <hr>
     <br>
