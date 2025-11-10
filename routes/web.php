@@ -668,11 +668,20 @@ Route::group(['middleware' => ['auth']], function () {
 
                 Route::post('/kirim/{retur}', [BillingController::class, 'barang_retur_kirim'])->name('billing.barang-retur.kirim');
                 Route::get('/cetak/{retur}', [BillingController::class, 'barang_retur_cetak'])->name('billing.barang-retur.cetak');
-                Route::get('/preview/{retur}', [BillingController::class, 'barang_retur_preview'])->name('billing.barang-retur.preview');
+                // Route::get('/preview/{retur}', [BillingController::class, 'barang_retur_preview'])->name('billing.barang-retur.preview');
                 Route::post('/selesaikan/{retur}', [BillingController::class, 'barang_retur_selesaikan'])->name('billing.barang-retur.selesaikan');
 
                 Route::post('/terima/{retur}', [BillingController::class, 'barang_retur_terima'])->name('billing.barang-retur.terima');
                 Route::get('/cetak-diterima/{retur}', [BillingController::class, 'barang_retur_cetak_diterima'])->name('billing.barang-retur.cetak_diterima');
+            });
+
+            Route::prefix('stok-retur')->group(function() {
+                Route::get('/', [BillingController::class, 'stok_retur'])->name('billing.stok-retur');
+                Route::get('/stok-retur-cart', [BillingController::class, 'get_stok_retur_cart'])->name('billing.stok-retur.cart.get');
+                Route::post('/stok-retur-cart/add', [BillingController::class, 'add_stok_retur_cart'])->name('billing.stok-retur.cart.add');
+                Route::post('/stok-retur-cart/remove', [BillingController::class, 'remove_stok_retur_cart'])->name('billing.stok-retur.cart.remove');
+                Route::post('/stok-retur-cart/process', [BillingController::class, 'process_stok_retur_cart'])->name('billing.stok-retur.cart.process');
+                Route::post('/stok-retur-cart/clear', [BillingController::class, 'clear_stok_retur_cart'])->name('billing.stok-retur.cart.clear');
             });
 
             // Routing Sales Order

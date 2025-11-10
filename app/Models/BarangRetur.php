@@ -74,9 +74,7 @@ class BarangRetur extends Model
             $actions .= '<button type="button" class="btn btn-warning btn-sm me-1" data-bs-toggle="tooltip" title="Terima Retur" onclick="terimaOrder('.$this->id.')">
                             <i class="fa fa-check-circle"></i> Terima
                          </button>';
-            $actions .= '<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Void" onclick="voidOrder('.$this->id.')">
-                            <i class="fa fa-times-circle"></i> Void
-                         </button>';
+
         }
 
         if ($this->status == 2) { // Diterima
@@ -100,9 +98,15 @@ class BarangRetur extends Model
 
         // Tombol cetak PDF Diterima (jika sudah diterima atau lebih)
         if ($this->status >= 2 && $this->status != 99) {
-             $actions .= ' <a href="'.route('billing.barang-retur.cetak_diterima', $this->id).'" target="_blank" class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="Cetak Bukti Diterima">
+             $actions .= ' <a href="'.route('billing.barang-retur.cetak_diterima', $this->id).'" target="_blank" class="btn btn-info btn-sm me-2" data-bs-toggle="tooltip" title="Cetak Bukti Diterima">
                             <i class="fa fa-download"></i>
                           </a>';
+        }
+
+        if ($this->status < 3) {
+            $actions .= '<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Void" onclick="voidOrder('.$this->id.')">
+                            <i class="fa fa-times-circle"></i> Void
+                         </button>';
         }
 
 
@@ -144,6 +148,21 @@ class BarangRetur extends Model
 
             $barang->stok -= $item->qty;
             $barang->save();
+
+            $stokKarantina = StokRetur::firstOrCreate(
+                ['barang_stok_harga_id' => $item->barang_stok_harga_id],
+                ['total_qty_karantina' => 0] // Default jika baru dibuat
+            );
+
+            $stokKarantina->total_qty_karantina = DB::raw("total_qty_karantina + {$item->qty}");
+            $stokKarantina->save();
+
+            StokReturSource::create([
+                'stok_retur_id'          => $stokKarantina->id, // Link ke tabel agregat
+                'barang_retur_detail_id' => $item->id, // Link ke item retur asli
+                'qty_diterima'           => $item->qty,
+            ]);
+
         }
 
         return true;
@@ -175,7 +194,7 @@ class BarangRetur extends Model
         try {
             DB::beginTransaction();
 
-             $calculate_stok = $this->update_stok($data->details);
+            $calculate_stok = $this->update_stok($data->details);
 
             if (isset($calculate_stok['status']) && $calculate_stok['status'] == false) {
                 $stok_update = $calculate_stok;
@@ -293,13 +312,6 @@ class BarangRetur extends Model
         try {
             DB::beginTransaction();
 
-            // foreach ($detail as $item) {
-            //     $barang = BarangStokHarga::find($item->barang_stok_harga_id);
-
-            //     $barang->stok += $item->qty;
-            //     $barang->save();
-            // }
-
             $data->update([
                 'status' => 99,
             ]);
@@ -319,75 +331,5 @@ class BarangRetur extends Model
 
         return ['status' => 'success', 'message' => 'Retur berhasil di void'];
 
-    }
-
-    public function kirim_retur($id)
-    {
-        $data = $this->find($id);
-
-        if ($data->status != 1) {
-            return ['status' => 'error', 'message' => 'Retur harus dalam status diajukan'];
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $data->update([
-                'status' => 2
-            ]);
-
-            DB::commit();
-        } catch (\Throwable $th) {
-            //throw $th;
-            DB::rollBack();
-
-            return ['status' => 'error', 'message' => 'Terjadi Kesalahan. Silahkan refresh dan coba lagi!'];
-        }
-
-        return ['status' => 'success', 'message' => 'Barang Berhasil Diproses. Silahkan Cetak Bukti Kirim!'];
-
-    }
-
-    public function selesaikan_retur($id)
-    {
-        $data = $this->with('details')->find($id);
-
-        if ($data->status != 3) {
-            return ['status' => 'error', 'message' => 'Hanya retur yang "Diproses" yang bisa diselesaikan.'];
-        }
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($data->details as $item) {
-                $barang = BarangStokHarga::find($item->barang_stok_harga_id);
-                if (!$barang) {
-                    throw new \Exception("Stok barang (ID: ".$item->barang_stok_harga_id.") tidak ditemukan.");
-                }
-
-                // if ($data->tipe == 1) {
-                //     // Tipe 1 = Retur ke Supplier (Barang KELUAR)
-                //     $barang->stok -= $item->qty;
-                // } else {
-                    // Tipe 2 = Retur dari Konsumen (Barang MASUK)
-                $barang->stok += $item->qty;
-                $barang->hide = 0;
-                // }
-
-                $barang->save();
-            }
-
-            $data->update([
-                'status' => 4, // 4 = Selesai
-            ]);
-
-            DB::commit();
-
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return ['status' => 'error', 'message' => $th->getMessage()];
-        }
-
-        return ['status' => 'success', 'message' => 'Retur berhasil diselesaikan. Stok telah diperbarui.'];
     }
 }

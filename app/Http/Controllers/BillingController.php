@@ -25,6 +25,7 @@ use App\Models\Pengaturan;
 use App\Models\Pengelola;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\StokRetur;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
@@ -129,7 +130,7 @@ class BillingController extends Controller
 
         $gr = GantiRugi::where('lunas', 0)->count();
 
-        $br = BarangRetur::whereIn('status', [1,2,3])->count();
+        $br = BarangRetur::whereIn('status', [1,2])->count();
 
         return view('billing.index', [
             'is' => $is,
@@ -897,7 +898,7 @@ class BillingController extends Controller
         if ($request->filled('status')) {
             $query->where('barang_returs.status', $request->status);
         } else {
-            $query->whereIn('barang_returs.status', [1, 2, 3]);
+            $query->whereIn('barang_returs.status', [1, 2]);
         }
 
         // 3. Gunakan DataTables untuk memproses
@@ -963,41 +964,6 @@ class BillingController extends Controller
         ]);
     }
 
-    public function barang_retur_preview(BarangRetur $retur)
-    {
-        // Pastikan statusnya sudah 2 (Diproses)
-        if ($retur->status < 2) {
-            // Jika belum, proses dulu (opsional, tapi lebih aman)
-            $db = new BarangRetur;
-            $db->kirim_retur($retur->id);
-        }
-
-        // Panggil cetak untuk memastikan file PDF ada
-        $this->barang_retur_cetak($retur, new Request());
-
-        $pdfUrl = route('billing.barang-retur.cetak', ['retur' => $retur->id]);
-        $downloadUrl = route('billing.barang-retur.cetak', ['retur' => $retur->id, 'download' => 'true']);
-
-        return view('billing.barang-retur.preview', [
-            'retur' => $retur,
-            'pdfUrl' => $pdfUrl,
-            'downloadUrl' => $downloadUrl,
-        ]);
-    }
-
-    // public function barang_retur_kirim(BarangRetur $retur)
-    // {
-    //     $db = new BarangRetur;
-    //     $res = $db->kirim_retur($retur->id);
-
-    //     // Jika sukses, tambahkan URL preview ke JSON response
-    //     if ($res['status'] == 'success') {
-    //         $res['preview_url'] = route('billing.barang-retur.preview', ['retur' => $retur->id]);
-    //     }
-
-    //     return response()->json($res);
-    // }
-
     public function barang_retur_kirim(BarangRetur $retur)
     {
         // Panggil fungsi model yang sudah diubah namanya menjadi 'proses_retur'
@@ -1031,8 +997,9 @@ class BillingController extends Controller
     public function barang_retur_selesaikan(BarangRetur $retur)
     {
         // Panggil fungsi 'selesaikan_retur' yang logikanya sudah disesuaikan
-        $res = $retur->selesaikan_retur($retur->id);
-        return response()->json($res);
+        return response()->json(['status' => 'error', 'message' =>'Fitur Sedang Dalam Perbaikan']);
+        // $res = $retur->selesaikan_retur($retur->id);
+        // return response()->json($res);
     }
 
     public function barang_retur_cetak(BarangRetur $retur, Request $request)
@@ -1105,5 +1072,211 @@ class BillingController extends Controller
         } else {
             return Storage::response($filePath, $fileName);
         }
+    }
+
+    public function stok_retur(Request $request)
+    {
+        // 1. Ambil data untuk filter dropdown
+        $units = BarangUnit::orderBy('nama', 'asc')->get();
+        $kategoris = BarangKategori::orderBy('nama', 'asc')->get();
+        $barangNamas = BarangNama::orderBy('nama', 'asc')->get();
+
+        // 2. Mulai query
+        $stokKarantinaQuery = StokRetur::with(
+                'barang_stok_harga.barang.satuan',
+                'barang_stok_harga.barang_nama',
+                'barang_stok_harga.unit',
+                'barang_stok_harga.kategori',
+                'sources.barang_retur_detail.barang_retur.konsumen.kode_toko'
+            )
+            ->where('status', 0)
+            ->where('total_qty_karantina', '>', 0);
+
+        // 3. Terapkan filter jika ada
+        $stokKarantinaQuery->when($request->filled('unit_id'), function ($q) use ($request) {
+            return $q->whereHas('barang_stok_harga', function ($q2) use ($request) {
+                $q2->where('barang_unit_id', $request->unit_id);
+            });
+        });
+
+        $stokKarantinaQuery->when($request->filled('kategori_id'), function ($q) use ($request) {
+            return $q->whereHas('barang_stok_harga', function ($q2) use ($request) {
+                $q2->where('barang_kategori_id', $request->kategori_id);
+            });
+        });
+
+        $stokKarantinaQuery->when($request->filled('barang_nama_id'), function ($q) use ($request) {
+            return $q->whereHas('barang_stok_harga', function ($q2) use ($request) {
+                $q2->where('barang_nama_id', $request->barang_nama_id);
+            });
+        });
+
+        $stokKarantinaQuery->when($request->filled('jenis_ppn'), function ($q) use ($request) {
+            return $q->whereHas('barang_stok_harga.barang', function ($q2) use ($request) {
+                $q2->where('jenis', $request->jenis_ppn); // Asumsi 1=PPN, 2=Non-PPN
+            });
+        });
+
+        // 4. Eksekusi query
+        $stokKarantina = $stokKarantinaQuery->orderBy('created_at', 'desc')->get();
+
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        // 5. Kirim data dan nilai filter ke view
+        return view('billing.barang-retur-kirim.index', [
+            'dataStok' => $stokKarantina,
+            // 'title' => 'Stok Karantina (Retur Tipe 2)',
+            'ppnRate' => $ppnRate,
+            'units' => $units,                 // Data filter
+            'kategoris' => $kategoris,         // Data filter
+            'barangNamas' => $barangNamas,     // Data filter
+            'filters' => $request->all()       // Nilai filter yg sedang aktif
+        ]);
+    }
+
+    public function get_stok_retur_cart(Request $request)
+    {
+        $cart = session()->get('stok_retur_cart', []);
+        $items = collect(); // <--- INI SOLUSINYA (Collection kosong)
+        $totalItems = 0;
+
+        if (!empty($cart)) {
+            $itemIds = array_keys($cart);
+            $items = StokRetur::with('barang_stok_harga.barang_nama', 'barang_stok_harga.barang.satuan') // Pastikan typo 'satun' sudah diperbaiki
+                        ->whereIn('id', $itemIds)
+                        ->get()
+                        ->map(function($item) use ($cart) {
+                            $item->qty_in_cart = $cart[$item->id]['qty']; // Tambahkan qty dari session
+                            return $item;
+                        });
+            $totalItems = $items->count();
+        }
+
+        // Render view partial untuk isi offcanvas
+        $html = view('billing.barang-retur-kirim.partials.cart_body', compact('items'))->render();
+
+        return response()->json([
+            'status' => 'success',
+            'html' => $html,
+            'totalItems' => $totalItems
+        ]);
+    }
+
+    /**
+     * Menambah/Update item ke keranjang
+     */
+    public function add_stok_retur_cart(Request $request)
+    {
+        $request->validate([
+            'stok_retur_id' => 'required|exists:stok_returs,id',
+            'qty' => 'required|integer|min:1'
+        ]);
+
+        $stokReturId = $request->stok_retur_id;
+        $qty = $request->qty;
+
+        $stok = StokRetur::find($stokReturId);
+
+        // Validasi agar qty tidak melebihi stok karantina
+        if ($qty > $stok->total_qty_karantina) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Jumlah melebihi stok retur (Maks: ' . $stok->total_qty_karantina . ')'
+            ], 422);
+        }
+
+        $cart = session()->get('stok_retur_cart', []);
+        $cart[$stokReturId] = ['qty' => $qty];
+        session()->put('stok_retur_cart', $cart);
+
+        $totalItems = count($cart);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Item ditambahkan ke keranjang!',
+            'totalItems' => $totalItems
+        ]);
+    }
+
+    public function clear_stok_retur_cart(Request $request)
+    {
+        // Lakukan "forget" pada session keranjang
+        session()->forget('stok_retur_cart');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Keranjang telah dikosongkan.',
+            'totalItems' => 0 // Kirim total item baru (yaitu 0)
+        ]);
+    }
+
+    /**
+     * Menghapus item dari keranjang
+     */
+    public function remove_stok_retur_cart(Request $request)
+    {
+        $request->validate(['stok_retur_id' => 'required|exists:stok_returs,id']);
+        $stokReturId = $request->stok_retur_id;
+
+        $cart = session()->get('stok_retur_cart', []);
+        unset($cart[$stokReturId]); // Hapus item
+        session()->put('stok_retur_cart', $cart);
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Memproses checkout keranjang
+     */
+    public function process_stok_retur_cart(Request $request)
+    {
+        $cart = session()->get('stok_retur_cart', []);
+        if (empty($cart)) {
+            return redirect()->back()->with('error', 'Keranjang kosong!');
+        }
+
+        // --- MULAI LOGIKA BISNIS ANDA DI SINI ---
+        // Contoh:
+        // 1. Loop setiap item di $cart
+        // 2. Pindahkan $item['qty'] dari 'total_qty_karantina' ke 'stok_good' (misalnya)
+        // 3. Kurangi 'total_qty_karantina'
+        // 4. Update status 'StokRetur' menjadi 'processed' (status=1) jika karantina habis
+        // 5. Buat Jurnal Akuntansi (jika perlu)
+        // 6. Catat di history/log
+        // ------------------------------------------
+
+        // try {
+        //     DB::beginTransaction();
+        //
+        //     foreach ($cart as $stokReturId => $item) {
+        //         $stok = StokRetur::find($stokReturId);
+        //         $qtyToProcess = $item['qty'];
+        //
+        //         // Lakukan logika Anda...
+        //         // $stok->total_qty_karantina -= $qtyToProcess;
+        //         // $stok->stok_good += $qtyToProcess; // Asumsi ada kolom ini
+        //         // $stok->save();
+        //
+        //         // Catat log, dll.
+        //     }
+        //
+        //     DB::commit();
+        //
+        //     // Kosongkan keranjang setelah berhasil
+               session()->forget('stok_retur_cart');
+        //
+        //     return redirect()->route('billing.stok-retur')
+        //                      ->with('success', 'Stok retur berhasil diproses!');
+        //
+        // } catch (\Throwable $th) {
+        //     DB::rollBack();
+        //     return redirect()->back()->with('error', 'Gagal memproses keranjang: ' . $th->getMessage());
+        // }
+
+        // !! HAPUS BARIS DI BAWAH INI SETELAH IMPLEMENTASI LOGIKA ANDA !!
+        // (Ini hanya simulasi)
+        session()->forget('stok_retur_cart');
+        return redirect()->route('billing.stok-retur')
+                         ->with('success', 'Logika proses belum diimplementasikan, tapi keranjang sudah dikosongkan.');
     }
 }
