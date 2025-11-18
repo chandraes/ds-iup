@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1 class="display-6 fw-bold">TERIMA RETUR</h1>
+            <h1 class="display-6 fw-bold">TERIMA / KIRIM RETUR</h1>
             <p class="lead text-muted">Manajemen data barang retur</p>
         </div>
     </div>
