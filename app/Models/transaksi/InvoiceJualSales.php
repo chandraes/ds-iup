@@ -173,11 +173,11 @@ class InvoiceJualSales extends Model
             // Tambahkan Header Merah VOID - Sistem Pembayaran (Kalau Cash: Merah-merah, tempo: Merah-Biru)
             $header_bawah = $invoice->sistem_pembayaran == 1 ? "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n" : "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n";
             $pesan .= "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                        "VOID - ". $invoice->sistem_pembayaran_word.
+                        "VOID - ". $invoice->sistem_pembayaran_word."\n".
                         $header_bawah;
 
             $kota = $invoice->konsumen->kabupaten_kota ? $invoice->konsumen->kabupaten_kota->nama_wilayah : '';
-            $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
+            $pesan .= $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
                     $invoice->konsumen->alamat."\n".
                     $kota."\n\n";
 

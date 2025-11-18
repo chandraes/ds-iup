@@ -308,6 +308,7 @@ class BarangRetur extends Model
             $tanggal = Carbon::now()->translatedFormat('d F Y');
 
             // $pesan = "*".$data->barang_unit->nama."*\n";
+            $pesan .= "🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸"."\n"."*TERIMA BARANG RETUR*\n"."🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸\n\n";
 
             if ($data['tipe'] == 2) {
                 $kota = $data->konsumen->kabupaten_kota ? $data->konsumen->kabupaten_kota->nama_wilayah : '';
@@ -319,7 +320,7 @@ class BarangRetur extends Model
                 $pesan .= "\n";
             }
 
-            $pesan .= "*Barang Retur* : ".$tanggal."\n\n";
+            $pesan .= "*Tanggal* : ".$tanggal."\n\n";
 
             //  $pesan = "Barang A: \n";
 
@@ -329,9 +330,23 @@ class BarangRetur extends Model
                 $pesan .= "\n\n";
             }
 
+            $pesan .= "=======================\n".
+                        "•⁠ Sales : ".$data->karyawan->nama."\n".
+                        "⁠•⁠ CP : ".$data->karyawan->no_hp."\n\n";
+
+            $pesan .= "No Kantor: *0853-3939-3918* \n";
+
             $tujuan = $dbWa->where('untuk', 'barang-retur')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);
+
+            $no_konsumen = $data->konsumen->no_hp;
+            $no_konsumen = str_replace('-', '', $no_konsumen);
+
+            // check length no hp
+            if (strlen($no_konsumen) > 10) {
+                $dbWa->sendWa($no_konsumen, $pesan);
+            }
 
         } catch (\Throwable $th) {
             //throw $th;
