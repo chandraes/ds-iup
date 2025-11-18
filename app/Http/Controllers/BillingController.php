@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BarangRetur;
 use App\Models\BarangReturDetail;
 use App\Models\Config;
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangStokHarga;
@@ -640,6 +641,8 @@ class BillingController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Preorder berhasil diselesaikan']);
     }
 
+
+
     public function form_barang_retur(Request $request)
     {
 
@@ -706,60 +709,95 @@ class BillingController extends Controller
         return redirect()->back()->with('success', 'Data retur berhasil dihapus');
     }
 
+    public function form_barang_retur_detail_datatable(BarangRetur $retur, Request $request)
+    {
+        $keranjangMap = $retur->details->mapWithKeys(function ($detail) {
+            return [
+                $detail->barang_id => [
+                    'qty' => $detail->qty,
+                    'id' => $detail->id // Ini adalah 'barang_retur_detail_id'
+                ]
+            ];
+        });
+            // TIPE 2 (Dari Konsumen) -> Tampilkan daftar BARANG (Produk)
+        $query = Barang::with(['barang_nama', 'satuan', 'kategori'])
+            ->select('barangs.*')
+            ->withSum(['stok_harga' => function($q) {
+                $q->where('stok', '>', 0);
+            }], 'stok');
+
+
+
+        if ($request->filled('kategori')) {
+            $query->where('barang_kategori_id', $request->input('kategori'));
+        }
+
+        if ($request->filled('barang_nama')) {
+            $query->where('barang_nama_id', $request->input('barang_nama'));
+        }
+        // === AKHIR BAGIAN BARU ===
+
+        // Teruskan $query yang SUDAH DIFILTER ke DataTables
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('stok_info', function ($row) {
+                return number_format($row->stok_harga_sum_stok, 0 , ',','.');
+            })
+            ->addColumn('action', function ($row) use ($keranjangMap) {
+                $row->nf_stok = number_format($row->stok_harga_sum_stok, 0 , ',','.');
+
+                $rowData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
+                $barangId = $row->id;
+
+                // 2. Cek apakah barang ini ada di map keranjang kita
+                if ($keranjangMap->has($barangId)) {
+
+                    // JIKA ADA (Mode Edit)
+                    $detail = $keranjangMap->get($barangId);
+                    $qty = $detail['qty'];
+                    $detailId = $detail['id'];
+                    $qtyFormatted = number_format($qty, 0, ',', '.');
+                    $satuan = $row->satuan->nama ?? 'PCS';
+
+                    // Buat tombol "Edit" (hijau) yang menampilkan Qty
+                    return '<button type="button" class="btn btn-success btn-sm btn-modal-trigger" '.
+                        ' data-row=\'' . $rowData . '\' '.
+                        ' data-qty="' . $qty . '" '. // <= Kirim Qty
+                        ' data-detail-id="' . $detailId . '">'. // <= Kirim Detail ID
+                        $qtyFormatted . ' ' . $satuan .
+                        '</button>';
+
+                } else {
+
+                    // JIKA TIDAK ADA (Mode Tambah Baru)
+
+                    // Buat tombol "Pilih" (biru) seperti biasa
+                    return '<button type="button" class="btn btn-primary btn-sm btn-modal-trigger" '.
+                        ' data-row=\'' . $rowData . '\' '.
+                        ' data-qty="0" '. // <= Qty adalah 0
+                        ' data-detail-id="0">'. // <= Detail ID adalah 0
+                        'Pilih'.
+                        '</button>';
+                }
+            })
+            ->rawColumns(['nama_barang', 'action'])
+            ->make(true);
+
+    }
+
     public function form_barang_retur_detail(BarangRetur $retur, Request $request)
     {
 
         $keranjang = $retur->load('karyawan')->details;
 
-        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+        $selectKategori = BarangKategori::all();
+        $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
 
-        $unitFilter = null;
-        $typeFilter = $request->input('type');
-        $kategoriFilter = $request->input('kategori');
-        $barangNamaFilter = $request->input('barang_nama');
-
-        if (! empty($unitFilter) && $unitFilter != '') {
-            $selectType = BarangType::where('barang_unit_id', $unitFilter)->get();
-
-            $selectKategori = BarangKategori::whereHas('barangs', function ($query) use ($unitFilter) {
-                $query->whereHas('type', function ($query) use ($unitFilter) {
-                    $query->where('barang_unit_id', $unitFilter);
-                });
-            })->get();
-
-            $selectBarangNama = BarangNama::whereHas('barang', function ($query) use ($unitFilter) {
-                $query->whereHas('type', function ($query) use ($unitFilter) {
-                    $query->where('barang_unit_id', $unitFilter);
-                });
-            })->get();
-
-        } else {
-            $selectType = BarangType::all();
-            $selectKategori = BarangKategori::all();
-            $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
-        }
-
-        $db = new BarangStokHarga;
-
-        $jenis = 1;
-
-        $data = $db->barangStokAll($unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
-        // $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
-        $units = BarangUnit::all();
 
         return view('billing.form-barang-retur.detail', [
             'b' => $retur,
             'keranjang' => $keranjang,
-            'data' => $data,
-            // 'nonPpn' => $nonPpn,
-            'units' => $units,
-            'unitFilter' => $unitFilter,
-            'typeFilter' => $typeFilter,
-            'kategoriFilter' => $kategoriFilter,
-            'selectType' => $selectType,
             'selectKategori' => $selectKategori,
-            'ppnRate' => $ppnRate,
-            'barangNamaFilter' => $barangNamaFilter,
             'selectBarangNama' => $selectBarangNama,
         ]);
     }
@@ -774,7 +812,7 @@ class BillingController extends Controller
     public function form_barang_retur_detail_store(BarangRetur $retur, Request $request)
     {
         $data = $request->validate([
-            'barang_stok_harga_id' => 'required|exists:barang_stok_hargas,id',
+            'barang_id' => 'required|exists:barang_stok_hargas,id',
             'jumlah' => 'required',
         ]);
 
@@ -794,7 +832,7 @@ class BillingController extends Controller
 
         if ($data['jumlah'] == 0) {
             $res = $db->where('barang_retur_id', $retur->id)
-                ->where('barang_stok_harga_id', $data['barang_stok_harga_id'])
+                ->where('barang_id', $data['barang_id'])
                 ->delete();
 
             $res = ['status' => 'success', 'message' => 'Item berhasil dihapus dari daftar retur'];
@@ -802,10 +840,10 @@ class BillingController extends Controller
 
             $res = $db->updateOrCreate([
                 'barang_retur_id' => $retur->id,
-                'barang_stok_harga_id' => $data['barang_stok_harga_id'],
+                'barang_id' => $data['barang_id'],
             ],[
                 'barang_retur_id' => $retur->id,
-                'barang_stok_harga_id' => $data['barang_stok_harga_id'],
+                'barang_id' => $data['barang_id'],
                 'qty' => $data['jumlah'],
             ]);
 
@@ -817,7 +855,7 @@ class BillingController extends Controller
 
     public function form_barang_retur_detail_preview(BarangRetur $retur)
     {
-        $keranjang = $retur->details->load(['stok.barang_nama', 'stok.barang.satuan']);
+        $keranjang = $retur->details->load(['barang.barang_nama', 'barang.satuan']);
         $konsumen = $retur->konsumen_id ? $retur->konsumen->load('kode_toko') : null;
 
         return view('billing.form-barang-retur.keranjang', [
@@ -957,7 +995,7 @@ class BillingController extends Controller
 
     public function barang_retur_detail(BarangRetur $retur)
     {
-        $detail = $retur->load(['details.stok.barang.satuan', 'details.stok.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
+        $detail = $retur->load(['details.barang.satuan', 'details.barang.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
 
         return view('billing.barang-retur.detail', [
             'data' => $detail,
@@ -966,6 +1004,7 @@ class BillingController extends Controller
 
     public function barang_retur_kirim(BarangRetur $retur)
     {
+        return ['status' => 'error', 'message' => 'fitur dalam perbaikan'];
         // Panggil fungsi model yang sudah diubah namanya menjadi 'proses_retur'
         $res = $retur->proses_retur($retur->id);
 
@@ -1050,7 +1089,7 @@ class BillingController extends Controller
         }
 
         try {
-            $retur->load(['details.stok.barang.satuan', 'details.stok.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
+            $retur->load(['details.barang.satuan', 'details.barang.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
             $pt = Config::where('untuk', 'resmi' )->first();
             $tanggal = Carbon::parse($retur->waktu_diterima)->format('d-m-Y');
 

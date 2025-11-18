@@ -32,6 +32,12 @@
                                             value="{{ $konsumen->kode_toko->kode .' '. $konsumen->nama ?? '' }}"
                                             disabled style="background-color: #e9ecef; opacity: 1;">
                                     </div>
+                                      <div class="mb-3">
+                                        <label for="konsumen" class="form-label fw-bold">Sales</label>
+                                        <input type="text" id="konsumen" class="form-control"
+                                            value="{{ $b->karyawan->nama }}"
+                                            disabled style="background-color: #e9ecef; opacity: 1;">
+                                    </div>
                                     @endif
                                     <div class="mb-3" id="namaTr" hidden>
                                         <label for="nama" class="form-label fw-bold">Nama</label>
@@ -61,25 +67,25 @@
                                 <tr class="{{$b->stok_kurang == 1 ? 'table-danger' : ''}}">
                                     <td class="text-center">{{$loop->iteration}}</td>
                                     <td class="text-start">
-                                        {{$b->stok->barang_nama->nama}}, {{$b->stok->barang->kode}}
+                                        {{$b->barang->barang_nama?->nama}}, {{$b->barang->kode}}
                                     </td>
                                     <td class="text-start">
-                                        {{$b->stok->barang->merk}}
+                                        {{$b->barang->merk}}
                                     </td>
                                     <td class="text-center">
                                         <strong>{{$b->nf_qty}}</strong>
                                     </td>
                                     <td class="text-center">
-                                        {{$b->stok->barang->satuan ? $b->stok->barang->satuan->nama
+                                        {{$b->barang->satuan ? $b->barang->satuan->nama
                                         : '-'}}
                                     </td>
                                     <td class="text-center">
-                                        @if ($b->stok->barang->jenis == 1)
+                                        @if ($b->barang->jenis == 1)
                                         <i class="fa fa-check text-success"></i>
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @if ($b->stok->barang->jenis == 2)
+                                        @if ($b->barang->jenis == 2)
                                         <i class="fa fa-check text-success"></i>
                                         @endif
                                     </td>

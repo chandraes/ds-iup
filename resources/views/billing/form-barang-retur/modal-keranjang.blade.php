@@ -9,14 +9,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form method="post" id="keranjangForm" action="{{route('billing.form-barang-retur.detail.store', $b->id)}}">
-                @csrf
 
-                <input type="hidden" name="barang_retur_id" value="{{ $b->id }}">
-                <input type="hidden" name="barang_stok_harga_id" id="barang_stok_harga_id">
-                <input type="hidden" name="detail_id" id="detail_id">
 
                 <div class="modal-body">
+                     <form method="post" id="keranjangForm" action="{{route('billing.form-barang-retur.detail.store', $b->id)}}">
+                    @csrf
+
+                    <input type="hidden" name="barang_retur_id" value="{{ $b->id }}">
+                    <input type="hidden" name="barang_id" id="barang_id">
+                    <input type="hidden" name="detail_id" id="detail_id">
                     <div class="row">
 
                         <div class="col-12 mb-3">
@@ -67,6 +68,7 @@
                             </div>
                         </div>
                     </div>
+                       </form>
                 </div>
 
                 <div class="modal-footer">
@@ -74,12 +76,12 @@
                         <i class="bi bi-x-lg me-1"></i>
                         Batal
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" form="keranjangForm">
                         <i class="bi bi-save me-1"></i>
                         Simpan
                     </button>
                 </div>
-            </form>
+
         </div>
     </div>
 </div>

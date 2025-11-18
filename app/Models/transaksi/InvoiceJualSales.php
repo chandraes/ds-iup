@@ -169,6 +169,13 @@ class InvoiceJualSales extends Model
             DB::beginTransaction();
              // Update stok barang
             $this->updateStok($detail);
+
+            // Tambahkan Header Merah VOID - Sistem Pembayaran (Kalau Cash: Merah-merah, tempo: Merah-Biru)
+            $header_bawah = $invoice->sistem_pembayaran == 1 ? "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n" : "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n";
+            $pesan .= "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "VOID - ". $invoice->sistem_pembayaran_word.
+                        $header_bawah;
+
             $kota = $invoice->konsumen->kabupaten_kota ? $invoice->konsumen->kabupaten_kota->nama_wilayah : '';
             $pesan = $invoice->konsumen->kode_toko->kode.' '.$invoice->konsumen->nama."\n".
                     $invoice->konsumen->alamat."\n".
@@ -191,8 +198,9 @@ class InvoiceJualSales extends Model
 
             $tujuan = $dbWa->where('untuk', 'sales-order')->first()->nama_group;
 
-            $pesan .= "\nNote: \n".
-                    "VOID";
+            // $pesan .= "\nNote: \n".
+            //         $invoice->sistem_pembayaran_word."\n".
+            //         "*VOID";
 
             $dbWa->sendWa($tujuan, $pesan);
 

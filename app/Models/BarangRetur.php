@@ -135,37 +135,90 @@ class BarangRetur extends Model
 
      private function update_stok($keranjang)
     {
-        foreach ($keranjang as $item) {
-            $barang = BarangStokHarga::find($item->barang_stok_harga_id);
+        $result = ['status' => 'success'];
+        $stok_retur = null;
 
-            if ($barang->stok < $item->qty) {
+        foreach ($keranjang as $d) {
 
-                return [
-                    'id' => $item->id,
-                    'status' => false,
-                ];
+            if ($this->tipe == 1) {
+                // TIPE 1 (Ke Supplier) - Logika Berbasis STOK
+
+                // 1. Kurangi Stok Utama (JIKA DIPERLUKAN - saat ini tidak ada)
+                // Jika Anda ingin mengurangi stok jual saat retur ke supplier,
+                // tambahkan logikanya di sini.
+                // $stok = $d->stok;
+                // $stok->decrement('stok', $d->qty);
+
+                // 2. Tambah Stok Karantina (Berbasis Stok)
+                $stok_retur = StokRetur::firstOrCreate(
+                    [
+                        'barang_stok_harga_id' => $d->barang_stok_harga_id,
+                        'barang_id' => $d->barang_id
+                    ],
+                    ['total_qty_karantina' => 0]
+                );
+
+            } else {
+                // TIPE 2 (Dari Konsumen) - Logika Berbasis BARANG
+
+                // 1. Kurangi Stok Utama (TIDAK ADA)
+                // Kita tidak mengurangi stok jual
+
+                // 2. Tambah Stok Karantina (Berbasis Barang)
+                $stok_retur = StokRetur::firstOrCreate(
+                    [
+                        'barang_id' => $d->barang_id,
+                        'barang_stok_harga_id' => null // Pastikan ini null
+                    ],
+                    ['total_qty_karantina' => 0]
+                );
             }
 
-            $barang->stok -= $item->qty;
-            $barang->save();
-
-            $stokKarantina = StokRetur::firstOrCreate(
-                ['barang_stok_harga_id' => $item->barang_stok_harga_id],
-                ['total_qty_karantina' => 0] // Default jika baru dibuat
-            );
-
-            $stokKarantina->total_qty_karantina = DB::raw("total_qty_karantina + {$item->qty}");
-            $stokKarantina->save();
+            // 3. Increment Karantina & Catat Sumber (Berlaku untuk kedua Tipe)
+            $stok_retur->increment('total_qty_karantina', $d->qty);
 
             StokReturSource::create([
-                'stok_retur_id'          => $stokKarantina->id, // Link ke tabel agregat
-                'barang_retur_detail_id' => $item->id, // Link ke item retur asli
-                'qty_diterima'           => $item->qty,
+                'stok_retur_id' => $stok_retur->id,
+                'barang_retur_detail_id' => $d->id,
+                'qty_diterima' => $d->qty,
             ]);
 
+            $d->update(['stok_kurang' => 0]);
         }
 
-        return true;
+        return $result;
+
+        // foreach ($keranjang as $item) {
+        //     $barang = BarangStokHarga::find($item->barang_stok_harga_id);
+
+        //     if ($barang->stok < $item->qty) {
+
+        //         return [
+        //             'id' => $item->id,
+        //             'status' => false,
+        //         ];
+        //     }
+
+        //     $barang->stok -= $item->qty;
+        //     $barang->save();
+
+        //     $stokKarantina = StokRetur::firstOrCreate(
+        //         ['barang_stok_harga_id' => $item->barang_stok_harga_id],
+        //         ['total_qty_karantina' => 0] // Default jika baru dibuat
+        //     );
+
+        //     $stokKarantina->total_qty_karantina = DB::raw("total_qty_karantina + {$item->qty}");
+        //     $stokKarantina->save();
+
+        //     StokReturSource::create([
+        //         'stok_retur_id'          => $stokKarantina->id, // Link ke tabel agregat
+        //         'barang_retur_detail_id' => $item->id, // Link ke item retur asli
+        //         'qty_diterima'           => $item->qty,
+        //     ]);
+
+        // }
+
+        // return true;
     }
 
     public function terima_retur($id)
@@ -271,8 +324,8 @@ class BarangRetur extends Model
             //  $pesan = "Barang A: \n";
 
             $n = 1;
-            foreach ($data->load(['details.stok.barang.satuan'])->details as $d) {
-                $pesan .= $n++.'. '.$d->stok->barang_nama->nama." ".$d->stok->barang->kode.""."\n".$d->stok->barang->merk." "."....... ". $d->qty.' ('.$d->stok->barang->satuan->nama.")";
+            foreach ($data->load(['details.barang.satuan'])->details as $d) {
+                $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->qty.' ('.$d->barang->satuan->nama.")";
                 $pesan .= "\n\n";
             }
 

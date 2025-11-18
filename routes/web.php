@@ -650,6 +650,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/delete/{retur}', [BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
 
                 Route::get('/detail/{retur}', [BillingController::class, 'form_barang_retur_detail'])->name('billing.form-barang-retur.detail');
+                Route::get('/detail/{retur}/data', [BillingController::class, 'form_barang_retur_detail_datatable'])->name('billing.form-barang-retur.detail.data');
                 Route::post('/detail/{retur}/store', [BillingController::class, 'form_barang_retur_detail_store'])->name('billing.form-barang-retur.detail.store');
                 Route::post('/detail/{retur}/empty', [BillingController::class, 'form_barang_retur_detail_empty'])->name('billing.form-barang-retur.detail.empty');
                 Route::post('/detail/{retur}/lanjutkan', [BillingController::class, 'form_barang_retur_detail_lanjutkan'])->name('billing.form-barang-retur.detail.lanjutkan');

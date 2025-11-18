@@ -183,12 +183,12 @@
             <tr>
                 <td class="text-center">{{$loop->iteration}}</td>
                 <td class="text-left">
-                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}}
+                    {{$d->barang->barang_nama->nama}}, {{$d->barang->kode}}
                     <br>
-                    <small style="color: #555;">Merek: {{$d->stok->barang->merk}}</small>
+                    <small style="color: #555;">Merek: {{$d->barang->merk}}</small>
                 </td>
                 <td class="text-center">{{$d->nf_qty}}</td>
-                <td class="text-center">{{$d->stok->barang->satuan ? $d->stok->barang->satuan->nama : '-'}}</td>
+                <td class="text-center">{{$d->barang->satuan ? $d->barang->satuan->nama : '-'}}</td>
 
             </tr>
             @endforeach
@@ -197,7 +197,7 @@
 
     </table>
 
-   
+
 
     <table class="signature-table">
         <tr>

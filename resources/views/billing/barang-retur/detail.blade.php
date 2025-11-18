@@ -56,59 +56,6 @@
 
                                     </table>
                                 </div>
-                                <!-- /.col -->
-                                {{-- <div class="col-md-6 invoice-col">
-                                    <div class="row d-flex justify-content-end">
-                                        <table style="width: 90%">
-
-                                            <tr style="height:50px">
-                                                <td class="text-start align-middle">Tanggal</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <input type="text" name="tanggal" id="tanggal" class="form-control"
-                                                        value="{{$tanggal}}" disabled>
-                                                </td>
-                                            </tr>
-                                            <tr style="height:50px">
-                                                <td class="text-start align-middle">Jam</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <input type="text" name="jam" id="jam" class="form-control"
-                                                        value="{{$jam}}" disabled>
-                                                </td>
-                                            </tr>
-                                            <tr style="height:50px">
-                                                <td class="text-start align-middle">No WA</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <input type="text" name="no_hp" id="no_hp" class="form-control"
-                                                        value="{{$info->konsumen->no_hp}}" disabled>
-                                                </td>
-                                            </tr>
-                                            <tr style="height:50px">
-                                                <td class="text-start align-middle">NPWP</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <input type="text" name="npwp" id="npwp" class="form-control"
-                                                        disabled value="{{$info->konsumen->npwp}}">
-                                                </td>
-                                            </tr>
-                                            @if ($adaPpn == 1)
-                                            <tr style="height:50px" hidden>
-                                                <td class="text-start align-middle">PPn Disetor Oleh</td>
-                                                <td class="text-start align-middle" style="width: 10%">:</td>
-                                                <td class="text-start align-middle">
-                                                    <select class="form-select" name="dipungut" id="dipungut" required
-                                                        onchange="ppnPungut()">
-                                                        <option selected value="1">Sendiri</option>
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            @endif
-                                        </table>
-                                    </div>
-
-                                </div> --}}
 
                             </div>
                         </div>
@@ -135,25 +82,25 @@
                             <tr class="{{$b->stok_kurang == 1 ? 'table-danger' : ''}}">
                                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                                 <td class="text-start align-middle">
-                                    {{$b->stok->barang_nama->nama}}, {{$b->stok->barang->kode}}
+                                    {{$b->barang->barang_nama->nama}}, {{$b->barang->kode}}
                                 </td>
                                 <td class="text-start align-middle">
-                                    {{$b->stok->barang->merk}}
+                                    {{$b->barang->merk}}
                                 </td>
                                 <td class="text-center align-middle">
                                     {{$b->nf_qty}}
                                 </td>
                                 <td class="text-center align-middle">
-                                    {{$b->stok->barang->satuan ? $b->stok->barang->satuan->nama
+                                    {{$b->barang->satuan ? $b->barang->satuan->nama
                                     : '-'}}
                                 </td>
                                 <td class="text-center align-middle">
-                                    @if ($b->stok->barang->jenis == 1)
+                                    @if ($b->barang->jenis == 1)
                                     <i class="fa fa-check text-success"></i>
                                     @endif
                                 </td>
                                 <td class="text-center align-middle">
-                                    @if ($b->stok->barang->jenis == 2)
+                                    @if ($b->barang->jenis == 2)
                                     <i class="fa fa-check text-success"></i>
                                     @endif
                                 </td>

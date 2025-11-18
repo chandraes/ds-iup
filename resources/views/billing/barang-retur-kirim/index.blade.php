@@ -291,6 +291,7 @@
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/datatable/scroller.bootstrap5.min.css')}}">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+
 {{-- Tambahkan CSS untuk Toast (Notifikasi) --}}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 <meta name="csrf-token" content="{{ csrf_token() }}">

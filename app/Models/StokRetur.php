@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\db\Barang\Barang; // TAMBAHKAN INI
 use App\Models\db\Barang\BarangStokHarga;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,9 +13,16 @@ class StokRetur extends Model
 
     protected $guarded = ['id'];
 
+    // Relasi ke produk
+    public function barang()
+    {
+        return $this->belongsTo(Barang::class, 'barang_id');
+    }
+
+    // Relasi ke stok
     public function barang_stok_harga()
     {
-        return $this->belongsTo(BarangStokHarga::class);
+        return $this->belongsTo(BarangStokHarga::class, 'barang_stok_harga_id');
     }
 
     public function sources()
