@@ -650,6 +650,10 @@ class BillingController extends Controller
             'tipe' => 'required|in:1,2',
         ]);
 
+        if ($d['tipe'] == 1) {
+            return redirect()->back()->with('error', 'Fitur ini masih dalam tahap pengembangan!!');
+        }
+
         $data = BarangRetur::with(['karyawan', 'konsumen.kode_toko'])->where('status', 0)->where('tipe', $d['tipe'])->get();
         $supplier = BarangUnit::select('id', 'nama')->get();
          $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
