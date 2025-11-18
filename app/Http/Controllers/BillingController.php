@@ -1033,6 +1033,11 @@ class BillingController extends Controller
     public function barang_retur_void(BarangRetur $retur)
     {
         // Panggil fungsi 'void_retur' yang logikanya sudah disesuaikan
+        $userAllow = ['su', 'admin'];
+        if (!in_array(auth()->user()->role, $userAllow )) {
+            return response()->json(['status' => 'error', 'message' => "Hanya admin yang boleh void!!"]);
+        }
+
         $res = $retur->void_retur($retur->id);
         return response()->json($res);
     }
