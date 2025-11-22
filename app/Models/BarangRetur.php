@@ -83,11 +83,11 @@ class BarangRetur extends Model
                          </button>';
         }
 
-        if ($this->status == 3) { // Diproses
-            $actions .= '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="tooltip" title="Selesaikan Retur" onclick="selesaikanOrder('.$this->id.')">
-                            <i class="fa fa-check-double"></i> Selesaikan
-                         </button>';
-        }
+        // if ($this->status == 3) { // Diproses
+        //     $actions .= '<button type="button" class="btn btn-success btn-sm" data-bs-toggle="tooltip" title="Selesaikan Retur" onclick="selesaikanOrder('.$this->id.')">
+        //                     <i class="fa fa-check-double"></i> Selesaikan
+        //                  </button>';
+        // }
 
         // Tombol cetak bisa untuk semua status yang sudah diajukan
         if ($this->status >= 3 && $this->status != 99) {
@@ -133,92 +133,76 @@ class BarangRetur extends Model
         return $this->hasMany(BarangReturDetail::class);
     }
 
-     private function update_stok($keranjang)
+    private function update_stok($details)
     {
-        $result = ['status' => 'success'];
-        $stok_retur = null;
+        // Loop setiap item dalam retur
+        foreach ($details as $detail) {
+            $sisa_qty_butuh_ganti = $detail->qty;
 
-        foreach ($keranjang as $d) {
+            // ---------------------------------------------------------
+            // LANGKAH 1: Cari Stok Pengganti (Good Stock) - Metode FILO
+            // ---------------------------------------------------------
+            // Kita ambil dari barang_stok_hargas dimana stok > 0
+            // Order by ID DESC (ID terbesar = Barang paling baru masuk = First Out)
+            $list_stok_gudang = BarangStokHarga::where('barang_id', $detail->barang_id)
+                ->where('stok', '>', 0)
+                ->orderBy('id', 'asc')
+                ->lockForUpdate() // Kunci baris agar tidak diambil transaksi lain saat proses
+                ->get();
 
-            if ($this->tipe == 1) {
-                // TIPE 1 (Ke Supplier) - Logika Berbasis STOK
-
-                // 1. Kurangi Stok Utama (JIKA DIPERLUKAN - saat ini tidak ada)
-                // Jika Anda ingin mengurangi stok jual saat retur ke supplier,
-                // tambahkan logikanya di sini.
-                // $stok = $d->stok;
-                // $stok->decrement('stok', $d->qty);
-
-                // 2. Tambah Stok Karantina (Berbasis Stok)
-                $stok_retur = StokRetur::firstOrCreate(
-                    [
-                        'barang_stok_harga_id' => $d->barang_stok_harga_id,
-                        'barang_id' => $d->barang_id
-                    ],
-                    ['total_qty_karantina' => 0]
-                );
-
-            } else {
-                // TIPE 2 (Dari Konsumen) - Logika Berbasis BARANG
-
-                // 1. Kurangi Stok Utama (TIDAK ADA)
-                // Kita tidak mengurangi stok jual
-
-                // 2. Tambah Stok Karantina (Berbasis Barang)
-                $stok_retur = StokRetur::firstOrCreate(
-                    [
-                        'barang_id' => $d->barang_id,
-                        'barang_stok_harga_id' => null // Pastikan ini null
-                    ],
-                    ['total_qty_karantina' => 0]
-                );
+            // ---------------------------------------------------------
+            // LANGKAH 2: Validasi Kecukupan Stok
+            // ---------------------------------------------------------
+            if ($list_stok_gudang->sum('stok') < $sisa_qty_butuh_ganti) {
+                // Jika total stok di semua batch tidak cukup, batalkan & beri tahu ID detailnya
+                return [
+                    'status' => false,
+                    'id' => $detail->id,
+                    'message' => 'Stok pengganti tidak mencukupi untuk barang ID: ' . $detail->barang_id
+                ];
             }
 
-            // 3. Increment Karantina & Catat Sumber (Berlaku untuk kedua Tipe)
-            $stok_retur->increment('total_qty_karantina', $d->qty);
+            // ---------------------------------------------------------
+            // LANGKAH 3: Eksekusi Pemotongan (Split Stock Logic)
+            // ---------------------------------------------------------
+            foreach ($list_stok_gudang as $stok_batch) {
+                if ($sisa_qty_butuh_ganti <= 0) break;
 
-            StokReturSource::create([
-                'stok_retur_id' => $stok_retur->id,
-                'barang_retur_detail_id' => $d->id,
-                'qty_diterima' => $d->qty,
-            ]);
+                // Ambil qty sebanyak yang dibutuhkan atau sebanyak yang tersedia di batch ini
+                $qty_potong = min($sisa_qty_butuh_ganti, $stok_batch->stok);
 
-            $d->update(['stok_kurang' => 0]);
+                // A. Kurangi Stok Bagus (Good Stock)
+                $stok_batch->decrement('stok', $qty_potong);
+
+                // B. Update/Buat Gudang Karantina (Bad Stock Agregat)
+                // Karena struktur baru Unique hanya per barang_id, ini akan menyatukan stok.
+                $bad_stok = StokRetur::firstOrCreate(
+                    ['barang_id' => $detail->barang_id],
+                    [
+                        'total_qty_karantina' => 0,
+                        'total_qty_diproses' => 0,
+                        'status' => 0
+                    ]
+                );
+                // Tambah stok ke gudang karantina
+                $bad_stok->increment('total_qty_karantina', $qty_potong);
+
+                // C. Simpan Jejak Asal (Traceability)
+                // Disini kita simpan barang_stok_harga_id agar tau bad stock ini
+                // "menggantikan" atau "berasal" dari batch yang mana.
+                StokReturSource::create([
+                    'stok_retur_id'          => $bad_stok->id,
+                    'barang_retur_detail_id' => $detail->id,
+                    'barang_stok_harga_id'   => $stok_batch->id, // <--- Disimpan di sini
+                    'qty_diterima'           => $qty_potong,
+                ]);
+
+                // Kurangi sisa yang harus dicari
+                $sisa_qty_butuh_ganti -= $qty_potong;
+            }
         }
 
-        return $result;
-
-        // foreach ($keranjang as $item) {
-        //     $barang = BarangStokHarga::find($item->barang_stok_harga_id);
-
-        //     if ($barang->stok < $item->qty) {
-
-        //         return [
-        //             'id' => $item->id,
-        //             'status' => false,
-        //         ];
-        //     }
-
-        //     $barang->stok -= $item->qty;
-        //     $barang->save();
-
-        //     $stokKarantina = StokRetur::firstOrCreate(
-        //         ['barang_stok_harga_id' => $item->barang_stok_harga_id],
-        //         ['total_qty_karantina' => 0] // Default jika baru dibuat
-        //     );
-
-        //     $stokKarantina->total_qty_karantina = DB::raw("total_qty_karantina + {$item->qty}");
-        //     $stokKarantina->save();
-
-        //     StokReturSource::create([
-        //         'stok_retur_id'          => $stokKarantina->id, // Link ke tabel agregat
-        //         'barang_retur_detail_id' => $item->id, // Link ke item retur asli
-        //         'qty_diterima'           => $item->qty,
-        //     ]);
-
-        // }
-
-        // return true;
+        return ['status' => true];
     }
 
     public function terima_retur($id)
@@ -336,7 +320,7 @@ class BarangRetur extends Model
 
             $pesan .= "No Kantor: *0853-3939-3918* \n";
 
-            $tujuan = $dbWa->where('untuk', 'barang-retur')->first()->nama_group;
+            $tujuan = $dbWa->where('untuk', 'terima-barang-retur')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);
 
@@ -373,6 +357,10 @@ class BarangRetur extends Model
 
         if ($data->status == 99) {
             return ['status' => 'error', 'message' => 'Retur sudah selesai, tidak dapat di void'];
+        }
+
+        if ($data->status == 3) {
+            return ['status' => 'error', 'message' => 'Fitur void pada status ini sedang tahap pengembangan!'];
         }
 
         $detail = $data->details;

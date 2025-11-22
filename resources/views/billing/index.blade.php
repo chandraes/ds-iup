@@ -188,7 +188,7 @@
                 <h5 class="mt-3">FORM RETUR</h5>
             </a>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.barang-retur')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-retur.svg')}}" alt="" width="70">
                 <h5 class="mt-3">TERIMA / KIRIM RETUR
@@ -198,23 +198,31 @@
                 </h5>
             </a>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.stok-retur')}}" class="text-decoration-none">
                 <img src="{{asset('images/retur-send.svg')}}" alt="" width="70">
                 <h5 class="mt-3">KIRIM RETUR
-                    {{-- @if ($br > 0)
-                    <span class="text-danger">({{$br}})</span>
-                    @endif --}}
+                    @if ($sr > 0)
+                    <span class="text-danger">({{$sr}})</span>
+                    @endif
                 </h5>
             </a>
         </div>
-          <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/retur-done.svg')}}" alt="" width="70">
                 <h5 class="mt-3">PENYELESAIAN RETUR
                     {{-- @if ($br > 0)
                     <span class="text-danger">({{$br}})</span>
                     @endif --}}
+                </h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.barang-retur-proses')}}" class="text-decoration-none">
+                <img src="{{asset('images/daftar-proses-retur.svg')}}" alt="" width="70">
+                <h5 class="mt-3">DAFTAR PROSES RETUR
+
                 </h5>
             </a>
         </div>
@@ -288,19 +296,9 @@
         </div>
 
     </div>
-    <hr>
-    {{-- <br>
-    <div class="row justify-content-left">
-        <h5 class="mt-3">INVENTARIS</h5>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.form-inventaris')}}" class="text-decoration-none">
-                <img src="{{asset('images/form-inventaris.svg')}}" alt="" width="70">
-                <h5 class="mt-3">FORM INVENTARIS
-                </h5>
-            </a>
-        </div>
-    </div> --}}
 </div>
+
+
 @endsection
 @push('js')
 <script>

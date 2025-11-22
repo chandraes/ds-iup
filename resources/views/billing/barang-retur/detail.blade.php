@@ -127,9 +127,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6 text-end mt-2">
-            @include('wa-status')
-        </div>
     </div>
 </div>
 @endsection

@@ -3,8 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1 class="display-6 fw-bold">TERIMA / KIRIM RETUR</h1>
-            <p class="lead text-muted">Manajemen data barang retur</p>
+            <h1 class="display-6 fw-bold">DAFTAR PROSES RETUR</h1>
         </div>
     </div>
 
@@ -20,9 +19,6 @@
                             Billing
                 </a>
             </nav>
-        </div>
-        <div class="col-md-5">
-            @include('wa-status')
         </div>
     </div>
 </div>
@@ -71,16 +67,6 @@
                             <option value="2">Retur dari Konsumen</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label for="filter_status" class="form-label">Status</label>
-                        <select class="form-select" name="status" id="filter_status">
-                            <option value="" selected>-- (Semua data) --</option>
-                            <option value="1">Diajukan</option>
-                            <option value="2">Diterima</option>
-                            <option value="3">Diproses</option>
-                        </select>
-                    </div>
-
                     <div class="col-md-2 d-flex align-items-end gap-2">
                         <button type="button" class="btn btn-primary w-100" id="btn-filter">
                             <i class="fa fa-search me-1"></i> Filter
@@ -166,7 +152,7 @@
                     d.konsumen_id = $('#filter_konsumen').val();
                     d.barang_unit_id = $('#filter_supplier').val();
                     d.tipe = $('#filter_tipe').val();
-                    d.status = $('#filter_status').val();
+                    d.status = [3];
                     d.sales = $('#filter_sales').val();
                 }
             },
@@ -252,89 +238,6 @@
                                 text: data.message,
                             }).then(() => {
                                 location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: data.message,
-                            });
-                        }
-                    }
-                });
-            }
-        })
-    }
-
-    function terimaOrder(id) {
-        Swal.fire({
-            title: 'Terima Retur Ini?',
-            text: "Status akan diubah menjadi 'Diterima' dan PDF Bukti Terima akan dibuat.",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#ffc107', // Warna kuning (Warning)
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Terima!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    // Panggil route BARU (Anda harus membuatnya di web.php)
-                    url: '{{ route('billing.barang-retur.terima', ':id') }}'.replace(':id', id),
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(data) {
-                        if (data.status == 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: data.message,
-                            }).then(() => {
-                                // Buka PDF BARU dan muat ulang tabel
-                                window.open(data.preview_url, '_blank');
-                                $('#rekapTable').DataTable().draw(false);
-                            });
-                        } else {
-                            Swal.fire({ icon: 'error', title: 'Gagal', text: data.message });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire('Error', 'Gagal menghubungi server.', 'error');
-                    }
-                });
-            }
-        });
-    }
-
-    function lanjutkanOrder(id) {
-        Swal.fire({
-            title: 'Proses Retur Ini?', // <-- Ubah teks
-            text: "Retur akan diproses dan status diubah menjadi 'Diproses'.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Saya Yakin!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '{{route('billing.barang-retur.kirim', ':id')}}'.replace(':id', id),
-                    type: 'POST',
-                    data: {
-                        id: id,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(data) {
-                        console.log(data);
-                        if (data.status == 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil',
-                                text: data.message,
-                            }).then(() => {
-                                window.open(data.preview_url, '_blank');
-                                $('#rekapTable').DataTable().draw(false);
                             });
                         } else {
                             Swal.fire({

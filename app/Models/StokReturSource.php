@@ -11,8 +11,9 @@ class StokReturSource extends Model
 
     protected $guarded = ['id'];
 
-    public function barang_retur_detail()
+    public function detail()
     {
-        return $this->belongsTo(BarangReturDetail::class);
+        return $this->belongsTo(BarangReturDetail::class, 'barang_retur_detail_id');
     }
+
 }

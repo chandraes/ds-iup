@@ -19,12 +19,6 @@ class StokRetur extends Model
         return $this->belongsTo(Barang::class, 'barang_id');
     }
 
-    // Relasi ke stok
-    public function barang_stok_harga()
-    {
-        return $this->belongsTo(BarangStokHarga::class, 'barang_stok_harga_id');
-    }
-
     public function sources()
     {
         return $this->hasMany(StokReturSource::class);
