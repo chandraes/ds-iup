@@ -15,7 +15,7 @@ return new class extends Migration
         $data = GroupWa::where('untuk', 'barang-retur')->first();
 
         if (!$data) {
-            GroupWa::create([
+            GroupWa::firstOrCreate([
                 'untuk' => 'terima-barang-retur',
                 'nama_group' => "Testing Group",
                 'group_id' => "Testing Group"

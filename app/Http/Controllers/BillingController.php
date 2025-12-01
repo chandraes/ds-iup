@@ -26,6 +26,7 @@ use App\Models\Pengaturan;
 use App\Models\Pengelola;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\ReturSupplier;
 use App\Models\StokRetur;
 use App\Models\transaksi\InventarisInvoice;
 use App\Models\transaksi\InvoiceBelanja;
@@ -133,9 +134,11 @@ class BillingController extends Controller
 
         $br = BarangRetur::whereIn('status', [1,2])->count();
         $sr = StokRetur::where('status', 0)->count();
+        $ps = ReturSupplier::whereNot('tipe', 99)->count();
 
         return view('billing.index', [
             'is' => $is,
+            'ps' => $ps,
             'ik' => $invoiceJualCounts->ik,
             'isn' => $isn,
             'ikn' => $invoiceJualCounts->ikn,

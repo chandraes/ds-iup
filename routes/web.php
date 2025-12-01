@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\RekapController;
+use App\Http\Controllers\ReturController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -682,9 +683,22 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('stok-retur')->group(function() {
                 Route::get('/', [BillingController::class, 'stok_retur'])->name('billing.stok-retur');
-                Route::get('/data', [BillingController::class, 'stok_retur_data'])->name('billing.stok-retur.data');
+                Route::get('/keranjang', [ReturController::class, 'cartIndex'])->name('billing.stok-retur.cart');
+                Route::post('/add-to-cart', [ReturController::class, 'addToCart'])->name('billing.stok-retur.add-to-cart');
+                Route::post('/empty-cart', [ReturController::class, 'emptyCart'])->name('billing.stok-retur.empty-cart');
+                Route::get('/cart-info', [ReturController::class, 'getCartInfo'])->name('billing.stok-retur.cart-info');
+                Route::get('/data', [ReturController::class, 'stok_retur_data'])->name('billing.stok-retur.data');
+                Route::post('/cart-update', [ReturController::class, 'updateCart'])->name('billing.stok-retur.cart-update');
+                Route::post('/checkout', [ReturController::class, 'processCheckout'])->name('billing.stok-retur.checkout');
+                Route::get('/cart-delete/{id}', [ReturController::class, 'deleteCart'])->name('billing.stok-retur.cart-delete');
                 Route::get('/history/{id}', [BillingController::class, 'stok_retur_sumber'])->name('billing.stok-retur.history');
 
+            });
+
+            Route::prefix('penyelesaian-retur')->group(function(){
+                Route::get('/', [ReturController::class, 'invoiceIndex'])->name('billing.penyelesaian-retur.index');
+                Route::get('/data', [ReturController::class, 'invoiceData'])->name('billing.penyelesaian-retur.data');
+                Route::get('/detail/{id}', [ReturController::class, 'invoiceShow'])->name('billing.penyelesaian-retur.detail');
             });
 
             // Routing Sales Order
