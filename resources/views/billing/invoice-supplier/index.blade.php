@@ -99,7 +99,7 @@
                         {{$d->nf_sisa}}
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->id_jatuh_tempo}}
+                        {{$d->jatuh_tempo}}
                     </td>
                     <td class="text-center align-middle">
                         <form action="{{route('billing.invoice-supplier.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
