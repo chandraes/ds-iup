@@ -249,7 +249,6 @@ class ReturController extends Controller
                 'nomor'          => $nomorBaru,        // <-- Kolom 'nomor' (Integer)
                 'tanggal'        => Carbon::now(),
                 'barang_unit_id' => $carts->first()->barang_unit_id,
-                'tipe_tujuan'    => 1, // Default ke Supplier (sesuaikan jika perlu)
                 'user_id'        => $user_id,
             ]);
 
@@ -329,14 +328,20 @@ class ReturController extends Controller
                 ->addColumn('supplier', function($row){
                     return $row->barang_unit->nama ?? '-';
                 })
-                ->addColumn('status_label', function($row){
+               ->addColumn('status_label', function($row){
                     $status = $row->tipe;
                     switch ($status) {
-                        case 0: return '<span class="badge rounded-pill bg-warning text-dark border border-warning"><i class="bi bi-hourglass-split"></i> Diajukan</span>';
-                        case 1: return '<span class="badge rounded-pill bg-info text-dark border border-info"><i class="bi bi-truck"></i> Dikirim</span>';
-                        case 2: return '<span class="badge rounded-pill bg-success border border-success"><i class="bi bi-check-circle-fill"></i> Selesai</span>';
-                        case 99: return '<span class="badge rounded-pill bg-danger border border-danger"><i class="bi bi-x-circle"></i> Void</span>';
-                        default: return '<span class="badge rounded-pill bg-secondary">Unknown</span>';
+                        case 0:
+                            // UBAH LABEL JADI: DIPROSES
+                            return '<span class="badge rounded-pill bg-warning text-dark border border-warning"><i class="bi bi-gear-fill"></i> Diproses</span>';
+                        case 1:
+                            return '<span class="badge rounded-pill bg-info text-dark border border-info"><i class="bi bi-truck"></i> Dikirim</span>';
+                        case 2:
+                            return '<span class="badge rounded-pill bg-success border border-success"><i class="bi bi-check-circle-fill"></i> Selesai</span>';
+                        case 99:
+                            return '<span class="badge rounded-pill bg-danger border border-danger"><i class="bi bi-x-circle"></i> Void</span>';
+                        default:
+                            return '<span class="badge rounded-pill bg-secondary">Unknown</span>';
                     }
                 })
                 ->addColumn('total_item', function($row){

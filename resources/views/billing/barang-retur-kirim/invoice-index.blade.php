@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
+<div class="container">
     {{-- Header --}}
     <div class="d-flex justify-content-center align-items-center mb-4">
         <div class="row justify-content-center mb-3">
@@ -61,11 +61,11 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <table class="table table-hover table-striped align-middle w-100" id="invoice-table">
-                <thead class="bg-primary text-white">
+                <thead class="table-success">
                     <tr>
                         <th width="5%" class="text-center">No</th>
                         <th width="15%">No. Invoice</th>
-                        <th width="15%">Tanggal Dibuat</th>
+                        <th width="15%">Tanggal</th>
                         <th>Supplier</th>
                         <th width="15%" class="text-center">Status</th>
                         <th width="10%" class="text-center">Total</th>

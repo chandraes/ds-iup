@@ -7,10 +7,11 @@
                 <h4 class="fw-bold text-primary mb-0">#{{ sprintf('%04d', $invoice->nomor) }}</h4>
 
                 {{-- Logic Badge Status --}}
-                @switch($invoice->tipe)
+               @switch($invoice->tipe)
                     @case(0)
+                        {{-- UBAH LABEL JADI: DIPROSES --}}
                         <span class="badge rounded-pill bg-warning text-dark border border-warning">
-                            <i class="bi bi-hourglass-split"></i> Diajukan
+                            <i class="bi bi-gear-fill"></i> Diproses
                         </span>
                         @break
                     @case(1)
