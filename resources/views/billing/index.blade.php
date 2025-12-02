@@ -191,7 +191,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.barang-retur')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-retur.svg')}}" alt="" width="70">
-                <h5 class="mt-3">TERIMA / KIRIM RETUR
+                <h5 class="mt-3">TERIMA / KIRIM RETUR KONSUMEN
                     @if ($br > 0)
                     <span class="text-danger">({{$br}})</span>
                     @endif
@@ -201,7 +201,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.stok-retur')}}" class="text-decoration-none">
                 <img src="{{asset('images/retur-send.svg')}}" alt="" width="70">
-                <h5 class="mt-3">KIRIM RETUR
+                <h5 class="mt-3">KIRIM RETUR SUPPLIER
                     @if ($sr > 0)
                     <span class="text-danger">({{$sr}})</span>
                     @endif
@@ -211,7 +211,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.penyelesaian-retur.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/retur-done.svg')}}" alt="" width="70">
-                <h5 class="mt-3">PENYELESAIAN RETUR
+                <h5 class="mt-3">PENYELESAIAN RETUR SUPPLIER
                     @if ($ps > 0)
                     <span class="text-danger">({{$ps}})</span>
                     @endif
