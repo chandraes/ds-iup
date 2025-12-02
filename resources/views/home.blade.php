@@ -14,6 +14,9 @@
             </a>
         </div>
         @endif
+         @if (auth()->user()->role == 'user')
+        @include('dashboard-user')
+        @endif
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('billing')}}" class="text-decoration-none">
                 <img src="{{asset('images/billing.svg')}}" alt="" width="70">

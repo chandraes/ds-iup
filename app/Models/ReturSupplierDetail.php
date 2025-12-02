@@ -15,4 +15,9 @@ class ReturSupplierDetail extends Model
     {
         return $this->belongsTo(Barang::class);
     }
+
+    public function getNfQtyAttribute()
+    {
+        return number_format($this->qty, 0, ',','.');
+    }
 }

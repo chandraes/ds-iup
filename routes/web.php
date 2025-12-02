@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\ReturController;
+use App\Http\Controllers\UserController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -42,6 +43,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/search-barang-type', [App\Http\Controllers\UniversalController::class, 'searchBarangType'])->name('universal.search-barang-type');
 
         Route::get('/konsumen-data', [App\Http\Controllers\UniversalController::class, 'konsumen_data'])->name('universal.konsumen-data');
+    });
+
+     Route::group(['middleware' => ['role:user']], function(){
+        Route::prefix('user')->group(function(){
+            Route::get('/stok-all', [UserController::class, 'stok_all'])->name('user.stok-all');
+        });
+
     });
 
     Route::group(['middleware' => ['role:perusahaan']], function(){
@@ -699,6 +707,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/', [ReturController::class, 'invoiceIndex'])->name('billing.penyelesaian-retur.index');
                 Route::get('/data', [ReturController::class, 'invoiceData'])->name('billing.penyelesaian-retur.data');
                 Route::get('/detail/{id}', [ReturController::class, 'invoiceShow'])->name('billing.penyelesaian-retur.detail');
+
+                Route::get('/print/{id}', [ReturController::class, 'printPdf'])->name('billing.penyelesaian-retur.print');
             });
 
             // Routing Sales Order

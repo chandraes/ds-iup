@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Config;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\ReturSupplier;
 use App\Models\ReturSupplierDetail;
 use App\Models\StokRetur;
 use App\Models\StokReturCart;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -174,10 +176,10 @@ class ReturController extends Controller
 
         if ($cartItem) {
             // Cek total qty jika digabung
-            if (($cartItem->qty + $request->qty) > $stokRetur->total_qty_karantina) {
+            if ($request->qty > $stokRetur->total_qty_karantina) {
                 return response()->json(['status' => 'error', 'message' => 'Total Qty di keranjang melebihi stok tersedia!']);
             }
-            $cartItem->increment('qty', $request->qty);
+            $cartItem->update(['qty' => $request->qty]);
         } else {
             StokReturCart::create([
                 'user_id'        => $user_id,
@@ -319,7 +321,7 @@ class ReturController extends Controller
             return datatables()->of($query)
                 ->addIndexColumn()
                 ->addColumn('nomor_display', function($row){
-                    return '<span class="fw-bold font-monospace text-primary">#' . sprintf('%04d', $row->nomor) . '</span>';
+                    return '<span class="fw-bold font-monospace text-primary">RS-' . sprintf('%04d', $row->nomor) . '</span>';
                 })
                 ->editColumn('created_at', function($row){
                     return $row->created_at->format('Y-m-d');
@@ -328,31 +330,86 @@ class ReturController extends Controller
                 ->addColumn('supplier', function($row){
                     return $row->barang_unit->nama ?? '-';
                 })
-               ->addColumn('status_label', function($row){
-                    $status = $row->tipe;
-                    switch ($status) {
-                        case 0:
-                            // UBAH LABEL JADI: DIPROSES
-                            return '<span class="badge rounded-pill bg-warning text-dark border border-warning"><i class="bi bi-gear-fill"></i> Diproses</span>';
-                        case 1:
-                            return '<span class="badge rounded-pill bg-info text-dark border border-info"><i class="bi bi-truck"></i> Dikirim</span>';
-                        case 2:
-                            return '<span class="badge rounded-pill bg-success border border-success"><i class="bi bi-check-circle-fill"></i> Selesai</span>';
-                        case 99:
-                            return '<span class="badge rounded-pill bg-danger border border-danger"><i class="bi bi-x-circle"></i> Void</span>';
-                        default:
-                            return '<span class="badge rounded-pill bg-secondary">Unknown</span>';
+               // --- LOGIKA KOLOM 1: TAHAP PROSES (Packing) ---
+                ->addColumn('status_proses', function($row){
+                    // Jika 0: Masih disini (Kuning)
+                    // Jika > 0: Sudah lewat (Centang Hijau)
+                    if ($row->tipe == 0) {
+                        return '<span class="badge bg-warning text-dark"><i class="bi bi-box-seam"></i> Diproses</span>';
+                    } elseif ($row->tipe > 0 && $row->tipe != 99) {
+                        return '<span class="text-success"><i class="bi bi-check-circle-fill fs-5"></i></span>';
+                    } else {
+                        return '<span class="text-muted">-</span>'; // Void
+                    }
+                })
+
+                // --- LOGIKA KOLOM 2: TAHAP PENGIRIMAN ---
+                ->addColumn('status_kirim', function($row){
+                    // Jika 0: Belum sampai sini (Abu-abu)
+                    // Jika 1: Sedang disini (Biru)
+                    // Jika 2: Selesai (Centang Hijau)
+                    if ($row->tipe == 0) {
+                        return '<span class="text-muted opacity-25"><i class="bi bi-dash-lg"></i></span>';
+                    } elseif ($row->tipe == 1) {
+                        return '<span class="badge bg-info text-dark"><i class="bi bi-truck"></i> Jalan</span>';
+                    } elseif ($row->tipe == 2) {
+                        return '<span class="badge bg-success"><i class="bi bi-check-all"></i> Diterima</span>';
+                    } else {
+                        return '<span class="badge bg-danger">Void</span>';
                     }
                 })
                 ->addColumn('total_item', function($row){
                     return '<span class="badge bg-light text-dark border">' . $row->details_count . ' Item</span>';
                 })
                 ->addColumn('aksi', function($row){
-                    return '<button class="btn btn-sm btn-info text-white btn-detail shadow-sm" data-id="'.$row->id.'"><i class="bi bi-eye"></i> Detail</button>';
+                    $btn = '<div class="btn-group" role="group">';
+
+                    // Tombol Detail
+                    $btn .= '<button class="btn btn-sm btn-outline-secondary btn-detail" data-id="'.$row->id.'" title="Lihat Detail"><i class="bi bi-eye"></i></button>';
+
+                    // Tombol Kirim/Cetak (Hanya jika status aktif)
+                    if ($row->tipe != 99) {
+                        $label = ($row->tipe == 0) ? 'Kirim' : 'Cetak';
+                        $icon  = ($row->tipe == 0) ? 'bi-send-fill' : 'bi-printer';
+                        $class = ($row->tipe == 0) ? 'btn-primary' : 'btn-secondary';
+
+                        // Link ke Route Print
+                        $url = route('billing.penyelesaian-retur.print', $row->id);
+
+                        $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm '.$class.' reload-on-click" title="'.$label.' PDF">
+                                    <i class="bi '.$icon.'"></i> '.$label.'
+                                 </a>';
+                    }
+
+                    $btn .= '</div>';
+                    return $btn;
                 })
-                ->rawColumns(['nomor_display', 'status_label', 'total_item', 'aksi'])
+                ->rawColumns(['nomor_display', 'status_proses', 'status_kirim', 'total_item', 'aksi'])
                 ->make(true);
         }
 
+    }
+
+    public function printPdf($id)
+    {
+        $invoice = ReturSupplier::with(['barang_unit', 'details.barang.barang_nama', 'details.barang.satuan', 'user'])
+                    ->findOrFail($id);
+
+        // LOGIC: Jika status masih 0 (Diproses), ubah jadi 1 (Dikirim)
+        if ($invoice->tipe == 0) {
+            $invoice->update(['tipe' => 1]);
+        }
+
+        // Generate PDF
+        // 'nomor_invoice' di bawah hanyalah string format tampilan
+        $invoice->nomor_invoice = 'RS-' . sprintf('%04d', $invoice->nomor);
+
+        $pt = Config::where('untuk', 'resmi' )->first();
+
+        $tanggal = Carbon::parse($invoice->updated_at)->format('d-m-Y');
+        $pdf = Pdf::loadView('billing.barang-retur-kirim.pdf.surat-jalan', compact('invoice', 'pt', 'tanggal'));
+
+        // Stream (Buka di tab baru) dengan nama file custom
+        return $pdf->stream('Surat_Jalan_Retur_'.$invoice->nomor_invoice.'.pdf');
     }
 }

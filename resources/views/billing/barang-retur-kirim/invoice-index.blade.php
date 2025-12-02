@@ -64,10 +64,11 @@
                 <thead class="table-success">
                     <tr>
                         <th width="5%" class="text-center">No</th>
-                        <th width="15%">No. Invoice</th>
-                        <th width="15%">Tanggal</th>
-                        <th>Supplier</th>
-                        <th width="15%" class="text-center">Status</th>
+                        <th width="15%" class="text-center">No. Invoice</th>
+                        <th width="15%" class="text-center">Tanggal</th>
+                        <th class="text-center">Supplier</th>
+                        <th width="10%" class="text-center ">Packing</th>
+                        <th width="10%" class="text-center">Pengiriman</th>
                         <th width="10%" class="text-center">Total</th>
                         <th width="10%" class="text-center">Aksi</th>
                     </tr>
@@ -132,7 +133,8 @@
             {data: 'nomor_display', name: 'nomor'},
             {data: 'created_at', name: 'created_at'},
             {data: 'supplier', name: 'barang_unit.nama'}, // Relasi barang_unit
-            {data: 'status_label', name: 'tipe', className: 'text-center'}, // Status Badge
+            {data: 'status_proses', name: 'tipe', className: 'text-center border-start'},
+            {data: 'status_kirim', name: 'tipe', className: 'text-center border-end'},
             {data: 'total_item', name: 'details_count', className: 'text-center'},
             {data: 'aksi', orderable: false, searchable: false, className: 'text-center'}
         ],
@@ -147,6 +149,12 @@
         $('#unit_filter').val('').trigger('change');
         // Optional: Reset tanggal ke default jika diinginkan
         table.draw();
+    });
+
+    $('#invoice-table tbody').on('click', '.reload-on-click', function() {
+        setTimeout(function() {
+            table.ajax.reload(null, false); // Reload tanpa reset paging
+        }, 1000); // Delay 1 detik untuk memastikan PDF tab terbuka dan DB terupdate
     });
 
     // Modal Logic
