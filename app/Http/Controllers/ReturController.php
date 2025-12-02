@@ -374,11 +374,11 @@ class ReturController extends Controller
                         $class = ($row->tipe == 0) ? 'btn-primary' : 'btn-secondary';
 
                         // Link ke Route Print
-                        $url = route('billing.penyelesaian-retur.print', $row->id);
+                        // $url = route('billing.penyelesaian-retur.print', $row->id);
 
-                        $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm '.$class.' reload-on-click" title="'.$label.' PDF">
-                                    <i class="bi '.$icon.'"></i> '.$label.'
-                                 </a>';
+                        // $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm '.$class.' reload-on-click" title="'.$label.' PDF">
+                        //             <i class="bi '.$icon.'"></i> '.$label.'
+                        //          </a>';
                     }
 
                     $btn .= '</div>';
