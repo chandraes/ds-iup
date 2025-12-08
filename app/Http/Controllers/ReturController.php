@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Config;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangUnit;
+use App\Models\GroupWa;
 use App\Models\ReturSupplier;
 use App\Models\ReturSupplierDetail;
 use App\Models\StokRetur;
@@ -369,16 +370,20 @@ class ReturController extends Controller
 
                     // Tombol Kirim/Cetak (Hanya jika status aktif)
                     if ($row->tipe != 99) {
-                        $label = ($row->tipe == 0) ? 'Kirim' : 'Cetak';
-                        $icon  = ($row->tipe == 0) ? 'bi-send-fill' : 'bi-printer';
-                        $class = ($row->tipe == 0) ? 'btn-primary' : 'btn-secondary';
+                        $url = route('billing.penyelesaian-retur.print', $row->id);
 
-                        // Link ke Route Print
-                        // $url = route('billing.penyelesaian-retur.print', $row->id);
-
-                        // $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm '.$class.' reload-on-click" title="'.$label.' PDF">
-                        //             <i class="bi '.$icon.'"></i> '.$label.'
-                        //          </a>';
+                        if ($row->tipe == 0) {
+                            // STATUS DIPROSES (0) -> Butuh Konfirmasi
+                            // Tambahkan class 'btn-kirim-confirm'
+                            $btn .= '<a href="'.$url.'" class="btn btn-sm btn-primary btn-kirim-confirm" title="Kirim & Cetak">
+                                        <i class="bi bi-send-fill"></i> Kirim
+                                    </a>';
+                        } else {
+                            // STATUS DIKIRIM/SELESAI -> Cetak Ulang (Langsung buka)
+                            $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm btn-secondary" title="Cetak Ulang">
+                                        <i class="bi bi-printer"></i> Cetak
+                                    </a>';
+                        }
                     }
 
                     $btn .= '</div>';
@@ -399,6 +404,29 @@ class ReturController extends Controller
         if ($invoice->tipe == 0) {
             $invoice->update(['tipe' => 1]);
         }
+
+        $dbWa = new GroupWa();
+        $pesan = '';
+        $tanggal = Carbon::now()->translatedFormat('d F Y');
+
+        // $pesan = "*".$data->barang_unit->nama."*\n";
+        $pesan .= "🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸"."\n"."*KIRIM BARANG RETUR*\n"."🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸\n\n";
+
+        $pesan .= $invoice->barang_unit?->nama."\n\n";
+
+        $pesan .= "*Tanggal* : ".$tanggal."\n\n";
+
+        //  $pesan = "Barang A: \n";
+
+        $n = 1;
+        foreach ($invoice->load(['details.barang.satuan'])->details as $d) {
+            $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->nf_qty.' ('.$d->barang->satuan->nama.")";
+            $pesan .= "\n\n";
+        }
+
+        $tujuan = $dbWa->where('untuk', 'kirim-retur-supplier')->first()->nama_group;
+
+        $dbWa->sendWa($tujuan, $pesan);
 
         // Generate PDF
         // 'nomor_invoice' di bawah hanyalah string format tampilan

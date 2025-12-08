@@ -142,6 +142,17 @@
                 <h5 class="mt-3">FORM BELI</h5>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            @include('billing.modal-otorisasi')
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalOtorisasi">
+                <img src="{{asset('images/otorisasi-pembelian.svg')}}" alt="" width="70">
+                <h5 class="mt-3">OTORISASI PEMBELIAN
+                     @if ($sumKeranjangBeli > 0)
+                    <span class="text-danger">({{$sumKeranjangBeli}})</span>
+                    @endif
+                </h5>
+            </a>
+        </div>
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.lihat-stok')}}" class="text-decoration-none">
                 <img src="{{asset('images/form-jual.svg')}}" alt="" width="70">
@@ -175,12 +186,8 @@
                 <h5 class="mt-3">PRE ORDER</h5>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
-
-        </div>
-        <div class="col-md-2 text-center mt-5">
-
-        </div>
+    </div>
+    <div class="row justify-content-left">
         @include('billing.modal-form-retur')
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formReturModal">

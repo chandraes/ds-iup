@@ -151,6 +151,46 @@
         table.draw();
     });
 
+    $('#invoice-table tbody').on('click', '.btn-kirim-confirm', function(e) {
+        e.preventDefault(); // Cegah link membuka tab langsung
+        var url = $(this).attr('href'); // Ambil URL PDF
+
+        Swal.fire({
+            title: 'Kirim Barang ke Supplier?',
+            html: `
+                Status akan berubah menjadi <b>DIKIRIM</b>.<br>
+                Surat Jalan (PDF) akan otomatis terbuka.
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0d6efd', // Warna Biru Primary
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Kirim & Cetak!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // 1. Buka PDF di Tab Baru
+                window.open(url, '_blank');
+
+                // 2. Reload Tabel otomatis agar status berubah jadi Hijau/Biru
+                // Beri jeda sedikit agar database sempat terupdate oleh Controller PDF
+                setTimeout(function() {
+                    table.ajax.reload(null, false);
+
+                    // Optional: Toast notifikasi kecil
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Status Diperbarui',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }, 1000);
+            }
+        });
+    });
+
     $('#invoice-table tbody').on('click', '.reload-on-click', function() {
         setTimeout(function() {
             table.ajax.reload(null, false); // Reload tanpa reset paging

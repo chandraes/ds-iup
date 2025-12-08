@@ -12,6 +12,7 @@ use App\Models\KasBesar;
 use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,11 @@ class Keranjang extends Model
     public function barang()
     {
         return $this->belongsTo(Barang::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getNfHargaAttribute()
@@ -419,5 +425,247 @@ class Keranjang extends Model
         // }
 
         return true;
+    }
+
+     public function checkout_otorisasi($data)
+    {
+        $keranjang = $this->where('user_id', $data['asistenId'])
+            ->where('jenis', $data['jenis'])
+            ->where('tempo', $data['tempo'])->get();
+
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        $total = $keranjang->sum('total');
+        $kodeKas = $data['kas_ppn'] == 1 ? 'Kas Besar PPN' : 'Kas Besar Non PPN';
+        $data['add_fee'] = str_replace('.', '', $data['add_fee']);
+        $data['diskon'] = str_replace('.', '', $data['diskon']);
+
+        $data['dp'] = isset($data['dp']) ? str_replace('.', '', $data['dp']) : 0;
+
+        $data['dp_ppn'] = isset($data['dp_ppn']) && $data['dp_ppn'] == 1 ? floor($data['dp'] * $ppnRate / 100) : 0;
+
+        $data['ppn'] = $data['kas_ppn'] == 1 ? floor(($total - $data['diskon']) * $ppnRate / 100) : 0;
+
+        $data['total'] = $total + $data['add_fee'] + $data['ppn'] - $data['diskon'];
+
+        $data['sisa_ppn'] = $data['dp_ppn'] > 0 ? $data['ppn'] - $data['dp_ppn'] : 0;
+
+        $data['sisa'] = $data['tempo'] == 1 ? $data['total'] - $data['dp'] - $data['dp_ppn'] : 0;
+
+        if ($data['tempo'] == 1 && $data['jatuh_tempo']) {
+            $data['jatuh_tempo'] = Carbon::createFromFormat('d-m-Y', $data['jatuh_tempo'])->format('Y-m-d');
+        } else {
+            $data['jatuh_tempo'] = null;
+        }
+
+        // dd($data);
+        $kas = new KasBesar;
+        $saldo = $kas->saldoTerakhir($data['kas_ppn']);
+
+        if ($data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) {
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas tidak mencukupi!',
+            ];
+        }
+
+        if ($data['tempo'] == 0 && $saldo < $data['total']) {
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas tidak mencukupi!',
+            ];
+        }
+
+        // if ((isset($data['dp']) && $data['dp'] > 0 && $saldo < $data['dp'] + $data['dp_ppn']) ||
+        //     (!isset($data['dp']) || $data['dp'] <= 0) && $saldo < $data['total']) {
+        //     return [
+        //         'status' => 'error',
+        //         'message' => 'Saldo kas tidak mencukupi!',
+        //     ];
+        // }
+
+        try {
+            DB::beginTransaction();
+
+            $store_inv = $this->invoice_checkout($data);
+
+            $state = 0;
+
+            if ($data['tempo'] == 0) {
+                $dataKas = [
+                    'ppn_kas' => $data['kas_ppn'],
+                    'uraian' => $data['uraian'],
+                    'jenis' => 0,
+                    'nominal' => $data['total'],
+                    'saldo' => $kas->saldoTerakhir($data['kas_ppn']) - $data['total'],
+                    'no_rek' => $store_inv->no_rek,
+                    'nama_rek' => $store_inv->nama_rek,
+                    'bank' => $store_inv->bank,
+                    'modal_investor_terakhir' => $kas->modalInvestorTerakhir($data['kas_ppn']),
+                    'invoice_belanja_id' => $store_inv->id,
+                ];
+                $store = $kas->create($dataKas);
+                $state = 1;
+            } elseif ($data['tempo'] == 1) {
+                if (isset($data['dp']) && $data['dp'] > 0) {
+                    $total = $data['dp'] + $data['dp_ppn'];
+                    $dataKas = [
+                        'ppn_kas' => $data['kas_ppn'],
+                        'uraian' => 'DP '.$data['uraian'],
+                        'jenis' => 0,
+                        'nominal' => $total,
+                        'saldo' => $kas->saldoTerakhir($data['kas_ppn']) - $total,
+                        'no_rek' => $store_inv->no_rek,
+                        'nama_rek' => $store_inv->nama_rek,
+                        'bank' => $store_inv->bank,
+                        'modal_investor_terakhir' => $kas->modalInvestorTerakhir($data['kas_ppn']),
+                        'invoice_belanja_id' => $store_inv->id,
+                    ];
+                    $store = $kas->create($dataKas);
+                    $state = 1;
+                }
+            }
+
+            $this->update_barang($data);
+
+            if ($data['kas_ppn'] == 1) {
+                $this->store_ppn($store_inv);
+            }
+
+            $this->where('user_id', $data['asistenId'])->where('jenis', $data['jenis'])
+                ->where('tempo', $data['tempo'])->delete();
+
+            DB::commit();
+            // check if there is $store
+
+            $dbInvoice = new InvoiceBelanja;
+
+            $totalInvoiceSupplier = $dbInvoice->where('void', 0)->where('tempo', 1)->where('supplier_id', $data['supplier_id'])->sum('sisa');
+            $grandTotalPpn = $dbInvoice->where('void', 0)->where('tempo', 1)->where('kas_ppn', 1)->sum('sisa');
+            $grandTotalNonPpn = $dbInvoice->where('void', 0)->where('tempo', 1)->where('kas_ppn', 0)->sum('sisa');
+
+            if ($state == 1) {
+                $dbPPn = new PpnMasukan;
+                $dbRekapPpn = new RekapPpn;
+                $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+                $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $dbPpnKeluaran = new PpnKeluaran;
+                $ppnKeluaran = $dbPpnKeluaran->where('is_finish', 0)->sum('nominal');
+
+                $getKas = $kas->getKas();
+
+                $addPesan = '';
+
+                if (isset($data['dp']) && $data['dp'] > 0) {
+                    $addPesan .= 'Invoice : Rp. '.number_format($data['dp'] + $data['dp_ppn'], 0, ',', '.')."\n".
+                                'Sisa Invoice : Rp. '.number_format($data['sisa'], 0, ',', '.')."\n\n".
+                                "==========================\n";
+                }
+
+                $addPesan .= "Sisa Saldo Kas Besar PPN: \n".
+                            'Rp. '.number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            "Sisa Saldo Kas Besar Non PPN: \n".
+                            'Rp. '.number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n";
+
+                if ($data['kas_ppn'] == 1) {
+                    $addPesan .= "Total PPn Masukan : \n".
+                                'Rp. '.number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                                "Total PPn Keluaran : \n".
+                                'Rp. '.number_format($ppnKeluaran, 0, ',', '.')."\n\n";
+                }
+
+                $addPesan .= "Total Invoice Supplier: \n".
+                            'Rp. '.number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice PPn: \n".
+                            'Rp. '.number_format($grandTotalPpn, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice Non PPn: \n".
+                            'Rp. '.number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
+
+                $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                            "*FORM BELI BARANG*\n".
+                            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                             '*'.$kodeKas."*\n".
+                            'Uraian :  *'.$store->uraian."*\n\n".
+                            'Nilai    :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            'Bank      : '.$store->bank."\n".
+                            'Nama    : '.$store->nama_rek."\n".
+                            'No. Rek : '.$store->no_rek."\n\n".
+                            "==========================\n".
+                            $addPesan.
+                            "Terima kasih 🙏🙏🙏\n";
+
+                $groupName = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+                $group = GroupWa::where('untuk', $groupName)->first()->nama_group;
+
+                $kas->sendWa($group, $pesan);
+            }
+
+            if ($data['tempo'] == 1 && $data['dp'] == 0) {
+                $dbPPn = new PpnMasukan;
+                $dbRekapPpn = new RekapPpn;
+                $saldoTerakhirPpn = $dbRekapPpn->saldoTerakhir();
+                $ppnMasukan = $dbPPn->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $dbPpnKeluaran = new PpnKeluaran;
+                $ppnKeluaran = $dbPpnKeluaran->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+
+                $getKas = $kas->getKas();
+
+                $addPesan = "Sisa Saldo Kas Besar PPN: \n".
+                            'Rp. '.number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
+                            "Sisa Saldo Kas Besar Non PPN: \n".
+                            'Rp. '.number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n";
+
+                if ($data['kas_ppn'] == 1) {
+                    $addPesan .= "Total PPn Masukan : \n".
+                                'Rp. '.number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                                "Total PPn Keluaran : \n".
+                                'Rp. '.number_format($ppnKeluaran, 0, ',', '.')."\n\n";
+                }
+
+                $addPesan .= "Total Invoice Supplier: \n".
+                            'Rp. '.number_format($totalInvoiceSupplier, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice PPn: \n".
+                            'Rp. '.number_format($grandTotalPpn, 0, ',', '.')."\n\n".
+                            "Grand Total Invoice Non PPn: \n".
+                            'Rp. '.number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
+
+                $jatuhTempo = Carbon::createFromFormat('Y-m-d', $data['jatuh_tempo'])->format('d-m-Y');
+                $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                        "*FORM BELI BARANG*\n".
+                        "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                            '*'.$kodeKas."*\n".
+                        'Uraian :  *'.$data['uraian']."*\n\n".
+                        'Invoice    :  *Rp. '.number_format($data['sisa'], 0, ',', '.')."*\n\n".
+                        'Supplier  :  *'.$store_inv->supplier->nama."*\n".
+                        'Jatuh Tempo :  *'.$jatuhTempo."*\n\n".
+                        "==========================\n".
+                        $addPesan.
+                        "Terima kasih 🙏🙏🙏\n";
+
+                $groupName = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+                $group = GroupWa::where('untuk', $groupName)->first()->nama_group;
+
+                $kas->sendWa($group, $pesan);
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'Transaksi berhasil!',
+                // 'data' => $store,
+            ];
+
+        } catch (\Throwable $th) {
+            // throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+
     }
 }

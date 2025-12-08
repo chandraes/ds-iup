@@ -17,13 +17,16 @@
             $sisaPPN = 0;
             @endphp
             <div class="modal-body">
-
-                <form action="{{route('billing.form-beli.keranjang.checkout')}}" method="post"
-                    id="beliBarang">
+            @if (Auth::user()->role != 'asisten-admin')
+                <form
+                    action="{{route('billing.form-beli.keranjang.checkout')}}" method="post" id="beliBarang">
                     @csrf
                     <input type="hidden" name="jenis" value="{{$jenis}}">
                     <input type="hidden" name="kas_ppn" value="{{$req['kas_ppn']}}">
                     <input type="hidden" name="tempo" value="{{$req['tempo']}}">
+
+
+
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="supplier_id" class="form-label">Supplier</label>
@@ -77,7 +80,7 @@
                                 <div class="input-group mb-3">
                                     <input type="text" class="form-control" name="tempo_hari" id="tempo_hari"
                                         aria-describedby="helpId" placeholder="" disabled>
-                                        <span class="input-group-text" id="basic-addon1">Hari</span>
+                                    <span class="input-group-text" id="basic-addon1">Hari</span>
                                 </div>
                             </div>
                         </div>
@@ -135,7 +138,8 @@
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control @if ($errors->has('add_fee'))
                                 is-invalid
-                            @endif" name="add_fee" id="add_fee" data-thousands="." required value="0" onkeyup="add_diskon()">
+                            @endif" name="add_fee" id="add_fee" data-thousands="." required value="0"
+                                    onkeyup="add_diskon()">
                             </div>
                         </div>
                         @if ($req['tempo'] == 1)
@@ -169,6 +173,7 @@
                     <hr>
 
                 </form>
+                @endif
                 <table class="table table-bordered">
                     <thead class="table-success">
                         <tr>
@@ -197,14 +202,14 @@
                             <td class="text-center align-middle">{{$b->barang->kode}}</td>
                             <td class="text-center align-middle">{{$b->barang->merk}}</td>
                             <td class="text-center align-middle">{{$b->nf_jumlah}}</td>
-                            <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama : '-'}}</td>
+                            <td class="text-center align-middle">{{$b->barang->satuan ? $b->barang->satuan->nama : '-'}}
+                            </td>
                             <td class="text-center align-middle">{{$b->nf_harga}}</td>
                             <td class="text-end align-middle">{{$b->nf_total}}
                             </td>
                             <td class="text-center align-middle">
-                                <form action="{{ route('billing.form-beli.keranjang.delete', $b->id) }}"
-                                    method="post" id="deleteForm{{ $b->id }}" class="delete-form"
-                                    data-id="{{ $b->id }}">
+                                <form action="{{ route('billing.form-beli.keranjang.delete', $b->id) }}" method="post"
+                                    id="deleteForm{{ $b->id }}" class="delete-form" data-id="{{ $b->id }}">
                                     @csrf
                                     @method('delete')
                                     <button type="submit" class="btn btn-danger">Hapus</button>
@@ -308,8 +313,11 @@
                 @include('wa-status')
 
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" onclick="submitBeli()">Beli Barang</button>
+                @if (Auth::user()->role != 'asisten-admin')
 
+
+                <button type="button" class="btn btn-primary" onclick="submitBeli()">Beli Barang</button>
+                @endif
             </div>
         </div>
     </div>

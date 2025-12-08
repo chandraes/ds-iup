@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Models\transaksi\Keranjang;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -52,9 +54,14 @@ class User extends Authenticatable
     public function getRoles()
     {
         $roles = [
-            'admin', 'user', 'sales', 'perusahaan'
+            'admin', 'user', 'sales', 'perusahaan', 'asisten-admin'
         ];
 
         return $roles;
+    }
+
+    public function keranjangBeli()
+    {
+        return $this->hasMany(Keranjang::class);
     }
 }

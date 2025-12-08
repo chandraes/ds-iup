@@ -17,6 +17,7 @@ use App\Models\db\KelompokRute;
 use App\Models\db\Konsumen;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
+use App\Models\db\Supplier;
 use App\Models\GantiRugi;
 use App\Models\GroupWa;
 use App\Models\Investor;
@@ -33,9 +34,11 @@ use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\InvoiceJualSalesDetail;
+use App\Models\transaksi\Keranjang;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
 use App\Models\transaksi\OrderIndenDetail;
+use App\Models\User;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -136,6 +139,9 @@ class BillingController extends Controller
         $sr = StokRetur::where('status', 0)->count();
         $ps = ReturSupplier::whereNot('tipe', 99)->count();
 
+        $asistenAdm = User::where('role', 'asisten-admin')->select('id', 'name')->withCount('keranjangBeli')->get();
+        $sumKeranjangBeli = $asistenAdm->sum('keranjang_beli_count');
+
         return view('billing.index', [
             'is' => $is,
             'ps' => $ps,
@@ -149,6 +155,8 @@ class BillingController extends Controller
             'sr' => $sr,
             'sales_order_ppn' => $salesOrderCounts->sales_order_ppn,
             'sales_order_non_ppn' => $salesOrderCounts->sales_order_non_ppn,
+            'asistenAdm' => $asistenAdm,
+            'sumKeranjangBeli' => $sumKeranjangBeli
         ]);
     }
 
@@ -1245,6 +1253,93 @@ class BillingController extends Controller
 
         // Kita return berupa Partial View (HTML potongan)
         return view('billing.barang-retur-kirim.partials.history', compact('stokRetur'));
+    }
+
+    public function otorisasi_pembelian(Request $request)
+    {
+        $data = $request->validate([
+            'asistenId' => 'required|exists:users,id'
+        ]);
+
+        $user = User::find($data['asistenId']);
+        if ($user->role != 'asisten-admin') {
+            return redirect()->back()->with('error', 'User ini bukan user Asisten Admin!!');
+        }
+
+        $keranjang = Keranjang::where('user_id', $user->id)->get();
+
+        return view('billing.otorisasi-beli.index', [
+            'keranjang' => $keranjang,
+            'user' => $user
+        ]);
+    }
+
+    public function otorisasi_pembelian_keranjang(Request $request)
+    {
+        $data = $request->validate([
+            'asistenId' => 'required|exists:users,id',
+            'tempo' => 'required',
+            'jenis' => 'required'
+        ]);
+
+        $user = User::find($data['asistenId']);
+
+        $keranjang = Keranjang::with(['barang.barang_nama', 'barang.satuan', 'barang.kategori'])->where('user_id', $data['asistenId'])
+                                ->where('tempo', $data['tempo'])
+                                ->where('jenis', $data['jenis'])
+                                ->get();
+
+        if($keranjang->count() == 0)
+        {
+            return redirect()->back()->with('error', 'Tidak ada item pada keranjang ini!!');
+        }
+
+        $supplier = Supplier::where('status', 1)->get();
+
+        if ($supplier->count() == 0) {
+            return redirect()->back()->with('error', 'Belum ada supplier yang aktif, silahkan tambah supplier terlebih dahulu!');
+        }
+
+        $tipeKas = $data['jenis'] == 1 ? 'Kas PPN' : 'Kas Non PPN';
+        $pembayaran = $data['tempo'] == 1 ? 'Tempo' : 'Cash';
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        return view('billing.otorisasi-beli.keranjang', [
+            'user' => $user,
+            'keranjang' => $keranjang,
+            'tipeKas' => $tipeKas,
+            'pembayaran' => $pembayaran,
+            'data' => $data,
+            'supplier' => $supplier,
+            'ppnRate' => $ppnRate
+        ]);
+    }
+
+    public function otorisasi_pembelian_keranjang_checkout(Request $request)
+    {
+        $data = $request->validate([
+            'asistenId' => 'required|exists:users,id',
+            'kas_ppn' => 'required',
+            'tempo' => 'required',
+            'supplier_id' => 'required',
+            'uraian' => 'required',
+            'diskon' => 'required',
+            'add_fee' => 'required',
+            'jenis' => 'required',
+            'dp' => 'required_if:tempo,1',
+            'dp_ppn' => 'nullable',
+            'jatuh_tempo' => 'required_if:tempo,1',
+        ]);
+
+        $db = new Keranjang;
+
+        $res = $db->checkout_otorisasi($data);
+
+        if ($res['status'] != 'success') {
+            return redirect()->back()->with($res['status'], $res['message']);
+        }
+
+        return redirect()->route('billing')->with($res['status'], $res['message']);
     }
 
 

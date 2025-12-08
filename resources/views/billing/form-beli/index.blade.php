@@ -7,28 +7,44 @@
             <h1><u>{{$req['tempo'] == 0 ? 'CASH' : 'TEMPO'}}</u></h1>
         </div>
     </div>
-    <div class="row justify-content-left mt-3 mb-3">
-        <div class="col-5">
-            <table>
-                <tr>
-                    <td>
-                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja" {{$keranjang->count() == 0 ? 'disabled' : ''}}>
-                            <i class="fa fa-shopping-cart"> Keranjang </i> ({{$keranjang->count()}})
-                        </button>
-                        @include('billing.form-beli.keranjang')
-                    </td>
-                    <td>
-                        <form action="{{route('billing.form-beli.keranjang.empty')}}" method="post" id="kosongKeranjang">
-                            @csrf
-                            <input type="hidden" name="jenis" value="{{$jenis}}">
-                            <input type="hidden" name="tempo" value="{{$req['tempo']}}">
-                            <button class="btn btn-danger" type="submit" {{$keranjang->count() == 0 ? 'disabled' : ''}}>
-                                <i class="fa fa-trash"> Kosongkan Keranjang </i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            </table>
+    <div class="row justify-content-between align-items-center mt-3 mb-3">
+
+        <div class="col-md-auto col-12 mb-2 mb-md-0">
+            <nav class="d-flex gap-4">
+                <a href="{{route('home')}}" class="text-decoration-none d-flex align-items-center fs-5 text-dark">
+                    <img src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30" class="me-2">
+                    Dashboard
+                </a>
+                @if (Auth::user()->role != 'asisten-admin')
+                <a href="{{route('billing')}}" class="text-decoration-none d-flex align-items-center fs-5 text-dark">
+                    <img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30" class="me-2">
+                    Billing
+                </a>
+                @endif
+
+            </nav>
+        </div>
+
+        <div class="col-md-auto col-12">
+            <div class="d-flex justify-content-md-end gap-2">
+
+                <div> <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja"
+                        {{$keranjang->count() == 0 ? 'disabled' : ''}}>
+                        <i class="fa fa-shopping-cart"></i> Keranjang ({{$keranjang->count()}})
+                    </button>
+                    @include('billing.form-beli.keranjang')
+                </div>
+
+                <form action="{{route('billing.form-beli.keranjang.empty')}}" method="post" id="kosongKeranjang">
+                    @csrf
+                    <input type="hidden" name="jenis" value="{{$jenis}}">
+                    <input type="hidden" name="tempo" value="{{$req['tempo']}}">
+                    <button class="btn btn-danger" type="submit" {{$keranjang->count() == 0 ? 'disabled' : ''}}>
+                        <i class="fa fa-trash"></i> Kosongkan
+                    </button>
+                </form>
+
+            </div>
         </div>
     </div>
     @include('swal')
@@ -38,10 +54,11 @@
             <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_unit_id" class="form-label">Perusahaan</label>
-                    <select class="form-select" name="barang_unit_id" id="barang_unit_id" onchange="funGetBarang()" required>
+                    <select class="form-select" name="barang_unit_id" id="barang_unit_id" onchange="funGetBarang()"
+                        required>
                         <option value=""> -- Pilih Perusahaan -- </option>
                         @foreach ($data as $k)
-                            <option value="{{$k->id}}">{{$k->nama}}</option>
+                        <option value="{{$k->id}}">{{$k->nama}}</option>
                         @endforeach
                     </select>
                 </div>
@@ -49,7 +66,8 @@
             <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_type_id" class="form-label">Bidang</label>
-                    <select class="form-select" name="barang_type_id" id="barang_type_id" required onchange="getKategori()">
+                    <select class="form-select" name="barang_type_id" id="barang_type_id" required
+                        onchange="getKategori()">
                         <option value=""> -- Pilih Bidang -- </option>
                     </select>
                 </div>
@@ -57,7 +75,8 @@
             <div class="col-md-2">
                 <div class="mb-3">
                     <label for="barang_kategori_id" class="form-label">Kelompok Barang</label>
-                    <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required onchange="getBarang()">
+                    <select class="form-select" name="barang_kategori_id" id="barang_kategori_id" required
+                        onchange="getBarang()">
                         <option value=""> -- Pilih Kelompok Barang -- </option>
                     </select>
                 </div>
@@ -94,9 +113,9 @@
             </div>
             <div class="col-md-2">
                 <div class="mb-3">
-                  <label for="jumlah" class="form-label">Jumlah</label>
-                  <input type="text"
-                    class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId" placeholder="" required>
+                    <label for="jumlah" class="form-label">Jumlah</label>
+                    <input type="text" class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId"
+                        placeholder="" required>
                 </div>
             </div>
             <div class="col-md-2 mb-3">
@@ -106,7 +125,7 @@
                     <input type="text" class="form-control @if ($errors->has('harga'))
                     is-invalid
                 @endif" name="harga" id="harga" data-thousands="." required>
-                  </div>
+                </div>
             </div>
         </div>
         <input type="hidden" name="tempo" value="{{$req['tempo']}}">
@@ -115,8 +134,8 @@
 
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Masukan Keranjang</button>
-            <a href="{{route('billing')}}" class="btn btn-secondary" type="button">Batal</a>
-          </div>
+            <a href="{{Auth::user()->role != 'asisten-admin' ? route('billing') : route('home')}}" class="btn btn-secondary" type="button">Batal</a>
+        </div>
     </form>
 </div>
 @endsection
@@ -126,9 +145,8 @@
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
-    <script>
-
-        function submitBeli(){
+<script>
+    function submitBeli(){
             Swal.fire({
                 title: "Apakah Anda Yakin?" ,
                 icon: 'warning',
@@ -537,5 +555,5 @@
             width: '100%',
         });
 
-    </script>
+</script>
 @endpush

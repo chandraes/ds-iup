@@ -120,6 +120,9 @@
         @if (auth()->user()->role == 'perusahaan')
         @include('dashboard-perusahaan')
         @endif
+        @if (auth()->user()->role == 'asisten-admin')
+        @include('dashboard-asisten-admin')
+        @endif
     </div>
 </div>
 @endsection
