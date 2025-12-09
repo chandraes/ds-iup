@@ -100,6 +100,7 @@
                      <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Satuan</th>
+                    <th class="text-center align-middle">Subpg</th>
                     <th class="text-center align-middle">Diskon</th>
                     <th class="text-center align-middle">Grosir</th>
                     <th class="text-center align-middle">Foto</th>
@@ -209,6 +210,7 @@ $(document).ready(function() {
             { data: 'kode', name: 'kode', className: 'text-center align-middle text-wrap' },
             { data: 'merk', name: 'merk', className: 'text-center align-middle text-wrap' },
             { data: 'satuan_view', name: 'satuan_view', className: 'text-center align-middle text-wrap' },
+            { data: 'subpg_view', name: 'subpg_view', className: 'text-center align-middle text-wrap' },
             { data: 'diskon_view', name: 'diskon', className: 'text-center align-middle text-wrap' },
             { data: 'grosir_view', name: 'grosir_view', className: 'text-center align-middle text-wrap', sortable:false},
             {

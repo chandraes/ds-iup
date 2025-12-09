@@ -304,7 +304,7 @@ class BarangController extends Controller
     {
         $filters = $request->only(['barang_nama', 'kategori', 'jenis', 'type', 'unit']); // Ambil filter dari request
 
-        $data = Barang::query()->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan'])
+        $data = Barang::query()->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan', 'subpg'])
                 ->filter($filters)
                 ->limit(10)
 ;
@@ -314,6 +314,8 @@ class BarangController extends Controller
             ->addColumn('unit', function ($d) {
                 // Use the relation if loaded, fallback to direct attribute if not
                 return $d->unit ? $d->unit->nama : $d->barang_unit_id;
+            })->addColumn('subpg_view', function ($d){
+                return $d->subpg?->nama;
             })
             ->addColumn('upload_barang', function ($d) {
                 return view('db.barang._upload-foto', compact('d'))->render();
