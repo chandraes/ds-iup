@@ -43,6 +43,7 @@ use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -91,7 +92,7 @@ class BillingController extends Controller
         $units = BarangUnit::all();
         // $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter);
 
-        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::where('user_id', Auth::user()->id)->get();
 
         // dd($units->toArray());
         return view('billing.stok.index', [
@@ -1047,7 +1048,7 @@ class BillingController extends Controller
     {
         // Panggil fungsi 'void_retur' yang logikanya sudah disesuaikan
         $userAllow = ['su', 'admin'];
-        if (!in_array(auth()->user()->role, $userAllow )) {
+        if (!in_array(Auth::user()->role, $userAllow )) {
             return response()->json(['status' => 'error', 'message' => "Hanya admin yang boleh void!!"]);
         }
 

@@ -10,6 +10,7 @@ use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\transaksi\Keranjang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class FormBeliController extends Controller
@@ -33,7 +34,7 @@ class FormBeliController extends Controller
         $jenis = $req['kas_ppn'] == '1' ? 1 : 2;
 
         $keranjang = Keranjang::with(['barang.type.unit'])
-            ->where('user_id', auth()->user()->id)
+            ->where('user_id', Auth::user()->id)
             ->where('jenis', $jenis)
             ->where('tempo', $req['tempo'])->get();
 
@@ -151,7 +152,7 @@ class FormBeliController extends Controller
             'tempo' => 'required',
         ]);
 
-        $data['user_id'] = auth()->user()->id;
+        $data['user_id'] = Auth::user()->id;
         $data['jumlah'] = str_replace('.', '', $data['jumlah']);
         $data['harga'] = str_replace('.', '', $data['harga']);
         $data['total'] = $data['jumlah'] * $data['harga'];
@@ -201,7 +202,7 @@ class FormBeliController extends Controller
         try {
             DB::beginTransaction();
 
-            Keranjang::where('user_id', auth()->user()->id)
+            Keranjang::where('user_id', Auth::user()->id)
                 ->where('jenis', $req['jenis'])
                 ->where('tempo', $req['tempo'])
                 ->delete();

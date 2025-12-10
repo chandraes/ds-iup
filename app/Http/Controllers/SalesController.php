@@ -29,6 +29,7 @@ use App\Models\Wilayah;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SalesController extends Controller
 {
@@ -52,7 +53,7 @@ class SalesController extends Controller
 
     public function jual()
     {
-        $data = KeranjangJualKonsumen::with('konsumen.kode_toko')->where('user_id', auth()->user()->id)->get();
+        $data = KeranjangJualKonsumen::with('konsumen.kode_toko')->where('user_id', Auth::user()->id)->get();
 
         return view('sales.jual.index', [
             'data' => $data,
@@ -66,7 +67,7 @@ class SalesController extends Controller
             'pembayaran' => 'required|in:1,2,3',
         ]);
 
-        $data['user_id'] = auth()->user()->id;
+        $data['user_id'] = Auth::user()->id;
 
         // Cek apakah konsumen sudah ada di keranjang
 
@@ -193,7 +194,7 @@ class SalesController extends Controller
 
         $info = KeranjangJualKonsumen::with('konsumen')->where('id',$data['keranjang_jual_konsumen_id'])->first();
 
-        if ($info->user_id != auth()->user()->id) {
+        if ($info->user_id != Auth::user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke keranjang ini');
         }
 
@@ -305,7 +306,7 @@ class SalesController extends Controller
         // Format the date
         $tanggal = Carbon::now()->translatedFormat('d F Y');
         $jam = Carbon::now()->translatedFormat('H:i');
-        $orderInden = KeranjangInden::with(['barang.kategori', 'barang.barang_nama', 'barang.satuan'])->where('user_id', auth()->user()->id)->get();
+        $orderInden = KeranjangInden::with(['barang.kategori', 'barang.barang_nama', 'barang.satuan'])->where('user_id', Auth::user()->id)->get();
 
         return view('sales.jual.keranjang', [
             'info' => $info,
@@ -361,7 +362,7 @@ class SalesController extends Controller
         $units = BarangUnit::all();
         // $nonPpn = $db->barangStok(2, $unitFilter, $typeFilter, $kategoriFilter);
 
-        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::where('user_id', Auth::user()->id)->get();
 
         // dd($units->toArray());
         return view('sales.stok-harga.index', [
@@ -393,7 +394,7 @@ class SalesController extends Controller
 
         $info = KeranjangJualKonsumen::with('konsumen')->where('id',$data['keranjang_jual_konsumen_id'])->first();
 
-        if ($info->user_id != auth()->user()->id) {
+        if ($info->user_id != Auth::user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke keranjang ini');
         }
 
@@ -492,7 +493,7 @@ class SalesController extends Controller
                 return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
             }
             KeranjangJual::create([
-                'user_id' => auth()->user()->id,
+                'user_id' => Auth::user()->id,
                 'barang_ppn' => $product->barang->jenis == 1 ? 1 : 0,
                 'barang_id' => $product->barang_id,
                 'barang_stok_harga_id' => $productId,
@@ -527,7 +528,7 @@ class SalesController extends Controller
             }
         } else {
             KeranjangJual::create([
-                'user_id' => auth()->user()->id,
+                'user_id' => Auth::user()->id,
                 'barang_ppn' => $product->barang->jenis == 1 ? 1 : 0,
                 'barang_id' => $product->barang_id,
                 'barang_stok_harga_id' => $productId,
@@ -542,13 +543,13 @@ class SalesController extends Controller
 
     public function keranjang_empty()
     {
-        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::where('user_id', Auth::user()->id)->get();
 
         if ($keranjang->isEmpty()) {
             return redirect()->back()->with('error', 'Keranjang sudah kosong');
         }
 
-        KeranjangJual::where('user_id', auth()->user()->id)->delete();
+        KeranjangJual::where('user_id', Auth::user()->id)->delete();
 
         return redirect()->back()->with('success', 'Keranjang berhasil dikosongkan');
     }
@@ -556,11 +557,11 @@ class SalesController extends Controller
     public function keranjang()
     {
 
-        $keranjang = KeranjangJual::with('stok', 'barang')->where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::with('stok', 'barang')->where('user_id', Auth::user()->id)->get();
         $dbPajak = new Pajak;
-        $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
+        $total = KeranjangJual::where('user_id', Auth::user()->id)->sum('total');
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
-        $konsumen = Konsumen::with('kode_toko')->where('active', 1)->where('karyawan_id', auth()->user()->karyawan_id)->get();
+        $konsumen = Konsumen::with('kode_toko')->where('active', 1)->where('karyawan_id', Auth::user()->karyawan_id)->get();
         $adaPpn = $keranjang->where('barang_ppn', 1)->count() > 0 ? 1 : 0;
         $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
         Carbon::setLocale('id');
@@ -569,7 +570,7 @@ class SalesController extends Controller
         // Format the date
         $tanggal = Carbon::now()->translatedFormat('d F Y');
         $jam = Carbon::now()->translatedFormat('H:i');
-        $orderInden = KeranjangInden::with(['barang.kategori', 'barang.barang_nama', 'barang.satuan'])->where('user_id', auth()->user()->id)->get();
+        $orderInden = KeranjangInden::with(['barang.kategori', 'barang.barang_nama', 'barang.satuan'])->where('user_id', Auth::user()->id)->get();
 
         $db = new InvoiceJual();
 
@@ -596,7 +597,7 @@ class SalesController extends Controller
         ]);
 
         KeranjangInden::create([
-            'user_id' => auth()->user()->id,
+            'user_id' => Auth::user()->id,
             'barang_id' => $data['barang_id'],
             'jumlah' => $data['jumlah'],
         ]);
@@ -639,7 +640,7 @@ class SalesController extends Controller
 
         $check = KeranjangJualKonsumen::find($data['keranjang_jual_konsumen_id']);
 
-        if ($check->user_id != auth()->user()->id) {
+        if ($check->user_id != Auth::user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke keranjang ini');
         }
          $data['pembayaran'] = $check->pembayaran;
@@ -692,7 +693,7 @@ class SalesController extends Controller
 
     public function order(Request $request)
     {
-        if (auth()->user()->karyawan_id == null) {
+        if (Auth::user()->karyawan_id == null) {
             return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
         }
 
@@ -700,7 +701,7 @@ class SalesController extends Controller
             'kas_ppn' => 'required|boolean',
         ]);
 
-        $data = InvoiceJualSales::where('karyawan_id', auth()->user()->karyawan_id)->where('kas_ppn', $req['kas_ppn'])->where('is_finished', 0)->get();
+        $data = InvoiceJualSales::where('karyawan_id', Auth::user()->karyawan_id)->where('kas_ppn', $req['kas_ppn'])->where('is_finished', 0)->get();
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('sales.order.index', [
@@ -761,7 +762,7 @@ class SalesController extends Controller
     public function preorder(Request $request)
     {
         $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen'])
-                ->where('karyawan_id', auth()->user()->karyawan_id)->where('is_finished', 0)->get();
+                ->where('karyawan_id', Auth::user()->karyawan_id)->where('is_finished', 0)->get();
 
         return view('sales.pre-order.index', [
             'data' => $data,
@@ -844,7 +845,7 @@ class SalesController extends Controller
             '12' => 'Desember'
         ];
 
-        $karyawan = auth()->user()->karyawan_id;
+        $karyawan = Auth::user()->karyawan_id;
 
         if ($karyawan == null) {
             return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
@@ -867,7 +868,7 @@ class SalesController extends Controller
             'karyawan_id' => 'required|exists:karyawans,id',
         ]);
 
-        if ($req['karyawan_id'] != auth()->user()->karyawan_id) {
+        if ($req['karyawan_id'] != Auth::user()->karyawan_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat data ini');
         }
 
@@ -903,7 +904,7 @@ class SalesController extends Controller
 
     public function check_konsumen()
     {
-        $konsumen = Konsumen::with(['kode_toko'])->where('active', 1)->where('karyawan_id', auth()->user()->karyawan_id)->get();
+        $konsumen = Konsumen::with(['kode_toko'])->where('active', 1)->where('karyawan_id', Auth::user()->karyawan_id)->get();
 
         if ($konsumen->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada konsumen yang ditemukan');
@@ -951,7 +952,7 @@ class SalesController extends Controller
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'kabupaten_kota', 'provinsi']);
 
         $query = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'kode_toko', 'karyawan'])
-            ->where('karyawan_id', auth()->user()->karyawan_id)
+            ->where('karyawan_id', Auth::user()->karyawan_id)
             ->filter($filters);
 
         if ($search) {
@@ -1022,7 +1023,7 @@ class SalesController extends Controller
     {
         $filters = $request->only(['expired', 'apa_ppn', 'konsumen_id', 'kecamatan_id', 'kabupaten_id']);
 
-        $filters['karyawan_id'] = auth()->user()->karyawan_id;
+        $filters['karyawan_id'] = Auth::user()->karyawan_id;
 
         $data = InvoiceJual::gabung($filters);
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;

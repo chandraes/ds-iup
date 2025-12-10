@@ -16,6 +16,7 @@ use App\Models\db\Satuan;
 use App\Models\GantiRugi;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -804,7 +805,7 @@ class BarangController extends Controller
             'harga_beli' => 'required'
         ]);
 
-        if (auth()->user()->role != 'su') {
+        if (Auth::user()->role != 'su') {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk eksekusi ini!!');
         }
 
@@ -916,7 +917,7 @@ class BarangController extends Controller
         $data['harga'] = str_replace('.', '', $data['harga']);
         $data['min_jual'] = str_replace('.', '', $data['min_jual']);
 
-        if (auth()->user()->role != 'su') {
+        if (Auth::user()->role != 'su') {
            if ($data['harga'] < $barang->harga_beli) {
                 return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
             }

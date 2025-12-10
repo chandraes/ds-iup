@@ -19,6 +19,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Browsershot\Browsershot;
 
 class FormJualController extends Controller
@@ -67,7 +68,7 @@ class FormJualController extends Controller
         $ppnValue = $data['barang_ppn'];
         $oppositePpnValue = $ppnValue == 1 ? 0 : 1;
 
-        $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->where('user_id', auth()->user()->id)->first();
+        $checkKeranjang = KeranjangJual::where('barang_ppn', $oppositePpnValue)->where('user_id', Auth::user()->id)->first();
         if ($checkKeranjang) {
             $errorMessage = $ppnValue == 1
                 ? 'Keranjang sudah terisi dengan barang non ppn. Silahkan hapus barang non ppn terlebih dahulu'
@@ -76,7 +77,7 @@ class FormJualController extends Controller
             return redirect()->back()->with('error', $errorMessage);
         }
 
-        $data['user_id'] = auth()->user()->id;
+        $data['user_id'] = Auth::user()->id;
         $data['jumlah'] = str_replace('.', '', $data['jumlah']);
         $data['barang_id'] = $product->barang_id;
         $data['harga_satuan'] = $product->harga;
@@ -111,7 +112,7 @@ class FormJualController extends Controller
                 return response()->json(['success' => false, 'message' => 'Jumlah item melebihi stok yang tersedia.']);
             }
             KeranjangJual::create([
-                'user_id' => auth()->user()->id,
+                'user_id' => Auth::user()->id,
                 'barang_ppn' => $product->barang->jenis == 1 ? 1 : 0,
                 'barang_id' => $product->barang_id,
                 'barang_stok_harga_id' => $productId,
@@ -146,7 +147,7 @@ class FormJualController extends Controller
             }
         } else {
             KeranjangJual::create([
-                'user_id' => auth()->user()->id,
+                'user_id' => Auth::user()->id,
                 'barang_ppn' => $product->barang->jenis == 1 ? 1 : 0,
                 'barang_id' => $product->barang_id,
                 'barang_stok_harga_id' => $productId,
@@ -161,13 +162,13 @@ class FormJualController extends Controller
 
     public function keranjang_empty()
     {
-        $keranjang = KeranjangJual::where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::where('user_id', Auth::user()->id)->get();
 
         if ($keranjang->isEmpty()) {
             return redirect()->back()->with('error', 'Keranjang sudah kosong');
         }
 
-        KeranjangJual::where('user_id', auth()->user()->id)->delete();
+        KeranjangJual::where('user_id', Auth::user()->id)->delete();
 
         return redirect()->back()->with('success', 'Keranjang berhasil dikosongkan');
     }
@@ -175,11 +176,11 @@ class FormJualController extends Controller
     public function keranjang()
     {
 
-        $keranjang = KeranjangJual::with('stok')->where('user_id', auth()->user()->id)->get();
+        $keranjang = KeranjangJual::with('stok')->where('user_id', Auth::user()->id)->get();
         $dbPajak = new Pajak;
-        $total = KeranjangJual::where('user_id', auth()->user()->id)->sum('total');
+        $total = KeranjangJual::where('user_id', Auth::user()->id)->sum('total');
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
-        $nominalPpn = KeranjangJual::where('user_id', auth()->user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
+        $nominalPpn = KeranjangJual::where('user_id', Auth::user()->id)->where('barang_ppn', 1)->first() ? ($total * $ppn / 100) : 0;
         $pphVal = $dbPajak->where('untuk', 'pph')->first()->persen;
         $konsumen = Konsumen::with(['kode_toko'])->where('active', 1)->get();
         $ppnStore = $nominalPpn > 0 ? 1 : 0;
@@ -472,10 +473,10 @@ class FormJualController extends Controller
         }
 
         // Save the new JPEG
-        Browsershot::html($html)
-            ->windowSize(707, 1000) // Ukuran A4 dalam portrait
-            ->setOption('landscape', false) // Atur ke true jika ingin landscape
-            ->save($jpegPath);
+        // Browsershot::html($html)
+        //     ->windowSize(707, 1000) // Ukuran A4 dalam portrait
+        //     ->setOption('landscape', false) // Atur ke true jika ingin landscape
+        //     ->save($jpegPath);
 
         // Generate the URL for the JPEG
         $jpegUrl = asset('storage/invoices/invoice-'.$invoice->id.'.jpeg');

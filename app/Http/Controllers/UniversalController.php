@@ -10,6 +10,7 @@ use App\Models\db\Konsumen;
 use App\Models\Wilayah;
 use App\Services\WaStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UniversalController extends Controller
 {
@@ -74,8 +75,8 @@ class UniversalController extends Controller
                 ->where('active', 1)
                 ->select('id', 'nama', 'kode_toko_id', 'pembayaran', 'kecamatan_id');
 
-        if (auth()->user()->role == 'sales') {
-            $data->where('karyawan_id', auth()->user()->karyawan_id);
+        if (Auth::user()->role == 'sales') {
+            $data->where('karyawan_id', Auth::user()->karyawan_id);
         }
 
         $data = $data->get();

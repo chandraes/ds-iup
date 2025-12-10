@@ -16,6 +16,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Keranjang extends Model
@@ -53,7 +54,7 @@ class Keranjang extends Model
 
     public function checkout($data)
     {
-        $keranjang = $this->where('user_id', auth()->user()->id)
+        $keranjang = $this->where('user_id', Auth::user()->id)
             ->where('jenis', $data['jenis'])
             ->where('tempo', $data['tempo'])->get();
 
@@ -156,7 +157,7 @@ class Keranjang extends Model
                 $this->store_ppn($store_inv);
             }
 
-            $this->where('user_id', auth()->user()->id)->where('jenis', $data['jenis'])
+            $this->where('user_id', Auth::user()->id)->where('jenis', $data['jenis'])
                 ->where('tempo', $data['tempo'])->delete();
 
             DB::commit();
@@ -339,7 +340,7 @@ class Keranjang extends Model
 
         $store = $db->create($invoice);
 
-        $keranjang = $this->with('barang')->where('user_id', auth()->user()->id)->where('jenis', $data['jenis'])->where('tempo', $data['tempo'])->get();
+        $keranjang = $this->with('barang')->where('user_id', Auth::user()->id)->where('jenis', $data['jenis'])->where('tempo', $data['tempo'])->get();
 
         foreach ($keranjang as $item) {
 
@@ -368,7 +369,7 @@ class Keranjang extends Model
     private function update_barang($data)
     {
         // Retrieve only necessary fields and group by barang_id and tipe
-        $keranjangItems = $this->where('user_id', auth()->user()->id)
+        $keranjangItems = $this->where('user_id', Auth::user()->id)
             ->where('jenis', $data['jenis'])
             ->where('tempo', $data['tempo'])
             ->get();
@@ -487,7 +488,7 @@ class Keranjang extends Model
         try {
             DB::beginTransaction();
 
-            $store_inv = $this->invoice_checkout($data);
+            $store_inv = $this->invoice_checkout_otorisasi($data);
 
             $state = 0;
 
@@ -526,7 +527,7 @@ class Keranjang extends Model
                 }
             }
 
-            $this->update_barang($data);
+            $this->update_barang_otorisasi($data);
 
             if ($data['kas_ppn'] == 1) {
                 $this->store_ppn($store_inv);
@@ -667,5 +668,120 @@ class Keranjang extends Model
             ];
         }
 
+    }
+
+     private function invoice_checkout_otorisasi($data)
+    {
+        $db = new InvoiceBelanja;
+        $supplier = Supplier::find($data['supplier_id']);
+
+        $invoice = [
+            'nomor' => $db->generateNomor($data['kas_ppn']),
+            'kas_ppn' => $data['kas_ppn'],
+            'uraian' => $data['uraian'],
+            'ppn' => $data['ppn'],
+            'add_fee' => $data['add_fee'],
+            'dp' => $data['dp'],
+            'dp_ppn' => $data['dp_ppn'],
+            'sisa' => $data['sisa'],
+            'sisa_ppn' => $data['sisa_ppn'],
+            'diskon' => str_replace('.', '', $data['diskon']),
+            'total' => $data['total'],
+            'tempo' => $data['tempo'],
+            'nama_rek' => $supplier->nama_rek,
+            'no_rek' => $supplier->no_rek,
+            'bank' => $supplier->bank,
+            'supplier_id' => $data['supplier_id'],
+            'jatuh_tempo' => $data['jatuh_tempo'],
+        ];
+
+        $store = $db->create($invoice);
+
+        $keranjang = $this->with('barang')->where('user_id', $data['asistenId'])->where('jenis', $data['jenis'])->where('tempo', $data['tempo'])->get();
+
+        foreach ($keranjang as $item) {
+
+            $baseRekap = [
+                'invoice_belanja_id' => $store->id,
+                'jenis' => 1, // Pembelian
+                'uraian' => $data['uraian'],
+                'jumlah' => $item->jumlah,
+                'harga' => $item->harga,
+                'barang_id' => $item->barang_id,
+                'nama' => $item->barang->nama,
+            ];
+
+            $rekap = BarangHistory::create($baseRekap);
+
+            $store->detail()->create([
+                'invoice_belanja_id' => $store->id,
+                'barang_history_id' => $rekap->id,
+            ]);
+        }
+
+        return $store;
+
+    }
+
+    private function update_barang_otorisasi($data)
+    {
+        // Retrieve only necessary fields and group by barang_id and tipe
+        $keranjangItems = $this->where('user_id', $data['asistenId'])
+            ->where('jenis', $data['jenis'])
+            ->where('tempo', $data['tempo'])
+            ->get();
+
+        // dd($keranjangItems);
+        foreach ($keranjangItems as $item) {
+            $barang = Barang::find($item->barang_id);
+            BarangStokHarga::create([
+                'barang_unit_id' => $barang->barang_unit_id,
+                'barang_type_id' => $barang->barang_type_id,
+                'barang_kategori_id' => $barang->barang_kategori_id,
+                'barang_nama_id' => $barang->barang_nama_id,
+                'barang_id' => $item->barang_id,
+                'stok_awal' => $item->jumlah,
+                'stok' => $item->jumlah,
+                'harga_beli' => $item->harga,
+            ]);
+        }
+
+        // Group by barang_id to reduce the number of queries
+        // $updates = $keranjangItems->groupBy('barang_id')->map(function ($items) use ($data) {
+        //     $totalJumlah = $items->sum('jumlah');
+        //     $tipe = $data['kas_ppn'] == 1 ? 'ppn' : 'non-ppn';
+        //     dd($items);
+        //     return [
+        //         'tipe' => $tipe,
+        //         'totalJumlah' => $totalJumlah,
+        //     ];
+        // });
+
+        // dd($updates);
+
+        // foreach ($updates as $barang_id => $update) {
+        // // Assuming BarangStokHarga has a method to increment stok in bulk or efficiently
+        //     BarangStokHarga::create([
+        //         'barang_id' => $barang_id,
+        //         'stok' => $update['totalJumlah'],
+        //         'harga_beli'
+        //     ]);
+        //         // BarangStokHarga::firstOrCreate(
+        //         //     [
+        //         //         'barang_id' => $barang_id,
+        //         //         'tipe' => $update['tipe'],
+        //         //     ],
+        //         //     [
+        //         //         'stok' => 0, // Default stok value if creating a new record
+        //         //     ]
+        //         // );
+
+        //         // // Now increment the stok
+        //         // BarangStokHarga::where('barang_id', $barang_id)
+        //         //             ->where('tipe', $update['tipe'])
+        //         //             ->increment('stok', $update['totalJumlah']);
+        // }
+
+        return true;
     }
 }

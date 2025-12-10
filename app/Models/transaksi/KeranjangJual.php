@@ -20,6 +20,7 @@ use App\Models\Rekening;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class KeranjangJual extends Model
@@ -320,7 +321,7 @@ class KeranjangJual extends Model
                 $waState = 1;
             }
 
-            $this->where('user_id', auth()->user()->id)->delete();
+            $this->where('user_id', Auth::user()->id)->delete();
 
             DB::commit();
 
@@ -609,7 +610,7 @@ class KeranjangJual extends Model
                 ];
             }
 
-            $data['karyawan_id'] = auth()->user()->karyawan_id;
+            $data['karyawan_id'] = Auth::user()->karyawan_id;
             $data['titipan'] = $master['pembayaran'] == 3 ? 1 : 0;
             $data['sistem_pembayaran'] = $master['pembayaran'];
 
@@ -640,17 +641,17 @@ class KeranjangJual extends Model
                 }
             }
 
-            // $this->where('user_id', auth()->user()->id)->delete();
+
             KeranjangJualKonsumen::where('id', $master['id'])->delete();
 
-            $inden = KeranjangInden::where('user_id', auth()->user()->id)->get();
+            $inden = KeranjangInden::where('user_id', Auth::user()->id)->get();
             $pesanInden = '';
 
             if ($inden->count() > 0) {
                 $jumlah_inden = $inden->count();
 
                 $createInden = OrderInden::create([
-                    'karyawan_id' => auth()->user()->karyawan_id,
+                    'karyawan_id' => Auth::user()->karyawan_id,
                     'konsumen_id' => $master['konsumen_id'],
                     'jumlah' => $jumlah_inden,
                     'is_finished' => 0,
@@ -712,7 +713,7 @@ class KeranjangJual extends Model
 
             $pesan .= "==========================\n";
 
-            $sales = Karyawan::find(auth()->user()->karyawan_id);
+            $sales = Karyawan::find(Auth::user()->karyawan_id);
 
             switch ($data['pembayaran']) {
                 case 1:
@@ -833,7 +834,7 @@ class KeranjangJual extends Model
             DB::beginTransaction();
 
             // dd($data);
-            $keranjang = $this->where('user_id', auth()->user()->id)->get();
+            $keranjang = $this->where('user_id', Auth::user()->id)->get();
 
             $keranjang_ppn = $keranjang->where('barang_ppn', 1);
             $keranjang_non_ppn = $keranjang->where('barang_ppn', 0);
@@ -845,7 +846,7 @@ class KeranjangJual extends Model
                 ];
             }
 
-            $data['karyawan_id'] = auth()->user()->karyawan_id;
+            $data['karyawan_id'] = Auth::user()->karyawan_id;
             $data['titipan'] = $data['pembayaran'] == 3 ? 1 : 0;
             $data['sistem_pembayaran'] = $data['pembayaran'];
 
@@ -876,16 +877,16 @@ class KeranjangJual extends Model
                 }
             }
 
-            $this->where('user_id', auth()->user()->id)->delete();
+            $this->where('user_id', Auth::user()->id)->delete();
 
-            $inden = KeranjangInden::where('user_id', auth()->user()->id)->get();
+            $inden = KeranjangInden::where('user_id', Auth::user()->id)->get();
             $pesanInden = '';
 
             if ($inden->count() > 0) {
                 $jumlah_inden = $inden->count();
 
                 $createInden = OrderInden::create([
-                    'karyawan_id' => auth()->user()->karyawan_id,
+                    'karyawan_id' => Auth::user()->karyawan_id,
                     'konsumen_id' => $data['konsumen_id'],
                     'jumlah' => $jumlah_inden,
                     'is_finished' => 0,
@@ -947,7 +948,7 @@ class KeranjangJual extends Model
 
             $pesan .= "==========================\n";
 
-            $sales = Karyawan::find(auth()->user()->karyawan_id);
+            $sales = Karyawan::find(Auth::user()->karyawan_id);
 
             switch ($data['pembayaran']) {
                 case 1:

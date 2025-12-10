@@ -11,6 +11,7 @@ use App\Models\Wilayah;
 use App\Services\WaStatus;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,12 +35,12 @@ class HomeController extends Controller
      */
     public function index()
     {
-        if (auth()->user()->role == 'perusahaan') {
-            $barang_ppn = Barang::where('barang_unit_id', auth()->user()->barang_unit_id)
+        if (Auth::user()->role == 'perusahaan') {
+            $barang_ppn = Barang::where('barang_unit_id', Auth::user()->barang_unit_id)
                 ->where('jenis', 1)
                 ->first() ? 1 : 0;
 
-            $barang_non_ppn = Barang::where('barang_unit_id', auth()->user()->barang_unit_id)
+            $barang_non_ppn = Barang::where('barang_unit_id', Auth::user()->barang_unit_id)
                 ->where('jenis', 2)
                 ->first() ? 1 : 0;
 

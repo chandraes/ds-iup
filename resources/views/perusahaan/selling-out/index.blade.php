@@ -9,7 +9,9 @@ $selectedTahun = request('year') ?? date('Y');
         <div class="col-md-12 text-center">
             @php
             use Carbon\Carbon;
-            $bulanNama = Carbon::create()->month($selectedBulan)->locale('id')->isoFormat('MMMM');
+            $bulanNama = Carbon::createFromDate(null, $selectedBulan, 1)
+            ->locale('id')
+            ->monthName;
             @endphp
             <h1><u>SELLING OUT<br>{{ ucfirst($bulanNama) }} {{$selectedTahun}}</u></h1>
         </div>

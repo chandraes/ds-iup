@@ -10,6 +10,7 @@ use App\Models\PesanWa;
 use App\Models\PpnMasukan;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class FormLainController extends Controller
@@ -37,7 +38,7 @@ class FormLainController extends Controller
 
         $db = new KasBesar;
 
-        if (! in_array(auth()->user()->role, $role)) {
+        if (! in_array(Auth::user()->role, $role)) {
             $batasan = Pengaturan::where('untuk', 'form-lain-lain')->first()->nilai;
 
             if ($data['nominal'] > $batasan) {
@@ -75,7 +76,7 @@ class FormLainController extends Controller
 
         $role = ['admin', 'su'];
 
-        if (in_array(auth()->user()->role, $role)) {
+        if (in_array(Auth::user()->role, $role)) {
             $commonRules['apa_ppn'] = 'required_if:ppn_kas,1';
         }
 
@@ -85,7 +86,7 @@ class FormLainController extends Controller
 
         $role = ['admin', 'su'];
 
-        if (! in_array(auth()->user()->role, $role)) {
+        if (! in_array(Auth::user()->role, $role)) {
             $batasan = Pengaturan::where('untuk', 'form-lain-lain')->first()->nilai;
 
             if ($data['nominal'] > $batasan) {
@@ -104,7 +105,7 @@ class FormLainController extends Controller
         try {
             DB::beginTransaction();
 
-            if (auth()->user()->role == 'admin' && $data['apa_ppn'] == 1) {
+            if (Auth::user()->role == 'admin' && $data['apa_ppn'] == 1) {
                 $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
                 $ppnNominal = $data['nominal'] * $ppnRate / 100;
 

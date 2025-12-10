@@ -13,10 +13,13 @@ use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Riskihajar\Terbilang\Facades\Terbilang;
+use App\Http\Traits\Terbilang;
+use Illuminate\Support\Facades\Auth;
 
 class PoController extends Controller
 {
+     use Terbilang;
+
     public function index()
     {
         return view('po.index');
@@ -63,7 +66,7 @@ class PoController extends Controller
             $db = new PurchaseOrder;
             $data['kepada'] = Supplier::find($data['supplier_id'])->nama;
             $data['nomor'] = $db->generateNomor();
-            $data['user_id'] = auth()->user()->id;
+            $data['user_id'] = Auth::user()->id;
             $data['full_nomor'] = $db->generateFullNomor();
 
             $purchaseOrder = PurchaseOrder::create([
@@ -136,7 +139,7 @@ class PoController extends Controller
             $total = $po->items->sum('total');
         }
 
-        $terbilang = Terbilang::make($total);
+        $terbilang = ucwords($this->pembilang($total));
 
         // dd($terbilang, $po->items->sum('total'));
 

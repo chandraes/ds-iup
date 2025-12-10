@@ -16,6 +16,7 @@ use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PerusahaanController extends Controller
 {
@@ -112,7 +113,7 @@ class PerusahaanController extends Controller
         // $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
-        $unitFilter = auth()->user()->barang_unit_id;
+        $unitFilter = Auth::user()->barang_unit_id;
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
@@ -164,7 +165,7 @@ class PerusahaanController extends Controller
 
     public function stok_non_ppn(Request $request)
     {
-        $unitFilter = auth()->user()->barang_unit_id;
+        $unitFilter = Auth::user()->barang_unit_id;
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
@@ -224,7 +225,7 @@ class PerusahaanController extends Controller
         $month = $request->input('month') ?? date('m');
         $year = $request->input('year') ?? date('Y');
 
-        $perusahaan = auth()->user()->barang_unit_id;
+        $perusahaan = Auth::user()->barang_unit_id;
 
         if (empty($perusahaan) || $perusahaan == '') {
             return redirect()->back()->with('error', 'Perusahaan tidak ditemukan atau tidak valid. Silahkan hubungi administrator sistem.');
