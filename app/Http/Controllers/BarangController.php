@@ -1231,6 +1231,7 @@ class BarangController extends Controller
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
+        $filterHarga = $request->input('filter_harga');
 
         if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::whereIn('barang_unit_id', $unitFilter)->get();
@@ -1255,7 +1256,7 @@ class BarangController extends Controller
 
         $db = new BarangStokHarga;
 
-        $data = $db->barangStokAll($unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $data = $db->barangStokAll($unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter, $filterHarga);
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 

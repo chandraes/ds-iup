@@ -99,6 +99,14 @@
                         @endforeach
                 </select>
             </div>
+             <div class="col-md-2">
+                <label for="nama">Filter Harga Jual</label>
+                <select class="form-select form-select-sm" name="filter_harga" id="filter_harga">
+                    <option value=""> Semua Stok</option>
+                    <option value="1" {{ request('filter_harga')=='1' ? 'selected' : '' }}> Stok Harga Jual 0</option>
+
+                </select>
+            </div>
             <div class="col-md-2">
                 <label for="nama">
                     ---------------

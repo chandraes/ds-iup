@@ -260,7 +260,7 @@ class BarangStokHarga extends Model
 
     }
 
-     public function barangStokAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
+     public function barangStokAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null, $filterHarga = null)
     {
         $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
             ->where('hide', 0)
@@ -270,6 +270,14 @@ class BarangStokHarga extends Model
             ->orderBy('barang_nama_id')
             ->orderBy('barang_id')
             ->orderBy('created_at', 'asc');
+
+        if (!empty($filterHarga)) {
+            $query->whereIn('barang_id', function($q){
+                $q->select('barang_id')
+                    ->from('barang_stok_hargas')
+                    ->where('harga', 0);
+            });
+        }
 
         if (!empty($unitFilter)) {
             $query->whereIn('barang_unit_id', $unitFilter);
@@ -349,7 +357,7 @@ class BarangStokHarga extends Model
 
     }
 
-    public function barangStokPdf($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null)
+    public function barangStokPdf($jenis, $unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null, $filterHarga = null)
     {
         $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
             ->whereHas('barang', function ($query) use ($jenis) {
