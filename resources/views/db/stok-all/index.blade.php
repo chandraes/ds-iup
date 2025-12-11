@@ -8,12 +8,12 @@
         </div>
     </div>
     @include('swal')
-     @if (auth()->user()->role != 'asisten-admin')
-        @include('db.stok-ppn.edit')
-        @include('db.stok-ppn.action')
-        @include('db.stok-ppn.histori')
-        @include('db.stok-ppn.edit-stok')
-        @include('db.stok-all.modal-approve')
+    @if (auth()->user()->role != 'asisten-admin')
+    @include('db.stok-ppn.edit')
+    @include('db.stok-ppn.action')
+    @include('db.stok-ppn.histori')
+    @include('db.stok-ppn.edit-stok')
+    @include('db.stok-all.modal-approve')
     @endif
     @if (auth()->user()->role == 'asisten-admin')
     @include('db.stok-all.modal-asisten-adm')
@@ -70,7 +70,8 @@
                 <select name="unit[]" id="unit" class="form-select form-select-sm" multiple>
                     <option value=""> ---------- </option>
                     @foreach($units as $unit)
-                    <option value="{{ $unit->id }}" {{ (is_array(request('unit')) && in_array($unit->id, request('unit'))) ? 'selected' : '' }}>
+                    <option value="{{ $unit->id }}" {{ (is_array(request('unit')) && in_array($unit->id,
+                        request('unit'))) ? 'selected' : '' }}>
                         {{ $unit->nama }}
                     </option>
                     @endforeach
@@ -108,8 +109,8 @@
                         @endforeach
                 </select>
             </div>
-               @if (auth()->user()->role != 'asisten-admin')
-             <div class="col-md-2">
+            @if (auth()->user()->role != 'asisten-admin')
+            <div class="col-md-2">
                 <label for="nama">Filter Harga Jual</label>
                 <select class="form-select form-select-sm" name="filter_harga" id="filter_harga">
                     <option value=""> Semua Stok</option>
@@ -208,7 +209,7 @@
                         @if (auth()->user()->role != 'asisten-admin')
                         <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
                             onclick="getHistori({{$stokHarga->barang->id}})">
-                        @endif
+                            @endif
                             {{ $stokHarga->barang->kode }}
 
                     </td>
@@ -216,7 +217,7 @@
                         @if (auth()->user()->role != 'asisten-admin')
                         <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
                             onclick="getHistori({{$stokHarga->barang->id}})">
-                        @endif
+                            @endif
                             {{ $stokHarga->barang->merk }}
 
                     </td>
@@ -247,50 +248,57 @@
                         <i class="fa fa-check"></i>
                         @endif
                     </td>
-                        <td class="text-center align-middle">
-                             @if ($stokHarga->barang->jenis == 2)
+                    <td class="text-center align-middle">
+                        @if ($stokHarga->barang->jenis == 2)
                         <i class="fa fa-check"></i>
                         @endif
-                        </td>
+                    </td>
                     @php
-                    $totalHargaBeli = $stokHarga->barang->jenis == 1 ?($stokHarga->harga_beli + ($stokHarga->harga_beli * $ppnRate / 100)) * $stokHarga->stok : $stokHarga->harga_beli * $stokHarga->stok;
-                    $totalHargaJual = $stokHarga->barang->jenis == 1 ? ($stokHarga->harga + ($stokHarga->harga * $ppnRate / 100)) * $stokHarga->stok : $stokHarga->harga * $stokHarga->stok;
+
+                    $hargaTemp = $stokHarga->harga_temp ? $stokHarga->harga_temp->harga_ajuan : $stokHarga->harga;
+                    $totalHargaBeli = $stokHarga->barang->jenis == 1 ? ($stokHarga->harga_beli + ($stokHarga->harga_beli
+                    * $ppnRate / 100)) * $stokHarga->stok : $stokHarga->harga_beli * $stokHarga->stok;
+                    $totalHargaJual = $stokHarga->barang->jenis == 1 ? ($hargaTemp + ($hargaTemp * $ppnRate / 100)) *
+                    $stokHarga->stok : $hargaTemp * $stokHarga->stok;
                     $sumTotalHargaJual += $totalHargaJual;
                     $sumTotalHargaBeli += $totalHargaBeli;
                     if ($stokHarga->harga_beli == 0) {
                     $margin = '-';
                     } else {
-                    $margin = ($stokHarga->harga - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
+                    $margin = ($hargaTemp - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
 
                     }
 
                     @endphp
                     <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
-                    <td class="text-center align-middle">{{ $stokHarga->barang->jenis == 1 ? number_format(($stokHarga->harga_beli +
-                        ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') : number_format($stokHarga->harga_beli, 0, ',', '.')}}</td>
-                    <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
+                    <td class="text-center align-middle">{{ $stokHarga->barang->jenis == 1 ?
+                        number_format(($stokHarga->harga_beli +
+                        ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') : number_format($stokHarga->harga_beli,
+                        0, ',', '.')}}</td>
+                    <td
+                        class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
                         @if (auth()->user()->role != 'asisten-admin')
-                         <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{$stokHarga}})">
-                        @endif
-                        @if (auth()->user()->role == 'asisten-admin' && $stokHarga->harga == 0)
-
-                        <button class="btn btn-outline-primary btn-sm" href="#" data-bs-toggle="modal" data-bs-target="#modAsAdm"
-                            onclick="asistenAdmFun({{$stokHarga}})">
-                        @endif
-                        {{ $stokHarga->nf_harga }}
-                        </button>
-                        <br>
-                        @if ($stokHarga->harga_temp)
-                        <small>Ajuan</small>: <br>
-                         @if (auth()->user()->role != 'asisten-admin')
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modApproveAdm"
-                            onclick="approveAdmFun({{$stokHarga}})">
-                        @endif
-                        {{$stokHarga->harga_temp->nf_harga_ajuan}}
-                        @endif
+                            @endif
+                            @if (auth()->user()->role == 'asisten-admin' && $stokHarga->harga == 0)
+                            <button class="btn btn-outline-primary btn-sm" href="#" data-bs-toggle="modal"
+                                data-bs-target="#modAsAdm" onclick="asistenAdmFun({{$stokHarga}})">
+                                @endif
+                                {{ $stokHarga->nf_harga }}
+                            </button>
+                            <br>
+                            @if ($stokHarga->harga_temp)
+                            <small>Ajuan</small>: <br>
+                            @if (auth()->user()->role != 'asisten-admin')
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modApproveAdm"
+                                onclick="approveAdmFun({{$stokHarga}})">
+                                @endif
+                                {{$stokHarga->harga_temp->nf_harga_ajuan}}
+                                @endif
                     </td>
-                     <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
+                    <td
+                        class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
 
                         {{ $stokHarga->min_jual }}
                         @if ($stokHarga->harga_temp)
@@ -298,7 +306,8 @@
                         @endif
                     </td>
                     <td class="text-end align-middle">
-                        {{  $stokHarga->barang->jenis == 1 ? number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') : number_format($stokHarga->harga, 0, ',','.') }}
+                        {{ $stokHarga->barang->jenis == 1 ? number_format($hargaTemp+($hargaTemp*$ppnRate/100), 0,
+                        ',','.') : number_format($hargaTemp, 0, ',','.') }}
                     </td>
 
                     <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
@@ -316,7 +325,9 @@
                     </td>
                     <td class="text-center align-middle">
                         @if ($stokHarga->stok == 0 && auth()->user()->role != 'asisten-admin')
-                        <form action="{{route('db.hide', ['barang' => $stokHarga->id])}}" method="post" id="deleteForm{{ $stokHarga->id }}" data-id="{{ $stokHarga->id }}" class="d-inline delete-form">
+                        <form action="{{route('db.hide', ['barang' => $stokHarga->id])}}" method="post"
+                            id="deleteForm{{ $stokHarga->id }}" data-id="{{ $stokHarga->id }}"
+                            class="d-inline delete-form">
                             @csrf
                             <div class="row px-3">
                                 <button type="submit" class="btn btn-sm btn-danger"><i
@@ -334,7 +345,8 @@
                 @endforeach
                 @if (!$loop->last)
                 <tr>
-                    <td colspan="17" style="border: none; background-color:transparent; border-bottom-color:transparent">
+                    <td colspan="17"
+                        style="border: none; background-color:transparent; border-bottom-color:transparent">
                     </td>
                 </tr>
                 @endif
@@ -362,7 +374,8 @@
 @endsection
 @push('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
