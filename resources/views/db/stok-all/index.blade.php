@@ -8,19 +8,28 @@
         </div>
     </div>
     @include('swal')
-    @include('db.stok-ppn.edit')
-    @include('db.stok-ppn.action')
-    @include('db.stok-ppn.histori')
-    @include('db.stok-ppn.edit-stok')
+     @if (auth()->user()->role != 'asisten-admin')
+        @include('db.stok-ppn.edit')
+        @include('db.stok-ppn.action')
+        @include('db.stok-ppn.histori')
+        @include('db.stok-ppn.edit-stok')
+        @include('db.stok-all.modal-approve')
+    @endif
+    @if (auth()->user()->role == 'asisten-admin')
+    @include('db.stok-all.modal-asisten-adm')
+    @endif
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
                 <tr class="text-center">
                     <td class="text-center align-middle"><a href="{{route('home')}}"><img
                                 src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30"> Dashboard</a></td>
+                    @if (auth()->user()->role != 'asisten-admin')
                     <td class="text-center align-middle"><a href="{{route('db')}}"><img
                                 src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
+                    @endif
+
                     <td class="text-center align-middle">
                         <form action="{{route('db.stok-ppn.download')}}" method="get" target="_blank">
                             {{-- <input type="hidden" name="unit" value="{{request('unit')}}"> --}}
@@ -99,6 +108,7 @@
                         @endforeach
                 </select>
             </div>
+               @if (auth()->user()->role != 'asisten-admin')
              <div class="col-md-2">
                 <label for="nama">Filter Harga Jual</label>
                 <select class="form-select form-select-sm" name="filter_harga" id="filter_harga">
@@ -107,6 +117,7 @@
 
                 </select>
             </div>
+            @endif
             <div class="col-md-2">
                 <label for="nama">
                     ---------------
@@ -141,6 +152,7 @@
                     <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
                     <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
+                    <th class="text-center align-middle" style="width: 20px">Kelipatan Jual Min</th>
                     <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
                     <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
@@ -193,16 +205,20 @@
                     @endif
                     @if (!$barangDisplayed)
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        @if (auth()->user()->role != 'asisten-admin')
                         <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
                             onclick="getHistori({{$stokHarga->barang->id}})">
+                        @endif
                             {{ $stokHarga->barang->kode }}
-                        </a>
+
                     </td>
                     <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
+                        @if (auth()->user()->role != 'asisten-admin')
                         <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
                             onclick="getHistori({{$stokHarga->barang->id}})">
+                        @endif
                             {{ $stokHarga->barang->merk }}
-                        </a>
+
                     </td>
                     @php $barangDisplayed = true; @endphp
                     @endif
@@ -217,7 +233,7 @@
                     <td class="text-center align-middle">
                         {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
                             onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a> --}}
-                        @if ($stokHarga->stok > 0)
+                        @if ($stokHarga->stok > 0 && auth()->user()->role != 'asisten-admin')
                         <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
                             onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a>
                         @else
@@ -253,9 +269,33 @@
                     <td class="text-center align-middle">{{ $stokHarga->barang->jenis == 1 ? number_format(($stokHarga->harga_beli +
                         ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') : number_format($stokHarga->harga_beli, 0, ',', '.')}}</td>
                     <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
+                        @if (auth()->user()->role != 'asisten-admin')
+                         <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
                             onclick="editFun({{$stokHarga}})">
+                        @endif
+                        @if (auth()->user()->role == 'asisten-admin' && $stokHarga->harga == 0)
+
+                        <button class="btn btn-outline-primary btn-sm" href="#" data-bs-toggle="modal" data-bs-target="#modAsAdm"
+                            onclick="asistenAdmFun({{$stokHarga}})">
+                        @endif
                         {{ $stokHarga->nf_harga }}
+                        </button>
+                        <br>
+                        @if ($stokHarga->harga_temp)
+                        <small>Ajuan</small>: <br>
+                         @if (auth()->user()->role != 'asisten-admin')
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modApproveAdm"
+                            onclick="approveAdmFun({{$stokHarga}})">
+                        @endif
+                        {{$stokHarga->harga_temp->nf_harga_ajuan}}
+                        @endif
+                    </td>
+                     <td class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
+
+                        {{ $stokHarga->min_jual }}
+                        @if ($stokHarga->harga_temp)
+                        <small>Ajuan</small>: <br>{{$stokHarga->harga_temp->nf_min_jual_ajuan}}
+                        @endif
                     </td>
                     <td class="text-end align-middle">
                         {{  $stokHarga->barang->jenis == 1 ? number_format($stokHarga->harga+($stokHarga->harga*$ppnRate/100), 0, ',','.') : number_format($stokHarga->harga, 0, ',','.') }}
@@ -275,7 +315,7 @@
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        @if ($stokHarga->stok == 0)
+                        @if ($stokHarga->stok == 0 && auth()->user()->role != 'asisten-admin')
                         <form action="{{route('db.hide', ['barang' => $stokHarga->id])}}" method="post" id="deleteForm{{ $stokHarga->id }}" data-id="{{ $stokHarga->id }}" class="d-inline delete-form">
                             @csrf
                             <div class="row px-3">
@@ -294,7 +334,7 @@
                 @endforeach
                 @if (!$loop->last)
                 <tr>
-                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent">
+                    <td colspan="17" style="border: none; background-color:transparent; border-bottom-color:transparent">
                     </td>
                 </tr>
                 @endif
@@ -302,13 +342,13 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="16" class="text-end align-middle">Grand Total</th>
+                    <th colspan="17" class="text-end align-middle">Grand Total</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
                     <th class="text-end align-middle" colspan="2"></th>
                 </tr>
                 <tr>
-                    <th colspan="16" class="text-end align-middle">Estimasi Profit</th>
+                    <th colspan="17" class="text-end align-middle">Estimasi Profit</th>
                     <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
                         0 ,',','.')}}</th>
                     <th class="text-end align-middle" colspan="2"></th>
@@ -355,6 +395,36 @@
         dropdownParent: $('#actionModal')
     });
 
+    function asistenAdmFun(data)
+    {
+        document.getElementById('asistenForm').reset();
+        $('#viewNamaBarang').text(data.barang_nama.nama);
+        $('#viewKode').text(data.barang.kode);
+        $('#viewMerk').text(data.barang.merk);
+        $('#satuan_edit').text(data.barang.satuan.nama);
+        if (data.harga_temp) {
+            $('#harga_ajuan').val(data.harga_temp.nf_harga_ajuan);
+            $('#min_jual_ajuan').val(data.harga_temp.nf_min_jual_ajuan);
+        }
+
+        document.getElementById('asistenForm').action = `{{route('db.stok-all.harga-ajuan-store', ':id')}}`.replace(':id', data.id);
+    }
+
+    function approveAdmFun(data)
+    {
+
+        document.getElementById('approvalForm').reset();
+        $('#viewNamaBarang_app').text(data.barang_nama.nama);
+        $('#viewKode_app').text(data.barang.kode);
+        $('#viewMerk_app').text(data.barang.merk);
+        $('#satuan_edit_app').text(data.barang.satuan.nama);
+        if (data.harga_temp) {
+            $('#harga_ajuan_app').val(data.harga_temp.nf_harga_ajuan);
+            $('#min_jual_ajuan_app').val(data.harga_temp.nf_min_jual_ajuan);
+        }
+        document.getElementById('approvalForm').action = `{{route('db.harga-ajuan-approve', ':id')}}`.replace(':id', data.harga_temp.id);
+    }
+
     function editStok(data)
     {
         console.log(data);
@@ -393,6 +463,8 @@
     confirmAndSubmit("#actionForm", "Apakah anda yakin?");
     confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
     confirmAndSubmit("#eForm", "Apakah anda yakin untuk mengubah data ini?");
+    confirmAndSubmit("#asistenForm", "Apakah anda yakin dengan data ini?");
+    confirmAndSubmit("#approvalForm", "Apakah anda yakin menyetujui ajuan ini?");
 
     function toggleNamaJabatan(id) {
 

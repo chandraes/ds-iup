@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\RekapController;
+use App\Http\Controllers\BarangController;
 use App\Http\Controllers\ReturController;
 use App\Http\Controllers\UserController;
 /*
@@ -310,6 +311,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::prefix('db')->group(function () {
 
         Route::group(['middleware' => ['role:su,admin']], function () {
+            Route::post('/approval-ajuan-harga/{harga}', [BarangController::class, 'harga_ajuan_approve'])->name('db.harga-ajuan-approve');
 
             Route::prefix('subpg')->group(function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'subpg'])->name('db.subpg');
@@ -503,10 +505,6 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
             });
 
-            Route::prefix('stok-all')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_all'])->name('db.stok-all');
-            });
-
             Route::post('/stok-hilang/{stok}', [App\Http\Controllers\BarangController::class, 'ganti_rugi'])->name('db.stok-hilang');
 
             Route::prefix('stok-non-ppn')->group(function () {
@@ -628,6 +626,13 @@ Route::group(['middleware' => ['auth']], function () {
     // START ROUTE ASISTEN ADMIN
     Route::group(['middleware' => ['role:su,admin,user,asisten-admin']], function() {
         Route::get('/db/barang-unit/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
+
+        Route::prefix('db')->group(function(){
+              Route::prefix('stok-all')->group(function () {
+                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_all'])->name('db.stok-all');
+                Route::post('/harga-ajuan/{barang}', [BarangController::class, 'harga_ajuan_store'])->name('db.stok-all.harga-ajuan-store');
+            });
+        });
 
         Route::prefix('billing.form-beli')->group(function() {
             Route::get('/', [App\Http\Controllers\FormBeliController::class, 'index'])->name('billing.form-beli');

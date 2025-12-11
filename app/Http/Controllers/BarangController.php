@@ -14,6 +14,7 @@ use App\Models\db\Karyawan;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
 use App\Models\GantiRugi;
+use App\Models\HargaSubmission;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1223,7 +1224,7 @@ class BarangController extends Controller
 
     public function stok_all(Request $request)
     {
-         $kategori = BarangKategori::with(['barang_nama'])->get();
+        $kategori = BarangKategori::with(['barang_nama'])->get();
         $type = BarangType::with(['unit', 'barangs'])->get();
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
@@ -1231,7 +1232,8 @@ class BarangController extends Controller
         $typeFilter = $request->input('type');
         $kategoriFilter = $request->input('kategori');
         $barangNamaFilter = $request->input('barang_nama');
-        $filterHarga = $request->input('filter_harga');
+
+        $filterHarga = Auth::user()->role != 'asisten-admin' ? $request->input('filter_harga') : 1;
 
         if (! empty($unitFilter) && $unitFilter != '') {
             $selectType = BarangType::whereIn('barang_unit_id', $unitFilter)->get();
@@ -1275,5 +1277,91 @@ class BarangController extends Controller
             'selectBarangNama' => $selectBarangNama,
             'karyawan' => $karyawan,
         ]);
+    }
+
+    public function harga_ajuan_store(Request $request, BarangStokHarga $barang)
+    {
+        $data = $request->validate([
+            'harga_ajuan' => 'required',
+            'min_jual_ajuan' => 'required'
+        ]);
+
+        $data['harga_ajuan'] = str_replace('.', '', $data['harga_ajuan']);
+        $data['min_jual_ajuan'] = str_replace('.', '', $data['min_jual_ajuan']);
+
+        if (Auth::user()->role != 'su') {
+           if ($data['harga_ajuan'] < $barang->harga_beli) {
+                return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
+            }
+        }
+
+        if ($data['min_jual_ajuan'] <= 0) {
+            return redirect()->back()->with('error', 'Minimum kelipatan jual tidak boleh dibawah 1 !');
+        }
+
+        $item = HargaSubmission::where('barang_stok_harga_id', $barang->id)->first();
+
+        if (!$item) {
+            HargaSubmission::create([
+                'barang_stok_harga_id' => $barang->id,
+                'user_id' => Auth::user()->id,
+                'harga_ajuan' => $data['harga_ajuan'],
+                'min_jual_ajuan' => $data['min_jual_ajuan'],
+                'status' => 1
+            ]);
+        } else {
+            $item->update([
+                'harga_ajuan' => $data['harga_ajuan'],
+                'min_jual_ajuan' => $data['min_jual_ajuan'],
+                'status' => 1
+            ]);
+        }
+
+
+        return redirect()->back()->with('success', 'Berhasil menyimpan data ajuan Harga!');
+
+    }
+
+    public function harga_ajuan_approve(Request $request, HargaSubmission $harga)
+    {
+        $data = $request->validate([
+            'harga_ajuan' => 'required',
+            'min_jual_ajuan' => 'required'
+        ]);
+
+        $item = BarangStokHarga::find($harga->barang_stok_harga_id);
+        $data['harga_ajuan'] = str_replace('.', '', $data['harga_ajuan']);
+        $data['min_jual_ajuan'] = str_replace('.', '', $data['min_jual_ajuan']);
+
+        if (Auth::user()->role != 'su') {
+           if ($data['harga_ajuan'] < $item->harga_beli) {
+                return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
+            }
+        }
+
+        if ($data['min_jual_ajuan'] <= 0) {
+            return redirect()->back()->with('error', 'Minimum kelipatan jual tidak boleh dibawah 1 !');
+        }
+
+        try {
+            DB::beginTransaction();
+             $item->update([
+                'harga' => $data['harga_ajuan'],
+                'min_jual' => $data['min_jual_ajuan']
+            ]);
+
+            $harga->update(['status' => 2]);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi Kesalahan!! '.$th->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Berhasil menyetujui data ajuan Harga!');
+
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models\db\Barang;
 
 use App\Models\db\Satuan;
+use App\Models\HargaSubmission;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,11 @@ class BarangStokHarga extends Model
     public function barang()
     {
         return $this->belongsTo(Barang::class, 'barang_id');
+    }
+
+    public function harga_temp()
+    {
+        return $this->hasOne(HargaSubmission::class);
     }
 
     public function getTanggalAttribute()
@@ -262,7 +268,9 @@ class BarangStokHarga extends Model
 
      public function barangStokAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null, $filterHarga = null)
     {
-        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types'])
+        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types', 'harga_temp' => function ($q) {
+                $q->where('status', 1);
+            }])
             ->where('hide', 0)
             ->orderBy('barang_unit_id')
             ->orderBy('barang_type_id')
