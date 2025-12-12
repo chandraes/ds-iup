@@ -319,6 +319,12 @@ class BarangController extends Controller
             })->addColumn('subpg_view', function ($d){
                 return $d->subpg?->nama;
             })
+            ->orderColumn('subpg_view', function ($query, $direction) {
+                // Gunakan join sementara hanya untuk sorting
+                $query->leftJoin('subpgs', 'barangs.subpg_id', '=', 'subpgs.id')
+                    ->orderBy('subpgs.nama', $direction) // Urutkan berdasarkan kolom 'nama' di tabel 'sub_pg'
+                    ->select('barangs.*'); // Pilih kembali semua kolom dari tabel 'barang' agar tidak ambiguous
+            })
             ->addColumn('upload_barang', function ($d) {
                 return view('db.barang._upload-foto', compact('d'))->render();
             })
