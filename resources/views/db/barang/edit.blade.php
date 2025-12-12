@@ -106,6 +106,8 @@
 </div>
 @push('js')
     <script>
+        
+
         function getTypeEdit() {
             let unit_id = document.getElementById('edit_barang_unit_id').value;
             // ajax request

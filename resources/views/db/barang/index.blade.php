@@ -427,6 +427,12 @@ $(document).ready(function() {
             dropdownParent: $('#editModal')
         });
 
+         $('#edit_subpg_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        dropdownParent: $('#editModal')
+    });
+
     function uploadFoto(id) {
         document.getElementById('uploadFotoForm').action = `{{route('db.barang.upload-image', ':id')}}`.replace(':id', id);
     }
