@@ -138,34 +138,98 @@
 <script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
 <script>
     $(document).on('submit', 'form[action*="upload-image"]', function() {
-    const filterState = {
-        unit: $('#filter_unit').val(),
-        type: $('#filter_type').val(),
-        kategori: $('#filter_kategori').val(),
-        barang_nama: $('#filter_barang_nama').val(),
-        jenis: $('#filter_jenis').val()
-    };
-    sessionStorage.setItem('barang_filter_state', JSON.stringify(filterState));
-});
+        const filterState = {
+            unit: $('#filter_unit').val(),
+            type: $('#filter_type').val(),
+            kategori: $('#filter_kategori').val(),
+            barang_nama: $('#filter_barang_nama').val(),
+            jenis: $('#filter_jenis').val()
+        };
+        sessionStorage.setItem('barang_filter_state', JSON.stringify(filterState));
+    });
 
+
+   $(document).on('submit', 'form[action*="update"]', function() {
+        // Fungsi bantu untuk mendapatkan ID dan Teks dari Select2
+        function getSelect2Data(selector) {
+            const data = $(selector).select2('data');
+            if (data && data.length > 0) {
+                return {
+                    id: data[0].id,
+                    text: data[0].text
+                };
+            }
+            return { id: null, text: null };
+        }
+
+        const typeData = getSelect2Data('#filter_type');
+        const kategoriData = getSelect2Data('#filter_kategori');
+        const barangNamaData = getSelect2Data('#filter_barang_nama');
+
+        const filterState = {
+            unit: $('#filter_unit').val(),
+            jenis: $('#filter_jenis').val(),
+
+            // Data AJAX
+            type: typeData.id,
+            type_text: typeData.text,
+            kategori: kategoriData.id,
+            kategori_text: kategoriData.text,
+            barang_nama: barangNamaData.id,
+            barang_nama_text: barangNamaData.text,
+        };
+        sessionStorage.setItem('barang_filter_state', JSON.stringify(filterState));
+    });
 // Restore state setelah page load
 $(document).ready(function() {
     const savedState = sessionStorage.getItem('barang_filter_state');
+
+    // Fungsi bantu untuk restorasi Select2 AJAX
+    // Fungsi ini membuat elemen <option> secara manual agar Select2 dapat menampilkan nilainya.
+    function restoreSelect2Ajax(selector, value, text) {
+        if (value && text) {
+            // 1. Buat elemen <option> baru (dipilih secara default)
+            const newOption = new Option(text, value, true, true);
+
+            // 2. Tambahkan option ke elemen Select2
+            $(selector).append(newOption).trigger('change');
+
+            // Catatan: Karena Anda sudah memanggil table.draw() di event change Select2,
+            // baris ini sudah cukup untuk mengatur nilai dan memicu filter.
+        }
+    }
+
     if (savedState) {
         const filterState = JSON.parse(savedState);
 
-        // Set nilai filter
-        if (filterState.unit) $('#filter_unit').val(filterState.unit).trigger('change');
-        if (filterState.jenis) $('#filter_jenis').val(filterState.jenis).trigger('change');
-
-        // Untuk select2 dengan AJAX, perlu load data dulu
-        if (filterState.type) {
-            // Load dan set type
-            // Implementasi tergantung struktur data
+        // --- 1. Restorasi Filter Non-AJAX (unit, jenis) ---
+        if (filterState.unit) {
+            $('#filter_unit').val(filterState.unit).trigger('change');
         }
+        if (filterState.jenis) {
+            $('#filter_jenis').val(filterState.jenis).trigger('change');
+        }
+
+        // --- 2. Restorasi Filter AJAX (Penting: Lakukan secara berurutan) ---
+
+        // A. Restorasi 'type'
+        restoreSelect2Ajax('#filter_type', filterState.type, filterState.type_text);
+
+        // B. Restorasi 'kategori'
+        // Ini perlu disetel sebelum 'barang_nama' karena 'barang_nama' mungkin terpengaruh olehnya.
+        restoreSelect2Ajax('#filter_kategori', filterState.kategori, filterState.kategori_text);
+
+        // C. Restorasi 'barang_nama'
+        restoreSelect2Ajax('#filter_barang_nama', filterState.barang_nama, filterState.barang_nama_text);
 
         // Clear session storage setelah restore
         sessionStorage.removeItem('barang_filter_state');
+
+        // PENTING: Jika event 'change' di setiap Select2 tidak memanggil table.draw(),
+        // Anda perlu memanggilnya di sini sekali setelah semua filter di-restore.
+        // Berdasarkan kode Anda, table.draw() sudah ada di setiap 'change',
+        // jadi ini opsional, tetapi bisa digunakan sebagai fallback.
+        // table.draw();
     }
 });
 </script>
