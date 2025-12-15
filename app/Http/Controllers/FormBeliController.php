@@ -9,44 +9,314 @@ use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
 use App\Models\transaksi\Keranjang;
+use App\Models\transaksi\KeranjangBeli;
+use App\Models\transaksi\KeranjangBeliDetail;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class FormBeliController extends Controller
 {
-    public function index(Request $request)
+
+    public function index()
     {
-        $req = $request->validate([
-            'kas_ppn' => 'required',
-            'tempo' => 'required',
+        $data = KeranjangBeli::where('user_id', Auth::user()->id)->withCount('details')->get();
+        $supplier = BarangUnit::select('id', 'nama')->get();
+
+        return view('billing.form-beli.index', compact('data', 'supplier'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'sistem_pembayaran' => 'required|in:1,2',
+            'kas_ppn' => 'required|boolean',
+            'barang_unit_id' => 'required|exists:barang_units,id'
         ]);
 
-        $supplier = Supplier::where('status', 1)->get();
+        $data['user_id'] = Auth::user()->id;
 
-        if ($supplier->count() == 0) {
-            return redirect()->back()->with('error', 'Belum ada supplier yang aktif, silahkan tambah supplier terlebih dahulu!');
-        }
+        $store = KeranjangBeli::create($data);
 
-        $data = BarangUnit::with(['types'])->get();
-        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        return redirect()->route('billing.form-beli.detail', $store->id);
+    }
 
-        $jenis = $req['kas_ppn'] == '1' ? 1 : 2;
+    public function delete(KeranjangBeli $keranjang)
+    {
+        $keranjang->delete();
 
-        $keranjang = Keranjang::with(['barang.type.unit'])
-            ->where('user_id', Auth::user()->id)
-            ->where('jenis', $jenis)
-            ->where('tempo', $req['tempo'])->get();
+        return redirect()->back()->with('success', 'Berhasil Menghapus Transaksi');
+    }
 
-        return view('billing.form-beli.index', [
-            'data' => $data,
-            'jenis' => $jenis, // 1 = 'tunai', 2 = 'kredit
-            'req' => $req,
-            'keranjang' => $keranjang,
-            'ppnRate' => $ppn,
-            'supplier' => $supplier,
+    public function detail(KeranjangBeli $keranjang)
+    {
+        $detail = $keranjang->details();
+        $selectKategori = BarangKategori::all();
+        $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+
+        return view('billing.form-beli.detail', [
+            'b' => $keranjang,
+            'keranjang' => $detail,
+            'selectBarangNama' => $selectBarangNama,
+            'selectKategori' => $selectKategori
         ]);
     }
+
+    public function detail_datatable(KeranjangBeli $keranjang, Request $request)
+    {
+        $keranjangMap = $keranjang->details->mapWithKeys(function ($detail) {
+            return [
+                $detail->barang_id => [
+                    'harga' => $detail->harga,
+                    'qty' => $detail->qty,
+                    'id' => $detail->id // Ini adalah 'barang_retur_detail_id'
+                ]
+            ];
+        });
+
+        $jenis = $keranjang->kas_ppn == 1 ? 1 : 2;
+            // TIPE 2 (Dari Konsumen) -> Tampilkan daftar BARANG (Produk)
+        $query = Barang::with(['barang_nama', 'satuan', 'kategori'])
+            ->select('barangs.*')
+            ->where('barangs.jenis', $jenis)
+            ->where('barangs.barang_unit_id', $keranjang->barang_unit_id)
+            ->withSum(['stok_harga' => function($q) {
+                $q->where('stok', '>', 0);
+            }], 'stok');
+
+
+
+        if ($request->filled('kategori')) {
+            $query->where('barang_kategori_id', $request->input('kategori'));
+        }
+
+        if ($request->filled('barang_nama')) {
+            $query->where('barang_nama_id', $request->input('barang_nama'));
+        }
+        // === AKHIR BAGIAN BARU ===
+
+        // Teruskan $query yang SUDAH DIFILTER ke DataTables
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('stok_info', function ($row) {
+                return number_format($row->stok_harga_sum_stok, 0 , ',','.');
+            })
+            ->addColumn('action', function ($row) use ($keranjangMap) {
+                $row->nf_stok = number_format($row->stok_harga_sum_stok, 0 , ',','.');
+
+                $rowData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
+                $barangId = $row->id;
+
+                // 2. Cek apakah barang ini ada di map keranjang kita
+                if ($keranjangMap->has($barangId)) {
+
+                    // JIKA ADA (Mode Edit)
+                    $detail = $keranjangMap->get($barangId);
+                    $harga = $detail['harga'];
+                    $qty = $detail['qty'];
+                    $detailId = $detail['id'];
+                    $qtyFormatted = number_format($qty, 0, ',', '.');
+                    $satuan = $row->satuan->nama ?? 'PCS';
+
+                    // Buat tombol "Edit" (hijau) yang menampilkan Qty
+                    return '<button type="button" class="btn btn-success btn-sm btn-modal-trigger" '.
+                        ' data-row=\'' . $rowData . '\' '.
+                        ' data-qty="' . $qty . '" '. // <= Kirim Qty
+                        ' data-harga="'. $harga .'" '.
+                        ' data-detail-id="' . $detailId . '">'. // <= Kirim Detail ID
+                        $qtyFormatted . ' ' . $satuan .
+                        '</button>';
+
+                } else {
+
+                    // JIKA TIDAK ADA (Mode Tambah Baru)
+
+                    // Buat tombol "Pilih" (biru) seperti biasa
+                    return '<button type="button" class="btn btn-primary btn-sm btn-modal-trigger" '.
+                        ' data-row=\'' . $rowData . '\' '.
+                        ' data-qty="0" '. // <= Qty adalah 0
+                        ' data-harga="0" '. // <= Qty adalah 0
+                        ' data-detail-id="0">'. // <= Detail ID adalah 0
+                        'Pilih'.
+                        '</button>';
+                }
+            })
+            ->rawColumns(['nama_barang', 'action'])
+            ->make(true);
+    }
+
+    public function detail_store(KeranjangBeli $keranjang, Request $request)
+    {
+         $data = $request->validate([
+            'barang_id' => 'required|exists:barang_stok_hargas,id',
+            'qty' => 'required',
+            'harga' => 'required'
+        ]);
+
+        $data['qty'] = str_replace('.', '', $data['qty']);
+        $data['harga'] = str_replace('.', '', $data['harga']);
+        $data['total'] = $data['qty'] * $data['harga'];
+
+        if ($data['qty'] < 0) {
+            return redirect()->back()->with('error', 'Jumlah Tidak Boleh dibawah 0!');
+        }
+
+        $db = new KeranjangBeliDetail();
+
+        // $stok = BarangStokHarga::find($data['barang_stok_harga_id'])->stok;
+
+        // if ($data['jumlah'] > $stok) {
+        //     return redirect()->back()->with('error', 'Jumlah retur melebihi stok yang tersedia (Stok: '.$stok.')');
+        // }
+
+        if ($data['qty'] == 0) {
+            $res = $db->where('keranjang_beli_id', $keranjang->id)
+                ->where('barang_id', $data['barang_id'])
+                ->delete();
+
+            $res = ['status' => 'success', 'message' => 'Item berhasil dihapus dari daftar retur'];
+        } else {
+
+            $res = $db->updateOrCreate([
+                'keranjang_beli_id' => $keranjang->id,
+                'barang_id' => $data['barang_id'],
+            ],[
+                'keranjang_beli_id' => $keranjang->id,
+                'barang_id' => $data['barang_id'],
+                'qty' => $data['qty'],
+                'harga' => $data['harga'],
+                'total' => $data['total']
+            ]);
+
+            $res = ['status' => 'success', 'message' => 'Item berhasil ditambahkan ke daftar retur'];
+        }
+
+        return redirect()->back()->with($res['status'], $res['message']);
+    }
+
+    public function detail_empty(KeranjangBeli $keranjang)
+    {
+
+        $keranjang->details()->delete();
+
+        return redirect()->back()->with('success', 'Keranjang Berhasil Di kosongkan!');
+    }
+
+    public function detail_preview(KeranjangBeli $keranjang)
+    {
+        $supplier = '';
+        $jatuhTempo = '';
+        if (Auth::user()->role != 'asisten-admin') {
+            $supplier = Supplier::where('barang_unit_id', $keranjang->barang_unit_id)->first();
+
+            if (!$supplier) {
+                return redirect()->back()->with('error', 'Perusahaan ini belum di atur Suppliernya. Silahkan atur terlebih dahulu di Menu Database Supplier!');
+            }
+
+            $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('Y-m-d') : '';
+        }
+
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+
+        return view('billing.form-beli.keranjang', [
+            'b' => $keranjang,
+            'keranjang' => $keranjang->details,
+            'supplier' => $supplier,
+            'ppnRate' => $ppnRate,
+            'jatuhTempo' => $jatuhTempo
+         ]);
+    }
+
+    public function detail_preview_delete(Request $request)
+    {
+         $data = $request->validate([
+            'id' => 'required|exists:keranjang_beli_details,id',
+        ]);
+
+        KeranjangBeliDetail::find($data['id'])->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Item berhasil dihapus dari daftar retur']);
+    }
+
+    public function detail_lanjutkan(KeranjangBeli $keranjang, Request $request)
+    {
+
+        $data = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'keranjang_beli_id' => 'required|exists:keranjang_belis,id',
+            'uraian' => 'required',
+            'diskon' => 'required',
+            'add_fee' => 'required',
+            'uraian' => 'required',
+            'dp' => 'nullable',
+            'dp_ppn' => 'nullable',
+            'jatuh_tempo' => 'nullable',
+        ]);
+
+        $db = new KeranjangBeli;
+        $res = $db->checkout($data);
+
+        if ($res['status'] == 'error') {
+            return redirect()->back()->with($res['status'], $res['message']);
+        }
+
+        return redirect()->route('billing')->with($res['status'], $res['message']);
+    }
+
+
+
+        // public function index(Request $request)
+        // {
+        //     $req = $request->validate([
+        //         'kas_ppn' => 'required',
+        //         'tempo' => 'required',
+        //     ]);
+
+        //     $jenis = $req['kas_ppn'] == '1' ? 1 : 2;
+        //     $selectKategori = BarangKategori::all();
+        //     $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+
+        //     $keranjang = Keranjang::with(['barang.type.unit'])
+        //             ->where('user_id', Auth::user()->id)
+        //             ->where('jenis', $jenis)
+        //             ->where('tempo', $req['tempo'])->get();
+
+        //     return view('billing.form-beli.index', compact('selectBarangNama', 'selectKategori', 'jenis', 'req', 'keranjang'));
+        // }
+    // public function index(Request $request)
+    // {
+    //     $req = $request->validate([
+    //         'kas_ppn' => 'required',
+    //         'tempo' => 'required',
+    //     ]);
+
+    //     $supplier = Supplier::where('status', 1)->get();
+
+    //     if ($supplier->count() == 0) {
+    //         return redirect()->back()->with('error', 'Belum ada supplier yang aktif, silahkan tambah supplier terlebih dahulu!');
+    //     }
+
+    //     $data = BarangUnit::with(['types'])->get();
+    //     $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
+    //     $jenis = $req['kas_ppn'] == '1' ? 1 : 2;
+
+    //     $keranjang = Keranjang::with(['barang.type.unit'])
+    //         ->where('user_id', Auth::user()->id)
+    //         ->where('jenis', $jenis)
+    //         ->where('tempo', $req['tempo'])->get();
+
+    //     return view('billing.form-beli.index', [
+    //         'data' => $data,
+    //         'jenis' => $jenis, // 1 = 'tunai', 2 = 'kredit
+    //         'req' => $req,
+    //         'keranjang' => $keranjang,
+    //         'ppnRate' => $ppn,
+    //         'supplier' => $supplier,
+    //     ]);
+    // }
 
     public function getSupplier(Request $request)
     {
