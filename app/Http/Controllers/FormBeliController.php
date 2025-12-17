@@ -255,6 +255,10 @@ class FormBeliController extends Controller
             'jatuh_tempo' => 'nullable',
         ]);
 
+        if (Auth::user()->role == 'asisten-admin') {
+            return redirect()->back()->with('error', 'Anda Tidak Memiliki Izin untuk melakukan Eksekusi ini!!');
+        }
+
         $db = new KeranjangBeli;
         $res = $db->checkout($data);
 
@@ -318,195 +322,195 @@ class FormBeliController extends Controller
     //     ]);
     // }
 
-    public function getSupplier(Request $request)
-    {
+    // public function getSupplier(Request $request)
+    // {
 
-        $data = Supplier::find($request->id);
+    //     $data = Supplier::find($request->id);
 
-        return response()->json($data);
-    }
+    //     return response()->json($data);
+    // }
 
-    public function getKategori(Request $request)
-    {
-        $barang = Barang::where('barang_type_id', $request->barang_type_id);
-        // distinct barang_kategori_id from barang to array
-        $kategori = $barang->distinct()->pluck('barang_kategori_id')->toArray();
+    // public function getKategori(Request $request)
+    // {
+    //     $barang = Barang::where('barang_type_id', $request->barang_type_id);
+    //     // distinct barang_kategori_id from barang to array
+    //     $kategori = $barang->distinct()->pluck('barang_kategori_id')->toArray();
 
-        $data = BarangKategori::whereIn('id', $kategori)->get();
+    //     $data = BarangKategori::whereIn('id', $kategori)->get();
 
-        if ($data->count() == 0) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Data tidak ditemukan',
-            ]);
-        }
+    //     if ($data->count() == 0) {
+    //         return response()->json([
+    //             'status' => 0,
+    //             'message' => 'Data tidak ditemukan',
+    //         ]);
+    //     }
 
-        return response()->json([
-            'status' => 1,
-            'data' => $data,
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => 1,
+    //         'data' => $data,
+    //     ]);
+    // }
 
-    public function getBarang(Request $request)
-    {
-        $jenis = [$request->jenis, 3];
-        $data = BarangNama::with('barang')->where('barang_kategori_id', $request->barang_kategori_id)
-            ->whereHas('barang', function ($q) use ($request, $jenis) {
-                $q->where('barang_type_id', $request->barang_type_id)
-                    ->whereIn('jenis', $jenis);
-            })
-            ->get();
+    // public function getBarang(Request $request)
+    // {
+    //     $jenis = [$request->jenis, 3];
+    //     $data = BarangNama::with('barang')->where('barang_kategori_id', $request->barang_kategori_id)
+    //         ->whereHas('barang', function ($q) use ($request, $jenis) {
+    //             $q->where('barang_type_id', $request->barang_type_id)
+    //                 ->whereIn('jenis', $jenis);
+    //         })
+    //         ->get();
 
-        if ($data->count() == 0) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Data tidak ditemukan',
-            ]);
-        }
+    //     if ($data->count() == 0) {
+    //         return response()->json([
+    //             'status' => 0,
+    //             'message' => 'Data tidak ditemukan',
+    //         ]);
+    //     }
 
-        return response()->json([
-            'status' => 1,
-            'data' => $data,
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => 1,
+    //         'data' => $data,
+    //     ]);
+    // }
 
-    public function getMerk(Request $request)
-    {
-        $jenis = [$request->jenis, 3];
-        $data = Barang::where('barang_nama_id', $request->barang_nama_id)
-            ->where('barang_kategori_id', $request->barang_kategori_id)
-            ->where('barang_type_id', $request->barang_type_id)
-            ->whereIn('jenis', $jenis)
-            ->get();
+    // public function getMerk(Request $request)
+    // {
+    //     $jenis = [$request->jenis, 3];
+    //     $data = Barang::where('barang_nama_id', $request->barang_nama_id)
+    //         ->where('barang_kategori_id', $request->barang_kategori_id)
+    //         ->where('barang_type_id', $request->barang_type_id)
+    //         ->whereIn('jenis', $jenis)
+    //         ->get();
 
-        if ($data->count() == 0) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Data tidak ditemukan',
-            ]);
-        }
+    //     if ($data->count() == 0) {
+    //         return response()->json([
+    //             'status' => 0,
+    //             'message' => 'Data tidak ditemukan',
+    //         ]);
+    //     }
 
-        return response()->json([
-            'status' => 1,
-            'data' => $data,
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => 1,
+    //         'data' => $data,
+    //     ]);
+    // }
 
-    public function getKode(Request $request)
-    {
-        $data = Barang::leftJoin('satuans as s', 's.id', 'barangs.satuan_id')
-            ->where('barangs.id', $request->barang_id)
-            ->select('barangs.*', 's.nama as satuan')
-            ->first();
+    // public function getKode(Request $request)
+    // {
+    //     $data = Barang::leftJoin('satuans as s', 's.id', 'barangs.satuan_id')
+    //         ->where('barangs.id', $request->barang_id)
+    //         ->select('barangs.*', 's.nama as satuan')
+    //         ->first();
 
-        if (! $data) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Data tidak ditemukan',
-            ]);
-        }
+    //     if (! $data) {
+    //         return response()->json([
+    //             'status' => 0,
+    //             'message' => 'Data tidak ditemukan',
+    //         ]);
+    //     }
 
-        return response()->json([
-            'status' => 1,
-            'data' => $data,
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => 1,
+    //         'data' => $data,
+    //     ]);
+    // }
 
-    public function keranjang_store(Request $request)
-    {
-        $data = $request->validate([
-            'barang_id' => 'required|exists:barangs,id',
-            'jumlah' => 'required',
-            'harga' => 'required',
-            'jenis' => 'required',
-            'tempo' => 'required',
-        ]);
+    // public function keranjang_store(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'barang_id' => 'required|exists:barangs,id',
+    //         'jumlah' => 'required',
+    //         'harga' => 'required',
+    //         'jenis' => 'required',
+    //         'tempo' => 'required',
+    //     ]);
 
-        $data['user_id'] = Auth::user()->id;
-        $data['jumlah'] = str_replace('.', '', $data['jumlah']);
-        $data['harga'] = str_replace('.', '', $data['harga']);
-        $data['total'] = $data['jumlah'] * $data['harga'];
+    //     $data['user_id'] = Auth::user()->id;
+    //     $data['jumlah'] = str_replace('.', '', $data['jumlah']);
+    //     $data['harga'] = str_replace('.', '', $data['harga']);
+    //     $data['total'] = $data['jumlah'] * $data['harga'];
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            Keranjang::create($data);
+    //         Keranjang::create($data);
 
-            DB::commit();
+    //         DB::commit();
 
-            return back()->with('success', 'Data berhasil disimpan');
+    //         return back()->with('success', 'Data berhasil disimpan');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return back()->with('error', $e->getMessage());
-        }
+    //         return back()->with('error', $e->getMessage());
+    //     }
 
-    }
+    // }
 
-    public function keranjang_delete(Keranjang $keranjang)
-    {
-        try {
-            DB::beginTransaction();
+    // public function keranjang_delete(Keranjang $keranjang)
+    // {
+    //     try {
+    //         DB::beginTransaction();
 
-            $keranjang->delete();
+    //         $keranjang->delete();
 
-            DB::commit();
+    //         DB::commit();
 
-            return back()->with('success', 'Data berhasil dihapus');
+    //         return back()->with('success', 'Data berhasil dihapus');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return back()->with('error', $e->getMessage());
-        }
-    }
+    //         return back()->with('error', $e->getMessage());
+    //     }
+    // }
 
-    public function keranjang_empty(Request $request)
-    {
-        $req = $request->validate([
-            'jenis' => 'required',
-            'tempo' => 'required',
-        ]);
+    // public function keranjang_empty(Request $request)
+    // {
+    //     $req = $request->validate([
+    //         'jenis' => 'required',
+    //         'tempo' => 'required',
+    //     ]);
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            Keranjang::where('user_id', Auth::user()->id)
-                ->where('jenis', $req['jenis'])
-                ->where('tempo', $req['tempo'])
-                ->delete();
+    //         Keranjang::where('user_id', Auth::user()->id)
+    //             ->where('jenis', $req['jenis'])
+    //             ->where('tempo', $req['tempo'])
+    //             ->delete();
 
-            DB::commit();
+    //         DB::commit();
 
-            return back()->with('success', 'Keranjang berhasil dikosongkan');
+    //         return back()->with('success', 'Keranjang berhasil dikosongkan');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return back()->with('error', $e->getMessage());
-        }
-    }
+    //         return back()->with('error', $e->getMessage());
+    //     }
+    // }
 
-    public function keranjang_checkout(Request $request)
-    {
-        $data = $request->validate([
-            'kas_ppn' => 'required',
-            'tempo' => 'required',
-            'supplier_id' => 'required',
-            'uraian' => 'required',
-            'diskon' => 'required',
-            'add_fee' => 'required',
-            'jenis' => 'required',
-            'dp' => 'required_if:tempo,1',
-            'dp_ppn' => 'nullable',
-            'jatuh_tempo' => 'required_if:tempo,1',
-        ]);
+    // public function keranjang_checkout(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'kas_ppn' => 'required',
+    //         'tempo' => 'required',
+    //         'supplier_id' => 'required',
+    //         'uraian' => 'required',
+    //         'diskon' => 'required',
+    //         'add_fee' => 'required',
+    //         'jenis' => 'required',
+    //         'dp' => 'required_if:tempo,1',
+    //         'dp_ppn' => 'nullable',
+    //         'jatuh_tempo' => 'required_if:tempo,1',
+    //     ]);
 
-        $db = new Keranjang;
+    //     $db = new KeranjangBeli;
 
-        $res = $db->checkout($data);
+    //     $res = $db->checkout($data);
 
-        return redirect()->back()->with($res['status'], $res['message']);
-    }
+    //     return redirect()->back()->with($res['status'], $res['message']);
+    // }
 }
