@@ -52,6 +52,15 @@
                                 <option value="0">Tidak Aktif</option>
                             </select>
                         </div>
+                         <div class="col-4 mb-3">
+                            <label for="barang_unit_id" class="form-label">Database Perusahaan</label>
+                            <select class="form-select" name="barang_unit_id" id="barang_unit_id" required>
+                                <option value="">-- Pilih Salah Satu --</option>
+                                @foreach ($unit as $un)
+                                <option value="{{$un->id}}">{{$un->nama}}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="col-12 mb-3">
                             <label for="alamat" class="form-label">Alamat</label>
                             <textarea name="alamat" id="alamat" class="form-control" required></textarea>

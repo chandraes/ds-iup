@@ -640,7 +640,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/store', [FormBeliController::class, 'store'])->name('billing.form-beli.store');
                 Route::post('/delete/{keranjang}', [FormBeliController::class, 'delete'])->name('billing.form-beli.delete');
                 Route::get('/detail/{keranjang}', [FormBeliController::class, 'detail'])->name('billing.form-beli.detail');
-                
+
                 Route::get('/detail/{keranjang}/data', [FormBeliController::class, 'detail_datatable'])->name('billing.form-beli.detail.data');
                 Route::post('/detail/{keranjang}/store', [FormBeliController::class, 'detail_store'])->name('billing.form-beli.detail.store');
                 Route::post('/detail/{keranjang}/empty', [FormBeliController::class, 'detail_empty'])->name('billing.form-beli.detail.empty');
@@ -695,8 +695,8 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('otorisasi-pembelian')->group(function(){
                 Route::get('/', [BillingController::class, 'otorisasi_pembelian'])->name('billing.otorisasi-pembelian');
                 Route::prefix('keranjang')->group(function() {
-                    Route::get('/', [BillingController::class, 'otorisasi_pembelian_keranjang'])->name('billing.otorisasi-pembelian.keranjang');
-                    Route::post('/checkout', [BillingController::class, 'otorisasi_pembelian_keranjang_checkout'])->name('billing.otorisasi-pembelian.keranjang.checkout');
+                    Route::get('/{keranjang}', [BillingController::class, 'otorisasi_pembelian_keranjang'])->name('billing.otorisasi-pembelian.keranjang');
+                    // Route::post('/checkout', [BillingController::class, 'otorisasi_pembelian_keranjang_checkout'])->name('billing.otorisasi-pembelian.keranjang.checkout');
                 });
             });
 

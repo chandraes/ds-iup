@@ -26,69 +26,47 @@
     </div>
 
     {{-- Main Content Card --}}
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <form action="{{ route('billing.otorisasi-pembelian.keranjang') }}" method="get">
-                        <input type="hidden" name="asistenId" value="{{ $user->id }}">
+    <div class="row">
+        @if (!empty($data))
+        @foreach ($data as $d)
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+            <div class="card shadow-sm h-100 border-start border-primary border-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0 fw-bold text-dark">
+                        {{ $d->barang_unit?->nama ?? 'Supplier Tidak Dikenal' }} ({{$d->details_count}} Items)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-1">
+                        <span class="badge bg-info text-dark me-1">{{ $d->sistem_pembayaran_text }}</span>
+                        <span class="badge bg-secondary">{{ $d->kas_ppn_text }}</span>
+                    </p>
 
-                        <div class="row g-3">
-                            {{-- Pilihan Tempo (Menggunakan Floating Label) --}}
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-select border-primary-subtle" name="tempo" id="tempo" required>
-                                        {{-- Menghitung jumlah item untuk badge visual --}}
-                                        @php
-                                        $countCash = $keranjang->where('tempo', 0)->count();
-                                        $countTempo = $keranjang->where('tempo', 1)->count();
-                                        @endphp
-                                        <option value="0">Cash {{ $countCash > 0 ? "($countCash)" : "" }}</option>
-                                        <option value="1">Dengan Tempo {{ $countTempo > 0 ? "($countTempo)" : "" }}
-                                        </option>
-                                    </select>
-                                    <label for="tempo">Metode Pembayaran</label>
-                                </div>
-                            </div>
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <form action="{{ route('billing.form-beli.delete', $d->id) }}" method="POST"
+                            class="d-flex gap-2 returDeleteForm" id="returDelete-{{ $d->id }}">
+                            @csrf
+                            <a class="btn btn-primary btn-sm" href="{{ route('billing.otorisasi-pembelian.keranjang', $d->id) }}">
+                                <i class="fa fa-play me-1"></i> Lanjutkan
+                            </a>
 
-                            {{-- Pilihan PPN --}}
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-select border-primary-subtle" name="jenis" id="jenis"
-                                        required>
-                                        @php
-                                        $countPpn = $keranjang->where('jenis', 1)->count();
-                                        $countNonPpn = $keranjang->where('jenis', 0)->count();
-                                        @endphp
-                                        <option value="1">KAS PPN {{ $countPpn > 0 ? "($countPpn)" : "" }}</option>
-                                        <option value="0">KAS NON PPN {{ $countNonPpn > 0 ? "($countNonPpn)" : "" }}
-                                        </option>
-                                    </select>
-                                    <label for="kas_ppn">Tipe KAS</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Action Button --}}
-                        <div class="d-grid gap-2 mt-4">
-                            <button class="btn btn-primary btn-lg py-3 fw-bold shadow-sm" type="submit">
-                                Lanjutkan Proses <i class="bi bi-arrow-right ms-2"></i>
+                            <button type="submit" class="btn btn-danger btn-sm delete-btn"
+                                data-form-id="returDelete-{{ $d->id }}">
+                                <i class="fa fa-trash-alt me-1"></i> Hapus
                             </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-
-            {{-- Optional: Info Alert jika keranjang kosong --}}
-            @if($keranjang->count() == 0)
-            <div class="alert alert-info mt-3 border-0 shadow-sm d-flex align-items-center" role="alert">
-                <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-                <div>
-                    Belum ada data pembelian yang perlu diotorisasi saat ini.
-                </div>
-            </div>
-            @endif
         </div>
+        @endforeach
+        @else
+        <div class="col-12">
+            <div class="alert alert-info text-center" role="alert">
+                <i class="fa fa-info-circle me-1"></i> Tidak ada transaksi pembelian yang belum selesai.
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

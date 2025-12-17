@@ -18,9 +18,12 @@
                             <td class="text-center align-middle"><a href="{{route('home')}}"><img
                                         src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30">
                                     Dashboard</a></td>
-                            <td class="text-center align-middle"><a href="{{route('billing')}}"><img
-                                        src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
-                                    Billing</a></td>
+                            @if (auth()->user()->role != 'asisten-admin')
+                                <td class="text-center align-middle"><a href="{{route('billing')}}"><img
+                                    src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
+                                Billing</a></td>
+                            @endif
+
                         </tr>
                     </table>
                 </div>

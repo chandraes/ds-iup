@@ -6,10 +6,11 @@
                 <h5 class="modal-title" id="editInvestorTitle">Edit Supplier @isset($d) {{$d->nama}} @endisset</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" id="editForm">
-                @csrf
-                @method('patch')
+
                 <div class="modal-body">
+                     <form method="post" id="editForm">
+                        @csrf
+                        @method('patch')
                     <div class="row">
                         <div class="col-4 mb-3">
                             <label for="nama" class="form-label">Nama Perusahaan</label>
@@ -53,6 +54,15 @@
                                 <option value="0">Tidak Aktif</option>
                             </select>
                         </div>
+                         <div class="col-4 mb-3">
+                            <label for="barang_unit_id" class="form-label">Database Perusahaan</label>
+                            <select class="form-select" name="barang_unit_id" id="edit_barang_unit_id" required>
+                                <option value="">-- Pilih Salah Satu --</option>
+                                @foreach ($unit as $un)
+                                <option value="{{$un->id}}">{{$un->nama}}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="col-12 mb-3">
                             <label for="alamat" class="form-label">Alamat</label>
                             <textarea name="alamat" id="edit_alamat" class="form-control" required></textarea>
@@ -78,12 +88,13 @@
                                 placeholder="" required>
                         </div>
                     </div>
+                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button form="editForm" type="submit" class="btn btn-primary">Simpan</button>
                 </div>
-            </form>
+
         </div>
     </div>
 </div>

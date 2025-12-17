@@ -1,558 +1,518 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid py-4">
-    {{-- ================================================================================== --}}
-    {{-- BAGIAN HEADER & NAVIGASI (TIDAK DIUBAH) --}}
-    {{-- ================================================================================== --}}
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1 class="fw-bold mb-0">
-                OTORISASI PEMBELIAN <br> {{$user->name}}
-            </h1>
+<div class="container-fluid py-4" style="max-width: 1300px;">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{route('billing.form-beli.detail', $b->id)}}"
+                            class="text-decoration-none">Detail Beli</a></li>
+                    <li class="breadcrumb-item active">Keranjang</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="h3 fw-bold text-dark mb-0">KONFIRMASI PESANAN</h1>
+                    <p class="text-muted mb-0">Tinjau item dan detail pembayaran sebelum menyelesaikan transaksi.</p>
+                </div>
+                <a href="{{route('billing.otorisasi-pembelian', ['asistenId' => $asistenId ])}}" class="btn btn-outline-secondary rounded-pill">
+                    <i class="fa fa-arrow-left me-2"></i> Kembali
+                </a>
+            </div>
         </div>
     </div>
-    <div class="row justify-content-between mt-3">
-        <div class="col-md-7">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td class="text-center align-middle"><a href="{{route('billing')}}"><img
-                                src="{{asset('images/billing.svg')}}" alt="dokumen" width="30">
-                            Billing</a></td>
 
-                </tr>
-            </table>
-        </div>
-    </div>
-    {{-- ================================================================================== --}}
+    @php
+    $diskon = 0;
+    $apaPpn = $b->kas_ppn ? 1 : 0;
+    $ppnRateVal = $ppnRate ?? 0;
+    $total = $keranjang ? $keranjang->sum('total') : 0;
+    $ppn = $apaPpn == 1 ? $total * ($ppnRateVal/100) : 0;
+    $add_fee = 0;
+    @endphp
+    @if (auth()->user()->role != 'asisten-admin')
+    <form action="{{route('billing.form-beli.detail.lanjutkan', $b->id)}}" method="post" id="storeForm">
+        @csrf
+        @endif
+        <input type="hidden" name="keranjang_beli_id" value="{{ $b->id }}">
 
-    {{-- MAIN CONTENT --}}
-    <div class="row justify-content-center">
-        @php
-            $diskon = 0;
-            $ppn = $data['jenis'] == 1 ? $keranjang->sum('total') * ($ppnRate/100) : 0;
-            $total = $keranjang ? $keranjang->sum('total') : 0;
-            $add_fee = 0;
-            $dp = 0;
-            $dpPPN = 0;
-            $totalDp = 0;
-            $sisaPPN = 0;
-        @endphp
+        {{-- HIDDEN INPUT BARU UNTUK MENYIMPAN NILAI PPN DP --}}
+        @if ($b->sistem_pembayaran == 2 && $apaPpn == 1)
+        <input type="hidden" id="dp_ppn_value" value="0">
+        @endif
 
-        <div class="col-md-12">
-
-            <form action="{{route('billing.otorisasi-pembelian.keranjang.checkout')}}" method="post" id="beliBarang">
-                @csrf
-                <input type="hidden" name="asistenId" value="{{$user->id}}">
-                <input type="hidden" name="kas_ppn" value="{{$data['jenis'] == 1 ? 1 : 0}}">
-                <input type="hidden" name="jenis" value="{{$data['jenis']}}">
-                <input type="hidden" name="tempo" value="{{$data['tempo']}}">
-
-                {{-- CARD 1: INFORMASI SUPPLIER & REKENING --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4 rounded-3">
                     <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0 fw-bold text-primary"><i class="fa fa-handshake-o me-2"></i>Informasi Supplier</h5>
+                        <h5 class="mb-0 fw-bold text-primary"><i class="fa fa-truck me-2"></i>Informasi Supplier</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body bg-light-subtle">
                         <div class="row g-3">
                             <div class="col-md-12">
-                                <label for="supplier_id" class="form-label fw-bold">Pilih Supplier</label>
-                                <select class="form-select" name="supplier_id" id="supplier_id" onchange="funSupplier()">
-                                    <option value="">-- Silahkan Pilih Supplier --</option>
-                                    @foreach ($supplier as $s)
-                                    <option value="{{$s->id}}">{{$s->nama}}</option>
+                                <label class="small text-muted text-uppercase fw-bold">Supplier</label>
+                                <p class="fw-bold mb-0">{{$supplier->nama}}</p>
+                                <input type="hidden" name="supplier_id" value="{{$supplier->id}}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small text-muted text-uppercase fw-bold">Nama Rekening</label>
+                                <p class="mb-0">{{$supplier->nama_rek}}</p>
+                                <input type="hidden" name="nama_rek" value="{{$supplier->nama_rek}}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small text-muted text-uppercase fw-bold">Nomor Rekening</label>
+                                <p class="mb-0">{{$supplier->no_rek}}</p>
+                                <input type="hidden" name="no_rek" value="{{$supplier->no_rek}}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small text-muted text-uppercase fw-bold">Bank</label>
+                                <p class="mb-0"><span class="badge bg-secondary">{{$supplier->bank}}</span></p>
+                                <input type="hidden" name="bank" value="{{$supplier->bank}}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-primary"><i class="fa fa-shopping-cart me-2"></i>Daftar Barang</h5>
+                        <span class="badge bg-info text-dark">{{ count($keranjang) }} Item</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Barang</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Harga Satuan</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-center pe-4">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($keranjang->where('barang_ppn', 0) as $item)
+                                    <tr class="{{$item->stok_kurang == 1 ? 'table-danger' : ''}}">
+                                        <td class="ps-4">
+                                            <div class="fw-bold">{{$item->barang->barang_nama?->nama}}</div>
+                                            <small class="text-muted">{{$item->barang->merk}} |
+                                                {{$item->barang->kode}}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-outline-primary text-dark border px-3">
+                                                {{$item->nf_qty}} {{ $item->barang->satuan ? $item->barang->satuan->nama
+                                                : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">{{$item->nf_harga}}</td>
+                                        <td class="text-end fw-bold">{{$item->nf_total}}</td>
+                                        <td class="text-center pe-4">
+                                            <button type="button" class="btn btn-outline-danger btn-sm rounded-circle"
+                                                onclick="deleteKeranjang({{$item->id}})" title="Hapus">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                     @endforeach
-                                </select>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 2rem; z-index: 10;">
+                    @if (auth()->user()->role != 'asisten-admin')
+                    <div class="card border-0 shadow-sm mb-4 rounded-3">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="uraian" class="form-label fw-bold small text-muted text-uppercase">Uraian
+                                    Transaksi</label>
+                                <textarea class="form-control" name="uraian" id="uraian" rows="2"
+                                    placeholder="Contoh: Pembelian Stok Bulanan" required
+                                    maxlength="20">{{old('uraian')}}</textarea>
                             </div>
 
-                            {{-- Area Informasi Rekening --}}
-                            <div class="col-12">
-                                <div class="p-3 bg-light rounded border">
-                                    <h6 class="text-muted mb-3 small text-uppercase fw-bold">Detail Rekening (Otomatis)</h6>
-                                    <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label small">Nama Rekening</label>
-                                            <input type="text" class="form-control bg-white" name="nama_rek" id="nama_rek"
-                                                value="{{old('nama_rek')}}" maxlength="15" required readonly>
-                                            @if ($errors->has('nama_rek'))
-                                            <div class="invalid-feedback d-block">{{$errors->first('nama_rek')}}</div>
-                                            @endif
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small">Bank</label>
-                                            <input type="text" class="form-control bg-white" name="bank" id="bank"
-                                                value="{{old('bank')}}" maxlength="10" required readonly>
-                                            @if ($errors->has('bank'))
-                                            <div class="invalid-feedback d-block">{{$errors->first('bank')}}</div>
-                                            @endif
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small">Nomor Rekening</label>
-                                            <input type="text" class="form-control bg-white" name="no_rek" id="no_rek"
-                                                value="{{old('no_rek')}}" required readonly>
-                                            @if ($errors->has('no_rek'))
-                                            <div class="invalid-feedback d-block">{{$errors->first('no_rek')}}</div>
-                                            @endif
-                                        </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="diskon"
+                                        class="form-label fw-bold small text-muted text-uppercase">Diskon (Rp)</label>
+                                    <input type="text" class="form-control" name="diskon" id="diskon" value="0"
+                                        onkeyup="add_diskon()">
+                                </div>
+                                <div class="col-6">
+                                    <label for="add_fee"
+                                        class="form-label fw-bold small text-muted text-uppercase">Penyesuaian</label>
+                                    <input type="text" class="form-control" name="add_fee" id="add_fee" value="0"
+                                        onkeyup="add_diskon()">
+                                </div>
+                            </div>
+
+                            @if ($b->sistem_pembayaran == 2)
+                            <hr>
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <label for="dp" class="form-label fw-bold small text-uppercase">Jatuh Tempo</label>
+                                    <div class="input-group">
+
+                                        <input type="text" class="form-control text-end" name="jatuh_tempo"
+                                            id="jatuh_tempo" value="{{$jatuhTempo}}" readonly>
+                                        <span class="input-group-text "> <i class="fa fa-calendar"></i></span>
                                     </div>
                                 </div>
-                            </div>
-
-                            @if ($data['tempo'] == 1)
-                            <div class="col-md-6">
-                                <label for="tempo_hari" class="form-label fw-bold">Tempo Pembayaran</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" name="tempo_hari" id="tempo_hari" disabled>
-                                    <span class="input-group-text">Hari</span>
+                                <div class="col-12 mb-2">
+                                    <label for="dp" class="form-label fw-bold small text-danger text-uppercase">Uang
+                                        Muka (DP)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-danger text-white border-danger">Rp</span>
+                                        <input type="text" class="form-control border-danger" name="dp" id="dp"
+                                            value="0" onkeyup="add_dp()">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="jatuh_tempo" class="form-label fw-bold">Tgl. Jatuh Tempo</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fa fa-calendar"></i></span>
-                                    <input type="text" class="form-control" name="jatuh_tempo" id="jatuh_tempo" readonly required>
+                                @if ($apaPpn == 1)
+                                <div class="col-12">
+                                    <label for="dp_ppn"
+                                        class="form-label fw-bold small text-muted text-uppercase">Gunakan PPN untuk
+                                        DP?</label>
+                                    <select class="form-select" name="dp_ppn" id="dp_ppn" onchange="add_dp_ppn()"
+                                        required>
+                                        <option value="0">Tanpa PPn</option>
+                                        <option value="1">Dengan PPn</option>
+                                    </select>
                                 </div>
-                            </div>
-                            @push('js')
-                            <script>
-                                if(document.getElementById('jatuh_tempo')){
-                                    flatpickr("#jatuh_tempo", { dateFormat: "d-m-Y" });
-                                }
-                            </script>
-                            @endpush
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                {{-- CARD 2: BIAYA & DISKON --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0 fw-bold text-success"><i class="fa fa-tags me-2"></i>Rincian Biaya</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <label for="uraian" class="form-label fw-bold">Uraian / Keterangan</label>
-                                <input type="text" class="form-control" name="uraian" id="uraian"
-                                    placeholder="Keterangan transaksi..." required maxlength="20"
-                                    value="{{old('uraian')}}">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="diskon" class="form-label fw-bold">Nominal Diskon</label>
-                                <div class="input-group">
-                                    <span class="input-group-text fw-bold">Rp</span>
-                                    <input type="text" class="form-control text-success fw-bold" name="diskon" id="diskon"
-                                        required value="0" onkeyup="add_diskon()">
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="add_fee" class="form-label fw-bold">Penyesuaian (+/-)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text fw-bold">Rp</span>
-                                    <input type="text" class="form-control text-danger fw-bold" name="add_fee" id="add_fee"
-                                        data-thousands="." required value="0" onkeyup="add_diskon()">
-                                </div>
-                                @if ($errors->has('add_fee'))
-                                    <small class="text-danger">{{$errors->first('add_fee')}}</small>
                                 @endif
                             </div>
-
-                            @if ($data['tempo'] == 1)
-                            <div class="col-md-6">
-                                <label for="dp" class="form-label fw-bold">Down Payment (DP)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text fw-bold">Rp</span>
-                                    <input type="text" class="form-control fw-bold" name="dp" id="dp"
-                                        required value="0" onkeyup="add_dp()">
-                                </div>
-                            </div>
-                            @if ($data['jenis'] == 1)
-                            <div class="col-md-6">
-                                <label for="dp_ppn" class="form-label fw-bold">Status PPN pada DP <span class="text-danger">*</span></label>
-                                <select class="form-select" name="dp_ppn" id="dp_ppn" onchange="add_dp_ppn()" required>
-                                    <option value="">-- Pilih Opsi --</option>
-                                    <option value="1">DP Termasuk PPN</option>
-                                    <option value="0">DP Tanpa PPN</option>
-                                </select>
-                            </div>
-                            @endif
                             @endif
                         </div>
                     </div>
-                </div>
-            </form>
+                    @endif
 
-            {{-- CARD 3: DAFTAR BARANG (KOLOM SESUAI PERMINTAAN) --}}
-            <div class="card border-0 shadow-sm rounded-4 mb-5">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0 fw-bold text-dark"><i class="fa fa-shopping-cart me-2"></i>Daftar Barang</h5>
-                    <span class="badge bg-secondary rounded-pill">{{ $keranjang->count() }} Item</span>
-                </div>
 
-                {{-- Table Responsive wajib ada karena kolomnya banyak (12 Kolom) --}}
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered mb-0 align-middle">
-                        <thead class="table-success text-center align-middle small text-uppercase fw-bold">
-                            <tr>
-                                <th>No</th>
-                                <th>Perusahaan</th>
-                                <th>Bidang</th>
-                                <th>Kategori Barang</th>
-                                <th>Nama Barang</th>
-                                <th>Kode</th>
-                                <th>Merk</th>
-                                <th>Banyak</th>
-                                <th>Satuan</th>
-                                <th>Harga Satuan</th>
-                                <th>Total</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($keranjang as $b)
-                            <tr>
-                                <td class="text-center">{{$loop->iteration}}</td>
-                                <td class="text-center">{{$b->barang->type->unit->nama}}</td>
-                                <td class="text-center">{{$b->barang->type->nama}}</td>
-                                <td class="text-center">{{$b->barang->kategori->nama}}</td>
-                                <td>{{$b->barang->barang_nama->nama}}</td>
-                                <td class="text-center">{{$b->barang->kode}}</td>
-                                <td class="text-center">{{$b->barang->merk}}</td>
-                                <td class="text-center fw-bold">{{$b->nf_jumlah}}</td>
-                                <td class="text-center">{{$b->barang->satuan ? $b->barang->satuan->nama : '-'}}</td>
-                                <td class="text-end text-nowrap">{{$b->nf_harga}}</td>
-                                <td class="text-end fw-bold text-nowrap">{{$b->nf_total}}</td>
-                                <td class="text-center">
-                                    <form action="{{ route('billing.form-beli.keranjang.delete', $b->id) }}" method="post"
-                                        id="deleteForm{{ $b->id }}" class="d-inline">
-                                        @csrf
-                                        @method('delete')
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot class="bg-white border-top">
-                            {{-- Karena ada 12 Kolom, Colspan untuk Label = 10, Kolom Angka = 1, Kolom Aksi = 1 --}}
+                    <div class="card border-0 shadow-lg bg-primary text-white rounded-3">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4">Ringkasan Pembayaran</h5>
 
-                            {{-- SUBTOTAL --}}
-                            <tr>
-                                <td colspan="10" class="text-end text-muted small">Total DPP</td>
-                                <td class="text-end fw-semibold text-nowrap" id="tdTotal">{{count($keranjang) > 0 ? number_format($keranjang->sum('total'), 0, ',','.') : ''}}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10" class="text-end text-muted small">Diskon (-)</td>
-                                <td class="text-end text-success text-nowrap" id="tdDiskon">{{number_format($diskon, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10" class="text-end text-muted small">Penyesuaian (+/-)</td>
-                                <td class="text-end text-nowrap" id="tdAddFee">0</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10" class="text-end fw-bold">Total DPP (Setelah Diskon)</td>
-                                <td class="text-end fw-bold text-nowrap" id="tdTotalSetelahDiskon">{{number_format($total-$diskon, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total DPP</span>
+                                <span id="tdTotal">{{number_format($total, 0, ',','.')}}</span>
+                            </div>
 
-                            @if ($data['jenis'] == 1)
-                            <tr>
-                                <td colspan="10" class="text-end text-muted small">PPN ({{ $ppnRate }}%) (+)</td>
-                                <td class="text-end text-nowrap" id="tdPpn">{{number_format($ppn, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Diskon</span>
+                                <span id="tdDiskon">0</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <small>DPP Setelah Diskon</small>
+                                <small id="tdTotalSetelahDiskon">{{number_format($total, 0, ',','.')}}</small>
+                            </div>
+
+                            @if ($apaPpn == 1)
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>PPN ({{$ppnRateVal}}%)</span>
+                                <span id="tdPpn">{{number_format($ppn, 0, ',','.')}}</span>
+                            </div>
                             @endif
 
-                            {{-- GRAND TOTAL --}}
-                            <tr class="table-primary border-top border-primary">
-                                <td colspan="10" class="text-end fw-bold fs-5 text-primary">GRAND TOTAL</td>
-                                <td class="text-end fw-bold fs-5 text-primary text-nowrap" id="grand_total">
-                                    {{number_format($total + $add_fee + $ppn - $diskon, 0, ',','.')}}
-                                </td>
-                                <td></td>
-                            </tr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Penyesuaian</span>
+                                <span id="tdAddFee">0</span>
+                            </div>
 
-                            @if ($data['tempo'] == 1)
-                            {{-- Spacer --}}
-                            <tr><td colspan="12" class="p-0 border-0"></td></tr>
+                            <hr class="bg-white">
 
-                            <tr>
-                                <td colspan="10" class="text-end text-secondary small">Down Payment (DP)</td>
-                                <td class="text-end text-danger text-nowrap" id="dpTd">{{number_format($dp, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
-                            @if ($data['jenis'] == 1)
-                            <tr>
-                                <td colspan="10" class="text-end text-secondary small">PPN pada DP</td>
-                                <td class="text-end text-danger text-nowrap" id="dpPPNtd">{{number_format($dpPPN, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10" class="text-end fw-bold text-secondary">Total DP</td>
-                                <td class="text-end fw-bold text-danger text-nowrap" id="totalDpTd">{{number_format($totalDp, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10" class="text-end text-secondary small">Sisa PPN</td>
-                                <td class="text-end text-nowrap" id="sisaPPN">{{number_format($sisaPPN, 0, ',','.')}}</td>
-                                <td></td>
-                            </tr>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="fw-bold mb-0">GRAND TOTAL</h4>
+                                <h4 class="fw-bold mb-0" id="grand_total">{{number_format($total + $ppn, 0, ',','.')}}
+                                </h4>
+                            </div>
+
+                            @if ($b->sistem_pembayaran == 2)
+                            <div class="bg-white text-dark rounded p-3 mb-4 shadow-sm">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>DP Terbayar:</span>
+                                    <span class="fw-bold text-danger" id="totalDpTd">0</span>
+                                </div>
+                                @if ($apaPpn == 1)
+                                <div class="d-flex justify-content-between small mb-1 border-bottom pb-1">
+                                    <span>Sisa PPN:</span>
+                                    {{-- Catatan: Elemen Sisa PPN di-update di add_dp_ppn() --}}
+                                    <span id="sisaPPN">{{number_format($ppn, 0, ',','.')}}</span>
+                                </div>
+                                @endif
+                                <div class="d-flex justify-content-between fw-bold mt-2">
+                                    <span>Sisa Tagihan:</span>
+                                    <span id="sisa">{{number_format($total + $ppn, 0, ',','.')}}</span>
+                                </div>
+                            </div>
                             @endif
-
-                            {{-- SISA TAGIHAN --}}
-                            <tr class="table-warning border-top border-warning">
-                                <td colspan="10" class="text-end fw-bold fs-5 text-dark">SISA TAGIHAN</td>
-                                <td class="text-end fw-bold fs-5 text-dark text-nowrap" id="sisa">
-                                    {{number_format($total + $add_fee + $ppn - $diskon - $sisaPPN, 0, ',','.')}}
-                                </td>
-                                <td></td>
-                            </tr>
+                            @if (auth()->user()->role != 'asisten-admin')
+                            <button type="submit"
+                                class="btn btn-light btn-lg w-100 fw-bold text-primary shadow-sm mt-2">
+                                LANJUTKAN <i class="fa fa-chevron-right ms-2"></i>
+                            </button>
                             @endif
-                        </tfoot>
-                    </table>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        @include('wa-status')
+                    </div>
                 </div>
             </div>
-
-            {{-- TOMBOL ACTION --}}
-            <div class="d-grid gap-2 mb-5">
-                <button type="submit" form="beliBarang" class="btn btn-primary btn-lg shadow fw-bold py-3 text-uppercase">
-                    <i class="fa fa-save me-2"></i> Lanjutkan Transaksi
-                </button>
-            </div>
-
         </div>
-    </div>
+        @if (auth()->user()->role != 'asisten-admin')
+    </form>
+    @endif
 </div>
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 <style>
-    /* Agar input readonly terlihat lebih jelas */
-    input[readonly] {
-        background-color: #e9ecef !important;
-        cursor: default;
+    body {
+        background-color: #f8f9fa;
     }
-    .table td, .table th {
-        vertical-align: middle;
-        white-space: nowrap; /* Opsional: Agar teks tidak turun ke bawah */
+
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+    .table thead th {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+
+    .bg-light-subtle {
+        background-color: #f1f4f8 !important;
     }
 </style>
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 
 @push('js')
-{{-- Load Cleave.js --}}
-<script src="{{ asset('assets/plugins/cleave/cleave.min.js') }}"></script>
+{{-- <script src="{{asset('assets/js/cleave.min.js')}}"></script> --}}
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
-
 <script>
-    $(document).ready(function() {
-        // --- Perbaikan Logic Cleave.js ---
-        // Cek element sebelum init agar tidak error
-        if(document.getElementById('diskon')){
-            var diskoTn = new Cleave('#diskon', {
-                numeral: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.'
-            });
-        }
-        if(document.getElementById('add_fee')){
-            var add_fee = new Cleave('#add_fee', {
-                numeral: true,
-                negative: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.'
-            });
-        }
-        if(document.getElementById('dp')){
-             var dp = new Cleave('#dp', {
-                numeral: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.'
-            });
-        }
+    // Fungsionalitas SweetAlert TIDAK DIUBAH
+    $('#storeForm').submit(function(e){
+        e.preventDefault();
+        Swal.fire({
+            title: 'Konfirmasi Lanjutkan Transaksi',
+            text: "Pastikan semua detail sudah benar. Anda akan melanjutkan ke proses berikutnya.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Lanjutkan!'
+            }).then((result) => {
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        })
     });
 
-    function funSupplier() {
-        var tempo = {{$data['tempo']}};
-        var supplier_id = document.getElementById('supplier_id').value;
-
-        $.ajax({
-            url: "{{route('billing.form-beli.get-supplier')}}",
-            type: "GET",
-            data: { id: supplier_id },
-            success: function(data) {
-                document.getElementById('nama_rek').value = data.nama_rek;
-                document.getElementById('bank').value = data.bank;
-                document.getElementById('no_rek').value = data.no_rek;
-
-                if (tempo !== 1) return;
-
-                if (data.pembayaran === 1) {
-                    document.getElementById('tempo_hari').value = null;
-                    document.getElementById('jatuh_tempo').value = null;
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Supplier memiliki sistem pembayaran cash. Silahkan Isi Tanggal Jatuh Tempo',
-                    });
-                    return;
-                }
-
-                if (data.pembayaran === 2 && data.tempo_hari != null) {
-                    document.getElementById('tempo_hari').value = data.tempo_hari;
-                    var formattedDate = addDaysAndFormat(data.tempo_hari);
-                    document.getElementById('jatuh_tempo').value = formattedDate;
-                    if(document.getElementById('jatuh_tempo')._flatpickr){
-                        document.getElementById('jatuh_tempo')._flatpickr.setDate(formattedDate);
+    function deleteKeranjang(id)
+    {
+        Swal.fire({
+            title: 'Hapus Item?',
+            text: "Anda yakin ingin menghapus item ini dari keranjang?",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Menghapus...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading()
                     }
-                }
+                });
+
+                $.ajax({
+                    url: '{{route('billing.form-beli.detail.preview.delete')}}',
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(data) {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Gagal!', 'Terjadi kesalahan saat menghapus item.', 'error');
+                    }
+                });
             }
         });
     }
+</script>
+<script>
+    // SKRIP CLEAVE & PERHITUNGAN (DIUBAH UNTUK MEMPERBAIKI BUG DP)
 
-    function addDaysAndFormat(days) {
-        var currentDate = new Date();
-        currentDate.setDate(currentDate.getDate() + days);
-        var day = ("0" + currentDate.getDate()).slice(-2);
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-        var year = currentDate.getFullYear();
-        return `${day}-${month}-${year}`;
+    // Inisialisasi Cleave
+    var cleaveDiskon = new Cleave('#diskon', {
+        numeral: true,
+        numeralThousandsGroupStyle: 'thousand',
+        numeralDecimalMark: ',',
+        delimiter: '.',
+    });
+
+    var cleaveAddFee = new Cleave('#add_fee', {
+        numeral: true,
+        negative: true,
+        numeralThousandsGroupStyle: 'thousand',
+        numeralDecimalMark: ',',
+        delimiter: '.',
+    });
+
+    // Inisialisasi DP jika ada
+    @if ($b->sistem_pembayaran == 2)
+    var cleaveDp = new Cleave('#dp', {
+        numeral: true,
+        numeralThousandsGroupStyle: 'thousand',
+        numeralDecimalMark: ',',
+        delimiter: '.',
+    });
+    @endif
+
+    // Helper untuk membersihkan dan mengkonversi angka
+    function cleanNumber(value) {
+        // Hati-hati dengan value yang berupa textContent/value dari input. Gunakan regex yang aman.
+        if (typeof value !== 'string') return 0;
+        return Number(value.replace(/[^0-9,-]/g, '').replace(/\./g, '').replace(',', '.'));
     }
 
+    // Helper untuk memformat angka
+    function formatNumber(number) {
+        // Gunakan toLocaleString untuk format ID
+        return number.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+    }
+
+    // PPN Rate dari PHP
+    const apaPpn = {!! $apaPpn !!};
+    const ppnRate = {!! $ppnRate !!} / 100;
+
     function add_diskon() {
-        var diskonT = document.getElementById('diskon').value ?? 0;
-        var diskon = diskonT.replace(/\./g, '');
-        var total = document.getElementById('tdTotal').textContent;
-        total = total.replace(/\./g, '');
-        var apa_ppn = {{$data['jenis'] == 1 ? 1 : 0}};
+        var diskon = cleanNumber(document.getElementById('diskon').value);
+        var totalDpp = cleanNumber(document.getElementById('tdTotal').textContent);
+        var addFee = cleanNumber(document.getElementById('add_fee').value);
 
-        if (apa_ppn == 1) {
-            var ppn = document.getElementById('tdPpn').textContent;
-            ppn = ppn.replace(/\./g, '');
-        }
+        if (isNaN(totalDpp)) totalDpp = 0;
 
-        var addFeeT = document.getElementById('add_fee').value;
-        var addFee = addFeeT.replace(/\./g, '');
-        var total_diskon = total - diskon;
-        var gd = total_diskon + Number(ppn) + Number(addFee);
+        var totalDppSetelahDiskon = totalDpp - diskon;
 
-        var diskonFormatted = Number(diskon).toLocaleString('id-ID');
-        var totalFormatted = total_diskon.toLocaleString('id-ID');
-        var addFeeFormatted = Number(addFee).toLocaleString('id-ID');
-        var gF = gd.toLocaleString('id-ID');
+        // Update nilai di tabel
+        document.getElementById('tdDiskon').textContent = formatNumber(diskon);
+        document.getElementById('tdTotalSetelahDiskon').textContent = formatNumber(totalDppSetelahDiskon);
+        document.getElementById('tdAddFee').textContent = formatNumber(addFee);
 
-        document.getElementById('tdDiskon').textContent = diskonT;
-        document.getElementById('tdTotalSetelahDiskon').textContent = totalFormatted;
-        document.getElementById('tdAddFee').textContent = addFeeFormatted;
-        document.getElementById('grand_total').textContent = gF;
-
+        // Lanjutkan ke PPN dan Sisa
         add_ppn();
-        check_sisa();
     }
 
     function add_ppn() {
-        var apa_ppn = {{$data['jenis'] == 1 ? 1 : 0}};
-        var ppnRate = {!! $ppnRate !!} / 100;
-        var addFee = Number(document.getElementById('add_fee').value.replace(/\./g, ''));
+        var totalDppSetelahDiskon = cleanNumber(document.getElementById('tdTotalSetelahDiskon').textContent);
+        var addFee = cleanNumber(document.getElementById('tdAddFee').textContent);
+        var vPpn = 0;
 
-        if (apa_ppn === 1) {
-            var gt = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
-            var vPpn = Math.floor(gt * ppnRate);
-            var totalap = gt + vPpn + addFee;
-            var tF = totalap.toLocaleString('id-ID');
-            var vF = vPpn.toLocaleString('id-ID');
-            document.getElementById('grand_total').textContent = tF;
-            document.getElementById('tdPpn').textContent = vF;
-        } else {
-            var gtWithoutPpn = Number(document.getElementById('tdTotalSetelahDiskon').textContent.replace(/\./g, ''));
-            var totalWithoutPpn = gtWithoutPpn + addFee;
-            totalWithoutPpn = totalWithoutPpn.toFixed(0);
-            totalWithoutPpn = parseInt(totalWithoutPpn);
-            var totalFormatted = totalWithoutPpn.toLocaleString('id-ID');
-            document.getElementById('grand_total').textContent = totalFormatted;
+        if (apaPpn === 1) {
+            vPpn = Math.floor(totalDppSetelahDiskon * ppnRate);
+            document.getElementById('tdPpn').textContent = formatNumber(vPpn);
         }
-        check_sisa();
+
+        var grandTotal = totalDppSetelahDiskon + vPpn + addFee;
+        document.getElementById('grand_total').textContent = formatNumber(grandTotal);
+
+        // Setelah Grand Total dihitung, cek DP/Sisa
+        if (document.getElementById('dp')) {
+            add_dp();
+        } else {
+            check_sisa(); // Jika tidak ada DP, langsung hitung sisa (walau sisa=grandtotal)
+        }
     }
 
     function add_dp(){
-        var dpT = document.getElementById('dp').value;
-        var dp = dpT.replace(/\./g, '');
-        document.getElementById('dpTd').textContent = dpT;
-        add_dp_ppn();
-        check_sisa();
+        // FUNGSI INI HANYA MEMICU PERHITUNGAN DP PPN DAN SISA
+
+        // BARIS DI BAWAH INI ADALAH SUMBER ERROR (Mencoba menulis ke elemen yang tidak ada)
+        // document.getElementById('dpTd').textContent = formatNumber(dp);
+
+        // Panggil DP PPN jika ada
+        if (document.getElementById('dp_ppn')) {
+            add_dp_ppn();
+        } else {
+            check_sisa();
+        }
     }
 
     function add_dp_ppn(){
-        var apa_dp_ppn = document.getElementById('dp_ppn') ? document.getElementById('dp_ppn').value || 0 : 0;
-        if(apa_dp_ppn === '1') {
-            var dp_ppn = document.getElementById('dp').value;
-            var dp_ppn = dp_ppn.replace(/\./g, '');
-            var ppn = {!! $ppnRate !!} / 100;
-            var ppn_dp_num = Math.floor(dp_ppn * ppn);
-            ppn_dp = ppn_dp_num.toLocaleString('id-ID');
-            document.getElementById('dpPPNtd').textContent = ppn_dp;
-            var ppn_total = document.getElementById('tdPpn').textContent;
-            ppn_total = ppn_total.replace(/\./g, '');
+        var dp = 0;
+        var ppn_dp_num = 0;
+
+        // Hanya dijalankan jika PPN diaktifkan DAN form DP ada
+        if (apaPpn === 1 && document.getElementById('dp')) {
+            var apa_dp_ppn = document.getElementById('dp_ppn').value;
+            dp = cleanNumber(document.getElementById('dp').value); // Baca dari input DP
+            var ppn_total = cleanNumber(document.getElementById('tdPpn').textContent);
+
+            if (apa_dp_ppn === '1') {
+                ppn_dp_num = Math.floor(dp * ppnRate);
+            }
+
+            // --- FIX BAGIAN B: SIMPAN NILAI PPN DP KE HIDDEN INPUT BARU ---
+            document.getElementById('dp_ppn_value').value = ppn_dp_num;
+
             var sisa_ppn = ppn_total - ppn_dp_num;
-            sisa_ppn = sisa_ppn.toFixed(0);
-            var sisa_ppnF = sisa_ppn.toLocaleString('id-ID');
-            document.getElementById('sisaPPN').textContent = sisa_ppnF;
-        } else {
-            if (document.getElementById('dpPPNtd')) document.getElementById('dpPPNtd').textContent = 0;
-            if (document.getElementById('sisaPPN')) document.getElementById('sisaPPN').textContent = 0;
+            sisa_ppn = (sisa_ppn < 0) ? 0 : sisa_ppn;
+
+            // document.getElementById('dpPPNtd').textContent = formatNumber(ppn_dp_num); // ID ini juga tidak ada
+            document.getElementById('sisaPPN').textContent = formatNumber(sisa_ppn);
         }
         check_sisa();
     }
 
     function check_sisa(){
-        var grand_total = document.getElementById('grand_total').textContent;
-        grand_total = parseInt(grand_total.replace(/\./g, ''), 10);
-        var dpElement = document.getElementById('dpTd');
-        var dp = dpElement ? dpElement.textContent : '0';
-        dp = parseInt(dp.replace(/\./g, ''), 10);
-        var dpPPNtd = document.getElementById('dpPPNtd') ? document.getElementById('dpPPNtd').textContent : '0';
-        dpPPNtd = parseInt(dpPPNtd.replace(/\./g, ''), 10);
-        if (isNaN(dpPPNtd)) dpPPNtd = 0;
+        var grandTotal = cleanNumber(document.getElementById('grand_total').textContent);
 
-        var sisa = grand_total - dp - dpPPNtd;
-        var sisaF = sisa.toLocaleString('id-ID');
+        // --- FIX BAGIAN A: BACA NILAI DP DARI INPUT DAN HIDDEN INPUT ---
+        var dpBase = cleanNumber(document.getElementById('dp')?.value || '0'); // Ambil nilai DP dasar dari input
+        var dpPPN = cleanNumber(document.getElementById('dp_ppn_value')?.value || '0'); // Ambil nilai PPN DP dari hidden input
 
-        var tdPPN = document.getElementById('tdPpn') ? document.getElementById('tdPpn').textContent : '0';
-        tdPPN = parseInt(tdPPN.replace(/\./g, ''), 10);
-        if (isNaN(tdPPN)) tdPPN = 0;
+        // Hitung Total DP (Base DP + PPN DP)
+        var totalDp = dpBase + dpPPN;
 
-        var sisaPPN = tdPPN - dpPPNtd;
-        sisaPPN = Number(sisaPPN.toFixed(0));
-
-        var sisaElement = document.getElementById('sisa');
-        if (sisaElement) sisaElement.textContent = sisaF;
-
-        if (sisaPPN == 0) {
-            if (document.getElementById('sisaPPN')) document.getElementById('sisaPPN').textContent = 0;
-        } else {
-            if (document.getElementById('sisaPPN')) document.getElementById('sisaPPN').textContent = sisaPPN.toLocaleString('id-ID');
+        if (document.getElementById('totalDpTd')) {
+            document.getElementById('totalDpTd').textContent = formatNumber(totalDp); // <<<< INI YANG MENGUBAH TEXT 'DP Terbayar'
         }
 
-        var totalDp = dp + dpPPNtd;
-        totalDp = Number(totalDp.toFixed(0));
-        if (document.getElementById('totalDpTd')) document.getElementById('totalDpTd').textContent = totalDp.toLocaleString('id-ID');
+        // Hitung Sisa Tagihan
+        var sisaTagihan = grandTotal - totalDp;
+        sisaTagihan = (sisaTagihan < 0) ? 0 : sisaTagihan;
+
+        // Update Sisa Tagihan
+        var sisaElement = document.getElementById('sisa');
+        if (sisaElement) {
+            sisaElement.textContent = formatNumber(sisaTagihan);
+        }
     }
 
-     confirmAndSubmit('#beliBarang', 'Apakah anda Yakin?');
+    // Panggil fungsi inisial saat halaman dimuat (untuk memastikan semua total terhitung dengan benar)
+    document.addEventListener('DOMContentLoaded', function() {
+        add_diskon(); // Memulai seluruh rangkaian perhitungan
+    });
 </script>
+<script src="{{asset('assets/js/bootstrap-bundle.js')}}"></script>
 @endpush

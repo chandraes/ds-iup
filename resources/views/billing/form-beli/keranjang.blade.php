@@ -6,7 +6,8 @@
         <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-2">
-                    <li class="breadcrumb-item"><a href="{{route('billing.form-beli.detail', $b->id)}}" class="text-decoration-none">Detail Beli</a></li>
+                    <li class="breadcrumb-item"><a href="{{route('billing.form-beli.detail', $b->id)}}"
+                            class="text-decoration-none">Detail Beli</a></li>
                     <li class="breadcrumb-item active">Keranjang</li>
                 </ol>
             </nav>
@@ -23,16 +24,17 @@
     </div>
 
     @php
-        $diskon = 0;
-        $apaPpn = $b->kas_ppn ? 1 : 0;
-        $ppnRateVal = $ppnRate ?? 0;
-        $total = $keranjang ? $keranjang->sum('total') : 0;
-        $ppn = $apaPpn == 1 ? $total * ($ppnRateVal/100) : 0;
-        $add_fee = 0;
+    $diskon = 0;
+    $apaPpn = $b->kas_ppn ? 1 : 0;
+    $ppnRateVal = $ppnRate ?? 0;
+    $total = $keranjang ? $keranjang->sum('total') : 0;
+    $ppn = $apaPpn == 1 ? $total * ($ppnRateVal/100) : 0;
+    $add_fee = 0;
     @endphp
-
+    @if (auth()->user()->role != 'asisten-admin')
     <form action="{{route('billing.form-beli.detail.lanjutkan', $b->id)}}" method="post" id="storeForm">
         @csrf
+        @endif
         <input type="hidden" name="keranjang_beli_id" value="{{ $b->id }}">
 
         {{-- HIDDEN INPUT BARU UNTUK MENYIMPAN NILAI PPN DP --}}
@@ -94,11 +96,13 @@
                                     <tr class="{{$item->stok_kurang == 1 ? 'table-danger' : ''}}">
                                         <td class="ps-4">
                                             <div class="fw-bold">{{$item->barang->barang_nama?->nama}}</div>
-                                            <small class="text-muted">{{$item->barang->merk}} | {{$item->barang->kode}}</small>
+                                            <small class="text-muted">{{$item->barang->merk}} |
+                                                {{$item->barang->kode}}</small>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge rounded-pill bg-outline-primary text-dark border px-3">
-                                                {{$item->nf_qty}} {{ $item->barang->satuan ? $item->barang->satuan->nama : '-' }}
+                                                {{$item->nf_qty}} {{ $item->barang->satuan ? $item->barang->satuan->nama
+                                                : '-' }}
                                             </span>
                                         </td>
                                         <td class="text-end">{{$item->nf_harga}}</td>
@@ -120,21 +124,29 @@
 
             <div class="col-lg-4">
                 <div class="sticky-top" style="top: 2rem; z-index: 10;">
+                    @if (auth()->user()->role != 'asisten-admin')
                     <div class="card border-0 shadow-sm mb-4 rounded-3">
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="uraian" class="form-label fw-bold small text-muted text-uppercase">Uraian Transaksi</label>
-                                <textarea class="form-control" name="uraian" id="uraian" rows="2" placeholder="Contoh: Pembelian Stok Bulanan" required maxlength="20">{{old('uraian')}}</textarea>
+                                <label for="uraian" class="form-label fw-bold small text-muted text-uppercase">Uraian
+                                    Transaksi</label>
+                                <textarea class="form-control" name="uraian" id="uraian" rows="2"
+                                    placeholder="Contoh: Pembelian Stok Bulanan" required
+                                    maxlength="20">{{old('uraian')}}</textarea>
                             </div>
 
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label for="diskon" class="form-label fw-bold small text-muted text-uppercase">Diskon (Rp)</label>
-                                    <input type="text" class="form-control" name="diskon" id="diskon" value="0" onkeyup="add_diskon()">
+                                    <label for="diskon"
+                                        class="form-label fw-bold small text-muted text-uppercase">Diskon (Rp)</label>
+                                    <input type="text" class="form-control" name="diskon" id="diskon" value="0"
+                                        onkeyup="add_diskon()">
                                 </div>
                                 <div class="col-6">
-                                    <label for="add_fee" class="form-label fw-bold small text-muted text-uppercase">Penyesuaian</label>
-                                    <input type="text" class="form-control" name="add_fee" id="add_fee" value="0" onkeyup="add_diskon()">
+                                    <label for="add_fee"
+                                        class="form-label fw-bold small text-muted text-uppercase">Penyesuaian</label>
+                                    <input type="text" class="form-control" name="add_fee" id="add_fee" value="0"
+                                        onkeyup="add_diskon()">
                                 </div>
                             </div>
 
@@ -145,21 +157,27 @@
                                     <label for="dp" class="form-label fw-bold small text-uppercase">Jatuh Tempo</label>
                                     <div class="input-group">
 
-                                        <input type="text" class="form-control text-end" name="jatuh_tempo" id="jatuh_tempo" value="{{$jatuhTempo}}" readonly>
+                                        <input type="text" class="form-control text-end" name="jatuh_tempo"
+                                            id="jatuh_tempo" value="{{$jatuhTempo}}" readonly>
                                         <span class="input-group-text "> <i class="fa fa-calendar"></i></span>
                                     </div>
                                 </div>
                                 <div class="col-12 mb-2">
-                                    <label for="dp" class="form-label fw-bold small text-danger text-uppercase">Uang Muka (DP)</label>
+                                    <label for="dp" class="form-label fw-bold small text-danger text-uppercase">Uang
+                                        Muka (DP)</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-danger text-white border-danger">Rp</span>
-                                        <input type="text" class="form-control border-danger" name="dp" id="dp" value="0" onkeyup="add_dp()">
+                                        <input type="text" class="form-control border-danger" name="dp" id="dp"
+                                            value="0" onkeyup="add_dp()">
                                     </div>
                                 </div>
                                 @if ($apaPpn == 1)
                                 <div class="col-12">
-                                    <label for="dp_ppn" class="form-label fw-bold small text-muted text-uppercase">Gunakan PPN untuk DP?</label>
-                                    <select class="form-select" name="dp_ppn" id="dp_ppn" onchange="add_dp_ppn()" required>
+                                    <label for="dp_ppn"
+                                        class="form-label fw-bold small text-muted text-uppercase">Gunakan PPN untuk
+                                        DP?</label>
+                                    <select class="form-select" name="dp_ppn" id="dp_ppn" onchange="add_dp_ppn()"
+                                        required>
                                         <option value="0">Tanpa PPn</option>
                                         <option value="1">Dengan PPn</option>
                                     </select>
@@ -169,6 +187,8 @@
                             @endif
                         </div>
                     </div>
+                    @endif
+
 
                     <div class="card border-0 shadow-lg bg-primary text-white rounded-3">
                         <div class="card-body p-4">
@@ -205,32 +225,35 @@
 
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4 class="fw-bold mb-0">GRAND TOTAL</h4>
-                                <h4 class="fw-bold mb-0" id="grand_total">{{number_format($total + $ppn, 0, ',','.')}}</h4>
+                                <h4 class="fw-bold mb-0" id="grand_total">{{number_format($total + $ppn, 0, ',','.')}}
+                                </h4>
                             </div>
 
                             @if ($b->sistem_pembayaran == 2)
-                                <div class="bg-white text-dark rounded p-3 mb-4 shadow-sm">
-                                    <div class="d-flex justify-content-between small mb-1">
-                                        <span>DP Terbayar:</span>
-                                        <span class="fw-bold text-danger" id="totalDpTd">0</span>
-                                    </div>
-                                    @if ($apaPpn == 1)
-                                    <div class="d-flex justify-content-between small mb-1 border-bottom pb-1">
-                                        <span>Sisa PPN:</span>
-                                        {{-- Catatan: Elemen Sisa PPN di-update di add_dp_ppn() --}}
-                                        <span id="sisaPPN">{{number_format($ppn, 0, ',','.')}}</span>
-                                    </div>
-                                    @endif
-                                    <div class="d-flex justify-content-between fw-bold mt-2">
-                                        <span>Sisa Tagihan:</span>
-                                        <span id="sisa">{{number_format($total + $ppn, 0, ',','.')}}</span>
-                                    </div>
+                            <div class="bg-white text-dark rounded p-3 mb-4 shadow-sm">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>DP Terbayar:</span>
+                                    <span class="fw-bold text-danger" id="totalDpTd">0</span>
                                 </div>
+                                @if ($apaPpn == 1)
+                                <div class="d-flex justify-content-between small mb-1 border-bottom pb-1">
+                                    <span>Sisa PPN:</span>
+                                    {{-- Catatan: Elemen Sisa PPN di-update di add_dp_ppn() --}}
+                                    <span id="sisaPPN">{{number_format($ppn, 0, ',','.')}}</span>
+                                </div>
+                                @endif
+                                <div class="d-flex justify-content-between fw-bold mt-2">
+                                    <span>Sisa Tagihan:</span>
+                                    <span id="sisa">{{number_format($total + $ppn, 0, ',','.')}}</span>
+                                </div>
+                            </div>
                             @endif
-
-                            <button type="submit" class="btn btn-light btn-lg w-100 fw-bold text-primary shadow-sm mt-2">
+                            @if (auth()->user()->role != 'asisten-admin')
+                            <button type="submit"
+                                class="btn btn-light btn-lg w-100 fw-bold text-primary shadow-sm mt-2">
                                 LANJUTKAN <i class="fa fa-chevron-right ms-2"></i>
                             </button>
+                            @endif
                         </div>
                     </div>
                     <div class="mt-3 text-end">
@@ -239,17 +262,37 @@
                 </div>
             </div>
         </div>
+        @if (auth()->user()->role != 'asisten-admin')
     </form>
+    @endif
 </div>
 @endsection
 
 @push('css')
 <style>
-    body { background-color: #f8f9fa; }
-    .card { transition: transform 0.2s ease; }
-    .table thead th { font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase; }
-    .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1); }
-    .bg-light-subtle { background-color: #f1f4f8 !important; }
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+    .table thead th {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+
+    .bg-light-subtle {
+        background-color: #f1f4f8 !important;
+    }
 </style>
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">

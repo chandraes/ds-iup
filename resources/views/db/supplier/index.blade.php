@@ -113,11 +113,21 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 @endpush
 @push('js')
+<script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+
+     $('#edit_barang_unit_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#editInvestor'),
+        });
+
     function editInvestor(data, id) {
         document.getElementById('edit_nama').value = data.nama;
         document.getElementById('edit_cp').value = data.cp;
@@ -128,7 +138,9 @@
         document.getElementById('edit_nama_rek').value = data.nama_rek;
         document.getElementById('edit_no_rek').value = data.no_rek;
         document.getElementById('edit_bank').value = data.bank;
-
+        document.getElementById('edit_barang_unit_id').value = data.barang_unit_id;
+        $('#edit_barang_unit_id').trigger('change');
+        
         if (data.pembayaran == 2) {
             $('#divTempoEdit').removeAttr('hidden');
             $('#edit_tempo_hari').attr('required', true);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\DiskonUmum;
 use App\Models\db\InventarisJenis;
@@ -771,8 +772,11 @@ class DatabaseController extends Controller
     {
         $data = Supplier::all();
 
+        $unit = BarangUnit::get();
+
         return view('db.supplier.index', [
             'data' => $data,
+            'unit' => $unit
         ]);
     }
 
@@ -785,6 +789,7 @@ class DatabaseController extends Controller
             'cp' => 'required',
             'no_hp' => 'required',
             'no_rek' => 'required',
+            'barang_unit_id' => 'required|exists:barang_units,id',
             'bank' => 'required',
             'nama_rek' => 'required',
             'pembayaran' => 'required|in:1,2',
@@ -809,6 +814,7 @@ class DatabaseController extends Controller
             'no_hp' => 'required',
             'no_rek' => 'required',
             'bank' => 'required',
+            'barang_unit_id' => 'required|exists:barang_units,id',
             'nama_rek' => 'required',
             'pembayaran' => 'required|in:1,2',
             'tempo_hari' => 'required_if:pembayaran,2',

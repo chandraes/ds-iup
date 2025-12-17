@@ -35,6 +35,7 @@ use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\InvoiceJualSalesDetail;
 use App\Models\transaksi\Keranjang;
+use App\Models\transaksi\KeranjangBeli;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
 use App\Models\transaksi\OrderIndenDetail;
@@ -1267,53 +1268,40 @@ class BillingController extends Controller
             return redirect()->back()->with('error', 'User ini bukan user Asisten Admin!!');
         }
 
-        $keranjang = Keranjang::where('user_id', $user->id)->get();
+        $keranjang = KeranjangBeli::where('user_id', $user->id)
+                    ->withCount('details')
+                    ->get();
 
         return view('billing.otorisasi-beli.index', [
-            'keranjang' => $keranjang,
+            'data' => $keranjang,
             'user' => $user
         ]);
     }
 
-    public function otorisasi_pembelian_keranjang(Request $request)
+    public function otorisasi_pembelian_keranjang(KeranjangBeli $keranjang)
     {
-        $data = $request->validate([
-            'asistenId' => 'required|exists:users,id',
-            'tempo' => 'required',
-            'jenis' => 'required'
-        ]);
+        $supplier = Supplier::where('barang_unit_id', $keranjang->barang_unit_id)->first();
 
-        $user = User::find($data['asistenId']);
-
-        $keranjang = Keranjang::with(['barang.barang_nama', 'barang.satuan', 'barang.kategori'])->where('user_id', $data['asistenId'])
-                                ->where('tempo', $data['tempo'])
-                                ->where('jenis', $data['jenis'])
-                                ->get();
-
-        if($keranjang->count() == 0)
-        {
-            return redirect()->back()->with('error', 'Tidak ada item pada keranjang ini!!');
+        if (!$supplier) {
+            $message = Auth::user()->role != 'asisten-admin' ? 'Perusahaan ini belum di atur Suppliernya. Silahkan atur terlebih dahulu di Menu Database Supplier!' :
+                                            'Perusahaan ini belum di atur Suppliernya. Silahkan hubungi admin untuk mengisi data di Menu Database Supplier!';
+            return redirect()->back()->with('error', $message);
         }
 
-        $supplier = Supplier::where('status', 1)->get();
+        $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('Y-m-d') : '';
 
-        if ($supplier->count() == 0) {
-            return redirect()->back()->with('error', 'Belum ada supplier yang aktif, silahkan tambah supplier terlebih dahulu!');
-        }
-
-        $tipeKas = $data['jenis'] == 1 ? 'Kas PPN' : 'Kas Non PPN';
-        $pembayaran = $data['tempo'] == 1 ? 'Tempo' : 'Cash';
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
+        $asistenId = $keranjang->user_id;
+
         return view('billing.otorisasi-beli.keranjang', [
-            'user' => $user,
-            'keranjang' => $keranjang,
-            'tipeKas' => $tipeKas,
-            'pembayaran' => $pembayaran,
-            'data' => $data,
+            'b' => $keranjang,
+            'keranjang' => $keranjang->details,
             'supplier' => $supplier,
-            'ppnRate' => $ppnRate
-        ]);
+            'ppnRate' => $ppnRate,
+            'jatuhTempo' => $jatuhTempo,
+            'asistenId' => $asistenId
+         ]);
     }
 
     public function otorisasi_pembelian_keranjang_checkout(Request $request)

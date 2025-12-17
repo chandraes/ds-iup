@@ -206,17 +206,17 @@ class FormBeliController extends Controller
 
     public function detail_preview(KeranjangBeli $keranjang)
     {
-        $supplier = '';
-        $jatuhTempo = '';
-        if (Auth::user()->role != 'asisten-admin') {
-            $supplier = Supplier::where('barang_unit_id', $keranjang->barang_unit_id)->first();
 
-            if (!$supplier) {
-                return redirect()->back()->with('error', 'Perusahaan ini belum di atur Suppliernya. Silahkan atur terlebih dahulu di Menu Database Supplier!');
-            }
+        $supplier = Supplier::where('barang_unit_id', $keranjang->barang_unit_id)->first();
 
-            $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('Y-m-d') : '';
+        if (!$supplier) {
+            $message = Auth::user()->role != 'asisten-admin' ? 'Perusahaan ini belum di atur Suppliernya. Silahkan atur terlebih dahulu di Menu Database Supplier!' :
+                                            'Perusahaan ini belum di atur Suppliernya. Silahkan hubungi admin untuk mengisi data di Menu Database Supplier!';
+            return redirect()->back()->with('error', $message);
         }
+
+        $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('Y-m-d') : '';
+
 
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
