@@ -172,6 +172,12 @@
             </a>
         </div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+            <a href="{{route('db.order')}}" class="text-decoration-none">
+                <img src="{{asset('images/order.svg')}}" alt="" width="70">
+                <h5 class="mt-2">ORDER</h5>
+            </a>
+        </div>
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
                 <h5 class="mt-2">DASHBOARD</h5>

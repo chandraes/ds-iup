@@ -7,6 +7,7 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\ReturController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FormBeliController;
+use App\Http\Controllers\DatabaseController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -144,6 +145,11 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['role:su,admin,user']], function () {
+
+        Route::prefix('db')->group(function () {
+            Route::get('/order', [DatabaseController::class, 'order'])->name('db.order');
+            Route::get('/order/data', [DatabaseController::class, 'order_data'])->name('db.order.data');
+        });
 
         Route::prefix('checklist-sales')->group(function () {
             Route::get('/', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');

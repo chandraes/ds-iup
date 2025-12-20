@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Barang\Barang;
+use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangNama;
+use App\Models\db\Barang\BarangType;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\CostOperational;
 use App\Models\db\DiskonUmum;
@@ -20,6 +24,7 @@ use App\Models\db\SalesArea;
 use App\Models\db\Satuan;
 use App\Models\db\Supplier;
 use App\Models\Pengelola;
+use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1067,6 +1072,91 @@ class DatabaseController extends Controller
         $diskon->update($data);
 
         return redirect()->back()->with('success', 'Data berhasil diupdate');
+    }
+
+    public function order(Request $request)
+    {
+        $selectUnit = BarangUnit::select('id', 'nama')->get();
+        $selectBidang = BarangType::select('id', 'nama')->get();
+        $selectKategori = BarangKategori::all();
+        $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+        return view('db.order.index', compact('selectKategori', 'selectBarangNama', 'selectUnit', 'selectBidang'));
+    }
+
+    public function order_data(Request $request)
+    {
+
+       // 1. Definisikan Subquery untuk 'stok_ready'
+        $stokSubquery = DB::table('barang_stok_hargas')
+            ->selectRaw('COALESCE(SUM(stok), 0)')
+            ->whereColumn('barang_id', 'barangs.id')
+            ->where('stok', '>', 0);
+
+        // 2. Definisikan Subquery untuk 'avg_sales'
+        $avgSubquery = DB::table('invoice_jual_details as ijd')
+            ->join('invoice_juals as ij', 'ijd.invoice_jual_id', '=', 'ij.id')
+            ->whereColumn('ijd.barang_id', 'barangs.id')
+            ->where('ij.void', 0)
+            ->selectRaw('COALESCE(SUM(ijd.jumlah), 0) / GREATEST(TIMESTAMPDIFF(MONTH, MIN(ij.created_at), NOW()), 1)');
+
+        // 3. QUERY UTAMA
+        $query = Barang::with(['unit', 'type', 'barang_nama', 'satuan', 'kategori'])
+            ->select('barangs.*')
+            ->selectSub($stokSubquery, 'stok_ready')
+            ->selectSub($avgSubquery, 'avg_sales');
+
+        // 4. FILTERING STANDAR
+        if ($request->filled('unit')) {
+            $query->where('barang_unit_id', $request->input('unit'));
+        }
+        if ($request->filled('bidang')) {
+            $query->where('barang_type_id', $request->input('bidang'));
+        }
+
+        if ($request->filled('kategori')) {
+            $query->where('barang_kategori_id', $request->input('kategori'));
+        }
+        if ($request->filled('barang_nama')) {
+            $query->where('barang_nama_id', $request->input('barang_nama'));
+        }
+
+        // 5. FILTER KHUSUS
+        $query->havingRaw('((avg_sales * 2) - stok_ready) >= 1');
+
+        // 6. DATATABLES CONFIG
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('barang_ppn', function ($row) {
+                return $row->jenis == 1 ? 'Ya' : 'Tidak';
+            })
+
+            // --- PERBAIKAN DI SINI ---
+            // Kolom Stok
+            ->addColumn('stok_info', function ($row) {
+                return number_format($row->stok_ready, 0, ',', '.');
+            })
+            // Tambahkan ini agar bisa di-sort berdasarkan hasil subquery
+            ->orderColumn('stok_info', 'stok_ready $1')
+            // -------------------------
+
+            ->addColumn('avg_penjualan', function ($row) {
+                return number_format($row->avg_sales, 0, ',', '.');
+            })
+            ->orderColumn('avg_penjualan', 'avg_sales $1')
+
+            ->addColumn('saran_order', function ($row) {
+                return number_format($row->avg_sales * 2, 0, ',', '.');
+            })
+            ->orderColumn('saran_order', '(avg_sales * 2) $1')
+
+            ->addColumn('order_qty', function ($row) {
+                $qty = ($row->avg_sales * 2) - $row->stok_ready;
+                return number_format($qty, 0, ',', '.');
+            })
+            ->orderColumn('order_qty', '((avg_sales * 2) - stok_ready) $1')
+
+            ->rawColumns(['nama_barang'])
+            ->make(true);
     }
 
 
