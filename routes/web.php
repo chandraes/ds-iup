@@ -149,6 +149,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::prefix('db')->group(function () {
             Route::get('/order', [DatabaseController::class, 'order'])->name('db.order');
             Route::get('/order/data', [DatabaseController::class, 'order_data'])->name('db.order.data');
+            Route::get('/order/export-pdf', [DatabaseController::class, 'order_export_pdf'])->name('db.order.export_pdf');
         });
 
         Route::prefix('checklist-sales')->group(function () {

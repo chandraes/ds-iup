@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid py-4">
- <div class="row justify-content-center">
+    <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h2 class="fw-bold text-dark mb-0">
                 <i class="fa fa-shopping-cart text-primary me-2"></i> ORDER
@@ -81,15 +81,28 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label for="multiplier" class="form-label fw-bold small">Pengali Saran</label>
+                        <input type="number" step="0.1" min="0.1" name="multiplier" id="filter_multiplier"
+                            class="form-control" value="2" placeholder="Default: 2">
+                    </div>
+                    <div class="col-md-2">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fa fa-search me-1"></i> Terapkan
                             </button>
-                            <a href="{{url()->current()}}" class="btn btn-light border w-100 text-danger">
+                            {{-- TAMBAHAN: Tombol Reset --}}
+                            <button type="button" id="btn-reset" class="btn btn-light border w-100 text-danger">
                                 <i class="fa fa-undo me-1"></i> Reset
-                            </a>
+                            </button>
                         </div>
+                    </div>
+
+                    {{-- TAMBAHAN: Tombol Download PDF --}}
+                    <div class="col-md-1">
+                        <button type="button" id="btn-download-pdf" class="btn btn-danger w-100" title="Download PDF">
+                            <i class="fa fa-file-pdf"></i> PDF
+                        </button>
                     </div>
                 </div>
             </form>
@@ -153,7 +166,9 @@
         min-height: 38px;
     }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous">
+</script>
 @endpush
 
 @push('js')
@@ -202,6 +217,8 @@
                     d.bidang = $('#filter_bidang').val();
                     d.kategori = $('#filter_kategori').val();
                     d.barang_nama = $('#filter_barang_nama').val();
+                    var mult = $('#filter_multiplier').val();
+                    d.multiplier = (mult === "" || mult === null) ? 2 : mult;
                 }
             },
             scrollY: '65vh', // Sedikit dikurangi agar pas dengan card
@@ -260,6 +277,49 @@
         // Trigger reload table saat filter berubah (Optional UX improvement)
         $('#filter-form select').on('change', function() {
             table.draw();
+        });
+
+        $('#filter-form').on('submit', function(e) {
+            e.preventDefault();
+            table.draw();
+        });
+
+        // Tombol Reset
+        $('#btn-reset').on('click', function() {
+            $('#filter_unit').val('').trigger('change');
+            $('#filter_bidang').val('').trigger('change');
+            $('#filter_kategori').val('').trigger('change');
+            $('#filter_barang_nama').val('').trigger('change');
+            $('#filter_multiplier').val('2'); // Reset ke 2
+            table.draw();
+        });
+
+        // --- LOGIKA TOMBOL DOWNLOAD PDF ---
+        $('#btn-download-pdf').on('click', function(e) {
+            e.preventDefault();
+
+            // Ambil semua value dari filter
+            var unit = $('#filter_unit').val();
+            var bidang = $('#filter_bidang').val();
+            var kategori = $('#filter_kategori').val();
+            var barang_nama = $('#filter_barang_nama').val();
+            var multiplier = $('#filter_multiplier').val();
+
+            // Handle default multiplier
+            if(multiplier === "" || multiplier === null) multiplier = 2;
+
+            // Buat URL Query String secara manual
+            var url = "{{ route('db.order.export_pdf') }}?" +
+                $.param({
+                    unit: unit,
+                    bidang: bidang,
+                    kategori: kategori,
+                    barang_nama: barang_nama,
+                    multiplier: multiplier
+                });
+
+            // Buka di tab baru / download
+            window.open(url, '_blank');
         });
     });
 </script>

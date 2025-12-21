@@ -1085,8 +1085,16 @@ class DatabaseController extends Controller
 
     public function order_data(Request $request)
     {
+        // 0. Ambil Input Multiplier (Default 2 jika kosong)
+        $multiplier = $request->input('multiplier');
+        if(is_null($multiplier) || $multiplier === '') {
+            $multiplier = 2;
+        } else {
+            // Pastikan angka untuk keamanan
+            $multiplier = (float) $multiplier;
+        }
 
-       // 1. Definisikan Subquery untuk 'stok_ready'
+        // 1. Definisikan Subquery untuk 'stok_ready'
         $stokSubquery = DB::table('barang_stok_hargas')
             ->selectRaw('COALESCE(SUM(stok), 0)')
             ->whereColumn('barang_id', 'barangs.id')
@@ -1112,7 +1120,6 @@ class DatabaseController extends Controller
         if ($request->filled('bidang')) {
             $query->where('barang_type_id', $request->input('bidang'));
         }
-
         if ($request->filled('kategori')) {
             $query->where('barang_kategori_id', $request->input('kategori'));
         }
@@ -1120,8 +1127,10 @@ class DatabaseController extends Controller
             $query->where('barang_nama_id', $request->input('barang_nama'));
         }
 
-        // 5. FILTER KHUSUS
-        $query->havingRaw('((avg_sales * 2) - stok_ready) >= 1');
+        // 5. FILTER KHUSUS (Menggunakan Variabel $multiplier)
+        // Rumus: (Avg * Multiplier) - Stok > 0
+        // Karena kita inject variable ke string SQL, pastikan variable aman (sudah di-cast float diatas)
+        $query->havingRaw("((avg_sales * {$multiplier}) - stok_ready) >= 1");
 
         // 6. DATATABLES CONFIG
         return DataTables::of($query)
@@ -1129,34 +1138,91 @@ class DatabaseController extends Controller
             ->addColumn('barang_ppn', function ($row) {
                 return $row->jenis == 1 ? 'Ya' : 'Tidak';
             })
-
-            // --- PERBAIKAN DI SINI ---
             // Kolom Stok
             ->addColumn('stok_info', function ($row) {
                 return number_format($row->stok_ready, 0, ',', '.');
             })
-            // Tambahkan ini agar bisa di-sort berdasarkan hasil subquery
             ->orderColumn('stok_info', 'stok_ready $1')
-            // -------------------------
 
+            // Kolom Avg
             ->addColumn('avg_penjualan', function ($row) {
                 return number_format($row->avg_sales, 0, ',', '.');
             })
             ->orderColumn('avg_penjualan', 'avg_sales $1')
 
-            ->addColumn('saran_order', function ($row) {
-                return number_format($row->avg_sales * 2, 0, ',', '.');
+            // Kolom Saran Order (Dinamis berdasarkan multiplier)
+            ->addColumn('saran_order', function ($row) use ($multiplier) {
+                return number_format($row->avg_sales * $multiplier, 0, ',', '.');
             })
-            ->orderColumn('saran_order', '(avg_sales * 2) $1')
+            ->orderColumn('saran_order', "(avg_sales * {$multiplier}) $1")
 
-            ->addColumn('order_qty', function ($row) {
-                $qty = ($row->avg_sales * 2) - $row->stok_ready;
+            // Kolom Order Qty (Dinamis berdasarkan multiplier)
+            ->addColumn('order_qty', function ($row) use ($multiplier) {
+                $qty = ($row->avg_sales * $multiplier) - $row->stok_ready;
                 return number_format($qty, 0, ',', '.');
             })
-            ->orderColumn('order_qty', '((avg_sales * 2) - stok_ready) $1')
+            ->orderColumn('order_qty', "((avg_sales * {$multiplier}) - stok_ready) $1")
 
             ->rawColumns(['nama_barang'])
             ->make(true);
+    }
+
+    public function order_export_pdf(Request $request)
+    {
+        // --- LOGIKA QUERY SAMA PERSIS DENGAN ORDER_DATA ---
+        // Kita ulangi query builder disini agar hasil PDF sama persis dengan tabel
+
+        $multiplier = $request->input('multiplier');
+        if(is_null($multiplier) || $multiplier === '') {
+            $multiplier = 2;
+        } else {
+            $multiplier = (float) $multiplier;
+        }
+
+        $stokSubquery = DB::table('barang_stok_hargas')
+            ->selectRaw('COALESCE(SUM(stok), 0)')
+            ->whereColumn('barang_id', 'barangs.id')
+            ->where('stok', '>', 0);
+
+        $avgSubquery = DB::table('invoice_jual_details as ijd')
+            ->join('invoice_juals as ij', 'ijd.invoice_jual_id', '=', 'ij.id')
+            ->whereColumn('ijd.barang_id', 'barangs.id')
+            ->where('ij.void', 0)
+            ->selectRaw('COALESCE(SUM(ijd.jumlah), 0) / GREATEST(TIMESTAMPDIFF(MONTH, MIN(ij.created_at), NOW()), 1)');
+
+        $query = Barang::with(['unit', 'type', 'barang_nama', 'satuan', 'kategori'])
+            ->select('barangs.*')
+            ->selectSub($stokSubquery, 'stok_ready')
+            ->selectSub($avgSubquery, 'avg_sales');
+
+        if ($request->filled('unit')) {
+            $query->where('barang_unit_id', $request->input('unit'));
+        }
+        if ($request->filled('bidang')) {
+            $query->where('barang_type_id', $request->input('bidang'));
+        }
+        if ($request->filled('kategori')) {
+            $query->where('barang_kategori_id', $request->input('kategori'));
+        }
+        if ($request->filled('barang_nama')) {
+            $query->where('barang_nama_id', $request->input('barang_nama'));
+        }
+
+        $query->havingRaw("((avg_sales * {$multiplier}) - stok_ready) >= 1");
+
+        // Urutkan default (misal berdasarkan Nama Barang atau Order Qty terbesar)
+        $query->orderByRaw("((avg_sales * {$multiplier}) - stok_ready) DESC");
+
+        // Ambil Data (Get, bukan DataTables)
+        $data = $query->get();
+
+        // Load View PDF
+        $pdf = Pdf::loadView('db.order.pdf', compact('data', 'multiplier'));
+
+        // Set Paper Size (Optional)
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan_saran_order.pdf');
     }
 
 
