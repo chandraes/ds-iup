@@ -642,32 +642,7 @@ Route::group(['middleware' => ['auth']], function () {
             });
         });
 
-        Route::prefix('billing/form-beli')->group(function() {
-            Route::get('/', [App\Http\Controllers\FormBeliController::class, 'index'])->name('billing.form-beli');
-                Route::post('/store', [FormBeliController::class, 'store'])->name('billing.form-beli.store');
-                Route::post('/delete/{keranjang}', [FormBeliController::class, 'delete'])->name('billing.form-beli.delete');
-                Route::get('/detail/{keranjang}', [FormBeliController::class, 'detail'])->name('billing.form-beli.detail');
 
-                Route::get('/detail/{keranjang}/data', [FormBeliController::class, 'detail_datatable'])->name('billing.form-beli.detail.data');
-                Route::post('/detail/{keranjang}/store', [FormBeliController::class, 'detail_store'])->name('billing.form-beli.detail.store');
-                Route::post('/detail/{keranjang}/empty', [FormBeliController::class, 'detail_empty'])->name('billing.form-beli.detail.empty');
-                Route::post('/detail/{keranjang}/lanjutkan', [FormBeliController::class, 'detail_lanjutkan'])->name('billing.form-beli.detail.lanjutkan');
-
-                Route::get('/detail/{keranjang}/preview', [FormBeliController::class, 'detail_preview'])->name('billing.form-beli.detail.preview');
-                Route::post('/detail/preview/delete', [FormBeliController::class, 'detail_preview_delete'])->name('billing.form-beli.detail.preview.delete');
-
-                // Route::get('/get-kategori', [App\Http\Controllers\FormBeliController::class, 'getKategori'])->name('billing.form-beli.get-kategori');
-                // Route::get('/get-barang', [App\Http\Controllers\FormBeliController::class, 'getBarang'])->name('billing.form-beli.get-barang');
-                // Route::get('/get-merk', [App\Http\Controllers\FormBeliController::class, 'getMerk'])->name('billing.form-beli.get-merk');
-                // Route::get('/get-kode', [App\Http\Controllers\FormBeliController::class, 'getKode'])->name('billing.form-beli.get-kode');
-                // Route::get('/get-supplier', [App\Http\Controllers\FormBeliController::class, 'getSupplier'])->name('billing.form-beli.get-supplier');
-
-                // Route::prefix('keranjang')->group(function () {
-                //     Route::post('/empty', [App\Http\Controllers\FormBeliController::class, 'keranjang_empty'])->name('billing.form-beli.keranjang.empty');
-                //     Route::post('/store', [App\Http\Controllers\FormBeliController::class, 'keranjang_store'])->name('billing.form-beli.keranjang.store');
-                //     Route::delete('/delete/{keranjang}', [App\Http\Controllers\FormBeliController::class, 'keranjang_delete'])->name('billing.form-beli.keranjang.delete');
-                // });
-        });
     });
 
 
@@ -705,6 +680,33 @@ Route::group(['middleware' => ['auth']], function () {
                     Route::get('/{keranjang}', [BillingController::class, 'otorisasi_pembelian_keranjang'])->name('billing.otorisasi-pembelian.keranjang');
                     // Route::post('/checkout', [BillingController::class, 'otorisasi_pembelian_keranjang_checkout'])->name('billing.otorisasi-pembelian.keranjang.checkout');
                 });
+            });
+
+            Route::prefix('form-beli')->group(function() {
+                Route::get('/', [FormBeliController::class, 'index'])->name('billing.form-beli');
+                Route::post('/store', [FormBeliController::class, 'store'])->name('billing.form-beli.store');
+                Route::post('/delete/{keranjang}', [FormBeliController::class, 'delete'])->name('billing.form-beli.delete');
+                Route::get('/detail/{keranjang}', [FormBeliController::class, 'detail'])->name('billing.form-beli.detail');
+
+                Route::get('/detail/{keranjang}/data', [FormBeliController::class, 'detail_datatable'])->name('billing.form-beli.detail.data');
+                Route::post('/detail/{keranjang}/store', [FormBeliController::class, 'detail_store'])->name('billing.form-beli.detail.store');
+                Route::post('/detail/{keranjang}/empty', [FormBeliController::class, 'detail_empty'])->name('billing.form-beli.detail.empty');
+                Route::post('/detail/{keranjang}/lanjutkan', [FormBeliController::class, 'detail_lanjutkan'])->name('billing.form-beli.detail.lanjutkan');
+
+                Route::get('/detail/{keranjang}/preview', [FormBeliController::class, 'detail_preview'])->name('billing.form-beli.detail.preview');
+                Route::post('/detail/preview/delete', [FormBeliController::class, 'detail_preview_delete'])->name('billing.form-beli.detail.preview.delete');
+
+                // Route::get('/get-kategori', [App\Http\Controllers\FormBeliController::class, 'getKategori'])->name('billing.form-beli.get-kategori');
+                // Route::get('/get-barang', [App\Http\Controllers\FormBeliController::class, 'getBarang'])->name('billing.form-beli.get-barang');
+                // Route::get('/get-merk', [App\Http\Controllers\FormBeliController::class, 'getMerk'])->name('billing.form-beli.get-merk');
+                // Route::get('/get-kode', [App\Http\Controllers\FormBeliController::class, 'getKode'])->name('billing.form-beli.get-kode');
+                // Route::get('/get-supplier', [App\Http\Controllers\FormBeliController::class, 'getSupplier'])->name('billing.form-beli.get-supplier');
+
+                // Route::prefix('keranjang')->group(function () {
+                //     Route::post('/empty', [App\Http\Controllers\FormBeliController::class, 'keranjang_empty'])->name('billing.form-beli.keranjang.empty');
+                //     Route::post('/store', [App\Http\Controllers\FormBeliController::class, 'keranjang_store'])->name('billing.form-beli.keranjang.store');
+                //     Route::delete('/delete/{keranjang}', [App\Http\Controllers\FormBeliController::class, 'keranjang_delete'])->name('billing.form-beli.keranjang.delete');
+                // });
             });
 
             Route::prefix('form-barang-retur')->group(function () {
@@ -853,8 +855,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/store', [BillingController::class, 'form_dividen_store'])->name('billing.form-dividen.store');
             });
 
-            Route::get('form-beli/', [App\Http\Controllers\FormBeliController::class, 'keranjang'])->name('billing.form-beli.keranjang');
-            Route::post('form-beli/keranjang/checkout', [App\Http\Controllers\FormBeliController::class, 'keranjang_checkout'])->name('billing.form-beli.keranjang.checkout');
+            // Route::get('form-beli/', [App\Http\Controllers\FormBeliController::class, 'keranjang'])->name('billing.form-beli.keranjang');
+            // Route::post('form-beli/keranjang/checkout', [App\Http\Controllers\FormBeliController::class, 'keranjang_checkout'])->name('billing.form-beli.keranjang.checkout');
 
             Route::prefix('form-jual')->group(function () {
                 Route::get('/', [App\Http\Controllers\FormJualController::class, 'index'])->name('billing.form-jual');
