@@ -6,7 +6,7 @@
         <div class="col-md-12">
             <div class="row justify-content-center">
                 <div class="col-md-12 text-center">
-                    <h1><u>FORM BARANG RETUR</u></h1>
+                    <h1><u>FORM BELI</u></h1>
                 </div>
             </div>
             @include('swal')
@@ -95,7 +95,7 @@
 
                             <div class="col-md-4">
                                 <label for="kas_ppn" class="form-label fw-bold">
-                                    <i class="fa fa-percent me-1"></i> Jenis Kas PPN
+                                    Jenis Kas
                                 </label>
                                 <select class="form-select" name="kas_ppn" id="kas_ppn" required>
                                     <option value="">Pilih Jenis Kas</option>

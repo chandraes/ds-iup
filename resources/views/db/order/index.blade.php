@@ -20,9 +20,9 @@
                 <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="20">
                 <span>Dashboard</span>
             </a>
-            <a href="{{ route('db') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
-                <img src="{{ asset('images/database.svg') }}" alt="database" width="20">
-                <span>Database</span>
+            <a href="{{ route('statistik') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                <img src="{{ asset('images/statistik.svg') }}" alt="database" width="20">
+                <span>Statistik</span>
             </a>
         </div>
     </div>

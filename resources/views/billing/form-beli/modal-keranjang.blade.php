@@ -38,7 +38,7 @@
                         </div>
 
                         <div class="col-12">
-                            <label for="jumlah" class="form-label fw-bold">Masukan Jumlah Retur</label>
+                            <label for="jumlah" class="form-label fw-bold">Masukan Jumlah Barang</label>
                             <div class="input-group mb-3">
                                 <input type="text" class="form-control text-end" name="qty" id="jumlah" required
                                     data-thousands="." placeholder="0" style="font-size: 1.1rem;">

@@ -642,7 +642,7 @@ Route::group(['middleware' => ['auth']], function () {
             });
         });
 
-        Route::prefix('billing.form-beli')->group(function() {
+        Route::prefix('billing/form-beli')->group(function() {
             Route::get('/', [App\Http\Controllers\FormBeliController::class, 'index'])->name('billing.form-beli');
                 Route::post('/store', [FormBeliController::class, 'store'])->name('billing.form-beli.store');
                 Route::post('/delete/{keranjang}', [FormBeliController::class, 'delete'])->name('billing.form-beli.delete');
