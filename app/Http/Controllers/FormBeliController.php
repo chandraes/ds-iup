@@ -215,7 +215,7 @@ class FormBeliController extends Controller
             return redirect()->back()->with('error', $message);
         }
 
-        $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('Y-m-d') : '';
+        $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('d-m-Y') : '';
 
 
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;

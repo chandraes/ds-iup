@@ -1288,7 +1288,7 @@ class BillingController extends Controller
             return redirect()->back()->with('error', $message);
         }
 
-        $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('Y-m-d') : '';
+        $jatuhTempo = $supplier->pembayaran == 2 ? Carbon::now()->addDays($supplier->tempo_hari)->format('d-m-Y') : '';
 
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
@@ -1320,7 +1320,7 @@ class BillingController extends Controller
             'jatuh_tempo' => 'required_if:tempo,1',
         ]);
 
-        $db = new Keranjang;
+        $db = new KeranjangBeli();
 
         $res = $db->checkout_otorisasi($data);
 

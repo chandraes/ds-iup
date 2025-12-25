@@ -6,7 +6,7 @@
         <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-2">
-                    <li class="breadcrumb-item"><a href="{{route('billing.form-beli.detail', $b->id)}}"
+                    <li class="breadcrumb-item"><a href="{{route('billing.otorisasi-pembelian', ['asistenId'=>$b->user_id])}}"
                             class="text-decoration-none">Detail Beli</a></li>
                     <li class="breadcrumb-item active">Keranjang</li>
                 </ol>
@@ -16,7 +16,7 @@
                     <h1 class="h3 fw-bold text-dark mb-0">KONFIRMASI PESANAN</h1>
                     <p class="text-muted mb-0">Tinjau item dan detail pembayaran sebelum menyelesaikan transaksi.</p>
                 </div>
-                <a href="{{route('billing.otorisasi-pembelian', ['asistenId' => $asistenId ])}}" class="btn btn-outline-secondary rounded-pill">
+                <a href="{{route('billing.otorisasi-pembelian', ['asistenId'=>$b->user_id])}}" class="btn btn-outline-secondary rounded-pill">
                     <i class="fa fa-arrow-left me-2"></i> Kembali
                 </a>
             </div>
@@ -386,6 +386,10 @@
         numeralDecimalMark: ',',
         delimiter: '.',
     });
+
+     flatpickr("#jatuh_tempo", {
+                    dateFormat: "d-m-Y",
+                });
     @endif
 
     // Helper untuk membersihkan dan mengkonversi angka

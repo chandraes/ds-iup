@@ -386,6 +386,10 @@
         numeralDecimalMark: ',',
         delimiter: '.',
     });
+
+     flatpickr("#jatuh_tempo", {
+                    dateFormat: "d-m-Y",
+                });
     @endif
 
     // Helper untuk membersihkan dan mengkonversi angka
