@@ -12,18 +12,18 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
-
-
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('home') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
                 <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="20">
                 <span>Dashboard</span>
             </a>
+            @if (auth()->user()->role != 'asisten-admin')
             <a href="{{ route('statistik') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
                 <img src="{{ asset('images/statistik.svg') }}" alt="database" width="20">
                 <span>Statistik</span>
             </a>
+            @endif
         </div>
     </div>
 

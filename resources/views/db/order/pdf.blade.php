@@ -93,7 +93,7 @@
                 </td>
                 <td class="text-center">{{ $item->satuan->nama ?? '-' }}</td>
                 <td class="text-center">{{ number_format($item->stok_ready, 0, ',', '.') }}</td>
-                <td class="text-center">{{ number_format($item->avg_sales, 1, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($item->avg_sales, 0, ',', '.') }}</td>
                 <td class="text-center">{{ number_format($saran, 0, ',', '.') }}</td>
                 <td class="text-center"><strong>{{ number_format($order, 0, ',', '.') }}</strong></td>
             </tr>

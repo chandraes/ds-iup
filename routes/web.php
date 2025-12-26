@@ -146,11 +146,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['role:su,admin,user']], function () {
 
-        Route::prefix('db')->group(function () {
-            Route::get('/order', [DatabaseController::class, 'order'])->name('db.order');
-            Route::get('/order/data', [DatabaseController::class, 'order_data'])->name('db.order.data');
-            Route::get('/order/export-pdf', [DatabaseController::class, 'order_export_pdf'])->name('db.order.export_pdf');
-        });
+
 
         Route::prefix('checklist-sales')->group(function () {
             Route::get('/', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
@@ -640,6 +636,10 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_all'])->name('db.stok-all');
                 Route::post('/harga-ajuan/{barang}', [BarangController::class, 'harga_ajuan_store'])->name('db.stok-all.harga-ajuan-store');
             });
+
+            Route::get('/order', [DatabaseController::class, 'order'])->name('db.order');
+            Route::get('/order/data', [DatabaseController::class, 'order_data'])->name('db.order.data');
+            Route::get('/order/export-pdf', [DatabaseController::class, 'order_export_pdf'])->name('db.order.export_pdf');
         });
 
           Route::prefix('billing/form-beli')->group(function() {
