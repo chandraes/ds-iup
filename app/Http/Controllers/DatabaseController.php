@@ -1169,6 +1169,12 @@ class DatabaseController extends Controller
 
     public function order_export_pdf(Request $request)
     {
+        $request->validate([
+            'unit' => 'required|exists:barang_units,id'
+        ], [
+            'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
+            'unit.exists' => 'Perusahaan yang dipilih tidak valid'
+        ]);
         // --- LOGIKA QUERY SAMA PERSIS DENGAN ORDER_DATA ---
         // Kita ulangi query builder disini agar hasil PDF sama persis dengan tabel
 
@@ -1192,6 +1198,7 @@ class DatabaseController extends Controller
 
         $query = Barang::with(['unit', 'type', 'barang_nama', 'satuan', 'kategori'])
             ->select('barangs.*')
+            ->orderBy('barangs.barang_nama_id', 'asc')
             ->selectSub($stokSubquery, 'stok_ready')
             ->selectSub($avgSubquery, 'avg_sales');
 
@@ -1216,13 +1223,18 @@ class DatabaseController extends Controller
         // Ambil Data (Get, bukan DataTables)
         $data = $query->get();
 
+        if (count($data) == 0) {
+            return redirect()->back()->with('error', 'Tidak ada data untuk diekspor. Silahkan sesuaikan filter Anda.');
+        }
+
+        $perusahaan = BarangUnit::find($request->input('unit'));
         // Load View PDF
-        $pdf = Pdf::loadView('db.order.pdf', compact('data', 'multiplier'));
+        $pdf = Pdf::loadView('db.order.pdf', compact('data', 'multiplier', 'perusahaan'));
 
         // Set Paper Size (Optional)
         $pdf->setPaper('a4', 'landscape');
 
-        return $pdf->download('laporan_saran_order.pdf');
+        return $pdf->stream('laporan_saran_order.pdf');
     }
 
 
