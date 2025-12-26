@@ -1270,11 +1270,17 @@ class BillingController extends Controller
 
         $keranjang = KeranjangBeli::where('user_id', $user->id)
                     ->withCount('details')
+                    ->withSum('details', 'total')
                     ->get();
+
+        // dd($keranjang);
+
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         return view('billing.otorisasi-beli.index', [
             'data' => $keranjang,
-            'user' => $user
+            'user' => $user,
+            'ppnRate' => $ppnRate,
         ]);
     }
 

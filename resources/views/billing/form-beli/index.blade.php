@@ -45,7 +45,12 @@
                                 <span class="badge bg-info text-dark me-1">{{ $d->sistem_pembayaran_text }}</span>
                                 <span class="badge bg-secondary">{{ $d->kas_ppn_text }}</span>
                             </p>
-
+                             <p class="card-text mb-1">
+                                @php
+                                    $total = $d->kas_ppn == 1 ? floor($d->details_sum_total * ($ppnRate/100)) + $d->details_sum_total : $d->details_sum_total;
+                                @endphp
+                                Total Pembelian {{$d->kas_ppn == 1 ? '(Incl. PPN)' : ''}}: <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong>
+                            </p>
                             <div class="mt-3 d-flex justify-content-between align-items-center">
                                 <form action="{{ route('billing.form-beli.delete', $d->id) }}" method="POST"
                                     class="d-flex gap-2 returDeleteForm" id="returDelete-{{ $d->id }}">

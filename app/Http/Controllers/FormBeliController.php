@@ -22,10 +22,11 @@ class FormBeliController extends Controller
 
     public function index()
     {
-        $data = KeranjangBeli::where('user_id', Auth::user()->id)->withCount('details')->get();
+        $data = KeranjangBeli::where('user_id', Auth::user()->id)->withCount('details')->withSum('details', 'total')->get();
         $supplier = BarangUnit::select('id', 'nama')->get();
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
-        return view('billing.form-beli.index', compact('data', 'supplier'));
+        return view('billing.form-beli.index', compact('data', 'supplier', 'ppnRate'));
     }
 
     public function store(Request $request)
