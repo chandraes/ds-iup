@@ -80,7 +80,7 @@ class KeranjangBeli extends Model
         $data['sisa'] = $data['tempo'] == 1 ? $data['total'] - $data['dp'] - $data['dp_ppn'] : 0;
 
         if ($data['tempo'] == 1 && $data['jatuh_tempo']) {
-            $data['jatuh_tempo'] = Carbon::createFromFormat('Y-m-d', $data['jatuh_tempo'])->format('Y-m-d');
+            $data['jatuh_tempo'] = Carbon::parse($data['jatuh_tempo'])->format('Y-m-d');
         } else {
             $data['jatuh_tempo'] = null;
         }
@@ -257,7 +257,8 @@ class KeranjangBeli extends Model
                             "Grand Total Invoice Non PPn: \n".
                             'Rp. '.number_format($grandTotalNonPpn, 0, ',', '.')."\n\n";
 
-                $jatuhTempo = Carbon::createFromFormat('Y-m-d', $data['jatuh_tempo'])->format('d-m-Y');
+                $jatuhTempo = Carbon::parse($data['jatuh_tempo'])->format('d-m-Y');
+                // Carbon::createFromFormat('Y-m-d', $data['jatuh_tempo'])->format('d-m-Y');
                 $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
                         "*FORM BELI BARANG*\n".
                         "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
