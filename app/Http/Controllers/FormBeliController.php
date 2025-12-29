@@ -81,6 +81,7 @@ class FormBeliController extends Controller
             // TIPE 2 (Dari Konsumen) -> Tampilkan daftar BARANG (Produk)
         $query = Barang::with(['barang_nama', 'satuan', 'kategori'])
             ->select('barangs.*')
+            ->withHbLama()
             ->where('barangs.jenis', $jenis)
             ->where('barangs.barang_unit_id', $keranjang->barang_unit_id)
             ->withSum(['stok_harga' => function($q) {
@@ -109,7 +110,8 @@ class FormBeliController extends Controller
 
                 $rowData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
                 $barangId = $row->id;
-
+                $hargaLama = $row->hb_lama ?? 0;
+                $formatedHargaLama = number_format($hargaLama, 0, ',', '.');
                 // 2. Cek apakah barang ini ada di map keranjang kita
                 if ($keranjangMap->has($barangId)) {
 
@@ -117,6 +119,7 @@ class FormBeliController extends Controller
                     $detail = $keranjangMap->get($barangId);
                     $harga = $detail['harga'];
                     $qty = $detail['qty'];
+
                     $detailId = $detail['id'];
                     $qtyFormatted = number_format($qty, 0, ',', '.');
                     $satuan = $row->satuan->nama ?? 'PCS';
@@ -126,6 +129,7 @@ class FormBeliController extends Controller
                         ' data-row=\'' . $rowData . '\' '.
                         ' data-qty="' . $qty . '" '. // <= Kirim Qty
                         ' data-harga="'. $harga .'" '.
+                        ' data-harga-lama="'. $formatedHargaLama .'" '.
                         ' data-detail-id="' . $detailId . '">'. // <= Kirim Detail ID
                         $qtyFormatted . ' ' . $satuan .
                         '</button>';
@@ -139,6 +143,7 @@ class FormBeliController extends Controller
                         ' data-row=\'' . $rowData . '\' '.
                         ' data-qty="0" '. // <= Qty adalah 0
                         ' data-harga="0" '. // <= Qty adalah 0
+                        ' data-harga-lama="'. $formatedHargaLama .'" '.
                         ' data-detail-id="0">'. // <= Detail ID adalah 0
                         'Pilih'.
                         '</button>';

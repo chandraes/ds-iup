@@ -1,6 +1,6 @@
 <div class="modal fade" id="keranjangModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
     role="dialog" aria-labelledby="keranjangTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="keranjangTitle">
@@ -48,7 +48,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-12">
+                        <div class="col-6">
                             <label for="jumlah" class="form-label fw-bold">Harga Satuan</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="jumlah_satuan_group">
@@ -58,7 +58,16 @@
                                     data-thousands="." placeholder="0" style="font-size: 1.1rem;">
                             </div>
                         </div>
-
+                         <div class="col-6">
+                            <label for="harga_lama" class="form-label fw-bold">Harga Satuan Pembelian Sebelumnya</label>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="harga_satuan_group">
+                                    Rp
+                                </span>
+                                <input type="text" class="form-control text-end" name="harga_lama" id="harga_lama" disabled
+                                    data-thousands="." placeholder="0" style="font-size: 1.1rem;">
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>

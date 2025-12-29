@@ -212,13 +212,14 @@
             var qty = $(this).data('qty'); // data-qty (dari tombol)
             var harga = $(this).data('harga'); // data-harga (dari tombol)
             var detailId = $(this).data('detail-id'); // data-detail-id (dari tombol)
+            var hargaLama = $(this).data('harga-lama'); // data-harga-lama (dari tombol)
 
             // 2. Isi info barang (Nama, Stok, Satuan, ID Barang)
             document.getElementById('jumlah_satuan').innerText = data.satuan ? data.satuan.nama : '';
             document.getElementById('barang_id').value = data.id;
             document.getElementById('stok_tersedia').textContent = data.nf_stok;
             document.getElementById('nm_barang_merk_retail').value = data.barang_nama.nama + ', ' + data.kode + ', ' + data.merk;
-
+            document.getElementById('harga_lama').value = hargaLama;
             // 3. Kosongkan input
             document.getElementById('jumlah').value = '';
             document.getElementById('detail_id').value = '';

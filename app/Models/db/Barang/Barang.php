@@ -153,4 +153,15 @@ class Barang extends Model
 
         return $query;
     }
+
+    public function scopeWithHbLama($query)
+    {
+        return $query->addSelect(['hb_lama' => function ($subquery) {
+            $subquery->select('harga_beli')
+                    ->from('barang_stok_hargas')
+                    ->whereColumn('barang_id', 'barangs.id')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(1);
+        }]);
+    }
 }
