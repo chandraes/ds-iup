@@ -80,6 +80,7 @@ class FormBeliController extends Controller
         $jenis = $keranjang->kas_ppn == 1 ? 1 : 2;
             // TIPE 2 (Dari Konsumen) -> Tampilkan daftar BARANG (Produk)
         $query = Barang::with(['barang_nama', 'satuan', 'kategori'])
+            ->where('barangs.is_active', 1)
             ->select('barangs.*')
             ->withHbLama()
             ->where('barangs.jenis', $jenis)

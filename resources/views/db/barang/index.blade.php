@@ -38,55 +38,81 @@
 
 
 <div class="container-fluid mt-3 table-responsive ">
-    <form method="GET" action="{{ route('db.barang') }}">
-        <div class="row">
-            <div class="col-md-2">
-                <label for="unit">Kategori Perusahaan</label>
-                <select name="unit" id="filter_unit" class="form-select">
-                    <option value=""> ---------- </option>
-                    @foreach($units as $unit)
-                    <option value="{{ $unit->id }}" {{ request('unit')==$unit->id ? 'selected' : '' }}>
-                        {{ $unit->nama }}
-                    </option>
-                    @endforeach
-                </select>
+    <div class="row justify-content-center mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center"
+                 data-bs-toggle="collapse" href="#filterCollapse" role="button" aria-expanded="true" style="cursor: pointer;">
+                <h6 class="mb-0 fw-bold text-secondary"><i class="fa fa-filter me-2 text-primary"></i>Filter Data Barang</h6>
+                <i class="fa fa-chevron-down text-muted" style="font-size: 0.8rem;"></i>
             </div>
-            <div class="col-md-2">
-                <label for="type">Bidang</label>
-                <select name="type" class="form-select" id="filter_type">
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="kategori">Kelompok Barang</label>
-                <select name="kategori" id="filter_kategori" class="form-select">
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="nama">Nama Barang</label>
-                <select class="form-select" name="barang_nama" id="filter_barang_nama">
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="nama">PPN/Non PPN</label>
-                <select class="form-select" name="jenis" id="filter_jenis">
-                    <option value=""> ---------- </option>
-                    <option value="1" >Barang PPN</option>
-                    <option value="2" >Barang Non PPN</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="nama">
-                    ---------------
-                </label>
-                    <br>
-                    <a href="{{ route('db.barang') }}" class="btn btn-danger">Reset Filter</a>
 
+            <div class="collapse show" id="filterCollapse">
+                <div class="card-body bg-light bg-opacity-25">
+                    <form id="filterForm">
+                        <div class="row g-3">
+
+                            <div class="col-md-8 col-lg-9">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Nama Barang</label>
+                                <select class="form-select" name="barang_nama" id="filter_barang_nama"></select>
+                            </div>
+
+                            <div class="col-md-4 col-lg-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Status Barang</label>
+                                <select class="form-select" name="status" id="filter_status">
+                                    <option value="all" selected>Semua Status</option>
+                                    <option value="1">Aktif</option>
+                                    <option value="0">Non Aktif</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <hr class="my-2 text-muted opacity-25">
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Kategori Perusahaan</label>
+                                <select name="unit" id="filter_unit" class="form-select">
+                                    <option value="">Semua Perusahaan</option>
+                                    @foreach($units as $unit)
+                                    <option value="{{ $unit->id }}" {{ request('unit')==$unit->id ? 'selected' : '' }}>
+                                        {{ $unit->nama }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Bidang</label>
+                                <select name="type" class="form-select" id="filter_type"></select>
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Kelompok Barang</label>
+                                <select name="kategori" id="filter_kategori" class="form-select"></select>
+                            </div>
+
+                            <div class="col-md-6 col-lg-3">
+                                <label class="form-label fw-bold small text-uppercase text-muted">PPN/Non PPN</label>
+                                <select class="form-select" name="jenis" id="filter_jenis">
+                                    <option value="">Semua Jenis</option>
+                                    <option value="1">Barang PPN</option>
+                                    <option value="2">Barang Non PPN</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 text-end mt-3">
+                                <button type="button" id="resetFilter" class="btn btn-danger px-4 shadow-sm">
+                                    <i class="fa fa-refresh me-1"></i> Reset Filter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-        <div class="row mt-3">
-
-        </div>
-    </form>
+    </div>
+</div>
     <div class="table-container mt-4">
         <table class="table table-bordered" id="data" style="font-size: 12px">
             <thead class="table-success">
@@ -95,9 +121,8 @@
                     <th class="text-center align-middle">Perusahaan</th>
                     <th class="text-center align-middle">Bidang</th>
                     <th class="text-center align-middle">Kelompok<br>Barang</th>
-                  <th class="text-center align-middle">Nama<br>Barang</th>
-
-                     <th class="text-center align-middle">Kode<br>Barang</th>
+                    <th class="text-center align-middle">Nama<br>Barang</th>
+                    <th class="text-center align-middle">Kode<br>Barang</th>
                     <th class="text-center align-middle">Merk<br>Barang</th>
                     <th class="text-center align-middle">Satuan</th>
                     <th class="text-center align-middle">Subpg</th>
@@ -106,6 +131,7 @@
                     <th class="text-center align-middle">Foto</th>
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
+                    <th class="text-center align-middle">Status</th>
                     <th class="text-center align-middle">Action</th>
                 </tr>
             </thead>
@@ -143,8 +169,12 @@
             type: $('#filter_type').val(),
             kategori: $('#filter_kategori').val(),
             barang_nama: $('#filter_barang_nama').val(),
-            jenis: $('#filter_jenis').val()
+            jenis: $('#filter_jenis').val(),
+            status: $('#filter_status').val()
         };
+        if (filterState.status) {
+            $('#filter_status').val(filterState.status).trigger('change');
+        }
         sessionStorage.setItem('barang_filter_state', JSON.stringify(filterState));
     });
 
@@ -169,7 +199,7 @@
         const filterState = {
             unit: $('#filter_unit').val(),
             jenis: $('#filter_jenis').val(),
-
+            status: $('#filter_status').val(),
             // Data AJAX
             type: typeData.id,
             type_text: typeData.text,
@@ -178,7 +208,99 @@
             barang_nama: barangNamaData.id,
             barang_nama_text: barangNamaData.text,
         };
+        if (filterState.status) {
+            $('#filter_status').val(filterState.status).trigger('change');
+        }
         sessionStorage.setItem('barang_filter_state', JSON.stringify(filterState));
+    });
+
+    $(document).on('click', '.toggle-status-btn', function(e) {
+        e.preventDefault();
+
+        let btn = $(this);
+        let icon = btn.find('i');
+        // Ambil elemen teks label (sibling dari tombol <a>)
+        let label = btn.siblings('.status-label');
+
+        let id = btn.data('id');
+        let currentStatus = btn.data('status'); // 1 = aktif, 0 = non-aktif
+
+        let actionText = currentStatus == 1 ? "menonaktifkan" : "mengaktifkan";
+        let confirmColor = currentStatus == 1 ? '#d33' : '#3085d6';
+
+        Swal.fire({
+            title: 'Ubah Status?',
+            text: `Apakah Anda yakin ingin ${actionText} barang ini?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: confirmColor,
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, ubah!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ url('db/barang/toggle-status') }}/" + id,
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    beforeSend: function() {
+                        btn.css('opacity', '0.5');
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: response.message,
+                            timer: 1000,
+                            showConfirmButton: false
+                        });
+
+                        // --- UPDATE VISUAL SECARA DINAMIS ---
+
+                        if (response.new_status == true) {
+                            // KONDISI: BARU SAJA DIAKTIFKAN
+
+                            // 1. Update Icon
+                            icon.removeClass('fa-toggle-off text-danger').addClass('fa-toggle-on text-success');
+
+                            // 2. Update Label Teks & Warna
+                            label.text('Aktif')
+                                .removeClass('text-danger')
+                                .addClass('text-success');
+
+                            // 3. Update Data Attribute
+                            btn.data('status', 1);
+
+                        } else {
+                            // KONDISI: BARU SAJA DINONAKTIFKAN
+
+                            // 1. Update Icon
+                            icon.removeClass('fa-toggle-on text-success').addClass('fa-toggle-off text-danger');
+
+                            // 2. Update Label Teks & Warna
+                            label.text('Non Aktif')
+                                .removeClass('text-success')
+                                .addClass('text-danger');
+
+                            // 3. Update Data Attribute
+                            btn.data('status', 0);
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan saat mengubah status.'
+                        });
+                    },
+                    complete: function() {
+                        btn.css('opacity', '1');
+                    }
+                });
+            }
+        });
     });
 // Restore state setelah page load
 $(document).ready(function() {
@@ -247,6 +369,7 @@ $(document).ready(function() {
                 d.jenis = $('#filter_jenis').val();
                 d.type = $('#filter_type').val();
                 d.unit = $('#filter_unit').val();
+                d.status = $('#filter_status').val();
             }
         },
         scrollY: '70vh', // tinggi area scroll, bisa disesuaikan
@@ -299,6 +422,13 @@ $(document).ready(function() {
                 render: function(data, type, row) {
                     return data == 2 ? '<i class="fa fa-check text-success"></i>' : '';
                 }
+            },
+            {
+                data: 'status',
+                name: 'is_active',
+                className: 'text-center align-middle',
+                orderable: true,
+                searchable: false
             },
             { data: 'aksi', name: 'aksi', orderable: false, searchable: false, className: 'text-center align-middle text-wrap' }
         ]
@@ -423,10 +553,19 @@ $(document).ready(function() {
         table.draw();
     });
 
+    $('#filter_status').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        minimumResultsForSearch: Infinity // Sembunyikan search box karena opsi cuma sedikit
+    }).on('change', function () {
+        table.draw(); // Reload tabel saat status berubah
+    });
+
    $('#resetFilter').on('click', function () {
-        $('#filter_barang_nama, #filter_kategori, #filter_jenis')
-            .val('')
-            .trigger('change');
+        $('#filter_barang_nama, #filter_kategori, #filter_jenis, #filter_unit, #filter_type').val(null).trigger('change');
+
+        // Reset Status ke 'all'
+        $('#filter_status').val('all').trigger('change');
 
     });
 });

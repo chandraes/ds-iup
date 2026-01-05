@@ -304,12 +304,11 @@ class BarangController extends Controller
 
     public function barang_data(Request $request)
     {
-        $filters = $request->only(['barang_nama', 'kategori', 'jenis', 'type', 'unit']); // Ambil filter dari request
+        $filters = $request->only(['barang_nama', 'kategori', 'jenis', 'type', 'unit', 'status']); // Ambil filter dari request
 
         $data = Barang::query()->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan', 'subpg'])
                 ->filter($filters)
-                ->limit(10)
-;
+                ->limit(10);
 
         return DataTables::of($data)
             // add unique barang_unit_id becouse its ambiguous
@@ -340,8 +339,40 @@ class BarangController extends Controller
             ->addColumn('satuan_view', function ($d) {
                 return view('db.barang._satuan', compact('d'))->render();
             })
-            ->rawColumns(['foto', 'diskon_view','aksi', 'upload_barang', 'satuan_view', 'grosir_view'])
+           ->addColumn('status', function ($d) {
+                // Tentukan variabel awal berdasarkan status database
+                $isActive = $d->is_active;
+                $icon = $isActive ? 'fa-toggle-on' : 'fa-toggle-off';
+                $color = $isActive ? 'text-success' : 'text-danger';
+                $label = $isActive ? 'Aktif' : 'Non Aktif';
+                $statusInt = $isActive ? 1 : 0;
+
+                // Render HTML: Container Flex -> Tombol Icon -> Teks Label
+                return '
+                <div class="d-flex flex-column align-items-center justify-content-center">
+                    <a href="javascript:void(0)" class="toggle-status-btn mb-1" data-id="'.$d->id.'" data-status="'.$statusInt.'" style="text-decoration: none;">
+                        <i class="fa '.$icon.' '.$color.' fa-2x"></i>
+                    </a>
+                    <span class="status-label fw-bold small '.$color.'" style="font-size: 11px;">
+                        '.$label.'
+                    </span>
+                </div>';
+            })
+            ->rawColumns(['foto', 'diskon_view','aksi', 'upload_barang', 'satuan_view', 'grosir_view', 'status'])
             ->make(true);
+    }
+
+    public function toggle_status($id)
+    {
+        $barang = Barang::findOrFail($id);
+        $barang->is_active = !$barang->is_active; // Balik status
+        $barang->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status berhasil diubah',
+            'new_status' => $barang->is_active // return boolean baru
+        ]);
     }
 
     public function barang(Request $request)

@@ -151,6 +151,10 @@ class Barang extends Model
             $query->where('jenis', $filters['jenis']);
         }
 
+        if (isset($filters['status'])  && $filters['status'] != 'all') {
+            $query->where('is_active', $filters['status']);
+        }
+
         return $query;
     }
 

@@ -1109,6 +1109,7 @@ class DatabaseController extends Controller
 
         // 3. QUERY UTAMA
         $query = Barang::with(['unit', 'type', 'barang_nama', 'satuan', 'kategori'])
+            ->where('barangs.is_active', 1)
             ->select('barangs.*')
             ->selectSub($stokSubquery, 'stok_ready')
             ->selectSub($avgSubquery, 'avg_sales');
@@ -1197,6 +1198,7 @@ class DatabaseController extends Controller
             ->selectRaw('COALESCE(SUM(ijd.jumlah), 0) / GREATEST(TIMESTAMPDIFF(MONTH, MIN(ij.created_at), NOW()), 1)');
 
         $query = Barang::with(['unit', 'type', 'barang_nama', 'satuan', 'kategori'])
+            ->where('barangs.is_active', 1)
             ->select('barangs.*')
             ->orderBy('barangs.barang_nama_id', 'asc')
             ->selectSub($stokSubquery, 'stok_ready')

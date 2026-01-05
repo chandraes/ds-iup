@@ -478,6 +478,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('barang')->group(function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'barang'])->name('db.barang');
                 Route::get('/data', [App\Http\Controllers\BarangController::class, 'barang_data'])->name('db.barang.data');
+                Route::post('/toggle-status/{id}', [App\Http\Controllers\BarangController::class, 'toggle_status'])->name('db.barang.toggle-status');
 
                 Route::get('/get-grosir', [App\Http\Controllers\BarangController::class, 'barang_get_grosir'])->name('db.barang.get-grosir');
                 Route::post('/store-grosir', [App\Http\Controllers\BarangController::class, 'barang_grosir_store'])->name('db.barang.store-grosir');
