@@ -59,6 +59,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::prefix('perusahaan')->group(function(){
             Route::get('/konsumen', [App\Http\Controllers\PerusahaanController::class, 'konsumen'])->name('perusahaan.konsumen');
             Route::get('/konsumen/data', [App\Http\Controllers\PerusahaanController::class, 'konsumen_data'])->name('perusahaan.konsumen.data');
+            Route::get('/konsumen/export', [App\Http\Controllers\PerusahaanController::class, 'exportKonsumen'])->name('perusahaan.konsumen.export');
 
             Route::get('/sales', [App\Http\Controllers\PerusahaanController::class, 'sales'])->name('perusahaan.sales');
 

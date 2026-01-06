@@ -12,7 +12,8 @@ use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
-use App\Models\transaksi\InvoiceJual;
+use Spatie\SimpleExcel\SimpleExcelWriter;
+use Illuminate\Support\LazyCollection;
 use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
@@ -94,6 +95,56 @@ class PerusahaanController extends Controller
             'recordsFiltered' => $total,
             'data' => $result,
         ]);
+    }
+
+    public function exportKonsumen(Request $request)
+    {
+        // 1. Set Time Limit agar tidak timeout jika data sangat besar (misal: 0 = unlimited)
+        set_time_limit(0);
+        ini_set('memory_limit', '512M'); // Opsional, sesuaikan dengan server
+
+        // 2. Ambil filter (Sama persis dengan logic di function konsumen_data)
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'provinsi', 'kabupaten_kota']);
+        $search = $request->input('search');
+
+        // 3. Bangun Query
+        $query = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
+            ->filter($filters);
+
+        // Jika ada pencarian keyword (opsional, jika ingin fitur search ikut ter-export)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%$search%")
+                ->orWhere('alamat', 'like', "%$search%");
+            });
+        }
+
+        // 4. Buat Stream Download
+        // Nama file disesuaikan dengan tanggal agar unik
+        $fileName = 'Data_Konsumen_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        $writer = SimpleExcelWriter::streamDownload($fileName);
+
+        // 5. Gunakan cursor() untuk menghemat memori
+        // Query tidak dieksekusi sekaligus, tapi row-per-row saat looping
+        $query->cursor()->each(function ($d) use ($writer) {
+            // Format data per baris
+            $row = [
+                'KODE'          => $d->full_kode,
+                'KODE TOKO'     => $d->kode_toko ? $d->kode_toko->kode : '',
+                'NAMA'          => $d->nama,
+                'SALES AREA'         => $d->karyawan ? $d->karyawan->nama : '', // Asumsi relasi karyawan adalah sales
+                'PROVINSI'      => $d->provinsi ? $d->provinsi->nama_wilayah : '',
+                'KAB/KOTA'      => $d->kabupaten_kota ? $d->kabupaten_kota->nama_wilayah : '',
+                'KECAMATAN'     => $d->kecamatan ? $d->kecamatan->nama_wilayah : '',
+                'ALAMAT'        => $d->alamat,
+            ];
+
+            // Tulis baris ke stream excel
+            $writer->addRow($row);
+        });
+
+        return $writer->toBrowser();
     }
 
     public function sales(Request $request)

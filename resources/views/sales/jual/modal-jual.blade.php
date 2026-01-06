@@ -8,10 +8,11 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" id="keranjangForm" action="{{route('sales.stok.keranjang.store')}}">
-                @csrf
 
-                <div class="modal-body">
+
+            <div class="modal-body">
+                <form method="post" id="keranjangForm" action="{{route('sales.stok.keranjang.store')}}">
+                    @csrf
                     <input type="hidden" name="keranjang_jual_konsumen_id" value="{{ $id }}">
                     <input type="hidden" name="barang_stok_harga_id" id="barang_stok_harga_id">
                     <input type="hidden" name="barang_ppn" id="barang_ppn">
@@ -19,7 +20,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="row">
-                                 <div class="col-md-12 mb-2">
+                                <div class="col-md-12 mb-2">
                                     <input type="text" id="nm_barang_merk_retail" class="form-control" disabled></input>
                                 </div>
                                 <div class="col-md-12">
@@ -42,7 +43,7 @@
                         </div>
 
                         <div class="col-md-6">
-                             <div class="row" id="rowGrosirRetail" hidden>
+                            <div class="row" id="rowGrosirRetail" hidden>
                                 {{-- grosir --}}
                                 <div class="col-md-12">
                                     <table class="table table-bordered table-hover">
@@ -61,15 +62,15 @@
                         </div>
                     </div>
 
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Batal
+                </button>
+                <button type="submit" class="btn btn-primary" form="keranjangForm">Simpan</button>
+            </div>
 
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Batal
-                    </button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
