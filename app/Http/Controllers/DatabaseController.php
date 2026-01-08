@@ -1400,7 +1400,7 @@ class DatabaseController extends Controller
                 'Merk'         => $row->merk,
                 'Jenis'        => $row->jenis == 1 ? 'PPN' : ($row->jenis == 2 ? 'Non PPN' : '-'),
                 'Stok Saat Ini'=> (float) $row->stok_ready,
-                'Satuan'       => $row->satuan_nama,
+                'Satuan'       => $row->satuan?->nama,
                 'Rata2 Jual'   => round($row->avg_sales),
                 'Saran Order'  => $saranOrder,
             ]);
