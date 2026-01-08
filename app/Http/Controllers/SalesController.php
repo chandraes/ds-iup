@@ -19,7 +19,6 @@ use App\Models\Pengaturan;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\InvoiceJualSalesDetail;
-use App\Models\transaksi\Keranjang;
 use App\Models\transaksi\KeranjangInden;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\KeranjangJualKonsumen;

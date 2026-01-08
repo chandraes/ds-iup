@@ -70,7 +70,15 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label for="jenis" class="form-label fw-bold small">Jenis Barang</label>
+                        <select name="jenis" id="filter_jenis" class="form-select">
+                            <option value="">Semua Jenis</option>
+                            <option value="1">Barang PPN</option>
+                            <option value="2">Barang Non PPN</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label for="nama" class="form-label fw-bold small">Nama Barang</label>
                         <select class="form-select" name="barang_nama" id="filter_barang_nama">
                             <option value="">Cari Nama Barang...</option>
@@ -91,18 +99,22 @@
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fa fa-search me-1"></i> Terapkan
                             </button>
-                            {{-- TAMBAHAN: Tombol Reset --}}
+                            {{-- Tombol Reset --}}
                             <button type="button" id="btn-reset" class="btn btn-light border w-100 text-danger">
                                 <i class="fa fa-undo me-1"></i> Reset
                             </button>
                         </div>
                     </div>
 
-                    {{-- TAMBAHAN: Tombol Download PDF --}}
-                    <div class="col-md-1">
-                        <button type="button" id="btn-download-pdf" class="btn btn-danger w-100" title="Download PDF">
-                            <i class="fa fa-file-pdf"></i> PDF
-                        </button>
+                    {{-- Tombol Download PDF --}}
+                 <div class="col-md-2"> <div class="d-flex gap-1">
+                            <button type="button" id="btn-download-pdf" class="btn btn-danger w-50" title="Download PDF">
+                                <i class="fa fa-file-pdf"></i> PDF
+                            </button>
+                            <button type="button" id="btn-download-excel" class="btn btn-success w-50" title="Download Excel">
+                                <i class="fa fa-file-excel"></i> Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -217,14 +229,15 @@
                     d.bidang = $('#filter_bidang').val();
                     d.kategori = $('#filter_kategori').val();
                     d.barang_nama = $('#filter_barang_nama').val();
+                    d.jenis = $('#filter_jenis').val();
                     var mult = $('#filter_multiplier').val();
                     d.multiplier = (mult === "" || mult === null) ? 2 : mult;
                 }
             },
-            scrollY: '65vh', // Sedikit dikurangi agar pas dengan card
+            scrollY: '65vh',
             scrollX: true,
             scrollCollapse: true,
-            stateSave: true,
+            stateSave: true, // Hati-hati: stateSave bisa menyimpan filter lama, pertimbangkan matikan jika mengganggu reset
             scroller: {
                 loadingIndicator: true
             },
@@ -245,7 +258,6 @@
                     name: 'jenis',
                     className: 'text-center',
                     render: function(data, type, row) {
-                        // Menggunakan Badge agar lebih menarik
                         return data == 1 ? '<span class="badge bg-success bg-opacity-10 text-success"><i class="fa fa-check"></i></span>' : '-';
                     }
                 },
@@ -266,7 +278,6 @@
                     className: 'text-center',
                     searchable:false,
                     render: function(data, type, row) {
-                        // Highlight saran order jika ada angka signifikan
                         return data > 0 ? `<span class="fw-bold text-danger">${data}</span>` : data;
                     }
                 },
@@ -274,52 +285,175 @@
             ],
         });
 
-        // Trigger reload table saat filter berubah (Optional UX improvement)
-        $('#filter-form select').on('change', function() {
+        // --- UPDATE FILTERS LOGIC (DEPENDENT DROPDOWNS) ---
+        function updateFilters(triggerSource) {
+            // Ambil value saat ini
+            var unitId = $('#filter_unit').val();
+            var bidangId = $('#filter_bidang').val();
+            var kategoriId = $('#filter_kategori').val();
+
+            // Panggil Endpoint
+            $.ajax({
+                url: "{{ route('db.order.filter_options') }}", // Pastikan Route ini dibuat di web.php
+                type: "GET",
+                data: {
+                    unit_id: unitId,
+                    bidang_id: bidangId,
+                    kategori_id: kategoriId
+                },
+                success: function(response) {
+                    const updateSelect = (selector, data, currentVal) => {
+                        const $el = $(selector);
+                        $el.empty();
+
+                        let placeholder = '';
+                        if(selector === '#filter_bidang') placeholder = 'Semua Bidang';
+                        if(selector === '#filter_kategori') placeholder = 'Semua Kelompok';
+                        if(selector === '#filter_barang_nama') placeholder = 'Cari Nama Barang...';
+
+                        $el.append(`<option value="">${placeholder}</option>`);
+
+                        if(data) {
+                            data.forEach(item => {
+                                const selected = item.id == currentVal ? 'selected' : '';
+                                $el.append(`<option value="${item.id}" ${selected}>${item.nama}</option>`);
+                            });
+                        }
+                        // Refresh Select2 agar UI terupdate (tanpa trigger change event recursive)
+                        $el.trigger('change.select2');
+                    };
+
+                    // Logic Cascade
+                    if (triggerSource === 'unit') {
+                        // Reset Bidang, Kategori, Nama dengan opsi baru dari server
+                        updateSelect('#filter_bidang', response.bidang, null);
+                        updateSelect('#filter_kategori', response.kategori, null);
+                        updateSelect('#filter_barang_nama', response.nama, null);
+                    }
+                    else if (triggerSource === 'bidang') {
+                        // Update Kategori & Nama
+                        updateSelect('#filter_kategori', response.kategori, kategoriId); // Kategori mungkin dipertahankan jika valid
+                        updateSelect('#filter_barang_nama', response.nama, null);
+                    }
+                    else if (triggerSource === 'kategori') {
+                        // Update Nama saja
+                        updateSelect('#filter_barang_nama', response.nama, null);
+                    }
+                }
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+
+        // 1. Ganti Unit
+        $('#filter_unit').on('change', function() {
+            // Reset value anak-anaknya dulu secara visual agar query table bersih
+            $('#filter_bidang').val(null).trigger('change.select2');
+            $('#filter_kategori').val(null).trigger('change.select2');
+            $('#filter_barang_nama').val(null).trigger('change.select2');
+
+            updateFilters('unit'); // Update opsi dropdown via AJAX
+            table.draw();          // Refresh Table
+        });
+
+        // 2. Ganti Bidang
+        $('#filter_bidang').on('change', function() {
+            // Hindari trigger loop jika change dipanggil oleh sistem
+            // (Kita bisa tambahkan flag jika perlu, tapi manual click user aman)
+
+            // Saat bidang ganti, kategori mungkin tidak relevan lagi, tapi updateFilters yang akan handle opsi-nya
+            // Untuk sementara kita biarkan value kategori (nanti AJAX akan update opsinya)
+
+            updateFilters('bidang');
             table.draw();
         });
 
+        // 3. Ganti Kategori
+        $('#filter_kategori').on('change', function() {
+            updateFilters('kategori');
+            table.draw();
+        });
+
+        // 4. Ganti Nama Barang (Hanya refresh table)
+        $('#filter_barang_nama').on('change', function() {
+            table.draw();
+        });
+
+        $('#filter_jenis').on('change', function() {
+            table.draw();
+        });
+
+        // 5. Submit Form Manual (tombol Terapkan)
         $('#filter-form').on('submit', function(e) {
             e.preventDefault();
             table.draw();
         });
 
-        // Tombol Reset
+        // 6. Tombol Reset
         $('#btn-reset').on('click', function() {
-            $('#filter_unit').val('').trigger('change');
-            $('#filter_bidang').val('').trigger('change');
-            $('#filter_kategori').val('').trigger('change');
-            $('#filter_barang_nama').val('').trigger('change');
-            $('#filter_multiplier').val('2'); // Reset ke 2
+            // Reset semua input
+            $('#filter_unit').val('').trigger('change.select2');
+            $('#filter_bidang').val('').trigger('change.select2');
+            $('#filter_kategori').val('').trigger('change.select2');
+            $('#filter_barang_nama').val('').trigger('change.select2');
+            $('#filter_jenis').val('').trigger('change');
+            $('#filter_multiplier').val('2');
+
+            // Panggil updateFilters 'unit' (state kosong) untuk mengembalikan semua opsi ke awal
+            updateFilters('unit');
+
             table.draw();
         });
 
-        // --- LOGIKA TOMBOL DOWNLOAD PDF ---
+        // --- PDF DOWNLOAD ---
         $('#btn-download-pdf').on('click', function(e) {
             e.preventDefault();
 
-            // Ambil semua value dari filter
             var unit = $('#filter_unit').val();
             var bidang = $('#filter_bidang').val();
             var kategori = $('#filter_kategori').val();
             var barang_nama = $('#filter_barang_nama').val();
+            var jenis = $('#filter_jenis').val();
             var multiplier = $('#filter_multiplier').val();
 
-            // Handle default multiplier
             if(multiplier === "" || multiplier === null) multiplier = 2;
 
-            // Buat URL Query String secara manual
             var url = "{{ route('db.order.export_pdf') }}?" +
                 $.param({
                     unit: unit,
                     bidang: bidang,
                     kategori: kategori,
                     barang_nama: barang_nama,
+                    jenis: jenis,
                     multiplier: multiplier
                 });
 
-            // Buka di tab baru / download
             window.open(url, '_blank');
+        });
+
+        $('#btn-download-excel').on('click', function(e) {
+            e.preventDefault();
+
+            var unit = $('#filter_unit').val();
+            var bidang = $('#filter_bidang').val();
+            var kategori = $('#filter_kategori').val();
+            var barang_nama = $('#filter_barang_nama').val();
+            var jenis = $('#filter_jenis').val();
+            var multiplier = $('#filter_multiplier').val();
+
+            if(multiplier === "" || multiplier === null) multiplier = 2;
+
+            var url = "{{ route('db.order.export_excel') }}?" +
+                $.param({
+                    unit: unit,
+                    bidang: bidang,
+                    kategori: kategori,
+                    barang_nama: barang_nama,
+                    jenis: jenis,
+                    multiplier: multiplier
+                });
+
+            window.open(url, '_blank'); // Download file
         });
     });
 </script>

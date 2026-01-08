@@ -642,6 +642,8 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/order', [DatabaseController::class, 'order'])->name('db.order');
             Route::get('/order/data', [DatabaseController::class, 'order_data'])->name('db.order.data');
             Route::get('/order/export-pdf', [DatabaseController::class, 'order_export_pdf'])->name('db.order.export_pdf');
+            Route::get('/order/filter-options', [DatabaseController::class, 'getFilterOptions'])->name('db.order.filter_options');
+            Route::get('/order/export-excel', [DatabaseController::class, 'export_excel'])->name('db.order.export_excel');
         });
 
           Route::prefix('billing/form-beli')->group(function() {

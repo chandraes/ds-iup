@@ -34,7 +34,6 @@ use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\InvoiceJualSalesDetail;
-use App\Models\transaksi\Keranjang;
 use App\Models\transaksi\KeranjangBeli;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
