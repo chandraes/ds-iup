@@ -1401,7 +1401,7 @@ class DatabaseController extends Controller
                 'Jenis'        => $row->jenis == 1 ? 'PPN' : ($row->jenis == 2 ? 'Non PPN' : '-'),
                 'Stok Saat Ini'=> (float) $row->stok_ready,
                 'Satuan'       => $row->satuan_nama,
-                'Rata2 Jual'   => number_format($row->avg_sales, 1, ',', '.'),
+                'Rata2 Jual'   => number_format($row->avg_sales, 0, ',', '.'),
                 'Saran Order'  => $saranOrder,
             ]);
 
