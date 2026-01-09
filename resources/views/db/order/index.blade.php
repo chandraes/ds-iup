@@ -29,6 +29,7 @@
 
     @include('swal')
     @include('billing.form-beli.foto')
+    @include('db.stok-ppn.histori')
 
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3">
@@ -186,7 +187,48 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
+<script>
+    function getHistori(data)
+        {
 
+            // ajax request
+            $.ajax({
+                url: `{{route('db.stok-ppn.history')}}`,
+                type: 'GET',
+                data: {
+                    barang: data
+                },
+                success: function(response) {
+                    $('#historiTable tbody').empty();
+
+                    if (response.status == 0) {
+                        $('#historiTable tbody').append(`
+                            <tr>
+                                <td colspan="4" class="text-center">${response.message}</td>
+                            </tr>
+                        `);
+                        return;
+                    }
+
+                    document.getElementById('historiKeterangan').innerHTML = response.keterangan ?? '-';
+                    document.getElementById('nm_barang_merk_retail').value = response.barang.barang_nama.nama + ', ' + response.barang.kode + ', ' + response.barang.merk;
+
+                    response.data.forEach((item, index) => {
+                        $('#historiTable tbody').append(`
+                            <tr>
+                                <td class="text-center align-middle">${index+1}</td>
+                                <td>${item.tanggal}</td>
+                                <td>${item.nf_stok_awal}</td>
+                                <td>${item.barang.satuan.nama}</td>
+                                <td class="text-end align-middle">${item.nf_harga_beli}</td>
+                                <td class="text-end align-middle">${item.nf_harga}</td>
+                            </tr>
+                        `);
+                    });
+                }
+            });
+        }
+</script>
 <script>
     // Inisialisasi Select2
     const select2Config = { theme: 'bootstrap-5', width: '100%' };
@@ -250,7 +292,12 @@
                 { data: 'unit.nama', name: 'unit.nama', className: 'text-wrap' },
                 { data: 'type.nama', name: 'type.nama', className: 'text-wrap'},
                 { data: 'kategori.nama', name: 'kategori.nama', className: 'text-wrap'},
-                { data: 'barang_nama.nama', name: 'barang_nama.nama', className: 'fw-bold text-primary'},
+                {
+                    data: 'barang_nama.nama', name: 'barang_nama.nama', className: 'fw-bold text-primary',
+                    render: function(data, type, row) {
+                        return `<a href="javascript:void(0)" onclick="getHistori(${row.id})" data-bs-toggle="modal" data-bs-target="#modalHistori">${data}</a>`;
+                    }
+                },
                 { data: 'kode', name: 'kode', className: 'font-monospace small'},
                 { data: 'merk', name: 'merk'},
                 {
@@ -284,6 +331,8 @@
                 { data: 'order_qty', name: 'order_qty', searchable: false, className: 'text-center' },
             ],
         });
+
+
 
         // --- UPDATE FILTERS LOGIC (DEPENDENT DROPDOWNS) ---
         function updateFilters(triggerSource) {

@@ -1179,7 +1179,7 @@ class BarangController extends Controller
 
     public function stok_history(Request $request)
     {
-        $barang = Barang::find($request->barang);
+        $barang = Barang::with('barang_nama')->where('id',$request->barang)->first();
 
         $data = BarangStokHarga::with(['barang.satuan'])->where('barang_id', $barang->id)->orderBy('created_at', 'desc')->get();
 
@@ -1193,6 +1193,7 @@ class BarangController extends Controller
         return response()->json([
             'status' => 1,
             'data' => $data,
+            'barang' => $barang,
             'keterangan' => $barang->keterangan,
         ]);
     }

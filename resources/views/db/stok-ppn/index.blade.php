@@ -429,7 +429,7 @@
                     `);
                     return;
                 }
-
+                document.getElementById('nm_barang_merk_retail').value = response.barang.barang_nama.nama + ', ' + response.barang.kode + ', ' + response.barang.merk;
                 document.getElementById('historiKeterangan').innerHTML = response.keterangan ?? '-';
 
                 response.data.forEach((item, index) => {
