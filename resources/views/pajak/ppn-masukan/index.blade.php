@@ -173,9 +173,9 @@
         $('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,
-            "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",
+            "stateSave": true,
             // default order column 1
             "order": [
                 [2, 'asc']
@@ -194,6 +194,7 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",
+            stateSave: true,
             // default order column 1
             "order": [
                 [1, 'asc']
