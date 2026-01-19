@@ -268,9 +268,20 @@ class BarangStokHarga extends Model
 
      public function barangStokAll($unitFilter = null, $typeFilter = null, $kategoriFilter = null, $barangNamaFilter = null, $filterHarga = null)
     {
-        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama', 'barang.satuan', 'barang.detail_types', 'harga_temp' => function ($q) {
+        $query = $this->with(['unit', 'type', 'kategori', 'barang_nama',
+            'barang.satuan', 'barang.detail_types',
+            'harga_temp' => function ($q) {
                 $q->where('status', 1);
             }])
+            ->where(function ($q) {
+                // Kondisi 1: Jika stok masih ada, tampilkan (abaikan status is_active)
+                $q->where('stok', '>', 0)
+
+                  // Kondisi 2: ATAU (jika stok 0), cek relasi barang harus active
+                  ->orWhereHas('barang', function ($subQ) {
+                      $subQ->where('is_active', 1);
+                  });
+            })
             ->where('hide', 0)
             ->orderBy('barang_unit_id')
             ->orderBy('barang_type_id')
@@ -360,7 +371,7 @@ class BarangStokHarga extends Model
             }
         }
 
-        // dd($data);
+        // dd($data[1]);
         return $data;
 
     }
