@@ -356,7 +356,7 @@ class InvoiceBelanja extends Model
                         "Rp. ".number_format($getKas['saldo_ppn'], 0, ',', '.')."\n\n".
                         "Sisa Saldo Kas Besar  NON PPN: \n".
                         "Rp. ".number_format($getKas['saldo_non_ppn'], 0, ',', '.')."\n\n".
-                        "Total Modal Investor : \n".
+                        "Grand Total Modal Investor : \n".
                         "Rp. ".number_format($getKas['modal_investor_terakhir'], 0, ',', '.')."\n\n".
                         "Total PPn Masukan : \n".
                         "Rp. ".number_format($ppnMasukan, 0, ',', '.')."\n\n".
