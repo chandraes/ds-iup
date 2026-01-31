@@ -213,6 +213,7 @@
             var harga = $(this).data('harga'); // data-harga (dari tombol)
             var detailId = $(this).data('detail-id'); // data-detail-id (dari tombol)
             var hargaLama = $(this).data('harga-lama'); // data-harga-lama (dari tombol)
+            console.log(data, qty, harga, detailId, hargaLama);
 
             // 2. Isi info barang (Nama, Stok, Satuan, ID Barang)
             document.getElementById('jumlah_satuan').innerText = data.satuan ? data.satuan.nama : '';

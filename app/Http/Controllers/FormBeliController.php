@@ -157,7 +157,7 @@ class FormBeliController extends Controller
     public function detail_store(KeranjangBeli $keranjang, Request $request)
     {
          $data = $request->validate([
-            'barang_id' => 'required|exists:barang_stok_hargas,id',
+            'barang_id' => 'required|exists:barangs,id',
             'qty' => 'required',
             'harga' => 'required'
         ]);
