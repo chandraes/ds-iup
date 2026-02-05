@@ -16,33 +16,9 @@
                 <a href="{{route('home')}}" class="btn btn-outline-dark border-0">
                     <img src="{{asset('images/dashboard.svg')}}" width="25" class="me-1"> Dashboard
                 </a>
-                <a href="{{route('billing')}}" class="btn btn-outline-dark border-0">
-                    <img src="{{asset('images/billing.svg')}}" width="25" class="me-1"> Billing
-                </a>
             </nav>
         </div>
 
-        {{-- AREA KERANJANG BARU --}}
-        <div class="col-md-6 text-end">
-            <div class="d-inline-flex gap-2">
-                 {{-- Tombol Kosongkan --}}
-                <button id="btn-empty-cart" class="btn btn-danger btn-sm">
-                    <i class="bi bi-trash"></i> Kosongkan Keranjang
-                </button>
-
-                 {{-- Tombol Lihat Keranjang --}}
-                <a href="{{ route('billing.stok-retur.cart') }}" class="btn btn-primary position-relative">
-                    <i class="bi bi-cart-check-fill"></i> Lihat Keranjang
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-badge">
-                        0
-                        <span class="visually-hidden">item di keranjang</span>
-                    </span>
-                </a>
-            </div>
-            <div class="mt-2">
-                 @include('wa-status')
-            </div>
-        </div>
     </div>
 
     {{-- Filter Section (Sama seperti sebelumnya) --}}
@@ -91,7 +67,6 @@
                         <th>PPN</th>
                         <th>Non PPN</th>
                         <th>Detail Sumber</th>
-                        <th style="width: 150px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -188,7 +163,7 @@ $(document).ready(function() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('billing.stok-retur.data') }}",
+            url: "{{ route('perusahaan.stok-retur.data') }}",
             data: function (d) {
                 d.unit_filter = $('#filter_unit').val();
                 d.kategori_filter = $('#filter_kategori').val();
@@ -206,16 +181,14 @@ $(document).ready(function() {
             {data: 'ppn', name: 'ppn', className: 'text-center'},
             {data: 'non_ppn', name: 'non_ppn', className: 'text-center'},
             {data: 'detail_sumber', orderable: false, searchable: false, className: 'text-center'},
-            {data: 'aksi', orderable: false, searchable: false, className: 'text-center'}
         ],
-        scrollY: 450,
+        scrollY: 500,
         scroller: true,
         scrollCollapse: true,
         deferRender: true,
         dom: 'frti',
     });
 
-    table.on('draw', function () { updateCartBadge(); });
     $('#filter_unit, #filter_kategori').change(function() { table.draw(); });
     $('#btn-reset').click(function(){
         $('#filter_unit').val('').trigger('change');
@@ -247,85 +220,6 @@ $(document).ready(function() {
         setTimeout(() => { $('#cart_qty').focus(); }, 500);
     });
 
-    // --- [PERUBAHAN 1] SUBMIT FORM CART DENGAN SWEETALERT ---
-    $('#formCart').submit(function(e) {
-        e.preventDefault();
-        var formData = $(this).serialize();
-
-        $.ajax({
-            url: "{{ route('billing.stok-retur.add-to-cart') }}",
-            type: "POST",
-            data: formData,
-            success: function(response) {
-                if(response.status == 'success') {
-                    $('#modalCart').modal('hide');
-                    table.draw(false);
-
-                    // Ganti Alert Biasa dengan Toast/Swal Kecil
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: response.message,
-                        timer: 1500,
-                        showConfirmButton: false,
-                        position: 'center'
-                    });
-                } else {
-                    // Alert Error
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        html: response.message // Pakai html karena ada tag <br> atau <b>
-                    });
-                }
-            },
-            error: function(xhr) {
-                var err = JSON.parse(xhr.responseText);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Terjadi Kesalahan',
-                    text: err.message || 'Server Error'
-                });
-            }
-        });
-    });
-
-    // --- [PERUBAHAN 2] TOMBOL KOSONGKAN KERANJANG ---
-    $('#btn-empty-cart').click(function() {
-        // Ganti confirm() bawaan dengan Swal.fire
-        Swal.fire({
-            title: 'Kosongkan Keranjang?',
-            text: "Semua barang yang Anda pilih akan dihapus dari keranjang!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Kosongkan!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Eksekusi AJAX jika user klik "Ya"
-                $.ajax({
-                    url: "{{ route('billing.stok-retur.empty-cart') }}",
-                    type: "POST",
-                    data: { _token: "{{ csrf_token() }}" },
-                    success: function(response) {
-                        table.draw();
-                        updateCartBadge();
-                        Swal.fire(
-                            'Dikosongkan!',
-                            'Keranjang belanja Anda sudah kosong.',
-                            'success'
-                        );
-                    },
-                    error: function() {
-                        Swal.fire('Gagal', 'Terjadi kesalahan saat mengosongkan keranjang.', 'error');
-                    }
-                });
-            }
-        });
-    });
-
     // --- HISTORY (Tetap sama, hanya loadingnya bisa dipercantik) ---
     $('#bad-stok-datatable tbody').on('click', 'button.btn-history', function() {
         // ... (kode history tetap sama) ...
@@ -335,7 +229,7 @@ $(document).ready(function() {
         $('#history-content').html('<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>');
         $('#modalHistoryDynamic').modal('show');
 
-        var url = "{{ route('billing.stok-retur.history', ':id') }}".replace(':id', id);
+        var url = "{{ route('perusahaan.stok-retur.history', ':id') }}".replace(':id', id);
         $.ajax({
             url: url,
             type: 'GET',
@@ -344,11 +238,6 @@ $(document).ready(function() {
         });
     });
 
-    function updateCartBadge() {
-        $.get("{{ route('billing.stok-retur.cart-info') }}", function(data){
-            $('#cart-badge').text(data.total_items || 0);
-        });
-    }
 });
 </script>
 @endpush

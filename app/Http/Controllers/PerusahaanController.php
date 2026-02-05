@@ -12,6 +12,8 @@ use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
+use App\Models\ReturSupplier;
+use App\Models\StokRetur;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Illuminate\Support\LazyCollection;
 use App\Models\transaksi\InvoiceJualDetail;
@@ -335,7 +337,7 @@ class PerusahaanController extends Controller
 
     public function order(Request $request)
     {
-        $selectUnit = BarangUnit::select('id', 'nama')->where('id', auth()->user()->barang_unit_id)->get();
+        $selectUnit = BarangUnit::select('id', 'nama')->where('id', Auth::user()->barang_unit_id)->get();
         $selectBidang = BarangType::select('id', 'nama')->get();
         $selectKategori = BarangKategori::all();
         $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
@@ -383,7 +385,7 @@ class PerusahaanController extends Controller
 
         // 4. FILTERING STANDAR
 
-        $query->where('barangs.barang_unit_id', auth()->user()->barang_unit_id);
+        $query->where('barangs.barang_unit_id', Auth::user()->barang_unit_id);
 
         if ($request->filled('bidang')) {
             $query->where('barangs.barang_type_id', $request->input('bidang'));
@@ -440,12 +442,12 @@ class PerusahaanController extends Controller
 
     public function order_export_pdf(Request $request)
     {
-        $request->validate([
-            'unit' => 'required|exists:barang_units,id'
-        ], [
-            'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
-            'unit.exists' => 'Perusahaan yang dipilih tidak valid'
-        ]);
+        // $request->validate([
+        //     'unit' => 'required|exists:barang_units,id'
+        // ], [
+        //     'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
+        //     'unit.exists' => 'Perusahaan yang dipilih tidak valid'
+        // ]);
         // --- LOGIKA QUERY SAMA PERSIS DENGAN ORDER_DATA ---
         // Kita ulangi query builder disini agar hasil PDF sama persis dengan tabel
 
@@ -482,7 +484,7 @@ class PerusahaanController extends Controller
             ->orderBy('barang_kategoris.nama', 'asc')
             ->orderBy('barang_namas.nama', 'asc');
 
-        $query->where('barangs.barang_unit_id', auth()->user()->barang_unit_id);
+        $query->where('barangs.barang_unit_id', Auth::user()->barang_unit_id);
 
         if ($request->filled('bidang')) {
             $query->where('barangs.barang_type_id', $request->input('bidang'));
@@ -509,7 +511,7 @@ class PerusahaanController extends Controller
             return redirect()->back()->with('error', 'Tidak ada data untuk diekspor. Silahkan sesuaikan filter Anda.');
         }
 
-        $perusahaan = BarangUnit::find($request->input('unit'));
+        $perusahaan = BarangUnit::find(Auth::user()->barang_unit_id);
         // Load View PDF
         $pdf = Pdf::loadView('db.order.pdf', compact('data', 'multiplier', 'perusahaan'));
 
@@ -522,12 +524,12 @@ class PerusahaanController extends Controller
     // Tambahkan method ini di dalam class DatabaseController
     public function export_excel(Request $request)
     {
-        $request->validate([
-            'unit' => 'required|exists:barang_units,id'
-        ], [
-            'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
-            'unit.exists' => 'Perusahaan yang dipilih tidak valid'
-        ]);
+        // $request->validate([
+        //     'unit' => 'required|exists:barang_units,id'
+        // ], [
+        //     'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
+        //     'unit.exists' => 'Perusahaan yang dipilih tidak valid'
+        // ]);
         // set_time_limit(0);
         // ini_set('memory_limit', '-1');
         if (ob_get_contents()) ob_end_clean();
@@ -565,7 +567,7 @@ class PerusahaanController extends Controller
             ->orderBy('barang_kategoris.nama', 'asc')
             ->orderBy('barang_namas.nama', 'asc');
 
-        $query->where('barangs.barang_unit_id', auth()->user()->barang_unit_id);
+        $query->where('barangs.barang_unit_id', Auth::user()->barang_unit_id);
 
         if ($request->filled('bidang')) {
             $query->where('barangs.barang_type_id', $request->input('bidang'));
@@ -612,5 +614,202 @@ class PerusahaanController extends Controller
         });
 
         exit;
+    }
+
+    public function stok_retur_data(Request $request)
+    {
+        if ($request->ajax()) {
+            $userId = Auth::user()->barang_unit_id;
+
+            // Query Utama dengan Left Join ke Keranjang User
+            // Tujuannya agar kita tahu row mana yang sedang ada di keranjang user tersebut
+            $query = StokRetur::with(['barang.unit', 'barang.kategori', 'barang.satuan', 'barang.barang_nama'])
+                    // ->leftJoin('stok_retur_carts', function($join) use ($userId) {
+                    //     $join->on('stok_returs.id', '=', 'stok_retur_carts.stok_retur_id')
+                    //         ->where('stok_retur_carts.user_id', '=', $userId);
+                    // })
+                    ->where('stok_returs.total_qty_karantina', '>', 0)
+                    ->select(
+                        'stok_returs.*'
+                    );
+
+            // --- Logic Filter (Tetap sama) ---
+            // if ($request->has('unit_filter') && $request->unit_filter != '') {
+            //     $query->whereHas('barang', function($q) use ($request) {
+            //         $q->where('barang_unit_id', $request->unit_filter);
+            //     });
+            // }
+
+            $query->whereHas('barang', function($q) use ($userId) {
+                    $q->where('barang_unit_id', $userId);
+                });
+
+            if ($request->has('kategori_filter') && $request->kategori_filter != '') {
+                $query->whereHas('barang', function($q) use ($request) {
+                    $q->where('barang_kategori_id', $request->kategori_filter);
+                });
+            }
+
+            return datatables()->of($query)
+                ->addIndexColumn()
+                // ... (Kolom perusahaan s/d non_ppn tetap sama) ...
+                ->addColumn('perusahaan', function($row){ return $row->barang->unit->nama ?? '-'; })
+                ->addColumn('kelompok', function($row){ return $row->barang->kategori->nama ?? '-'; })
+                ->addColumn('nama_barang', function($row){ return $row->barang->barang_nama->nama ?? '-'; })
+                ->addColumn('kode_barang', function($row){ return $row->barang->kode ?? '-'; })
+                ->addColumn('merk', function($row){ return $row->barang->merk ?? '-'; })
+                ->addColumn('stok_retur', function($row){
+                    return '<span class="fw-bold text-danger">'.number_format($row->total_qty_karantina).'</span>';
+                })
+                ->addColumn('satuan', function($row){ return $row->barang->satuan->nama ?? '-'; })
+                ->addColumn('ppn', function($row){ return ($row->barang->jenis == 1) ? '<span class="badge bg-success">Ya</span>' : '-'; })
+                ->addColumn('non_ppn', function($row){ return ($row->barang->jenis == 2) ? '<span class="badge bg-success">Ya</span>' : '-'; })
+                ->addColumn('detail_sumber', function($row){
+                    return '<button type="button" class="btn btn-sm btn-info text-white btn-history"
+                            data-id="'.$row->id.'" data-nama="'.$row->barang->barang_nama->nama.'">
+                            <i class="bi bi-clock-history"></i> Lihat</button>';
+                })
+                // --- MODIFIKASI KOLOM AKSI ---
+
+                ->rawColumns(['stok_retur', 'ppn', 'non_ppn', 'detail_sumber'])
+                ->make(true);
+        }
+    }
+
+    public function stok_retur(Request $request)
+    {
+        $unitId = Auth::user()->barang_unit_id;
+
+       $units = BarangUnit::where('id', $unitId)->get();
+        // $kategoris = BarangKategori::all();
+         $kategoris = BarangKategori::whereHas('barangs', function($q) use ($unitId) {
+                $q->where('is_active', 1); // Opsional: hanya yang aktif
+                $q->where('barang_unit_id', $unitId);
+            })->get();
+        // 5. Kirim data dan nilai filter ke view
+        return view('perusahaan.barang-retur-kirim.index', [
+            'units' => $units,
+            'kategoris' => $kategoris
+        ]);
+    }
+
+    public function stok_retur_sumber($id)
+    {
+        $stokRetur = StokRetur::with([
+            'barang.barang_nama',
+            'barang.satuan',
+            // Load sampai ke konsumen dan barang stok harga (batch asal)
+            'sources.detail.barang_retur.konsumen.kode_toko',
+            'sources.detail.stok'
+        ])->findOrFail($id);
+
+        // Kita return berupa Partial View (HTML potongan)
+        return view('perusahaan.barang-retur-kirim.partials.history', compact('stokRetur'));
+    }
+
+    public function invoiceIndex()
+    {
+        $units = BarangUnit::where('id', Auth::user()->barang_unit_id)->get(); // Untuk filter
+        return view('perusahaan.barang-retur-kirim.invoice-index', compact('units'));
+    }
+
+   public function invoiceShow($id)
+    {
+        // [UBAH DISINI] Load relasi 'barang_unit'
+        $invoice = ReturSupplier::with(['barang_unit', 'user', 'details.barang.barang_nama', 'details.barang.satuan'])->where('barang_unit_id', Auth::user()->barang_unit_id)->findOrFail($id);
+        return view('perusahaan.barang-retur-kirim.partials.invoice-detail', compact('invoice'));
+    }
+
+    public function invoiceData(Request $request)
+    {
+        if ($request->ajax()) {
+            // [UBAH DISINI] Ganti 'unit' menjadi 'barang_unit'
+            $query = ReturSupplier::with(['barang_unit', 'user'])
+                    ->withCount('details');
+
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
+            }
+
+            $query->where('barang_unit_id', Auth::user()->barang_unit_id);
+
+
+            return datatables()->of($query)
+                ->addIndexColumn()
+                ->addColumn('nomor_display', function($row){
+                    return '<span class="fw-bold font-monospace text-primary">RS-' . sprintf('%04d', $row->nomor) . '</span>';
+                })
+                ->editColumn('created_at', function($row){
+                    return $row->created_at->format('Y-m-d');
+                })
+                // [UBAH DISINI] Akses relasi 'barang_unit'
+                ->addColumn('supplier', function($row){
+                    return $row->barang_unit->nama ?? '-';
+                })
+               // --- LOGIKA KOLOM 1: TAHAP PROSES (Packing) ---
+                ->addColumn('status_proses', function($row){
+                    // Jika 0: Masih disini (Kuning)
+                    // Jika > 0: Sudah lewat (Centang Hijau)
+                    if ($row->tipe == 0) {
+                        return '<span class="badge bg-warning text-dark"><i class="bi bi-box-seam"></i> Diproses</span>';
+                    } elseif ($row->tipe > 0 && $row->tipe != 99) {
+                        return '<span class="text-success"><i class="bi bi-check-circle-fill fs-5"></i></span>';
+                    } else {
+                        return '<span class="text-muted">-</span>'; // Void
+                    }
+                })
+
+                // --- LOGIKA KOLOM 2: TAHAP PENGIRIMAN ---
+                ->addColumn('status_kirim', function($row){
+                    // Jika 0: Belum sampai sini (Abu-abu)
+                    // Jika 1: Sedang disini (Biru)
+                    // Jika 2: Selesai (Centang Hijau)
+                    if ($row->tipe == 0) {
+                        return '<span class="text-muted opacity-25"><i class="bi bi-dash-lg"></i></span>';
+                    } elseif ($row->tipe == 1) {
+                        return '<span class="badge bg-info text-dark"><i class="bi bi-truck"></i> Jalan</span>';
+                    } elseif ($row->tipe == 2) {
+                        return '<span class="badge bg-success"><i class="bi bi-check-all"></i> Diterima</span>';
+                    } else {
+                        return '<span class="badge bg-danger">Void</span>';
+                    }
+                })
+                ->addColumn('total_item', function($row){
+                    return '<span class="badge bg-light text-dark border">' . $row->details_count . ' Item</span>';
+                })
+                // ->addColumn('aksi', function($row){
+                //     $btn = '<div class="btn-group" role="group">';
+
+                //     // Tombol Detail
+                //     $btn .= '<button class="btn btn-sm btn-outline-secondary btn-detail" data-id="'.$row->id.'" title="Lihat Detail"><i class="bi bi-eye"></i></button>';
+
+                //     // Tombol Kirim/Cetak (Hanya jika status aktif)
+                //     if ($row->tipe != 99) {
+                //         $url = route('billing.penyelesaian-retur.print', $row->id);
+
+                //         if ($row->tipe == 0) {
+                //             // STATUS DIPROSES (0) -> Butuh Konfirmasi
+                //             // Tambahkan class 'btn-kirim-confirm'
+                //             $btn .= '<a href="'.$url.'" class="btn btn-sm btn-primary btn-kirim-confirm" title="Kirim & Cetak">
+                //                         <i class="bi bi-send-fill"></i> Kirim
+                //                     </a>';
+                //         } else {
+                //             // STATUS DIKIRIM/SELESAI -> Cetak Ulang (Langsung buka)
+                //             $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm btn-secondary" title="Cetak Ulang">
+                //                         <i class="bi bi-printer"></i> Cetak
+                //                     </a>';
+                //         }
+                //     }
+
+                //     $btn .= '</div>';
+                //     return $btn;
+                // })
+                ->rawColumns(['nomor_display', 'status_proses', 'status_kirim', 'total_item'])
+                ->make(true);
+        }
+
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\ReturController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FormBeliController;
 use App\Http\Controllers\DatabaseController;
+use App\Http\Controllers\PerusahaanController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -57,7 +58,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['role:perusahaan']], function(){
         Route::prefix('perusahaan')->group(function(){
-            Route::get('/konsumen', [App\Http\Controllers\PerusahaanController::class, 'konsumen'])->name('perusahaan.konsumen');
+            Route::get('/konsumen', [PerusahaanController::class, 'konsumen'])->name('perusahaan.konsumen');
             Route::get('/konsumen/data', [App\Http\Controllers\PerusahaanController::class, 'konsumen_data'])->name('perusahaan.konsumen.data');
             Route::get('/konsumen/export', [App\Http\Controllers\PerusahaanController::class, 'exportKonsumen'])->name('perusahaan.konsumen.export');
 
@@ -71,6 +72,21 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/order/export-pdf', [App\Http\Controllers\PerusahaanController::class, 'order_export_pdf'])->name('perusahaan.order.export_pdf');
             Route::get('/order/filter-options', [App\Http\Controllers\PerusahaanController::class, 'getFilterOptions'])->name('perusahaan.order.filter_options');
             Route::get('/order/export-excel', [App\Http\Controllers\PerusahaanController::class, 'export_excel'])->name('perusahaan.order.export_excel');
+
+            Route::prefix('stok-retur')->group(function() {
+                Route::get('/', [PerusahaanController::class, 'stok_retur'])->name('perusahaan.stok-retur');
+                Route::get('/data', [PerusahaanController::class, 'stok_retur_data'])->name('perusahaan.stok-retur.data');
+                Route::get('/history/{id}', [PerusahaanController::class, 'stok_retur_sumber'])->name('perusahaan.stok-retur.history');
+
+            });
+
+              Route::prefix('penyelesaian-retur')->group(function(){
+                Route::get('/', [PerusahaanController::class, 'invoiceIndex'])->name('perusahaan.penyelesaian-retur.index');
+                Route::get('/data', [PerusahaanController::class, 'invoiceData'])->name('perusahaan.penyelesaian-retur.data');
+                Route::get('/detail/{id}', [PerusahaanController::class, 'invoiceShow'])->name('perusahaan.penyelesaian-retur.detail');
+
+            });
+
 
             Route::prefix('selling-out')->group(function () {
                 Route::get('/', [App\Http\Controllers\PerusahaanController::class, 'selling_out'])->name('perusahaan.selling-out');

@@ -7,6 +7,8 @@ use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\Katalog;
+use App\Models\ReturSupplier;
+use App\Models\StokRetur;
 use App\Models\Wilayah;
 use App\Services\WaStatus;
 use Illuminate\Http\Request;
@@ -44,9 +46,17 @@ class HomeController extends Controller
                 ->where('jenis', 2)
                 ->first() ? 1 : 0;
 
+            $sr = StokRetur::whereHas('barang', function ($q) {
+                $q->where('barang_unit_id', Auth::user()->barang_unit_id);
+            })->where('status', 0)->count();
+
+             $ps = ReturSupplier::whereNot('tipe', 99)->where('barang_unit_id', Auth::user()->barang_unit_id)->count();
+
             return view('home', [
                 'barang_ppn' => $barang_ppn,
                 'barang_non_ppn' => $barang_non_ppn,
+                'sr' => $sr,
+                'ps' => $ps,
             ]);
         }
         return view('home');
