@@ -66,6 +66,12 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/stok-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_ppn'])->name('perusahaan.stok-ppn');
             Route::get('/stok-non-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_non_ppn'])->name('perusahaan.stok-non-ppn');
 
+             Route::get('/order', [App\Http\Controllers\PerusahaanController::class, 'order'])->name('perusahaan.order');
+            Route::get('/order/data', [App\Http\Controllers\PerusahaanController::class, 'order_data'])->name('perusahaan.order.data');
+            Route::get('/order/export-pdf', [App\Http\Controllers\PerusahaanController::class, 'order_export_pdf'])->name('perusahaan.order.export_pdf');
+            Route::get('/order/filter-options', [App\Http\Controllers\PerusahaanController::class, 'getFilterOptions'])->name('perusahaan.order.filter_options');
+            Route::get('/order/export-excel', [App\Http\Controllers\PerusahaanController::class, 'export_excel'])->name('perusahaan.order.export_excel');
+
             Route::prefix('selling-out')->group(function () {
                 Route::get('/', [App\Http\Controllers\PerusahaanController::class, 'selling_out'])->name('perusahaan.selling-out');
             });
