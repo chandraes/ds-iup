@@ -410,9 +410,9 @@ class ReturController extends Controller
         $tanggal = Carbon::now()->translatedFormat('d F Y');
 
         // $pesan = "*".$data->barang_unit->nama."*\n";
-        $pesan .= "🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸"."\n"."*KIRIM BARANG RETUR*\n"."🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸\n\n";
+        $pesan .= "◆◆◆◆◆◆◆◆◆◆◆◆"."\n"."*KIRIM BARANG RETUR*\n"."◆◆◆◆◆◆◆◆◆◆◆◆\n\n";
 
-        $pesan .= $invoice->barang_unit?->nama."\n\n";
+        $pesan .= "*".$invoice->barang_unit?->nama."*\n\n";
 
         $pesan .= "*Tanggal* : ".$tanggal."\n\n";
 
