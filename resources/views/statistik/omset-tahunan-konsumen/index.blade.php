@@ -38,9 +38,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold">Unit Barang</label>
+                    <label class="form-label fw-bold">Perusahaan</label>
                     <select name="barang_unit_id" id="barang_unit_id" class="form-select">
-                        <option value="">-- Semua Unit --</option>
+                        <option value="">-- Semua Perusahaan --</option>
                         @foreach($units as $unit)
                             <option value="{{ $unit->id }}">{{ $unit->nama }}</option>
                         @endforeach

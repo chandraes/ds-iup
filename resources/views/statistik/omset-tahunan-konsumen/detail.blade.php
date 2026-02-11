@@ -47,7 +47,7 @@
                             <th>No Invoice</th>
                             <th>Kode Barang</th>
                             <th>Nama Barang</th>
-                            <th>Unit</th>
+                            <th>Perusahaan</th>
                             <th class="text-end">Qty</th>
                             <th class="text-end">Harga</th>
                             <th class="text-end">PPn</th>

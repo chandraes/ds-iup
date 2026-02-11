@@ -57,7 +57,7 @@
 
     <div class="header">
         <h2>LAPORAN OMSET TAHUNAN KONSUMEN</h2>
-        <p>Tahun: {{ $tahun }} | Unit: {{ $namaUnit }}</p>
+        <p>Tahun: {{ $tahun }} | Perusahaan: {{ $namaUnit }}</p>
     </div>
 
     <table>
