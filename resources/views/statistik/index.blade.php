@@ -27,6 +27,16 @@
     </div>
     <hr>
     <div class="row justify-content-left">
+        <h4 class="mt-3">OMSET KONSUMEN</h4>
+        <div class="col-lg-3 mt-3 mb-3 text-center">
+            <a href="{{route('statistik.omset-tahunan-konsumen')}}" class="text-decoration-none">
+                <img src="{{asset('images/omset-tahunan-konsumen.svg')}}" alt="" width="70">
+                <h4 class="mt-3">TAHUNAN</h4>
+            </a>
+        </div>
+    </div>
+    <hr>
+    <div class="row justify-content-left">
         <h4 class="mt-3">PROFIT INVOICE</h4>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('statistik.profit.harian')}}" class="text-decoration-none">

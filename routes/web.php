@@ -558,6 +558,10 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/harian', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit.harian');
             });
 
+            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
+            Route::get('/omset-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset'])->name('statistik.omset.excel');
+            Route::get('statistik/omset-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset'])->name('statistik.omset.print');
+
         });
 
         Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
