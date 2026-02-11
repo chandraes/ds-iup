@@ -20,7 +20,7 @@
             <div class="row">
                 <div class="col-md-4">
                     <small class="text-muted text-uppercase fw-bold">Konsumen</small>
-                    <h5 class="fw-bold text-primary">{{ $konsumen->nama }}</h5>
+                    <h5 class="fw-bold text-primary">{{ $konsumen->kode_toko?->kode }} {{ $konsumen->nama }}</h5>
                     <span>Kode: {{ $konsumen->full_kode }}</span>
                 </div>
                 <div class="col-md-4">
@@ -50,6 +50,8 @@
                             <th>Unit</th>
                             <th class="text-end">Qty</th>
                             <th class="text-end">Harga</th>
+                            <th class="text-end">PPn</th>
+                            <th class="text-end">Diskon</th>
                             <th class="text-end">Subtotal</th>
                         </tr>
                     </thead>
@@ -64,6 +66,8 @@
                             <td>{{ $row->nama_unit ?? '-' }}</td>
                             <td class="text-end">{{ number_format($row->jumlah, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($row->harga_satuan, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($row->ppn, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($row->diskon, 0, ',', '.') }}</td>
                             <td class="text-end fw-bold">{{ number_format($row->total, 0, ',', '.') }}</td>
                         </tr>
                         @empty

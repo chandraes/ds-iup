@@ -307,7 +307,7 @@ class StatistikController extends Controller
         $unitId = $request->input('unit_id');
 
         // 1. Ambil Data Konsumen
-        $konsumen = Konsumen::where('id', $konsumenId)->select('nama', 'kode')->first();
+        $konsumen = Konsumen::with('kode_toko')->where('id', $konsumenId)->select('nama', 'kode', 'kode_toko_id')->first();
         if (!$konsumen) abort(404, 'Konsumen tidak ditemukan');
 
         // 2. Query Detail Transaksi
@@ -324,6 +324,8 @@ class StatistikController extends Controller
                 'u.nama as nama_unit',
                 'd.jumlah',
                 'd.harga_satuan',
+                'd.diskon',
+                'd.ppn',
                 'd.total'
             ])
             ->where('i.konsumen_id', $konsumenId)
