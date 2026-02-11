@@ -151,7 +151,7 @@ $(document).ready(function() {
         },
         columns: [
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-                {data: 'kode', name: 'konsumens.kode'},
+                {data: 'full_kode', name: 'konsumens.kode'},
                 {data: 'kode_toko', name: 'kode_toko'},
                 {data: 'nama', name: 'konsumens.nama'},
 
