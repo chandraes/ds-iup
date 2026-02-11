@@ -129,6 +129,7 @@
 <script src="https://cdn.datatables.net/scroller/2.4.3/js/scroller.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script>
 <script>
+
 $(document).ready(function() {
 
     // Inisialisasi Select2
@@ -149,28 +150,57 @@ $(document).ready(function() {
             }
         },
         columns: [
-            {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-            {data: 'full_kode', name: 'konsumens.kode'},
-            {data: 'kode_toko', name: 'kode_toko'},
-            {data: 'nama', name: 'konsumens.nama'},
-            {data: 'bulan_1', name: 'bulan_1', orderable: false, searchable: false},
-            {data: 'bulan_2', name: 'bulan_2', orderable: false, searchable: false},
-            {data: 'bulan_3', name: 'bulan_3', orderable: false, searchable: false},
-            {data: 'bulan_4', name: 'bulan_4', orderable: false, searchable: false},
-            {data: 'bulan_5', name: 'bulan_5', orderable: false, searchable: false},
-            {data: 'bulan_6', name: 'bulan_6', orderable: false, searchable: false},
-            {data: 'bulan_7', name: 'bulan_7', orderable: false, searchable: false},
-            {data: 'bulan_8', name: 'bulan_8', orderable: false, searchable: false},
-            {data: 'bulan_9', name: 'bulan_9', orderable: false, searchable: false},
-            {data: 'bulan_10', name: 'bulan_10', orderable: false, searchable: false},
-            {data: 'bulan_11', name: 'bulan_11', orderable: false, searchable: false},
-            {data: 'bulan_12', name: 'bulan_12', orderable: false, searchable: false},
-            {data: 'total', name: 'total_setahun', orderable: true, searchable: false}
-        ],
+                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
+                {data: 'kode', name: 'konsumens.kode'},
+                {data: 'kode_toko', name: 'kode_toko'},
+                {data: 'nama', name: 'konsumens.nama'},
+
+                // --- MULAI KOLOM BULAN 1 s/d 12 ---
+                {data: 'bulan_1', name: 'bulan_1', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 1); }},
+
+                {data: 'bulan_2', name: 'bulan_2', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 2); }},
+
+                {data: 'bulan_3', name: 'bulan_3', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 3); }},
+
+                {data: 'bulan_4', name: 'bulan_4', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 4); }},
+
+                {data: 'bulan_5', name: 'bulan_5', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 5); }},
+
+                {data: 'bulan_6', name: 'bulan_6', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 6); }},
+
+                {data: 'bulan_7', name: 'bulan_7', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 7); }},
+
+                {data: 'bulan_8', name: 'bulan_8', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 8); }},
+
+                {data: 'bulan_9', name: 'bulan_9', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 9); }},
+
+                {data: 'bulan_10', name: 'bulan_10', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 10); }},
+
+                {data: 'bulan_11', name: 'bulan_11', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 11); }},
+
+                {data: 'bulan_12', name: 'bulan_12', orderable: false, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 12); }},
+
+                // --- KOLOM TOTAL SETAHUN ---
+                {data: 'total', name: 'transaksi.total_setahun', orderable: true, searchable: false, className: 'text-end',
+                render: function(data, type, row) { return renderLink(data, row, 'total'); }}
+            ],
         pageLength: 25, // Default jumlah data per halaman
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         order: [[1, 'asc']], // Default urut berdasarkan Nama Toko
         scrollY: 500,
+        scrollX: true,
         scroller: true,
         scrollCollapse: true,
         deferRender: true,
@@ -211,6 +241,40 @@ $(document).ready(function() {
         var url = "{{ route('statistik.omset.print') }}?tahun=" + tahun + "&barang_unit_id=" + unit;
         window.open(url, '_blank');
     });
+
+    // Fungsi Helper Membuat Link
+    function renderLink(data, row, bulan) {
+        // 1. Bersihkan data dari tag HTML (jika ada bold) dan titik ribuan
+        var cleanData = (data + '').replace(/<[^>]*>?/gm, '');
+        var numericValue = parseInt(cleanData.replace(/\./g, ''));
+
+        // 2. Ambil nilai filter saat ini
+        var tahun = $('#tahun').val();
+        var unitId = $('#barang_unit_id').val();
+
+        // 3. Logic: Jika nilai > 0 buat Link, jika 0 kembalikan teks asli
+        if (numericValue > 0) {
+            // Base URL Route Laravel
+            // Kita gunakan placeholder 'XXX', 'YYY', 'ZZZ' lalu replace manual dengan JS
+            // Ini trik agar route() blade tidak error karena parameter JS belum ada
+            var baseUrl = "{{ route('statistik.omset.detail_page', ['konsumen' => 'XXX', 'bulan' => 'YYY', 'tahun' => 'ZZZ']) }}";
+
+            // Ganti placeholder dengan data asli baris ini
+            var finalUrl = baseUrl
+                .replace('XXX', row.id)
+                .replace('YYY', bulan)
+                .replace('ZZZ', tahun);
+
+            // Tambahkan query param untuk unit jika ada
+            if(unitId) {
+                finalUrl += "?unit_id=" + unitId;
+            }
+
+            return '<a href="' + finalUrl + '" class="text-decoration-none fw-bold" target="_blank" title="Lihat Detail">' + data + '</a>';
+        }
+
+        return data; // Kembalikan angka 0 atau teks asli
+    }
 });
 </script>
 @endpush

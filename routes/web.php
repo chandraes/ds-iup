@@ -560,7 +560,10 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
             Route::get('/omset-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset'])->name('statistik.omset.excel');
-            Route::get('statistik/omset-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset'])->name('statistik.omset.print');
+            Route::get('/omset-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset'])->name('statistik.omset.print');
+            // Route untuk halaman detail omset
+            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_page'])
+                ->name('statistik.omset.detail_page');
 
         });
 

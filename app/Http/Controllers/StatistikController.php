@@ -301,4 +301,55 @@ class StatistikController extends Controller
 
         return new StreamedResponse($callback, 200, $headers);
     }
+
+    public function detail_omset_page($konsumenId, $bulan, $tahun, Request $request)
+    {
+        $unitId = $request->input('unit_id');
+
+        // 1. Ambil Data Konsumen
+        $konsumen = Konsumen::where('id', $konsumenId)->select('nama', 'kode')->first();
+        if (!$konsumen) abort(404, 'Konsumen tidak ditemukan');
+
+        // 2. Query Detail Transaksi
+        $query = DB::table('invoice_jual_details as d')
+            ->join('invoice_juals as i', 'd.invoice_jual_id', '=', 'i.id')
+            ->join('barangs as b', 'd.barang_id', '=', 'b.id')
+            ->leftJoin('barang_namas as bn', 'b.barang_nama_id', '=', 'bn.id') // Join nama barang untuk info
+            ->leftJoin('barang_units as u', 'b.barang_unit_id', '=', 'u.id') // Join unit untuk info
+            ->select([
+                'i.kode as no_invoice',
+                'i.created_at as tanggal',
+                'bn.nama as nama_barang',
+                'b.kode as kode_barang',
+                'u.nama as nama_unit',
+                'd.jumlah',
+                'd.harga_satuan',
+                'd.total'
+            ])
+            ->where('i.konsumen_id', $konsumenId)
+            ->where('i.void', 0) // Pastikan tidak mengambil nota void
+            ->whereYear('i.created_at', $tahun);
+
+        // Filter Bulan (Jika bukan 'total', filter per bulan)
+       if ($bulan !== 'total') {
+            $query->whereMonth('i.created_at', $bulan);
+
+            // Fix: Gunakan createFromDate, paksa (int), dan set tanggal ke 1 agar aman
+            $namaBulan = \Carbon\Carbon::createFromDate($tahun, (int)$bulan, 1)->isoFormat('MMMM');
+        } else {
+            $namaBulan = "Setahun (Jan - Des)";
+        }
+
+        // Filter Unit (Jika ada)
+        if ($unitId) {
+            $query->where('b.barang_unit_id', $unitId);
+        }
+
+        // Eksekusi Query
+        $details = $query->orderBy('i.created_at', 'asc')->get();
+
+        return view('statistik.omset-tahunan-konsumen.detail', compact(
+            'details', 'konsumen', 'bulan', 'namaBulan', 'tahun', 'unitId'
+        ));
+    }
 }
