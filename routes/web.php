@@ -64,8 +64,6 @@ Route::group(['middleware' => ['auth']], function () {
 
         });
 
-
-
     });
 
     Route::group(['middleware' => ['role:perusahaan']], function(){

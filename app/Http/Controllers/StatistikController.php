@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Karyawan;
+use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\transaksi\InvoiceJual;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -114,7 +115,7 @@ class StatistikController extends Controller
     }
 
     // Function ini hanya bertugas menyiapkan Query Builder, tidak mengeksekusi ->get()
-    private function getOmsetQuery($tahun, $unitId)
+    private function getOmsetQuery($tahun, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null)
     {
         // 1. Subquery Transaksi (Sama seperti sebelumnya)
         $subquery = DB::table('invoice_juals as i')
@@ -144,6 +145,7 @@ class StatistikController extends Controller
                 'konsumens.kode',
                 'konsumens.nama',
                 'konsumens.kode_toko_id',
+                'konsumens.karyawan_id',
                 // Ambil kolom hasil hitungan
                 'transaksi.bulan_1', 'transaksi.bulan_2', 'transaksi.bulan_3',
                 'transaksi.bulan_4', 'transaksi.bulan_5', 'transaksi.bulan_6',
@@ -151,11 +153,32 @@ class StatistikController extends Controller
                 'transaksi.bulan_10', 'transaksi.bulan_11', 'transaksi.bulan_12',
                 'transaksi.total_setahun'
             ])
-            ->with('kode_toko')
+            ->with('kode_toko', 'karyawan')
             ->where('konsumens.active', 1)
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
                 $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
             });
+
+            if ($kodeTokoId) {
+                $query->where('konsumens.kode_toko_id', $kodeTokoId);
+            }
+
+            if ($salesId) {
+                $query->where('konsumens.karyawan_id', $salesId);
+            }
+
+            if ($statusOmset) {
+                if ($statusOmset == 'ada') {
+                    // Hanya tampilkan yang total setahunnya > 0
+                    $query->where('transaksi.total_setahun', '>', 0);
+                } elseif ($statusOmset == 'nol') {
+                    // Tampilkan yang totalnya NULL (tidak ada record di subquery) ATAU 0
+                    $query->where(function($q) {
+                        $q->whereNull('transaksi.total_setahun')
+                        ->orWhere('transaksi.total_setahun', '=', 0);
+                    });
+                }
+            }
 
         return $query;
     }
@@ -167,7 +190,11 @@ class StatistikController extends Controller
             $tahun = $request->input('tahun', date('Y'));
             $unitId = $request->input('barang_unit_id');
 
-            $query = $this->getOmsetQuery($tahun, $unitId);
+            $kodeTokoId = $request->input('kode_toko_id'); // <--- Tangkap input baru
+            $statusOmset = $request->input('status_omset');
+            $salesId = $request->input('sales_id');
+
+            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId);
 
             // Opsi: Jika difilter unit, hanya tampilkan konsumen yg pernah beli unit itu
             // if ($unitId) {
@@ -207,8 +234,11 @@ class StatistikController extends Controller
 
         // Jika bukan AJAX, tampilkan View awal
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
-
-        return view('statistik.omset-tahunan-konsumen.index', compact('units'));
+        $kodeTokos = KodeToko::select('id', 'kode')->get();
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                    $query->where('is_sales', 1);
+                })->select('id', 'nama')->get();
+        return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales'));
     }
 
     public function print_omset(Request $request)
@@ -219,14 +249,17 @@ class StatistikController extends Controller
 
         $tahun = $request->input('tahun', date('Y'));
         $unitId = $request->input('barang_unit_id');
+        $kodeTokoId = $request->input('kode_toko_id'); // <--- Tangkap input baru
+        $statusOmset = $request->input('status_omset');
+        $salesId = $request->input('sales_id');
 
         // Ambil Data
-        $laporan = $this->getOmsetQuery($tahun, $unitId)
+        $laporan = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId)
             ->orderBy('konsumens.kode', 'asc') // Sort default untuk cetak
             ->get();
 
         // Nama Unit untuk Judul
-        $namaUnit = 'Semua Unit';
+        $namaUnit = 'Semua Perusahaan';
         if ($unitId) {
             $unitDB = DB::table('barang_units')->where('id', $unitId)->first();
             $namaUnit = $unitDB->nama ?? '-';
@@ -239,7 +272,9 @@ class StatistikController extends Controller
     {
         $tahun = $request->input('tahun', date('Y'));
         $unitId = $request->input('barang_unit_id');
-
+        $kodeTokoId = $request->input('kode_toko_id'); // <--- Tangkap input baru
+        $statusOmset = $request->input('status_omset');
+        $salesId = $request->input('sales_id');
         // Nama File
         $fileName = 'Omset_Konsumen_' . $tahun . '.csv';
 
@@ -253,18 +288,18 @@ class StatistikController extends Controller
         ];
 
         // Fungsi Callback untuk Streaming
-        $callback = function() use ($tahun, $unitId) {
+        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId) {
             $file = fopen('php://output', 'w');
 
             // 1. Tulis Header Excel
             fputcsv($file, [
-                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko',
+                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Sales Area',
                 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
                 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des', 'Total'
             ]);
 
             // 2. Ambil Query (tanpa ->get() dulu)
-            $query = $this->getOmsetQuery($tahun, $unitId);
+            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId);
 
             // 3. CHUNKING: Ambil data per 500 baris agar RAM aman
             $no = 1;
@@ -276,6 +311,7 @@ class StatistikController extends Controller
                         $row->full_kode,
                         $row->kode_toko->kode ?? $row->kode_toko_id ?? '-', // Handle relation
                         $row->nama,
+                        $row->karyawan?->nama ?? '-', // Tambahkan nama sales jika ada
                         $row->bulan_1 ?? 0, // Biarkan angka asli (tanpa format Rp) agar bisa dihitung di Excel
                         $row->bulan_2 ?? 0,
                         $row->bulan_3 ?? 0,

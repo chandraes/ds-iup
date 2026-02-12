@@ -46,6 +46,33 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-2">
+                        <label class="form-label fw-bold small">Kode Toko</label>
+                        <select name="kode_toko_id" id="kode_toko_id" class="form-select ">
+                            <option value="">-- Semua Kode Toko --</option>
+                            @foreach($kodeTokos as $kt)
+                                <option value="{{ $kt->id }}">{{ $kt->kode }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">Sales Area</label>
+                        <select name="sales_id" id="sales_id" class="form-select ">
+                            <option value="">-- Semua Sales --</option>
+                            @foreach($sales as $s)
+                                <option value="{{ $s->id }}">{{ $s->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    {{-- FILTER BARU 2: STATUS OMSET --}}
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">Status Omset</label>
+                        <select name="status_omset" id="status_omset" class="form-select">
+                            <option value="">-- Semua --</option>
+                            <option value="ada">Ada Omset (> 0)</option>
+                            <option value="nol">Tidak Ada (0)</option>
+                        </select>
+                    </div>
                 <div class="col-md-4 d-flex align-items-end gap-2">
                     {{-- Tombol Filter --}}
                     <button type="button" id="btn-filter" class="btn btn-primary" title="Tampilkan Data">
@@ -85,6 +112,7 @@
                             <th>Kode</th>
                             <th>Kode Toko</th>
                             <th>Nama Toko</th>
+                            <th>Sales Area</th>
                             <th>Jan</th>
                             <th>Feb</th>
                             <th>Mar</th>
@@ -138,6 +166,21 @@ $(document).ready(function() {
         width: '100%'
     });
 
+    $('#kode_toko_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        // placeholder: '-- Pilih Kode Toko --',
+        // allowClear: true
+    });
+
+    $('#sales_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        // placeholder: '-- Pilih Kode Toko --',
+        // allowClear: true
+    });
+
+
     // Inisialisasi DataTables
     var table = $('#omsetTable').DataTable({
         processing: true,
@@ -147,14 +190,17 @@ $(document).ready(function() {
             data: function (d) {
                 d.tahun = $('#tahun').val();
                 d.barang_unit_id = $('#barang_unit_id').val();
+                d.kode_toko_id = $('#kode_toko_id').val();
+                d.status_omset = $('#status_omset').val();
+                d.sales_id = $('#sales_id').val();
             }
         },
         columns: [
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
                 {data: 'full_kode', name: 'konsumens.kode'},
                 {data: 'kode_toko', name: 'kode_toko'},
-                {data: 'nama', name: 'konsumens.nama'},
-
+                {data: 'nama', name: 'konsumens.nama', className: 'text-wrap'},
+                {data: 'karyawan.nama', name: 'karyawan.nama', className: 'text-wrap text-start'},
                 // --- MULAI KOLOM BULAN 1 s/d 12 ---
                 {data: 'bulan_1', name: 'bulan_1', orderable: false, searchable: false, className: 'text-end',
                 render: function(data, type, row) { return renderLink(data, row, 1); }},
@@ -219,26 +265,37 @@ $(document).ready(function() {
         // 2. Reset Select2 Unit Barang (Penting pakai trigger change)
         $('#barang_unit_id').val('').trigger('change');
 
+        $('#kode_toko_id').val('').trigger('change');
+        $('#status_omset').val('');
+        $('#sales_id').val('').trigger('change');
+
         // 3. Refresh Tabel
         table.draw();
     });
 
     $('#btn-excel').click(function() {
-        var tahun = $('#tahun').val();
-        var unit = $('#barang_unit_id').val();
-
-        // Redirect ke URL download dengan query params
-        var url = "{{ route('statistik.omset.excel') }}?tahun=" + tahun + "&barang_unit_id=" + unit;
-        window.location.href = url;
+        var params = $.param({
+            tahun: $('#tahun').val(),
+            barang_unit_id: $('#barang_unit_id').val(),
+            // TAMBAHAN
+            kode_toko_id: $('#kode_toko_id').val(),
+            status_omset: $('#status_omset').val(),
+            sales_id: $('#sales_id').val()
+        });
+        window.location.href = "{{ route('statistik.omset.excel') }}?" + params;
     });
 
     // TOMBOL PDF
    $('#btn-print').click(function() {
-        var tahun = $('#tahun').val();
-        var unit = $('#barang_unit_id').val();
-
-        // Arahkan ke route cetak baru
-        var url = "{{ route('statistik.omset.print') }}?tahun=" + tahun + "&barang_unit_id=" + unit;
+       var params = $.param({
+            tahun: $('#tahun').val(),
+            barang_unit_id: $('#barang_unit_id').val(),
+            // TAMBAHAN
+            kode_toko_id: $('#kode_toko_id').val(),
+            status_omset: $('#status_omset').val(),
+            sales_id: $('#sales_id').val()
+        });
+        var url = "{{ route('statistik.omset.print') }}?" + params;
         window.open(url, '_blank');
     });
 

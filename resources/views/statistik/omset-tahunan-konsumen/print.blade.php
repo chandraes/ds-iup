@@ -67,6 +67,7 @@
                 <th width="3%">Kode</th>
                 <th width="2%">Kode Toko</th>
                 <th width="15%">Nama Toko</th>
+                <th width="15%">Sales Area</th>
                 <th>Jan</th> <th>Feb</th> <th>Mar</th> <th>Apr</th>
                 <th>Mei</th> <th>Jun</th> <th>Jul</th> <th>Agu</th>
                 <th>Sep</th> <th>Okt</th> <th>Nov</th> <th>Des</th>
@@ -82,6 +83,7 @@
                 <td class="text-left">{{ $row->full_kode }}</td>
                 <td class="text-left">{{ $row->kode_toko->kode }}</td>
                 <td class="text-left">{{ $row->nama }}</td>
+                <td class="text-left">{{ $row->karyawan?->nama }}</td>
                 <td>{{ $row->bulan_1 ? number_format($row->bulan_1, 0, ',', '.') : '-' }}</td>
                 <td>{{ $row->bulan_2 ? number_format($row->bulan_2, 0, ',', '.') : '-' }}</td>
                 <td>{{ $row->bulan_3 ? number_format($row->bulan_3, 0, ',', '.') : '-' }}</td>
@@ -98,7 +100,7 @@
             </tr>
             @endforeach
             <tr style="background-color: #eee; font-weight: bold;">
-                <td colspan="16" class="text-center">GRAND TOTAL</td>
+                <td colspan="17" class="text-center">GRAND TOTAL</td>
                 <td>{{ number_format($grandTotal, 0, ',', '.') }}</td>
             </tr>
         </tbody>
