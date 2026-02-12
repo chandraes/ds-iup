@@ -79,7 +79,7 @@ class Konsumen extends Model
 
     public function getNfPlafonAttribute()
     {
-        return number_format($this->plafon, 0, ',', '.');
+        return $this->plafon != null ? number_format($this->plafon, 0, ',', '.') : 0;
     }
 
     public function kas()

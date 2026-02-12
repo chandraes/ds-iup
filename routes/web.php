@@ -52,7 +52,19 @@ Route::group(['middleware' => ['auth']], function () {
      Route::group(['middleware' => ['role:user']], function(){
         Route::prefix('user')->group(function(){
             Route::get('/stok-all', [UserController::class, 'stok_all'])->name('user.stok-all');
+
+            Route::prefix('konsumen')->group(function () {
+                Route::get('/', [App\Http\Controllers\UserController::class, 'konsumen'])->name('user.konsumen');
+                Route::get('/data', [App\Http\Controllers\UserController::class, 'konsumen_data'])->name('user.konsumen.data');
+
+                Route::get('/dokumen', [App\Http\Controllers\UserController::class, 'konsumen_dokumen'])->name('user.konsumen.dokumen');
+                Route::post('/dokumen/store', [App\Http\Controllers\UserController::class, 'konsumen_dokumen_store'])->name('user.konsumen.dokumen.store');
+                Route::delete('/dokumen/destroy/{dokumen}', [App\Http\Controllers\UserController::class, 'konsumen_dokumen_destroy'])->name('.konsumen.dokumen.destroy');
+            });
+
         });
+
+
 
     });
 
