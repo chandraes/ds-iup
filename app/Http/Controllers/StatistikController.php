@@ -7,6 +7,7 @@ use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\Wilayah;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -115,7 +116,8 @@ class StatistikController extends Controller
     }
 
     // Function ini hanya bertugas menyiapkan Query Builder, tidak mengeksekusi ->get()
-    private function getOmsetQuery($tahun, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null)
+    private function getOmsetQuery($tahun, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null, $kabupatenKotaId = null, $kecamatanId = null, $statusInvoice = null,
+                                    $bulan = [])
     {
         // 1. Subquery Transaksi (Sama seperti sebelumnya)
         $subquery = DB::table('invoice_juals as i')
@@ -127,6 +129,15 @@ class StatistikController extends Controller
 
         if ($unitId) {
             $subquery->where('b.barang_unit_id', $unitId);
+        }
+
+        if ($statusInvoice) {
+
+            if ($statusInvoice == 'invoice') {
+                $subquery->where('i.lunas', 0);
+            } elseif ($statusInvoice == 'piutang') {
+                $subquery->where('i.status_bayar', '!=', 'lunas');
+            }
         }
 
         $selectsRaw = [];
@@ -145,6 +156,8 @@ class StatistikController extends Controller
                 'konsumens.kode',
                 'konsumens.nama',
                 'konsumens.kode_toko_id',
+                'konsumens.kabupaten_kota_id',
+                'konsumens.kecamatan_id',
                 'konsumens.karyawan_id',
                 // Ambil kolom hasil hitungan
                 'transaksi.bulan_1', 'transaksi.bulan_2', 'transaksi.bulan_3',
@@ -153,7 +166,7 @@ class StatistikController extends Controller
                 'transaksi.bulan_10', 'transaksi.bulan_11', 'transaksi.bulan_12',
                 'transaksi.total_setahun'
             ])
-            ->with('kode_toko', 'karyawan')
+            ->with('kode_toko', 'karyawan', 'kabupaten_kota', 'kecamatan')
             ->where('konsumens.active', 1)
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
                 $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
@@ -167,15 +180,38 @@ class StatistikController extends Controller
                 $query->where('konsumens.karyawan_id', $salesId);
             }
 
+                if ($kabupatenKotaId) {
+                    $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
+                }
+
+                if ($kecamatanId) {
+                    $query->where('konsumens.kecamatan_id', $kecamatanId);
+                }
+
             if ($statusOmset) {
+
+            // Tentukan kolom mana saja yang akan dijumlahkan berdasarkan filter bulan
+            if (!empty($bulan)) {
+                $sumParts = [];
+                foreach ($bulan as $b) {
+                    // intval() memastikan aman dari SQL Injection
+                    $sumParts[] = "COALESCE(transaksi.bulan_" . intval($b) . ", 0)";
+                }
+                // Menghasilkan string misal: "COALESCE(transaksi.bulan_1, 0) + COALESCE(transaksi.bulan_2, 0)"
+                $sumExpression = implode(' + ', $sumParts);
+                } else {
+                    // Jika tidak ada filter bulan, gunakan total setahun bawaan
+                    $sumExpression = "COALESCE(transaksi.total_setahun, 0)";
+                }
+
                 if ($statusOmset == 'ada') {
-                    // Hanya tampilkan yang total setahunnya > 0
-                    $query->where('transaksi.total_setahun', '>', 0);
+                    // Filter Omset > 0 menggunakan Query Raw dinamis
+                    $query->whereRaw("($sumExpression) > 0");
                 } elseif ($statusOmset == 'nol') {
-                    // Tampilkan yang totalnya NULL (tidak ada record di subquery) ATAU 0
-                    $query->where(function($q) {
+                    // Filter Omset = 0 atau NULL (tidak ada transaksi)
+                    $query->where(function($q) use ($sumExpression) {
                         $q->whereNull('transaksi.total_setahun')
-                        ->orWhere('transaksi.total_setahun', '=', 0);
+                        ->orWhereRaw("($sumExpression) = 0");
                     });
                 }
             }
@@ -193,9 +229,34 @@ class StatistikController extends Controller
             $kodeTokoId = $request->input('kode_toko_id'); // <--- Tangkap input baru
             $statusOmset = $request->input('status_omset');
             $salesId = $request->input('sales_id');
+            $kabupatenKotaId = $request->input('kabupaten_kota_id');
+            $kecamatanId = $request->input('kecamatan_id');
+            $statusInvoice = $request->input('status_invoice');
 
-            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId);
+            $bulan = $request->input('bulan', []); // Tangkap filter bulan (array)
 
+            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan);
+
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+
+            $grandTotals = DB::table(DB::raw("($sql) as temp_total"))
+                ->setBindings($bindings)
+                ->selectRaw('
+                    COALESCE(SUM(bulan_1), 0) as sum_b1,
+                    COALESCE(SUM(bulan_2), 0) as sum_b2,
+                    COALESCE(SUM(bulan_3), 0) as sum_b3,
+                    COALESCE(SUM(bulan_4), 0) as sum_b4,
+                    COALESCE(SUM(bulan_5), 0) as sum_b5,
+                    COALESCE(SUM(bulan_6), 0) as sum_b6,
+                    COALESCE(SUM(bulan_7), 0) as sum_b7,
+                    COALESCE(SUM(bulan_8), 0) as sum_b8,
+                    COALESCE(SUM(bulan_9), 0) as sum_b9,
+                    COALESCE(SUM(bulan_10), 0) as sum_b10,
+                    COALESCE(SUM(bulan_11), 0) as sum_b11,
+                    COALESCE(SUM(bulan_12), 0) as sum_b12,
+                    COALESCE(SUM(total_setahun), 0) as sum_total
+                ')->first();
             // Opsi: Jika difilter unit, hanya tampilkan konsumen yg pernah beli unit itu
             // if ($unitId) {
             //     $query->whereNotNull('transaksi.konsumen_id');
@@ -205,11 +266,20 @@ class StatistikController extends Controller
             // LANGKAH 4: Return ke DataTables
             // ------------------------------------------------------------------
             return DataTables::of($query)
+                ->with('grand_totals', $grandTotals)
                 ->addIndexColumn()
                 ->addColumn('kode_toko', function($row){
                     return $row->kode_toko->kode ?? $row->kode_toko_id ?? '-';
                 })
                 // Format angka menjadi Rupiah untuk tampilan
+                ->editColumn('kabupaten_kota.nama_wilayah', function($row) {
+                    $nama = $row->kabupaten_kota?->nama_wilayah ?? '-';
+                    return str_replace(['Kab. ', 'Kota '], '', $nama);
+                })
+                ->editColumn('kecamatan.nama_wilayah', function($row) {
+                    $nama = $row->kecamatan?->nama_wilayah ?? '-';
+                    return str_replace(['Kec. '], '', $nama);
+                })
                 ->editColumn('bulan_1', fn($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
                 ->editColumn('bulan_2', fn($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
                 ->editColumn('bulan_3', fn($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
@@ -238,7 +308,9 @@ class StatistikController extends Controller
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
                     $query->where('is_sales', 1);
                 })->select('id', 'nama')->get();
-        return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales'));
+        $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->get();
+        // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
+        return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
 
     public function print_omset(Request $request)
@@ -252,9 +324,14 @@ class StatistikController extends Controller
         $kodeTokoId = $request->input('kode_toko_id'); // <--- Tangkap input baru
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
+        $kabupatenKotaId = $request->input('kabupaten_kota_id');
+        $kecamatanId = $request->input('kecamatan_id');
+        $statusInvoice = $request->input('status_invoice');
+
+        $bulan = $request->input('bulan', []);
 
         // Ambil Data
-        $laporan = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId)
+        $laporan = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
             ->orderBy('konsumens.kode', 'asc') // Sort default untuk cetak
             ->get();
 
@@ -265,20 +342,25 @@ class StatistikController extends Controller
             $namaUnit = $unitDB->nama ?? '-';
         }
 
-        return view('statistik.omset-tahunan-konsumen.print', compact('laporan', 'tahun', 'namaUnit'));
+        return view('statistik.omset-tahunan-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
     }
 
     public function export_excel_omset(Request $request)
     {
         $tahun = $request->input('tahun', date('Y'));
         $unitId = $request->input('barang_unit_id');
-        $kodeTokoId = $request->input('kode_toko_id'); // <--- Tangkap input baru
+        $kodeTokoId = $request->input('kode_toko_id');
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
-        // Nama File
+        $kabupatenKotaId = $request->input('kabupaten_kota_id');
+        $kecamatanId = $request->input('kecamatan_id');
+        $statusInvoice = $request->input('status_invoice');
+
+        // [BARU] Tangkap array bulan
+        $bulan = $request->input('bulan', []);
+
         $fileName = 'Omset_Konsumen_' . $tahun . '.csv';
 
-        // Header Kolom
         $headers = [
             'Content-type'        => 'text/csv',
             'Content-Disposition' => 'attachment; filename=' . $fileName,
@@ -287,48 +369,61 @@ class StatistikController extends Controller
             'Expires'             => '0',
         ];
 
-        // Fungsi Callback untuk Streaming
-        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId) {
+        // [MODIFIKASI] Gunakan 'use ($bulan)' pada callback
+        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan) {
             $file = fopen('php://output', 'w');
 
-            // 1. Tulis Header Excel
-            fputcsv($file, [
-                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Sales Area',
-                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des', 'Total'
-            ]);
+            // 1. Susun Header Excel Secara Dinamis
+            $csvHeaders = [
+                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko','Kab/Kota','Kecamatan', 'Sales Area'
+            ];
 
-            // 2. Ambil Query (tanpa ->get() dulu)
-            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId);
+            $namaBulan = [
+                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+            ];
 
-            // 3. CHUNKING: Ambil data per 500 baris agar RAM aman
+            // Looping header bulan (tambahkan hanya jika bulan tidak difilter atau termasuk yang dipilih)
+            for ($i = 1; $i <= 12; $i++) {
+                if (empty($bulan) || in_array((string)$i, $bulan)) {
+                    $csvHeaders[] = $namaBulan[$i];
+                }
+            }
+            $csvHeaders[] = 'Total'; // Tambahkan Total di akhir
+
+            fputcsv($file, $csvHeaders);
+
+            // 2. Ambil Query
+            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
+                ->orderBy('konsumens.kode', 'asc');
+
+            // 3. CHUNKING
             $no = 1;
-            $query->chunk(500, function($konsumens) use ($file, &$no) {
+            $query->chunk(500, function($konsumens) use ($file, &$no, $bulan) { // [MODIFIKASI] use $bulan
                 foreach ($konsumens as $row) {
-                    // Siapkan baris data
+                    // Siapkan baris data awal
                     $csvRow = [
                         $no++,
                         $row->full_kode,
-                        $row->kode_toko->kode ?? $row->kode_toko_id ?? '-', // Handle relation
+                        $row->kode_toko->kode ?? $row->kode_toko_id ?? '-',
                         $row->nama,
-                        $row->karyawan?->nama ?? '-', // Tambahkan nama sales jika ada
-                        $row->bulan_1 ?? 0, // Biarkan angka asli (tanpa format Rp) agar bisa dihitung di Excel
-                        $row->bulan_2 ?? 0,
-                        $row->bulan_3 ?? 0,
-                        $row->bulan_4 ?? 0,
-                        $row->bulan_5 ?? 0,
-                        $row->bulan_6 ?? 0,
-                        $row->bulan_7 ?? 0,
-                        $row->bulan_8 ?? 0,
-                        $row->bulan_9 ?? 0,
-                        $row->bulan_10 ?? 0,
-                        $row->bulan_11 ?? 0,
-                        $row->bulan_12 ?? 0,
-                        $row->total_setahun ?? 0
+                        str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah) ?? '-',
+                        str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah) ?? '-',
+                        $row->karyawan?->nama ?? '-'
                     ];
+
+                    // Looping nilai per bulan secara dinamis
+                    for ($i = 1; $i <= 12; $i++) {
+                        if (empty($bulan) || in_array((string)$i, $bulan)) {
+                            $kolomBulan = 'bulan_' . $i;
+                            $csvRow[] = $row->$kolomBulan ?? 0;
+                        }
+                    }
+
+                    $csvRow[] = $row->total_setahun ?? 0; // Masukkan total di akhir
+
                     fputcsv($file, $csvRow);
                 }
-                // Flush buffer ke browser agar download terasa berjalan
                 flush();
             });
 
@@ -341,6 +436,8 @@ class StatistikController extends Controller
     public function detail_omset_page($konsumenId, $bulan, $tahun, Request $request)
     {
         $unitId = $request->input('unit_id');
+        $statusInvoice = $request->input('status_invoice');
+        $bulanFilter = $request->input('bulanFilter'); // Format: "1,2,3" atau "total"
 
         // 1. Ambil Data Konsumen
         $konsumen = Konsumen::with('kode_toko')->where('id', $konsumenId)->select('nama', 'kode', 'kode_toko_id')->first();
@@ -375,7 +472,22 @@ class StatistikController extends Controller
             // Fix: Gunakan createFromDate, paksa (int), dan set tanggal ke 1 agar aman
             $namaBulan = \Carbon\Carbon::createFromDate($tahun, (int)$bulan, 1)->isoFormat('MMMM');
         } else {
-            $namaBulan = "Setahun (Jan - Des)";
+           // Jika klik pada kolom "Total" di ujung kanan
+            if (!empty($bulanFilter)) {
+                $arrayBulan = explode(',', $bulanFilter); // Ubah string "1,2" jadi array [1, 2]
+
+                // Gunakan DB::raw untuk filter array bulan
+                $query->whereIn(DB::raw('MONTH(i.created_at)'), $arrayBulan);
+
+                // Menyusun nama bulan dinamis untuk judul (misal: "Januari, Maret, Desember")
+                $namaBulanArray = [];
+                foreach($arrayBulan as $b) {
+                    $namaBulanArray[] = \Carbon\Carbon::createFromDate($tahun, (int)$b, 1)->isoFormat('MMMM');
+                }
+                $namaBulan = implode(', ', $namaBulanArray);
+            } else {
+                $namaBulan = "Setahun (Jan - Des)";
+            }
         }
 
         // Filter Unit (Jika ada)
@@ -383,6 +495,13 @@ class StatistikController extends Controller
             $query->where('b.barang_unit_id', $unitId);
         }
 
+        if ($statusInvoice) {
+            if ($statusInvoice == 'invoice') {
+                $query->where('i.lunas', 0);
+            } elseif ($statusInvoice == 'lunas') {
+                $query->where('i.lunas', 1);
+            }
+        }
         // Eksekusi Query
         $details = $query->orderBy('i.created_at', 'asc')->get();
 

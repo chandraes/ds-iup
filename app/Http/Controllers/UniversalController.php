@@ -171,4 +171,51 @@ class UniversalController extends Controller
             'data' => $data,
         ]);
     }
+
+    public function getKabKota(Request $request)
+    {
+        $provinsi = $request->input('provinsi');
+
+        $db = new Wilayah;
+        if ($provinsi == 'all') {
+
+            $data = $db->where('id_level_wilayah', 2)->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $data,
+            ]);
+        }
+        $provinsi_data = $db->find($provinsi);
+
+        $data = $db->where('id_level_wilayah', 2)->where('id_induk_wilayah', $provinsi_data->id_wilayah)->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
+
+    }
+
+    public function getKecamatan(Request $request)
+    {
+        $kab = $request->kabupaten_kota_id;
+        $db = new Wilayah;
+
+        if ($kab == 'all') {
+            $data = $db->where('id_level_wilayah', 3)->get();
+            return response()->json([
+                'status' => 'success',
+                'data' => $data,
+            ]);
+        }
+        $kab_data = $db->find($kab);
+
+        $data = $db->where('id_level_wilayah', 3)->where('id_induk_wilayah', $kab_data->id_wilayah)->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
+    }
 }

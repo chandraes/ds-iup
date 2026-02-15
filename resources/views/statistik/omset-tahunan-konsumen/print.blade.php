@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px; /* Font kecil agar muat banyak */
+            font-size: 10px;
             margin: 0;
             padding: 10px;
         }
@@ -37,10 +37,9 @@
         .text-center { text-align: center; }
         .fw-bold { font-weight: bold; }
 
-        /* Styling khusus saat diprint */
         @media print {
             @page {
-                size: landscape; /* Otomatis Landscape */
+                size: landscape;
                 margin: 10mm;
             }
             body { -webkit-print-color-adjust: exact; }
@@ -60,48 +59,89 @@
         <p>Tahun: {{ $tahun }} | Perusahaan: {{ $namaUnit }}</p>
     </div>
 
+    @php
+        // Persiapan array untuk nama bulan dan variabel total
+        $namaBulan = [1=>'Jan', 2=>'Feb', 3=>'Mar', 4=>'Apr', 5=>'Mei', 6=>'Jun', 7=>'Jul', 8=>'Agu', 9=>'Sep', 10=>'Okt', 11=>'Nov', 12=>'Des'];
+        $grandTotalSetahun = 0;
+        $totalPerBulan = array_fill(1, 12, 0); // Array berisi angka 0 untuk bulan 1 s/d 12
+    @endphp
+
     <table>
         <thead>
             <tr>
                 <th width="3%">No</th>
                 <th width="3%">Kode</th>
                 <th width="2%">Kode Toko</th>
-                <th width="15%">Nama Toko</th>
-                <th width="15%">Sales Area</th>
-                <th>Jan</th> <th>Feb</th> <th>Mar</th> <th>Apr</th>
-                <th>Mei</th> <th>Jun</th> <th>Jul</th> <th>Agu</th>
-                <th>Sep</th> <th>Okt</th> <th>Nov</th> <th>Des</th>
+                <th>Nama Toko</th>
+                <th>Kab/Kota</th>
+                <th>Kecamatan</th>
+                <th>Sales Area</th>
+
+                {{-- Tampilkan Header Bulan secara Dinamis --}}
+                @for($i = 1; $i <= 12; $i++)
+                    @if(empty($bulan) || in_array((string)$i, $bulan))
+                        <th>{{ $namaBulan[$i] }}</th>
+                    @endif
+                @endfor
+
                 <th width="8%">Total</th>
             </tr>
         </thead>
         <tbody>
-            @php $grandTotal = 0; @endphp
+            @php
+                $grandTotalFilter = 0; // Ubah nama variabel agar lebih relevan
+            @endphp
+
             @foreach($laporan as $row)
-            @php $grandTotal += $row->total_setahun; @endphp
-            <tr>
-                <td class="text-center">{{ $loop->iteration }}</td>
-                <td class="text-left">{{ $row->full_kode }}</td>
-                <td class="text-left">{{ $row->kode_toko->kode }}</td>
-                <td class="text-left">{{ $row->nama }}</td>
-                <td class="text-left">{{ $row->karyawan?->nama }}</td>
-                <td>{{ $row->bulan_1 ? number_format($row->bulan_1, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_2 ? number_format($row->bulan_2, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_3 ? number_format($row->bulan_3, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_4 ? number_format($row->bulan_4, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_5 ? number_format($row->bulan_5, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_6 ? number_format($row->bulan_6, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_7 ? number_format($row->bulan_7, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_8 ? number_format($row->bulan_8, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_9 ? number_format($row->bulan_9, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_10 ? number_format($row->bulan_10, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_11 ? number_format($row->bulan_11, 0, ',', '.') : '-' }}</td>
-                <td>{{ $row->bulan_12 ? number_format($row->bulan_12, 0, ',', '.') : '-' }}</td>
-                <td class="fw-bold">{{ number_format($row->total_setahun, 0, ',', '.') }}</td>
-            </tr>
+                @php
+                    $rowTotal = 0; // Siapkan penampung total per baris yang difilter
+                @endphp
+                <tr>
+                    <td class="text-center">{{ $loop->iteration }}</td>
+                    <td class="text-left">{{ $row->full_kode }}</td>
+                    <td class="text-left">{{ $row->kode_toko->kode ?? '-' }}</td>
+                    <td class="text-left">{{ $row->nama }}</td>
+                    <td class="text-left">{{ str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah) }}</td>
+                    <td class="text-left">{{ str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah) }}</td>
+                    <td class="text-left">{{ $row->karyawan?->nama }}</td>
+
+                    {{-- Tampilkan Data Bulan secara Dinamis & Hitung Totalnya --}}
+                    @for($i = 1; $i <= 12; $i++)
+                        @if(empty($bulan) || in_array((string)$i, $bulan))
+                            @php
+                                $kolom = 'bulan_' . $i;
+                                $nilaiBulan = $row->$kolom ?? 0;
+
+                                $totalPerBulan[$i] += $nilaiBulan; // Tambahkan ke Grand Total per Bulan (bawah)
+                                $rowTotal += $nilaiBulan;          // Tambahkan ke Total Baris ini (kanan)
+                            @endphp
+                            <td>{{ $nilaiBulan ? number_format($nilaiBulan, 0, ',', '.') : '-' }}</td>
+                        @endif
+                    @endfor
+
+                    {{-- Tampilkan Total Baris yang sudah dinamis --}}
+                    <td class="fw-bold">{{ number_format($rowTotal, 0, ',', '.') }}</td>
+                </tr>
+
+                @php
+                    // Tambahkan total baris ini ke Grand Total Sudut Kanan Bawah
+                    $grandTotalFilter += $rowTotal;
+                @endphp
             @endforeach
+
+            {{-- Baris Grand Total di Bawah --}}
             <tr style="background-color: #eee; font-weight: bold;">
-                <td colspan="17" class="text-center">GRAND TOTAL</td>
-                <td>{{ number_format($grandTotal, 0, ',', '.') }}</td>
+                <td colspan="7" class="text-center">GRAND TOTAL</td>
+
+                {{-- Tampilkan Grand Total per Bulan secara Dinamis --}}
+                @for($i = 1; $i <= 12; $i++)
+                    @if(empty($bulan) || in_array((string)$i, $bulan))
+                        <td>{{ $totalPerBulan[$i] ? number_format($totalPerBulan[$i], 0, ',', '.') : '-' }}</td>
+                    @endif
+                @endfor
+
+                {{-- Tampilkan Grand Total Keseluruhan (Sudut Kanan Bawah) --}}
+                <td>{{ number_format($grandTotalFilter, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

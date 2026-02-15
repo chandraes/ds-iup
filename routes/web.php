@@ -47,6 +47,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/search-barang-type', [App\Http\Controllers\UniversalController::class, 'searchBarangType'])->name('universal.search-barang-type');
 
         Route::get('/konsumen-data', [App\Http\Controllers\UniversalController::class, 'konsumen_data'])->name('universal.konsumen-data');
+
+        Route::get('/get-kab-kota', [App\Http\Controllers\UniversalController::class, 'getKabKota'])->name('universal.get-kab-kota');
+        Route::get('/get-kecamatan', [App\Http\Controllers\UniversalController::class, 'getKecamatan'])->name('universal.get-kecamatan');
     });
 
      Route::group(['middleware' => ['role:user']], function(){
@@ -178,8 +181,6 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['role:su,admin,user']], function () {
-
-
 
         Route::prefix('checklist-sales')->group(function () {
             Route::get('/', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
