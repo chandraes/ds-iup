@@ -65,7 +65,7 @@
                         {{-- select all --}}
                         <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                     </th>
-                    <th rowspan="2" class="text-center align-middle">Tanggal Input</th>
+                    <th rowspan="2" class="text-center align-middle">Tanggal</th>
                     <th rowspan="2" class="text-center align-middle">Nota</th>
                     <th rowspan="2" class="text-center align-middle">Konsumen</th>
                     <th rowspan="2" class="text-center align-middle">NIK/NPWP</th>
@@ -94,7 +94,7 @@
                             data-tagihan="{{$d->nominal}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}"
                             {{$d->is_faktur == 0 ? 'disabled' : ''}}>
                     </td>
-                    <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal_en : '-'}}</td>
+                    <td class="text-center align-middle">{{$d->invoiceJual ? $d->invoiceJual->tanggal_lunas : '-'}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoiceJual)
                         <a href="{{route('billing.invoice-konsumen.detail', ['invoice' => $d->invoice_jual_id])}}">

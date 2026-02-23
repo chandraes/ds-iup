@@ -8,7 +8,6 @@ use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\Wilayah;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -116,108 +115,7 @@ class StatistikController extends Controller
     }
 
     // Function ini hanya bertugas menyiapkan Query Builder, tidak mengeksekusi ->get()
-    private function getOmsetQuery($tahun, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null, $kabupatenKotaId = null, $kecamatanId = null, $statusInvoice = null,
-                                    $bulan = [])
-    {
-        // 1. Subquery Transaksi (Sama seperti sebelumnya)
-        $subquery = DB::table('invoice_juals as i')
-            ->join('invoice_jual_details as d', 'i.id', '=', 'd.invoice_jual_id')
-            ->join('barangs as b', 'd.barang_id', '=', 'b.id')
-            ->select('i.konsumen_id')
-            ->where('i.void', 0)
-            ->whereYear('i.created_at', $tahun);
 
-        if ($unitId) {
-            $subquery->where('b.barang_unit_id', $unitId);
-        }
-
-        if ($statusInvoice) {
-
-            if ($statusInvoice == 'invoice') {
-                $subquery->where('i.lunas', 0);
-            } elseif ($statusInvoice == 'piutang') {
-                $subquery->where('i.status_bayar', '!=', 'lunas');
-            }
-        }
-
-        $selectsRaw = [];
-        for ($m = 1; $m <= 12; $m++) {
-            $selectsRaw[] = "COALESCE(SUM(CASE WHEN MONTH(i.created_at) = $m THEN d.total ELSE 0 END), 0) as bulan_$m";
-        }
-        $selectsRaw[] = "COALESCE(SUM(d.total), 0) as total_setahun";
-
-        $subquery->addSelect(DB::raw(implode(',', $selectsRaw)));
-        $subquery->groupBy('i.konsumen_id');
-
-        // 2. Query Utama
-        $query = Konsumen::query() // Pastikan namespace model benar
-            ->select([
-                'konsumens.id',
-                'konsumens.kode',
-                'konsumens.nama',
-                'konsumens.kode_toko_id',
-                'konsumens.kabupaten_kota_id',
-                'konsumens.kecamatan_id',
-                'konsumens.karyawan_id',
-                // Ambil kolom hasil hitungan
-                'transaksi.bulan_1', 'transaksi.bulan_2', 'transaksi.bulan_3',
-                'transaksi.bulan_4', 'transaksi.bulan_5', 'transaksi.bulan_6',
-                'transaksi.bulan_7', 'transaksi.bulan_8', 'transaksi.bulan_9',
-                'transaksi.bulan_10', 'transaksi.bulan_11', 'transaksi.bulan_12',
-                'transaksi.total_setahun'
-            ])
-            ->with('kode_toko', 'karyawan', 'kabupaten_kota', 'kecamatan')
-            ->where('konsumens.active', 1)
-            ->leftJoinSub($subquery, 'transaksi', function ($join) {
-                $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
-            });
-
-            if ($kodeTokoId) {
-                $query->where('konsumens.kode_toko_id', $kodeTokoId);
-            }
-
-            if ($salesId) {
-                $query->where('konsumens.karyawan_id', $salesId);
-            }
-
-                if ($kabupatenKotaId) {
-                    $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
-                }
-
-                if ($kecamatanId) {
-                    $query->where('konsumens.kecamatan_id', $kecamatanId);
-                }
-
-            if ($statusOmset) {
-
-            // Tentukan kolom mana saja yang akan dijumlahkan berdasarkan filter bulan
-            if (!empty($bulan)) {
-                $sumParts = [];
-                foreach ($bulan as $b) {
-                    // intval() memastikan aman dari SQL Injection
-                    $sumParts[] = "COALESCE(transaksi.bulan_" . intval($b) . ", 0)";
-                }
-                // Menghasilkan string misal: "COALESCE(transaksi.bulan_1, 0) + COALESCE(transaksi.bulan_2, 0)"
-                $sumExpression = implode(' + ', $sumParts);
-                } else {
-                    // Jika tidak ada filter bulan, gunakan total setahun bawaan
-                    $sumExpression = "COALESCE(transaksi.total_setahun, 0)";
-                }
-
-                if ($statusOmset == 'ada') {
-                    // Filter Omset > 0 menggunakan Query Raw dinamis
-                    $query->whereRaw("($sumExpression) > 0");
-                } elseif ($statusOmset == 'nol') {
-                    // Filter Omset = 0 atau NULL (tidak ada transaksi)
-                    $query->where(function($q) use ($sumExpression) {
-                        $q->whereNull('transaksi.total_setahun')
-                        ->orWhereRaw("($sumExpression) = 0");
-                    });
-                }
-            }
-
-        return $query;
-    }
 
     public function omset_tahunan_konsumen(Request $request)
     {
@@ -235,7 +133,9 @@ class StatistikController extends Controller
 
             $bulan = $request->input('bulan', []); // Tangkap filter bulan (array)
 
-            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan);
+            $db = new InvoiceJual;
+
+            $query = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan);
 
             $sql = $query->toSql();
             $bindings = $query->getBindings();
@@ -329,9 +229,9 @@ class StatistikController extends Controller
         $statusInvoice = $request->input('status_invoice');
 
         $bulan = $request->input('bulan', []);
-
+        $db = new InvoiceJual;
         // Ambil Data
-        $laporan = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
+        $laporan = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
             ->orderBy('konsumens.kode', 'asc') // Sort default untuk cetak
             ->get();
 
@@ -393,8 +293,10 @@ class StatistikController extends Controller
 
             fputcsv($file, $csvHeaders);
 
+            $db = new InvoiceJual;
+
             // 2. Ambil Query
-            $query = $this->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
+            $query = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
                 ->orderBy('konsumens.kode', 'asc');
 
             // 3. CHUNKING
