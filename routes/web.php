@@ -116,6 +116,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
 
+            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\SalesController::class, 'omset_tahunan_konsumen'])->name('sales.omset-tahunan-konsumen');
+            Route::get('/omset-konsumen/excel', [App\Http\Controllers\SalesController::class, 'export_excel_omset'])->name('sales.omset.excel');
+            Route::get('/omset-konsumen/print', [App\Http\Controllers\SalesController::class, 'print_omset'])->name('sales.omset.print');
+            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\SalesController::class, 'detail_omset_page'])
+                ->name('sales.omset.detail_page');
+
             Route::get('/konsumen/data', [App\Http\Controllers\SalesController::class, 'konsumen_data'])->name('sales.konsumen.data');
             Route::get('/konsumen', [App\Http\Controllers\SalesController::class, 'konsumen'])->name('sales.konsumen');
 
