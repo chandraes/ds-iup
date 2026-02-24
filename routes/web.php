@@ -93,13 +93,18 @@ Route::group(['middleware' => ['auth']], function () {
 
             });
 
-              Route::prefix('penyelesaian-retur')->group(function(){
+            Route::prefix('penyelesaian-retur')->group(function(){
                 Route::get('/', [PerusahaanController::class, 'invoiceIndex'])->name('perusahaan.penyelesaian-retur.index');
                 Route::get('/data', [PerusahaanController::class, 'invoiceData'])->name('perusahaan.penyelesaian-retur.data');
                 Route::get('/detail/{id}', [PerusahaanController::class, 'invoiceShow'])->name('perusahaan.penyelesaian-retur.detail');
 
             });
 
+            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\PerusahaanController::class, 'omset_tahunan_konsumen'])->name('perusahaan.omset-tahunan-konsumen');
+            Route::get('/omset-konsumen/excel', [App\Http\Controllers\PerusahaanController::class, 'export_excel_omset'])->name('perusahaan.omset.excel');
+            Route::get('/omset-konsumen/print', [App\Http\Controllers\PerusahaanController::class, 'print_omset'])->name('perusahaan.omset.print');
+            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\PerusahaanController::class, 'detail_omset_page'])
+                ->name('perusahaan.omset.detail_page');
 
             Route::prefix('selling-out')->group(function () {
                 Route::get('/', [App\Http\Controllers\PerusahaanController::class, 'selling_out'])->name('perusahaan.selling-out');

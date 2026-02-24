@@ -68,6 +68,12 @@
             <h5 class="mt-2">ORDER</h5>
         </a>
     </div>
+      <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{route('perusahaan.omset-tahunan-konsumen')}}" class="text-decoration-none">
+            <img src="{{asset('images/omset-tahunan-konsumen.svg')}}" alt="" width="70">
+            <h5 class="mt-2">OMSET KONSUMEN TAHUNAN</h5>
+        </a>
+    </div>
 </div>
 {{-- <div class="row justify-content-left">
     <h3>REKAP</h3>

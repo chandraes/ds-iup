@@ -114,9 +114,6 @@ class StatistikController extends Controller
         ]);
     }
 
-    // Function ini hanya bertugas menyiapkan Query Builder, tidak mengeksekusi ->get()
-
-
     public function omset_tahunan_konsumen(Request $request)
     {
         // Cek apakah request dari DataTables (AJAX)
