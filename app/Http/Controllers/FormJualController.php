@@ -289,6 +289,7 @@ class FormJualController extends Controller
         $pdf = PDF::loadview('billing.stok.invoice-pdf', [
             'data' => $invoice->loadMissing([
                 'konsumen',
+                'karyawan',
                 'invoice_detail.stok.type',
                 'invoice_detail.stok.barang',
                 'invoice_detail.stok.barang.satuan',
