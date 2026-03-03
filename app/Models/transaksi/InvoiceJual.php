@@ -1266,7 +1266,7 @@ class InvoiceJual extends Model
                 'transaksi.total_setahun'
             ])
             ->with('kode_toko', 'karyawan', 'kabupaten_kota', 'kecamatan')
-            ->where('konsumens.active', 1)
+            // ->where('konsumens.active', 1)
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
                 $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
             });

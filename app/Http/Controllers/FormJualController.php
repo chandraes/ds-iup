@@ -20,7 +20,6 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Browsershot\Browsershot;
 
 class FormJualController extends Controller
 {
