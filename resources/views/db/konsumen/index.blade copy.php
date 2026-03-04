@@ -62,15 +62,15 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-2">
+        {{-- <div class="col-2">
             <label for="kota" class="form-label">Kabupaten / Kota</label>
-            <select name="kab_kot_id" id="filterKab" class="form-select form-select-sm" onchange="filterKecamatan()">
+            <select name="kabupaten_kota_id" id="kab_filter" class="form-select form-select-sm" onchange="filterKecamatan()">
                 <option value="">-- Pilih Kabupaten / Kota --</option>
                 @foreach ($kab_filter as $kab)
                     <option value="{{ $kab->id }}">{{ $kab->nama_wilayah }}</option>
                 @endforeach
             </select>
-        </div>
+        </div> --}}
         <div class="col-md-3">
             <label for="filterKecamatan" class="form-label">Kecamatan</label>
             <select id="filterKecamatan" name="kecamatan" class="form-select form-select-sm" >
@@ -137,9 +137,9 @@
     <script src="{{asset('assets/js/dt5.min.js')}}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
     <script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
-    <script>
+    {{-- <script>
     function filterKecamatan() {
-        var kabupatenKotaId = $('#filterKab').val();
+        var kabupatenKotaId = $('#kab_filter').val();
         $('#filterKecamatan').val(null).trigger('change'); // Reset kecamatan
         if(kabupatenKotaId) {
             $.ajax({
@@ -157,7 +157,7 @@
             $('#filterKecamatan').html('<option value="">-- Pilih Kecamatan --</option>');
         }
     }
-</script>
+</script> --}}
 <script>
     $(document).ready(function() {
 
@@ -172,7 +172,7 @@
                 d.area = $('#filterSalesArea').val();
                 d.kecamatan = $('#filterKecamatan').val();
                 d.status = $('#filterStatus').val();
-                d.kabupaten_kota = $('#filterKab').val();
+                d.kabupaten_kota = $('#kab_filter').val();
             }
         },
         scrollY: '70vh', // tinggi area scroll, bisa disesuaikan
@@ -203,9 +203,9 @@
         ]
     });
 
-    const filters = $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus, #filterKab');
+    const filters = $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus', '#kab_filter');
 
-     filters.select2({
+    filters.select2({
         theme: 'bootstrap-5',
         width: '100%'
     }).on('change', function () {
@@ -213,7 +213,7 @@
     });
 
    $('#resetFilter').on('click', function () {
-        $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus, #filterKab')
+        $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus', '#kab_filter')
             .val('')
             .trigger('change');
 
@@ -248,12 +248,13 @@
             width: '100%',
         });
 
-         $('#filterKab').select2({
+
+
+        $('#filterKecamatan').select2({
             theme: 'bootstrap-5',
             width: '100%',
         });
-
-        $('#filterKecamatan').select2({
+         $('#kab_filter').select2({
             theme: 'bootstrap-5',
             width: '100%',
         });

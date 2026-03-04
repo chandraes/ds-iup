@@ -497,7 +497,7 @@ class DatabaseController extends Controller
 
     public function konsumen_data(Request $request)
     {
-        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'kabupaten_kota']); // Ambil filter dari request
 
         $data = Konsumen::query()->with(['kode_toko', 'provinsi', 'kabupaten_kota', 'kecamatan', 'karyawan'])
                 ->withCount('docs')
@@ -629,11 +629,15 @@ class DatabaseController extends Controller
         //     // ->limit(10)
         //     ->get();
 
-        $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
-            $query->select('id_wilayah')
-                ->from('wilayahs')
-                ->where('id_induk_wilayah', '110000');
-        })->where('id_level_wilayah', 3)->get();
+        $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
+
+        $kab_filter = Wilayah::whereIn('id', $kabupatenKotaIds)->get();
+
+        // $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
+        //     $query->select('id_wilayah')
+        //         ->from('wilayahs')
+        //         ->where('id_induk_wilayah', '110000');
+        // })->where('id_level_wilayah', 3)->get();
 
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
 
@@ -645,8 +649,9 @@ class DatabaseController extends Controller
             // 'data' => $data,
             'provinsi' => $provinsi,
             'sales_area' => $sales_area,
+            'kab_filter' => $kab_filter,
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
-            'kecamatan_filter' => $kecamatan_filter,
+            // 'kecamatan_filter' => $kecamatan_filter,
         ]);
     }
 
