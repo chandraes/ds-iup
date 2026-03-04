@@ -1216,7 +1216,7 @@ class InvoiceJual extends Model
     }
 
     public function getOmsetQuery($tahun, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null, $kabupatenKotaId = null, $kecamatanId = null, $statusInvoice = null,
-                                    $bulan = [])
+                                    $bulan = [], $statusKonsumen = null)
     {
         // 1. Subquery Transaksi (Sama seperti sebelumnya)
         $subquery = DB::table('invoice_juals as i')
@@ -1258,6 +1258,7 @@ class InvoiceJual extends Model
                 'konsumens.kabupaten_kota_id',
                 'konsumens.kecamatan_id',
                 'konsumens.karyawan_id',
+                'konsumens.active',
                 // Ambil kolom hasil hitungan
                 'transaksi.bulan_1', 'transaksi.bulan_2', 'transaksi.bulan_3',
                 'transaksi.bulan_4', 'transaksi.bulan_5', 'transaksi.bulan_6',
@@ -1270,6 +1271,14 @@ class InvoiceJual extends Model
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
                 $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
             });
+
+            if ($statusKonsumen) {
+                if ($statusKonsumen == 'aktif') {
+                    $query->where('konsumens.active', 1);
+                } elseif ($statusKonsumen == 'nonaktif') {
+                    $query->where('konsumens.active', 0);
+                }
+            }
 
             if ($kodeTokoId) {
                 $query->where('konsumens.kode_toko_id', $kodeTokoId);

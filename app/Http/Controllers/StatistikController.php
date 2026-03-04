@@ -127,12 +127,15 @@ class StatistikController extends Controller
             $kabupatenKotaId = $request->input('kabupaten_kota_id');
             $kecamatanId = $request->input('kecamatan_id');
             $statusInvoice = $request->input('status_invoice');
+            $statusKonsumen = $request->input('status_konsumen'); // <--- Tangkap status konsumen
 
             $bulan = $request->input('bulan', []); // Tangkap filter bulan (array)
 
             $db = new InvoiceJual;
 
-            $query = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan);
+            $query = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan, $statusKonsumen);
+
+            // get unique konsumens.kabupaten_kota_id from query
 
             $sql = $query->toSql();
             $bindings = $query->getBindings();
@@ -199,13 +202,14 @@ class StatistikController extends Controller
                 ->make(true);
         }
 
+        $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
         // Jika bukan AJAX, tampilkan View awal
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
         $kodeTokos = KodeToko::select('id', 'kode')->get();
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
                     $query->where('is_sales', 1);
                 })->select('id', 'nama')->get();
-        $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->get();
+        $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->whereIn('id', $kabupatenKotaIds)->get();
         // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
         return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
@@ -224,11 +228,12 @@ class StatistikController extends Controller
         $kabupatenKotaId = $request->input('kabupaten_kota_id');
         $kecamatanId = $request->input('kecamatan_id');
         $statusInvoice = $request->input('status_invoice');
+        $statusKonsumen = $request->input('status_konsumen'); // <--- Tangkap status konsumen
 
         $bulan = $request->input('bulan', []);
         $db = new InvoiceJual;
         // Ambil Data
-        $laporan = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
+        $laporan = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan, $statusKonsumen)
             ->orderBy('konsumens.kode', 'asc') // Sort default untuk cetak
             ->get();
 
@@ -252,6 +257,7 @@ class StatistikController extends Controller
         $kabupatenKotaId = $request->input('kabupaten_kota_id');
         $kecamatanId = $request->input('kecamatan_id');
         $statusInvoice = $request->input('status_invoice');
+        $statusKonsumen = $request->input('status_konsumen'); // <--- Tangkap status konsumen
 
         // [BARU] Tangkap array bulan
         $bulan = $request->input('bulan', []);
@@ -267,7 +273,7 @@ class StatistikController extends Controller
         ];
 
         // [MODIFIKASI] Gunakan 'use ($bulan)' pada callback
-        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan) {
+        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan, $statusKonsumen) {
             $file = fopen('php://output', 'w');
 
             // 1. Susun Header Excel Secara Dinamis
@@ -293,7 +299,7 @@ class StatistikController extends Controller
             $db = new InvoiceJual;
 
             // 2. Ambil Query
-            $query = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan)
+            $query = $db->getOmsetQuery($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan, $statusKonsumen)
                 ->orderBy('konsumens.kode', 'asc');
 
             // 3. CHUNKING

@@ -99,6 +99,14 @@
                             <option value="invoice">Invoice</option>
                         </select>
                     </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">Status Konsumen</label>
+                        <select name="status_konsumen" id="status_konsumen" class="form-select form-select-sm">
+                            <option value="">-- Semua --</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="nonaktif">Non Aktif</option>
+                        </select>
+                    </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small">Pilih Bulan (Opsional)</label>
                         <select name="bulan[]" id="bulan" class="form-select form-select-sm" multiple="multiple">
@@ -300,6 +308,19 @@ $(document).ready(function() {
                 d.kecamatan_id = $('#kecamatan_id').val();
                 d.status_invoice = $('#status_invoice').val();
                 d.bulan = $('#bulan').val();
+                d.status_konsumen = $('#status_konsumen').val();
+            }
+        },
+        createdRow: function(row, data, dataIndex) {
+            // Pastikan variabel 'active' sesuai dengan key JSON yang dikirim dari controller
+            // Jika dari relasi, mungkin bentuknya data.konsumens.active atau data.active
+
+            if (data.active == 0 || data.active === '0') {
+                // Cara 1: Menggunakan inline CSS
+                // $(row).css('background-color', '#ffcccc'); // Merah muda/merah
+
+                // Cara 2: Jika Anda menggunakan Bootstrap, gunakan class (Hapus komentar di bawah)
+                $(row).addClass('table-danger');
             }
         },
         columns: [
@@ -449,6 +470,7 @@ $(document).ready(function() {
         $('#kabupaten_kota_id').val('').trigger('change');
         $('#kecamatan_id').val('').trigger('change');
         $('#status_invoice').val('');
+        $('#status_konsumen').val('');
 
         $('#bulan').val(null).trigger('change');
 
@@ -472,7 +494,8 @@ $(document).ready(function() {
             kabupaten_kota_id: $('#kabupaten_kota_id').val(),
             kecamatan_id: $('#kecamatan_id').val(),
             status_invoice: $('#status_invoice').val(),
-            bulan: $('#bulan').val()
+            bulan: $('#bulan').val(),
+            status_konsumen: $('#status_konsumen').val()
         });
         window.location.href = "{{ route('statistik.omset.excel') }}?" + params;
     });
@@ -489,7 +512,8 @@ $(document).ready(function() {
             kabupaten_kota_id: $('#kabupaten_kota_id').val(),
             kecamatan_id: $('#kecamatan_id').val(),
             status_invoice: $('#status_invoice').val(),
-            bulan: $('#bulan').val()
+            bulan: $('#bulan').val(),
+            status_konsumen: $('#status_konsumen').val()
         });
         var url = "{{ route('statistik.omset.print') }}?" + params;
         window.open(url, '_blank');
