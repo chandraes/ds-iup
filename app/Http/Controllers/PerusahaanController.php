@@ -16,7 +16,6 @@ use App\Models\ReturSupplier;
 use App\Models\StokRetur;
 use App\Models\transaksi\InvoiceJual;
 use Spatie\SimpleExcel\SimpleExcelWriter;
-use Illuminate\Support\LazyCollection;
 use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -31,21 +30,21 @@ class PerusahaanController extends Controller
     public function konsumen(Request $request)
     {
         $filters = $request->only(['area', 'kabupaten_kota','kecamatan', 'kode_toko', 'status', 'provinsi']); // Ambil filter dari request
-        $wilayah = Wilayah::whereIn('id_level_wilayah', [1, 2, 3])->get()->groupBy('id_level_wilayah');
-        $provinsi = $wilayah->get(1, collect());
+        $provinsiIds = Konsumen::select('provinsi_id')->distinct()->get()->pluck('provinsi_id')->toArray();
+        $provinsi = Wilayah::whereIn('id', $provinsiIds)->get();
 
         if ($request->has('provinsi') && $request->input('provinsi') != '') {
             $prov = Wilayah::find($request->input('provinsi'));
             $kabupaten_kota = Wilayah::where('id_induk_wilayah', $prov->id_wilayah)->where('id_level_wilayah', 2)->get();
         } else {
-            $kabupaten_kota = $wilayah->get(2, collect());
+            $kabupaten_kota = Wilayah::whereIn('id', Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->toArray())->get();
         }
 
         if ($request->has('kabupaten_kota') && $request->input('kabupaten_kota') != '') {
             $kab = Wilayah::find($request->input('kabupaten_kota'));
-            $kecamatan_filter = Wilayah::where('id_induk_wilayah', $kab->id_wilayah )->where('id_level_wilayah', 3)->get();
+            $kecamatan_filter = Wilayah::where('id_induk_wilayah', $kab->id_wilayah)->where('id_level_wilayah', 3)->get();
         } else {
-            $kecamatan_filter = $wilayah->get(3, collect());
+            $kecamatan_filter = Wilayah::whereIn('id', Konsumen::select('kecamatan_id')->distinct()->pluck('kecamatan_id')->toArray())->get();
         }
 
         $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
