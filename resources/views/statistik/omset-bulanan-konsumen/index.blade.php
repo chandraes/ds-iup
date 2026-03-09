@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center my-4">
-            <h3><u>OMSET TAHUNAN KONSUMEN</u></h3>
+            <h3><u>OMSET BULANAN KONSUMEN</u></h3>
         </div>
     </div>
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,6 +16,12 @@
                 <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="20">
                 <span>Dashboard</span>
             </a>
+            @if (auth()->user()->role != 'asisten-admin')
+            <a href="{{ route('statistik') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                <img src="{{ asset('images/statistik.svg') }}" alt="database" width="20">
+                <span>Statistik</span>
+            </a>
+            @endif
         </div>
     </div>
 
@@ -31,7 +37,7 @@
                         @endfor
                     </select>
                 </div>
-                {{-- <div class="col-md-3">
+                <div class="col-md-3">
                     <label class="form-label fw-bold">Perusahaan</label>
                     <select name="barang_unit_id" id="barang_unit_id" class="form-select form-select-sm">
                         <option value="">-- Semua Perusahaan --</option>
@@ -39,7 +45,7 @@
                             <option value="{{ $unit->id }}">{{ $unit->nama }}</option>
                         @endforeach
                     </select>
-                </div> --}}
+                </div>
                 <div class="col-md-2">
                         <label class="form-label fw-bold small">Kode Toko</label>
                         <select name="kode_toko_id" id="kode_toko_id" class="form-select form-select-sm">
@@ -91,6 +97,14 @@
                         <select name="status_invoice" id="status_invoice" class="form-select form-select-sm">
                             <option value="">Omset</option>
                             <option value="invoice">Invoice</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">Status Konsumen</label>
+                        <select name="status_konsumen" id="status_konsumen" class="form-select form-select-sm">
+                            <option value="">-- Semua --</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="nonaktif">Non Aktif</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -283,7 +297,7 @@ $(document).ready(function() {
         processing: true,
         serverSide: true, // PENTING: Mengaktifkan mode server-side
         ajax: {
-            url: "{{ route('perusahaan.omset-tahunan-konsumen') }}", // Ganti dengan nama route Anda
+            url: "{{ route('statistik.omset-bulanan-konsumen') }}", // Ganti dengan nama route Anda
             data: function (d) {
                 d.tahun = $('#tahun').val();
                 d.barang_unit_id = $('#barang_unit_id').val();
@@ -294,6 +308,19 @@ $(document).ready(function() {
                 d.kecamatan_id = $('#kecamatan_id').val();
                 d.status_invoice = $('#status_invoice').val();
                 d.bulan = $('#bulan').val();
+                d.status_konsumen = $('#status_konsumen').val();
+            }
+        },
+        createdRow: function(row, data, dataIndex) {
+            // Pastikan variabel 'active' sesuai dengan key JSON yang dikirim dari controller
+            // Jika dari relasi, mungkin bentuknya data.konsumens.active atau data.active
+
+            if (data.active == 0 || data.active === '0') {
+                // Cara 1: Menggunakan inline CSS
+                // $(row).css('background-color', '#ffcccc'); // Merah muda/merah
+
+                // Cara 2: Jika Anda menggunakan Bootstrap, gunakan class (Hapus komentar di bawah)
+                $(row).addClass('table-danger');
             }
         },
         columns: [
@@ -443,6 +470,7 @@ $(document).ready(function() {
         $('#kabupaten_kota_id').val('').trigger('change');
         $('#kecamatan_id').val('').trigger('change');
         $('#status_invoice').val('');
+        $('#status_konsumen').val('');
 
         $('#bulan').val(null).trigger('change');
 
@@ -466,9 +494,10 @@ $(document).ready(function() {
             kabupaten_kota_id: $('#kabupaten_kota_id').val(),
             kecamatan_id: $('#kecamatan_id').val(),
             status_invoice: $('#status_invoice').val(),
-            bulan: $('#bulan').val()
+            bulan: $('#bulan').val(),
+            status_konsumen: $('#status_konsumen').val()
         });
-        window.location.href = "{{ route('perusahaan.omset.excel') }}?" + params;
+        window.location.href = "{{ route('statistik.omset.excel') }}?" + params;
     });
 
     // TOMBOL PDF
@@ -483,9 +512,10 @@ $(document).ready(function() {
             kabupaten_kota_id: $('#kabupaten_kota_id').val(),
             kecamatan_id: $('#kecamatan_id').val(),
             status_invoice: $('#status_invoice').val(),
-            bulan: $('#bulan').val()
+            bulan: $('#bulan').val(),
+            status_konsumen: $('#status_konsumen').val()
         });
-        var url = "{{ route('perusahaan.omset.print') }}?" + params;
+        var url = "{{ route('statistik.omset.print') }}?" + params;
         window.open(url, '_blank');
     });
 
@@ -505,7 +535,7 @@ $(document).ready(function() {
             // Base URL Route Laravel
             // Kita gunakan placeholder 'XXX', 'YYY', 'ZZZ' lalu replace manual dengan JS
             // Ini trik agar route() blade tidak error karena parameter JS belum ada
-            var baseUrl = "{{ route('perusahaan.omset.detail_page', ['konsumen' => 'XXX', 'bulan' => 'YYY', 'tahun' => 'ZZZ']) }}";
+            var baseUrl = "{{ route('statistik.omset.detail_page', ['konsumen' => 'XXX', 'bulan' => 'YYY', 'tahun' => 'ZZZ']) }}";
 
             // Ganti placeholder dengan data asli baris ini
             var finalUrl = baseUrl

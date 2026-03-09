@@ -100,7 +100,7 @@ Route::group(['middleware' => ['auth']], function () {
 
             });
 
-            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\PerusahaanController::class, 'omset_tahunan_konsumen'])->name('perusahaan.omset-tahunan-konsumen');
+            Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\PerusahaanController::class, 'omset_tahunan_konsumen'])->name('perusahaan.omset-bulanan-konsumen');
             Route::get('/omset-konsumen/excel', [App\Http\Controllers\PerusahaanController::class, 'export_excel_omset'])->name('perusahaan.omset.excel');
             Route::get('/omset-konsumen/print', [App\Http\Controllers\PerusahaanController::class, 'print_omset'])->name('perusahaan.omset.print');
             Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\PerusahaanController::class, 'detail_omset_page'])
@@ -116,7 +116,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
 
-            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\SalesController::class, 'omset_tahunan_konsumen'])->name('sales.omset-tahunan-konsumen');
+            Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\SalesController::class, 'omset_tahunan_konsumen'])->name('sales.omset-bulanan-konsumen');
             Route::get('/omset-konsumen/excel', [App\Http\Controllers\SalesController::class, 'export_excel_omset'])->name('sales.omset.excel');
             Route::get('/omset-konsumen/print', [App\Http\Controllers\SalesController::class, 'print_omset'])->name('sales.omset.print');
             Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\SalesController::class, 'detail_omset_page'])
@@ -580,7 +580,12 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/harian', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit.harian');
             });
 
+            Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_bulanan_konsumen'])->name('statistik.omset-bulanan-konsumen');
             Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
+            Route::get('/omset-tahunan-konsumen/detail/{konsumen}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_tahunan_page'])->name('statistik.omset.detail_tahunan_page');
+            Route::get('statistik/omset-tahunan-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset_tahunan'])->name('statistik.omset.print_tahunan');
+            Route::get('statistik/omset-tahunan-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_tahunan'])->name('statistik.omset.excel_tahunan');
+
             Route::get('/omset-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset'])->name('statistik.omset.excel');
             Route::get('/omset-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset'])->name('statistik.omset.print');
             // Route untuk halaman detail omset

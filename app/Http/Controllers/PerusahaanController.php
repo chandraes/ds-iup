@@ -294,7 +294,6 @@ class PerusahaanController extends Controller
 
         $kabupaten_kota = Wilayah::select('id', 'nama_wilayah')->whereIn('id', $kab_kot->pluck('kabupaten_kota_id'))->get();
 
-        // create array of month in indonesian with key 1-12
         $dataBulan = [
             '1' => 'Januari',
             '2' => 'Februari',
@@ -880,7 +879,7 @@ class PerusahaanController extends Controller
                 })->select('id', 'nama')->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->get();
         // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
-        return view('perusahaan.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
+        return view('perusahaan.omset-bulanan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
 
     public function print_omset(Request $request)
@@ -912,7 +911,7 @@ class PerusahaanController extends Controller
             $namaUnit = $unitDB->nama ?? '-';
         }
 
-        return view('perusahaan.omset-tahunan-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
+        return view('-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
     }
 
     public function export_excel_omset(Request $request)
@@ -1077,7 +1076,7 @@ class PerusahaanController extends Controller
         // Eksekusi Query
         $details = $query->orderBy('i.created_at', 'asc')->get();
 
-        return view('perusahaan.omset-tahunan-konsumen.detail', compact(
+        return view('perusahaan.omset-bulanan-konsumen.detail', compact(
             'details', 'konsumen', 'bulan', 'namaBulan', 'tahun', 'unitId'
         ));
     }

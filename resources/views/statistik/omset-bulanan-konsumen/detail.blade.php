@@ -1,11 +1,12 @@
 @extends('layouts.app')
+
 @section('content')
 <div class="container-fluid">
     {{-- Header --}}
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('perusahaan.omset-tahunan-konsumen') }}?year={{$tahun}}" class="btn btn-secondary btn-sm">
+                <a href="{{ route('statistik.omset-bulanan-konsumen') }}?year={{$tahun}}" class="btn btn-secondary btn-sm">
                     <i class="fa fa-arrow-left"></i> Kembali
                 </a>
                 <h3 class="m-0">Detail Transaksi</h3>

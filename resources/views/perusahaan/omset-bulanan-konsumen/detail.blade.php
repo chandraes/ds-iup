@@ -1,16 +1,14 @@
 @extends('layouts.app')
-
 @section('content')
 <div class="container-fluid">
     {{-- Header --}}
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="d-flex align-items-center gap-3">
-                {{-- Tombol kembali akan membawa nilai filter tahun awal & akhir agar datatables tidak reset --}}
-                <a href="{{ route('statistik.omset-tahunan-konsumen') }}?tahun_awal={{$tahunAwal}}&tahun_akhir={{$tahunAkhir}}" class="btn btn-secondary btn-sm">
+                <a href="{{ route('perusahaan.omset-bulanan-konsumen') }}?year={{$tahun}}" class="btn btn-secondary btn-sm">
                     <i class="fa fa-arrow-left"></i> Kembali
                 </a>
-                <h3 class="m-0">Detail Transaksi Tahunan</h3>
+                <h3 class="m-0">Detail Transaksi</h3>
             </div>
         </div>
     </div>
@@ -22,11 +20,11 @@
                 <div class="col-md-4">
                     <small class="text-muted text-uppercase fw-bold">Konsumen</small>
                     <h5 class="fw-bold text-primary">{{ $konsumen->kode_toko?->kode }} {{ $konsumen->nama }}</h5>
-                    <span>Kode: {{ $konsumen->kode }}</span>
+                    <span>Kode: {{ $konsumen->full_kode }}</span>
                 </div>
                 <div class="col-md-4">
                     <small class="text-muted text-uppercase fw-bold">Periode</small>
-                    <h5 class="fw-bold">{{ $periodeTeks }}</h5>
+                    <h5 class="fw-bold">{{ $namaBulan }} {{ $tahun }}</h5>
                 </div>
                 <div class="col-md-4 text-end">
                     <small class="text-muted text-uppercase fw-bold">Total Nilai Halaman Ini</small>
@@ -41,7 +39,7 @@
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover" id="detailTable">
-                    <thead class="table-dark text-nowrap">
+                    <thead class="table-dark">
                         <tr>
                             <th width="5%" class="text-center">No</th>
                             <th>Tanggal</th>
@@ -73,8 +71,8 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="11" class="text-center p-4">
-                                <h6 class="text-muted">Tidak ada data transaksi untuk periode ini.</h6>
+                            <td colspan="9" class="text-center p-4">
+                                <h6 class="text-muted">Tidak ada data transaksi untuk filter ini.</h6>
                             </td>
                         </tr>
                         @endforelse
@@ -89,6 +87,7 @@
 @push('js')
 <script>
     $(document).ready(function() {
+        // Opsional: Aktifkan Datatable Client Side jika ingin sorting di halaman detail
         $('#detailTable').DataTable({
             "paging": true,
             "ordering": true,

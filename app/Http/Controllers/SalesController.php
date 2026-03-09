@@ -1151,7 +1151,7 @@ class SalesController extends Controller
                 })->select('id', 'nama')->where('id', Auth::user()->karyawan_id)->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->get();
         // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
-        return view('sales.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
+        return view('sales.omset-bulanan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
 
     public function print_omset(Request $request)
@@ -1183,7 +1183,7 @@ class SalesController extends Controller
             $namaUnit = $unitDB->nama ?? '-';
         }
 
-        return view('sales.omset-tahunan-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
+        return view('sales.omset-bulanan-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
     }
 
     public function export_excel_omset(Request $request)
@@ -1348,7 +1348,7 @@ class SalesController extends Controller
         // Eksekusi Query
         $details = $query->orderBy('i.created_at', 'asc')->get();
 
-        return view('sales.omset-tahunan-konsumen.detail', compact(
+        return view('sales.omset-bulanan-konsumen.detail', compact(
             'details', 'konsumen', 'bulan', 'namaBulan', 'tahun', 'unitId'
         ));
     }

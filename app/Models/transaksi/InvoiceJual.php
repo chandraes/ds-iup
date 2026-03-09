@@ -1326,4 +1326,92 @@ class InvoiceJual extends Model
 
         return $query;
     }
+
+    public function getOmsetTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null, $kabupatenKotaId = null, $kecamatanId = null, $statusInvoice = null, $statusKonsumen = null)
+    {
+        // Proteksi di Backend: Pastikan jarak tahun tidak lebih dari 5 tahun (misal 2020 s/d 2024 = 4)
+        if (($tahunAkhir - $tahunAwal) > 4) {
+            $tahunAwal = $tahunAkhir - 4;
+        }
+
+        // Buat array tahun aktual (misal: [2022, 2023, 2024])
+        $years = range($tahunAwal, $tahunAkhir);
+
+        // Pad array agar SELALU berisi 5 elemen (untuk konsistensi kolom Datatables)
+        // misal: [2022, 2023, 2024, null, null]
+        $paddedYears = array_pad($years, 5, null);
+
+        // 1. Subquery Transaksi Tahunan
+        $subquery = DB::table('invoice_juals as i')
+            ->join('invoice_jual_details as d', 'i.id', '=', 'd.invoice_jual_id')
+            ->join('barangs as b', 'd.barang_id', '=', 'b.id')
+            ->select('i.konsumen_id')
+            ->where('i.void', 0)
+            ->whereBetween(DB::raw('YEAR(i.created_at)'), [$tahunAwal, $tahunAkhir]);
+
+        if ($unitId) {
+            $subquery->where('b.barang_unit_id', $unitId);
+        }
+
+        if ($statusInvoice) {
+            if ($statusInvoice == 'invoice') {
+                $subquery->where('i.lunas', 0);
+            } elseif ($statusInvoice == 'piutang') {
+                $subquery->where('i.status_bayar', '!=', 'lunas');
+            }
+        }
+
+        $selectsRaw = [];
+        // Looping 5 kolom pasti
+        for ($i = 0; $i < 5; $i++) {
+            $colName = "tahun_" . ($i + 1);
+            if ($paddedYears[$i] !== null) {
+                $y = $paddedYears[$i];
+                $selectsRaw[] = "COALESCE(SUM(CASE WHEN YEAR(i.created_at) = $y THEN d.total ELSE 0 END), 0) as $colName";
+            } else {
+                // Kolom dummy jika range kurang dari 5 tahun
+                $selectsRaw[] = "0 as $colName";
+            }
+        }
+        $selectsRaw[] = "COALESCE(SUM(d.total), 0) as total_semua";
+
+        $subquery->addSelect(DB::raw(implode(',', $selectsRaw)));
+        $subquery->groupBy('i.konsumen_id');
+
+        // 2. Query Utama
+        $query = Konsumen::query()
+            ->select([
+                'konsumens.id', 'konsumens.kode', 'konsumens.nama', 'konsumens.kode_toko_id',
+                'konsumens.kabupaten_kota_id', 'konsumens.kecamatan_id', 'konsumens.karyawan_id', 'konsumens.active',
+                'transaksi.tahun_1', 'transaksi.tahun_2', 'transaksi.tahun_3',
+                'transaksi.tahun_4', 'transaksi.tahun_5', 'transaksi.total_semua'
+            ])
+            ->with('kode_toko', 'karyawan', 'kabupaten_kota', 'kecamatan')
+            ->leftJoinSub($subquery, 'transaksi', function ($join) {
+                $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
+            });
+
+        // --- FILTER LAINNYA (Sama persis seperti versi bulanan) ---
+        if ($statusKonsumen) {
+            $query->where('konsumens.active', $statusKonsumen == 'aktif' ? 1 : 0);
+        }
+        if ($kodeTokoId) $query->where('konsumens.kode_toko_id', $kodeTokoId);
+        if ($salesId) $query->where('konsumens.karyawan_id', $salesId);
+        if ($kabupatenKotaId) $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
+        if ($kecamatanId) $query->where('konsumens.kecamatan_id', $kecamatanId);
+
+        if ($statusOmset) {
+            $sumExpression = "COALESCE(transaksi.total_semua, 0)";
+            if ($statusOmset == 'ada') {
+                $query->whereRaw("($sumExpression) > 0");
+            } elseif ($statusOmset == 'nol') {
+                $query->where(function($q) use ($sumExpression) {
+                    $q->whereNull('transaksi.total_semua')
+                    ->orWhereRaw("($sumExpression) = 0");
+                });
+            }
+        }
+
+        return $query;
+    }
 }

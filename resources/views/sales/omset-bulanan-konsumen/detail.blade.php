@@ -6,7 +6,7 @@
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('statistik.omset-tahunan-konsumen') }}?year={{$tahun}}" class="btn btn-secondary btn-sm">
+                <a href="{{ route('sales.omset-bulanan-konsumen') }}?year={{$tahun}}" class="btn btn-secondary btn-sm">
                     <i class="fa fa-arrow-left"></i> Kembali
                 </a>
                 <h3 class="m-0">Detail Transaksi</h3>

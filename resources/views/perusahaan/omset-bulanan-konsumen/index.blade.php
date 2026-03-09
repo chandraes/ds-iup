@@ -31,7 +31,7 @@
                         @endfor
                     </select>
                 </div>
-                <div class="col-md-3">
+                {{-- <div class="col-md-3">
                     <label class="form-label fw-bold">Perusahaan</label>
                     <select name="barang_unit_id" id="barang_unit_id" class="form-select form-select-sm">
                         <option value="">-- Semua Perusahaan --</option>
@@ -39,7 +39,7 @@
                             <option value="{{ $unit->id }}">{{ $unit->nama }}</option>
                         @endforeach
                     </select>
-                </div>
+                </div> --}}
                 <div class="col-md-2">
                         <label class="form-label fw-bold small">Kode Toko</label>
                         <select name="kode_toko_id" id="kode_toko_id" class="form-select form-select-sm">
@@ -68,7 +68,7 @@
                                 @endforeach --}}
                             </select>
                         </div>
-                    {{-- <div class="col-md-2">
+                    <div class="col-md-2">
                         <label class="form-label fw-bold small">Sales Area</label>
                         <select name="sales_id" id="sales_id" class="form-select form-select-sm">
                             <option value="">-- Semua Sales --</option>
@@ -76,7 +76,7 @@
                                 <option value="{{ $s->id }}">{{ $s->nama }}</option>
                             @endforeach
                         </select>
-                    </div> --}}
+                    </div>
                     {{-- FILTER BARU 2: STATUS OMSET --}}
                     <div class="col-md-2">
                         <label class="form-label fw-bold small">Status Omset</label>
@@ -264,6 +264,12 @@ $(document).ready(function() {
         // allowClear: true
     });
 
+    $('#sales_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        // placeholder: '-- Pilih Kode Toko --',
+        // allowClear: true
+    });
 
     $('#bulan').select2({
         theme: 'bootstrap-5',
@@ -277,7 +283,7 @@ $(document).ready(function() {
         processing: true,
         serverSide: true, // PENTING: Mengaktifkan mode server-side
         ajax: {
-            url: "{{ route('sales.omset-tahunan-konsumen') }}", // Ganti dengan nama route Anda
+            url: "{{ route('perusahaan.omset-bulanan-konsumen') }}", // Ganti dengan nama route Anda
             data: function (d) {
                 d.tahun = $('#tahun').val();
                 d.barang_unit_id = $('#barang_unit_id').val();
@@ -462,7 +468,7 @@ $(document).ready(function() {
             status_invoice: $('#status_invoice').val(),
             bulan: $('#bulan').val()
         });
-        window.location.href = "{{ route('sales.omset.excel') }}?" + params;
+        window.location.href = "{{ route('perusahaan.omset.excel') }}?" + params;
     });
 
     // TOMBOL PDF
@@ -479,7 +485,7 @@ $(document).ready(function() {
             status_invoice: $('#status_invoice').val(),
             bulan: $('#bulan').val()
         });
-        var url = "{{ route('sales.omset.print') }}?" + params;
+        var url = "{{ route('perusahaan.omset.print') }}?" + params;
         window.open(url, '_blank');
     });
 
@@ -499,7 +505,7 @@ $(document).ready(function() {
             // Base URL Route Laravel
             // Kita gunakan placeholder 'XXX', 'YYY', 'ZZZ' lalu replace manual dengan JS
             // Ini trik agar route() blade tidak error karena parameter JS belum ada
-            var baseUrl = "{{ route('sales.omset.detail_page', ['konsumen' => 'XXX', 'bulan' => 'YYY', 'tahun' => 'ZZZ']) }}";
+            var baseUrl = "{{ route('perusahaan.omset.detail_page', ['konsumen' => 'XXX', 'bulan' => 'YYY', 'tahun' => 'ZZZ']) }}";
 
             // Ganti placeholder dengan data asli baris ini
             var finalUrl = baseUrl

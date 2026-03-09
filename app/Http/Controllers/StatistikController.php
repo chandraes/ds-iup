@@ -114,7 +114,7 @@ class StatistikController extends Controller
         ]);
     }
 
-    public function omset_tahunan_konsumen(Request $request)
+    public function omset_bulanan_konsumen(Request $request)
     {
         // Cek apakah request dari DataTables (AJAX)
         if ($request->ajax()) {
@@ -211,7 +211,7 @@ class StatistikController extends Controller
                 })->select('id', 'nama')->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->whereIn('id', $kabupatenKotaIds)->get();
         // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
-        return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
+        return view('statistik.omset-bulanan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
 
     public function print_omset(Request $request)
@@ -244,7 +244,7 @@ class StatistikController extends Controller
             $namaUnit = $unitDB->nama ?? '-';
         }
 
-        return view('statistik.omset-tahunan-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
+        return view('statistik.omset-bulanan-konsumen.print', compact('laporan', 'tahun', 'namaUnit', 'bulan'));
     }
 
     public function export_excel_omset(Request $request)
@@ -410,8 +410,280 @@ class StatistikController extends Controller
         // Eksekusi Query
         $details = $query->orderBy('i.created_at', 'asc')->get();
 
-        return view('statistik.omset-tahunan-konsumen.detail', compact(
+        return view('statistik.omset-bulanan-konsumen.detail', compact(
             'details', 'konsumen', 'bulan', 'namaBulan', 'tahun', 'unitId'
         ));
+    }
+
+    public function omset_tahunan_konsumen(Request $request)
+    {
+        if ($request->ajax()) {
+            // Default tahun: 4 tahun kebelakang s/d tahun sekarang (5 tahun berjalan)
+            $tahunAkhir = $request->input('tahun_akhir', date('Y'));
+            $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
+
+            // Proteksi di request AJAX
+            if (($tahunAkhir - $tahunAwal) > 4) {
+                $tahunAwal = $tahunAkhir - 4;
+            }
+
+            $years = range($tahunAwal, $tahunAkhir); // Kita oper array ini ke Frontend
+
+            $unitId = $request->input('barang_unit_id');
+            $kodeTokoId = $request->input('kode_toko_id');
+            $statusOmset = $request->input('status_omset');
+            $salesId = $request->input('sales_id');
+            $kabupatenKotaId = $request->input('kabupaten_kota_id');
+            $kecamatanId = $request->input('kecamatan_id');
+            $statusInvoice = $request->input('status_invoice');
+            $statusKonsumen = $request->input('status_konsumen');
+
+            $db = new InvoiceJual; // Sesuaikan dengan model Anda
+            $query = $db->getOmsetTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $statusKonsumen);
+
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+
+            $grandTotals = DB::table(DB::raw("($sql) as temp_total"))
+                ->setBindings($bindings)
+                ->selectRaw('
+                    COALESCE(SUM(tahun_1), 0) as sum_t1,
+                    COALESCE(SUM(tahun_2), 0) as sum_t2,
+                    COALESCE(SUM(tahun_3), 0) as sum_t3,
+                    COALESCE(SUM(tahun_4), 0) as sum_t4,
+                    COALESCE(SUM(tahun_5), 0) as sum_t5,
+                    COALESCE(SUM(total_semua), 0) as sum_total
+                ')->first();
+
+            return DataTables::of($query)
+                ->with('grand_totals', $grandTotals)
+                ->with('years_array', $years) // <--- PENTING: Untuk merubah Header di Datatables
+                ->addIndexColumn()
+                ->addColumn('kode_toko', function($row){
+                    return $row->kode_toko->kode ?? $row->kode_toko_id ?? '-';
+                })
+                ->editColumn('kabupaten_kota.nama_wilayah', function($row) {
+                    return str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah ?? '-');
+                })
+                ->editColumn('kecamatan.nama_wilayah', function($row) {
+                    return str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah ?? '-');
+                })
+                ->editColumn('tahun_1', fn($row) => number_format($row->tahun_1 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_2', fn($row) => number_format($row->tahun_2 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_3', fn($row) => number_format($row->tahun_3 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_4', fn($row) => number_format($row->tahun_4 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_5', fn($row) => number_format($row->tahun_5 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function($row) {
+                    return '<strong>'.number_format($row->total_semua ?? 0, 0, ',', '.').'</strong>';
+                })
+                ->rawColumns(['total'])
+                ->make(true);
+        }
+
+        $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
+        $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
+        $kodeTokos = KodeToko::select('id', 'kode')->get();
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', fn($q) => $q->where('is_sales', 1))->select('id', 'nama')->get();
+        $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->whereIn('id', $kabupatenKotaIds)->get();
+
+        return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
+    }
+
+    public function detail_omset_tahunan_page($konsumenId, $tahunKlik, Request $request)
+    {
+        // Tangkap parameter filter yang dikirim dari halaman index
+        $unitId = $request->input('unit_id');
+        $statusInvoice = $request->input('status_invoice');
+        $tahunAwal = $request->input('tahun_awal');
+        $tahunAkhir = $request->input('tahun_akhir');
+
+        // 1. Ambil Data Konsumen
+        $konsumen = Konsumen::with('kode_toko')->where('id', $konsumenId)->select('nama', 'kode', 'kode_toko_id')->first();
+        if (!$konsumen) abort(404, 'Konsumen tidak ditemukan');
+
+        // 2. Query Detail Transaksi
+        $query = DB::table('invoice_jual_details as d')
+            ->join('invoice_juals as i', 'd.invoice_jual_id', '=', 'i.id')
+            ->join('barangs as b', 'd.barang_id', '=', 'b.id')
+            ->leftJoin('barang_namas as bn', 'b.barang_nama_id', '=', 'bn.id')
+            ->leftJoin('barang_units as u', 'b.barang_unit_id', '=', 'u.id')
+            ->select([
+                'i.kode as no_invoice',
+                'i.created_at as tanggal',
+                'bn.nama as nama_barang',
+                'b.kode as kode_barang',
+                'u.nama as nama_unit',
+                'd.jumlah',
+                'd.harga_satuan',
+                'd.diskon',
+                'd.ppn',
+                'd.total'
+            ])
+            ->where('i.konsumen_id', $konsumenId)
+            ->where('i.void', 0); // Pastikan tidak mengambil nota void
+
+        // --- FILTER TAHUN ---
+        if ($tahunKlik !== 'total') {
+            // Jika User klik pada kolom tahun spesifik (misal: 2023)
+            $query->whereYear('i.created_at', $tahunKlik);
+            $periodeTeks = "Tahun " . $tahunKlik;
+        } else {
+            // Jika User klik pada kolom "Total", tampilkan seluruh transaksi di range tahun filter
+            if ($tahunAwal && $tahunAkhir) {
+                $query->whereYear('i.created_at', '>=', $tahunAwal)
+                    ->whereYear('i.created_at', '<=', $tahunAkhir);
+                $periodeTeks = "Periode $tahunAwal - $tahunAkhir";
+            } else {
+                $periodeTeks = "Semua Tahun";
+            }
+        }
+
+        // --- FILTER TAMBAHAN (Sama seperti index) ---
+        if ($unitId) {
+            $query->where('b.barang_unit_id', $unitId);
+        }
+
+        if ($statusInvoice) {
+            if ($statusInvoice == 'invoice') {
+                $query->where('i.lunas', 0);
+            } elseif ($statusInvoice == 'piutang') { // Sesuaikan jika ada status piutang
+                $query->where('i.status_bayar', '!=', 'lunas');
+            }
+        }
+
+        // Eksekusi Query
+        $details = $query->orderBy('i.created_at', 'asc')->get();
+
+        return view('statistik.omset-tahunan-konsumen.detail', compact(
+            'details', 'konsumen', 'tahunKlik', 'periodeTeks', 'unitId', 'tahunAwal', 'tahunAkhir'
+        ));
+    }
+
+    public function print_omset_tahunan(Request $request)
+    {
+        ini_set('memory_limit', '256M');
+        set_time_limit(300);
+
+        // Filter Tahun
+        $tahunAkhir = $request->input('tahun_akhir', date('Y'));
+        $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
+
+        if (($tahunAkhir - $tahunAwal) > 4) {
+            $tahunAwal = $tahunAkhir - 4;
+        }
+        $years = range($tahunAwal, $tahunAkhir); // Array tahun untuk header dinamis
+
+        // Tangkap Filter Lainnya
+        $unitId = $request->input('barang_unit_id');
+        $kodeTokoId = $request->input('kode_toko_id');
+        $statusOmset = $request->input('status_omset');
+        $salesId = $request->input('sales_id');
+        $kabupatenKotaId = $request->input('kabupaten_kota_id');
+        $kecamatanId = $request->input('kecamatan_id');
+        $statusInvoice = $request->input('status_invoice');
+        $statusKonsumen = $request->input('status_konsumen');
+
+        $db = new InvoiceJual;
+
+        // Ambil Data dari Query Tahunan
+        $laporan = $db->getOmsetTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $statusKonsumen)
+            ->orderBy('konsumens.kode', 'asc')
+            ->get();
+
+        // Nama Unit untuk Judul
+        $namaUnit = 'Semua Perusahaan';
+        if ($unitId) {
+            $unitDB = DB::table('barang_units')->where('id', $unitId)->first();
+            $namaUnit = $unitDB->nama ?? '-';
+        }
+
+        return view('statistik.omset-tahunan-konsumen.print', compact('laporan', 'tahunAwal', 'tahunAkhir', 'years', 'namaUnit'));
+    }
+
+    public function export_excel_omset_tahunan(Request $request)
+    {
+        // Filter Tahun
+        $tahunAkhir = $request->input('tahun_akhir', date('Y'));
+        $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
+
+        if (($tahunAkhir - $tahunAwal) > 4) {
+            $tahunAwal = $tahunAkhir - 4;
+        }
+        $years = range($tahunAwal, $tahunAkhir); // Array tahun untuk header dinamis
+
+        // Tangkap Filter Lainnya
+        $unitId = $request->input('barang_unit_id');
+        $kodeTokoId = $request->input('kode_toko_id');
+        $statusOmset = $request->input('status_omset');
+        $salesId = $request->input('sales_id');
+        $kabupatenKotaId = $request->input('kabupaten_kota_id');
+        $kecamatanId = $request->input('kecamatan_id');
+        $statusInvoice = $request->input('status_invoice');
+        $statusKonsumen = $request->input('status_konsumen');
+
+        $fileName = 'Omset_Tahunan_Konsumen_' . $tahunAwal . '_' . $tahunAkhir . '.csv';
+
+        $headers = [
+            'Content-type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=' . $fileName,
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function() use ($tahunAwal, $tahunAkhir, $years, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $statusKonsumen) {
+            $file = fopen('php://output', 'w');
+
+            // 1. Susun Header Excel Secara Dinamis
+            $csvHeaders = [
+                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Kab/Kota', 'Kecamatan', 'Sales Area'
+            ];
+
+            // Tambahkan Header Tahun (misal: 2022, 2023, 2024)
+            foreach ($years as $year) {
+                $csvHeaders[] = $year;
+            }
+            $csvHeaders[] = 'Total'; // Kolom Grand Total
+
+            fputcsv($file, $csvHeaders);
+
+            $db = new InvoiceJual;
+
+            // 2. Ambil Query
+            $query = $db->getOmsetTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $statusKonsumen)
+                ->orderBy('konsumens.kode', 'asc');
+
+            // 3. CHUNKING
+            $no = 1;
+            $query->chunk(500, function($konsumens) use ($file, &$no, $years) {
+                foreach ($konsumens as $row) {
+                    $csvRow = [
+                        $no++,
+                        $row->full_kode, // Jika null coba ganti ke $row->kode sesuai setup Anda
+                        $row->kode_toko->kode ?? $row->kode_toko_id ?? '-',
+                        $row->nama,
+                        str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah) ?? '-',
+                        str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah) ?? '-',
+                        $row->karyawan?->nama ?? '-'
+                    ];
+
+                    // Looping nilai per tahun (tahun_1 s/d tahun_N)
+                    // Jumlah kolom tahun akan sama dengan jumlah elemen di array $years
+                    for ($i = 1; $i <= count($years); $i++) {
+                        $kolomTahun = 'tahun_' . $i;
+                        $csvRow[] = $row->$kolomTahun ?? 0;
+                    }
+
+                    $csvRow[] = $row->total_semua ?? 0; // Masukkan total semua di akhir
+
+                    fputcsv($file, $csvRow);
+                }
+                flush();
+            });
+
+            fclose($file);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
     }
 }
