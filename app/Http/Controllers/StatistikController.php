@@ -9,6 +9,7 @@ use App\Models\db\Konsumen;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Yajra\DataTables\Facades\DataTables;
@@ -417,6 +418,8 @@ class StatistikController extends Controller
 
     public function omset_tahunan_konsumen(Request $request)
     {
+        $user = Auth::user();
+
         if ($request->ajax()) {
             // Default tahun: 4 tahun kebelakang s/d tahun sekarang (5 tahun berjalan)
             $tahunAkhir = $request->input('tahun_akhir', date('Y'));
@@ -430,6 +433,14 @@ class StatistikController extends Controller
             $years = range($tahunAwal, $tahunAkhir); // Kita oper array ini ke Frontend
 
             $unitId = $request->input('barang_unit_id');
+
+            if ($user->role == 'perusahaan') {
+                $unitId = $user->barang_unit_id;
+                if (!$unitId) {
+                    return response()->json(['error' => 'Unit tidak ditemukan untuk perusahaan'], 400);
+                }
+            }
+
             $kodeTokoId = $request->input('kode_toko_id');
             $statusOmset = $request->input('status_omset');
             $salesId = $request->input('sales_id');
@@ -481,7 +492,15 @@ class StatistikController extends Controller
         }
 
         $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
-        $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
+
+        $units = BarangUnit::select('id', 'nama')->orderBy('nama');
+
+        if ($user->role == 'perusahaan') {
+            $units->where('id', $user->barang_unit_id);
+        }
+
+        $units = $units->get();
+
         $kodeTokos = KodeToko::select('id', 'kode')->get();
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', fn($q) => $q->where('is_sales', 1))->select('id', 'nama')->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->whereIn('id', $kabupatenKotaIds)->get();
@@ -493,6 +512,14 @@ class StatistikController extends Controller
     {
         // Tangkap parameter filter yang dikirim dari halaman index
         $unitId = $request->input('unit_id');
+        
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+             if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
+
         $statusInvoice = $request->input('status_invoice');
         $tahunAwal = $request->input('tahun_awal');
         $tahunAkhir = $request->input('tahun_akhir');
@@ -575,6 +602,13 @@ class StatistikController extends Controller
 
         // Tangkap Filter Lainnya
         $unitId = $request->input('barang_unit_id');
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+             if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
+
         $kodeTokoId = $request->input('kode_toko_id');
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
@@ -613,6 +647,13 @@ class StatistikController extends Controller
 
         // Tangkap Filter Lainnya
         $unitId = $request->input('barang_unit_id');
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+             if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
+
         $kodeTokoId = $request->input('kode_toko_id');
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');

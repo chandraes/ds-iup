@@ -69,6 +69,17 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
+    // Routing statistik yang bisa di akses hampir seluruh role
+    Route::group(['middleware' => ['role:su,admin,user,sales,perusahaan']], function(){
+        Route::prefix('statistik')->group(function(){
+            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
+            Route::get('/omset-tahunan-konsumen/detail/{konsumen}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_tahunan_page'])->name('statistik.omset.detail_tahunan_page');
+            Route::get('/omset-tahunan-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset_tahunan'])->name('statistik.omset.print_tahunan');
+            Route::get('/omset-tahunan-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_tahunan'])->name('statistik.omset.excel_tahunan');
+        });
+
+    });
+
     Route::group(['middleware' => ['role:perusahaan']], function(){
         Route::prefix('perusahaan')->group(function(){
             Route::get('/konsumen', [PerusahaanController::class, 'konsumen'])->name('perusahaan.konsumen');
@@ -581,10 +592,6 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_bulanan_konsumen'])->name('statistik.omset-bulanan-konsumen');
-            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
-            Route::get('/omset-tahunan-konsumen/detail/{konsumen}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_tahunan_page'])->name('statistik.omset.detail_tahunan_page');
-            Route::get('statistik/omset-tahunan-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset_tahunan'])->name('statistik.omset.print_tahunan');
-            Route::get('statistik/omset-tahunan-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_tahunan'])->name('statistik.omset.excel_tahunan');
 
             Route::get('/omset-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset'])->name('statistik.omset.excel');
             Route::get('/omset-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset'])->name('statistik.omset.print');

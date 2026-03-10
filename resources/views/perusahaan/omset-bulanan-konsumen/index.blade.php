@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center my-4">
-            <h3><u>OMSET TAHUNAN KONSUMEN</u></h3>
+            <h3><u>OMSET BULANAN KONSUMEN</u></h3>
         </div>
     </div>
       <div class="d-flex justify-content-between align-items-center mb-4">

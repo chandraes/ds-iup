@@ -14,7 +14,7 @@
                 <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="20">
                 <span>Dashboard</span>
             </a>
-            @if (auth()->user()->role != 'asisten-admin')
+            @if (!in_array(auth()->user()->role, ['asisten-admin', 'perusahaan', 'sales']))
             <a href="{{ route('statistik') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
                 <img src="{{ asset('images/statistik.svg') }}" alt="database" width="20">
                 <span>Statistik</span>
@@ -43,6 +43,7 @@
                         @endfor
                     </select>
                 </div>
+                @if (auth()->user()->role != 'perusahaan')
                 <div class="col-md-3">
                     <label class="form-label fw-bold small">Perusahaan</label>
                     <select name="barang_unit_id" id="barang_unit_id" class="form-select form-select-sm">
@@ -52,6 +53,8 @@
                         @endforeach
                     </select>
                 </div>
+                @endif
+
                 <div class="col-md-2">
                     <label class="form-label fw-bold small">Kode Toko</label>
                     <select name="kode_toko_id" id="kode_toko_id" class="form-select form-select-sm">
