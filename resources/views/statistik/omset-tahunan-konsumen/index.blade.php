@@ -24,7 +24,7 @@
     </div>
 
     {{-- Filter Area --}}
-    <div class="card mb-4">
+    <div class="card mb-4">`
         <div class="card-body">
             <form id="filterForm" class="row g-3">
                 <div class="col-md-2">
@@ -81,6 +81,7 @@
                         <option value="">-- Pilih Kecamatan --</option>
                     </select>
                 </div>
+                @if (auth()->user()->role != 'sales')
                 <div class="col-md-2">
                     <label class="form-label fw-bold small">Sales Area</label>
                     <select name="sales_id" id="sales_id" class="form-select form-select-sm">
@@ -90,6 +91,7 @@
                         @endforeach
                     </select>
                 </div>
+                @endif
                 <div class="col-md-2">
                     <label class="form-label fw-bold small">Status Omset</label>
                     <select name="status_omset" id="status_omset" class="form-select form-select-sm">

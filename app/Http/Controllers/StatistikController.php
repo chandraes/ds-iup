@@ -444,6 +444,10 @@ class StatistikController extends Controller
             $kodeTokoId = $request->input('kode_toko_id');
             $statusOmset = $request->input('status_omset');
             $salesId = $request->input('sales_id');
+
+            if ($user->role == 'sales') {
+                $salesId = $user->karyawan_id;
+            }
             $kabupatenKotaId = $request->input('kabupaten_kota_id');
             $kecamatanId = $request->input('kecamatan_id');
             $statusInvoice = $request->input('status_invoice');
@@ -512,7 +516,7 @@ class StatistikController extends Controller
     {
         // Tangkap parameter filter yang dikirim dari halaman index
         $unitId = $request->input('unit_id');
-        
+
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
              if (!$unitId) {
@@ -612,6 +616,9 @@ class StatistikController extends Controller
         $kodeTokoId = $request->input('kode_toko_id');
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
+        if (Auth::user()->role == 'sales') {
+            $salesId =  Auth::user()->karyawan_id;
+        }
         $kabupatenKotaId = $request->input('kabupaten_kota_id');
         $kecamatanId = $request->input('kecamatan_id');
         $statusInvoice = $request->input('status_invoice');
@@ -657,6 +664,9 @@ class StatistikController extends Controller
         $kodeTokoId = $request->input('kode_toko_id');
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
+        if (Auth::user()->role == 'sales') {
+            $salesId =  Auth::user()->karyawan_id;
+        }
         $kabupatenKotaId = $request->input('kabupaten_kota_id');
         $kecamatanId = $request->input('kecamatan_id');
         $statusInvoice = $request->input('status_invoice');
