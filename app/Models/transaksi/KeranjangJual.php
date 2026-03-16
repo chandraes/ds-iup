@@ -582,12 +582,14 @@ class KeranjangJual extends Model
                     ->where('jatuh_tempo', '<', today())
                     ->exists();
 
-                if ($checkInvoice) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Tidak Bisa melanjutkan Proses karena Konsumen memiliki tagihan yang telah jatuh tempo.',
-                    ];
-                }
+                    
+
+                // if ($checkInvoice) {
+                //     return [
+                //         'status' => 'error',
+                //         'message' => 'Tidak Bisa melanjutkan Proses karena Konsumen memiliki tagihan yang telah jatuh tempo.',
+                //     ];
+                // }
             }
 
             // $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
