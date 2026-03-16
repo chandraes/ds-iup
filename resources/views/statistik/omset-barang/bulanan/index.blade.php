@@ -58,8 +58,8 @@
                     </select>
                 </div>
 
-                {{-- TOGGLE MODE TAMPILAN (QTY vs NOMINAL) --}}
-                <div class="col-md-3">
+                {{-- TOGGLE MODE TAMPILAN --}}
+                <div class="col-md-4">
                     <label class="form-label fw-bold small text-primary">Tampilkan Berdasarkan</label>
                     <select name="mode_tampil" id="mode_tampil" class="form-select form-select-sm border-primary">
                         <option value="qty">Qty Terjual (Jumlah Barang)</option>
@@ -68,7 +68,7 @@
                 </div>
 
                 {{-- FILTER BULAN --}}
-                <div class="col-md-3">
+                <div class="col-md-5">
                     <label class="form-label fw-bold small">Pilih Bulan</label>
                     <select name="bulan[]" id="bulan" class="form-select form-select-sm" multiple="multiple" data-placeholder="-- Semua Bulan --">
                         <option value="1">Januari</option>
@@ -87,7 +87,7 @@
                 </div>
 
                 {{-- FILTER STATUS OMSET --}}
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label fw-bold small">Status Omset</label>
                     <select name="status_omset" id="status_omset" class="form-select form-select-sm">
                         <option value="">-- Semua --</option>
@@ -96,19 +96,19 @@
                     </select>
                 </div>
 
-                <div class="col-md-12 d-flex align-items-end justify-content-end gap-2 mt-3">
-                    <button type="button" id="btn-filter" class="btn btn-primary" title="Tampilkan Data">
+                <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
+                    <button type="button" id="btn-filter" class="btn btn-primary btn-sm" title="Tampilkan Data">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <button type="button" id="btn-reset" class="btn btn-secondary" title="Reset Filter">
+                    <button type="button" id="btn-reset" class="btn btn-secondary btn-sm" title="Reset Filter">
                         <i class="fa fa-undo"></i> Reset
                     </button>
-                    <div class="vr mx-2"></div>
-                    <button type="button" id="btn-excel" class="btn btn-success" title="Download Excel">
+                    <div class="vr mx-1"></div>
+                    <button type="button" id="btn-excel" class="btn btn-success btn-sm" title="Download Excel">
                         <i class="fa fa-file-excel"></i> Excel
                     </button>
-                    <button type="button" id="btn-print" class="btn btn-danger" title="Cetak / PDF">
-                        <i class="fa fa-print"></i> Cetak PDF
+                    <button type="button" id="btn-print" class="btn btn-danger btn-sm" title="Cetak / PDF">
+                        <i class="fa fa-print"></i> PDF
                     </button>
                 </div>
             </form>
@@ -188,6 +188,44 @@
 <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script>
 
 <script>
+// --- FUNGSI HELPER UNTUK LINK DETAIL ---
+function renderLinkBarang(data, type, row, meta, bulan) {
+    if(type !== 'display') return data;
+
+    // Bersihkan html dan titik pemisah ribuan
+    var cleanData = (data + '').replace(/<[^>]*>?/gm, '');
+    var numericValue = parseInt(cleanData.replace(/\./g, ''));
+
+    // Jika nilainya lebih dari 0, buat jadi link
+    if (numericValue > 0) {
+        var tahun = $('#tahun').val();
+        var unitId = $('#barang_unit_id').val();
+        var kategoriId = $('#barang_kategori_id').val();
+        var modeTampil = $('#mode_tampil').val();
+        var selectedBulan = $('#bulan').val();
+
+        // Base URL ke halaman Detail
+        var baseUrl = "{{ route('statistik.omset-barang.bulanan.detail_page', ['barang' => 'XXX', 'bulan' => 'YYY', 'tahun' => 'ZZZ']) }}";
+        var finalUrl = baseUrl.replace('XXX', row.id).replace('YYY', bulan).replace('ZZZ', tahun);
+
+        // Sisipkan Parameter Filter Lainnya (unit, kategori, dll)
+        var params = [];
+        if(unitId) params.push("barang_unit_id=" + unitId);
+        if(kategoriId) params.push("barang_kategori_id=" + kategoriId);
+        if(modeTampil) params.push("mode_tampil=" + modeTampil);
+        if(selectedBulan && selectedBulan.length > 0) params.push("bulanFilter=" + selectedBulan.join(','));
+
+        if(params.length > 0) {
+            finalUrl += "?" + params.join('&');
+        }
+
+        return '<a href="' + finalUrl + '" class="text-decoration-none fw-bold text-primary" target="_blank" title="Lihat Detail Transaksi">' + data + '</a>';
+    }
+
+    // Jika 0, biarkan saja teks biasa (tidak usah link)
+    return data;
+}
+
 $(document).ready(function() {
 
     // Inisialisasi Select2
@@ -202,16 +240,14 @@ $(document).ready(function() {
         processing: true,
         serverSide: true,
         ajax: {
-            // Sesuaikan route di bawah ini dengan route Anda di web.php
             url: "{{ route('statistik.omset-barang.bulanan') }}",
             data: function (d) {
                 d.tahun = $('#tahun').val();
                 d.barang_unit_id = $('#barang_unit_id').val();
                 d.barang_kategori_id = $('#barang_kategori_id').val();
-                d.mode_tampil = $('#mode_tampil').val(); // Kirim status QTY / Uang ke Backend
-                // --- KIRIM FILTER BARU ---
+                d.mode_tampil = $('#mode_tampil').val();
                 d.status_omset = $('#status_omset').val();
-                d.bulan = $('#bulan').val(); // Array
+                d.bulan = $('#bulan').val();
             }
         },
         columns: [
@@ -222,23 +258,25 @@ $(document).ready(function() {
             {data: 'merk', name: 'barangs.merk', className: 'text-wrap'},
             {data: 'nama_barang', name: 'barang_nama.nama', className: 'text-wrap'},
             {data: 'satuan', name: 'satuan.nama', className: 'text-center'},
-            {data: 'bulan_1', name: 'bulan_1', orderable: false, searchable: false},
-            {data: 'bulan_2', name: 'bulan_2', orderable: false, searchable: false},
-            {data: 'bulan_3', name: 'bulan_3', orderable: false, searchable: false},
-            {data: 'bulan_4', name: 'bulan_4', orderable: false, searchable: false},
-            {data: 'bulan_5', name: 'bulan_5', orderable: false, searchable: false},
-            {data: 'bulan_6', name: 'bulan_6', orderable: false, searchable: false},
-            {data: 'bulan_7', name: 'bulan_7', orderable: false, searchable: false},
-            {data: 'bulan_8', name: 'bulan_8', orderable: false, searchable: false},
-            {data: 'bulan_9', name: 'bulan_9', orderable: false, searchable: false},
-            {data: 'bulan_10', name: 'bulan_10', orderable: false, searchable: false},
-            {data: 'bulan_11', name: 'bulan_11', orderable: false, searchable: false},
-            {data: 'bulan_12', name: 'bulan_12', orderable: false, searchable: false},
-            {data: 'total', name: 'transaksi.total_setahun', orderable: true, searchable: false}
+            // Kolom Bulan menggunakan fungsi renderLinkBarang
+            {data: 'bulan_1', name: 'bulan_1', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 1); }},
+            {data: 'bulan_2', name: 'bulan_2', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 2); }},
+            {data: 'bulan_3', name: 'bulan_3', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 3); }},
+            {data: 'bulan_4', name: 'bulan_4', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 4); }},
+            {data: 'bulan_5', name: 'bulan_5', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 5); }},
+            {data: 'bulan_6', name: 'bulan_6', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 6); }},
+            {data: 'bulan_7', name: 'bulan_7', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 7); }},
+            {data: 'bulan_8', name: 'bulan_8', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 8); }},
+            {data: 'bulan_9', name: 'bulan_9', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 9); }},
+            {data: 'bulan_10', name: 'bulan_10', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 10); }},
+            {data: 'bulan_11', name: 'bulan_11', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 11); }},
+            {data: 'bulan_12', name: 'bulan_12', orderable: false, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 12); }},
+            // Kolom Total
+            {data: 'total', name: 'transaksi.total_setahun', orderable: true, searchable: false, render: function(d,t,r,m){ return renderLinkBarang(d,t,r,m, 'total'); }}
         ],
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-        order: [[5, 'asc']], // Default urut abjad berdasarkan Nama Barang
+        order: [[5, 'asc']], // Urut berdasarkan Nama Barang
         scrollY: 500,
         scrollX: true,
         scroller: true,
@@ -250,15 +288,14 @@ $(document).ready(function() {
             var json = api.ajax.json();
 
             if (json) {
-                // 1. Logika Sembunyikan/Tampilkan Kolom Bulan
+                // 1. Dinamis Sembunyikan/Tampilkan Kolom Bulan berdasarkan filter Select2 Multiple
                 if (json.bulan_array !== undefined) {
                     var selectedBulan = json.bulan_array;
 
                     for (var i = 1; i <= 12; i++) {
-                        var colIdx = i + 6; // Index kolom Jan di table array (mulai 0)
+                        var colIdx = i + 6; // Index kolom tabel. (No=0 ... Satuan=6, Jan=7)
                         var column = api.column(colIdx);
 
-                        // Jika tidak ada filter bulan (Semua) ATAU bulan tersebut dipilih
                         if (selectedBulan.length === 0 || selectedBulan.includes(i.toString())) {
                             column.visible(true);
                         } else {
@@ -271,7 +308,7 @@ $(document).ready(function() {
                 if (json.grand_totals) {
                     var totals = json.grand_totals;
                     var mode = json.mode;
-                    var prefix = (mode === 'nominal') ? 'Rp ' : '';
+                    var prefix = (mode === 'nominal') ? '' : '';
 
                     var formatAngka = function(num) {
                         return prefix + new Intl.NumberFormat('id-ID').format(num || 0);
@@ -282,6 +319,7 @@ $(document).ready(function() {
                     }
                     $('#ft-total').html('<strong>' + formatAngka(totals.sum_total) + '</strong>');
 
+                    // Ganti teks panduan QTY/Rp
                     var modeTeks = (mode === 'qty') ? 'QTY (Jumlah Barang)' : 'TOTAL OMSET UANG (Rp)';
                     $('#info-mode-teks').html('Menampilkan data berdasarkan <strong>' + modeTeks + '</strong>');
                 }
@@ -295,14 +333,40 @@ $(document).ready(function() {
     });
 
     // --- TOMBOL RESET ---
-   $('#btn-reset').click(function(){
+    $('#btn-reset').click(function(){
         $('#tahun').val(new Date().getFullYear());
         $('#barang_unit_id').val('').trigger('change');
         $('#barang_kategori_id').val('').trigger('change');
-        $('#bulan').val(null).trigger('change'); // Reset Select2 Bulan
+        $('#bulan').val(null).trigger('change');
         $('#status_omset').val('');
         $('#mode_tampil').val('qty');
         table.draw();
+    });
+
+    // --- TOMBOL EXCEL ---
+    $('#btn-excel').click(function() {
+        var params = $.param({
+            tahun: $('#tahun').val(),
+            barang_unit_id: $('#barang_unit_id').val(),
+            barang_kategori_id: $('#barang_kategori_id').val(),
+            mode_tampil: $('#mode_tampil').val(),
+            status_omset: $('#status_omset').val(),
+            bulan: $('#bulan').val()
+        });
+        window.location.href = "{{ route('statistik.omset-barang.bulanan.excel') }}?" + params;
+    });
+
+    // --- TOMBOL PDF ---
+    $('#btn-print').click(function() {
+        var params = $.param({
+            tahun: $('#tahun').val(),
+            barang_unit_id: $('#barang_unit_id').val(),
+            barang_kategori_id: $('#barang_kategori_id').val(),
+            mode_tampil: $('#mode_tampil').val(),
+            status_omset: $('#status_omset').val(),
+            bulan: $('#bulan').val()
+        });
+        window.open("{{ route('statistik.omset-barang.bulanan.print') }}?" + params, '_blank');
     });
 
 });

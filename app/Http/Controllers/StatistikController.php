@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Karyawan;
@@ -802,5 +803,160 @@ class StatistikController extends Controller
 
         // Sesuai dengan modifikasi path Blade Anda
         return view('statistik.omset-barang.bulanan.index', compact('units', 'kategoris'));
+    }
+
+    // --- 1. FUNGSI DETAIL ---
+    public function detail_omset_barang_page($barangId, $bulan, $tahun, Request $request)
+    {
+        $unitId = $request->input('barang_unit_id');
+        $kategoriId = $request->input('barang_kategori_id');
+        $modeTampil = $request->input('mode_tampil', 'qty');
+        $bulanFilter = $request->input('bulanFilter'); // Jika klik dari kolom 'Total'
+
+        // Ambil Data Barang
+        $barang = Barang::with(['unit', 'kategori', 'barang_nama', 'satuan'])->find($barangId);
+        if (!$barang) abort(404, 'Barang tidak ditemukan');
+
+        // Query Detail Transaksi untuk barang tersebut
+        $query = DB::table('invoice_jual_details as d')
+            ->join('invoice_juals as i', 'd.invoice_jual_id', '=', 'i.id')
+            ->leftJoin('konsumens as k', 'i.konsumen_id', '=', 'k.id')
+            ->leftJoin('kode_tokos as kt', 'k.kode_toko_id', '=', 'kt.id')
+            ->select([
+                'i.kode as no_invoice',
+                'i.created_at as tanggal',
+                'k.nama as nama_konsumen',
+                'kt.kode as kode_toko',
+                'd.jumlah',
+                'd.harga_satuan',
+                'd.diskon',
+                'd.ppn',
+                'd.total'
+            ])
+            ->where('d.barang_id', $barangId)
+            ->where('i.void', 0)
+            ->whereYear('i.created_at', $tahun);
+
+        // Logic Filter Bulan
+        if ($bulan !== 'total') {
+            $query->whereMonth('i.created_at', $bulan);
+            $namaBulan = \Carbon\Carbon::createFromDate($tahun, (int)$bulan, 1)->isoFormat('MMMM');
+        } else {
+            if (!empty($bulanFilter)) {
+                $arrayBulan = explode(',', $bulanFilter);
+                $query->whereIn(DB::raw('MONTH(i.created_at)'), $arrayBulan);
+
+                $namaBulanArray = [];
+                foreach($arrayBulan as $b) {
+                    $namaBulanArray[] = \Carbon\Carbon::createFromDate($tahun, (int)$b, 1)->isoFormat('MMMM');
+                }
+                $namaBulan = implode(', ', $namaBulanArray);
+            } else {
+                $namaBulan = "Setahun (Jan - Des)";
+            }
+        }
+
+        $details = $query->orderBy('i.created_at', 'asc')->get();
+
+        return view('statistik.omset-barang.bulanan.detail', compact(
+            'details', 'barang', 'bulan', 'namaBulan', 'tahun', 'modeTampil'
+        ));
+    }
+
+    // --- 2. FUNGSI EXCEL ---
+    public function export_excel_omset_barang(Request $request)
+    {
+        $tahun = $request->input('tahun', date('Y'));
+        $unitId = $request->input('barang_unit_id');
+        $kategoriId = $request->input('barang_kategori_id');
+        $modeTampil = $request->input('mode_tampil', 'qty');
+        $statusOmset = $request->input('status_omset');
+        $bulan = $request->input('bulan', []);
+
+        $tipeData = ($modeTampil == 'nominal') ? 'Nominal_Rp' : 'Qty';
+        $fileName = 'Omset_Barang_' . $tipeData . '_' . $tahun . '.csv';
+
+        $headers = [
+            'Content-type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=' . $fileName,
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function() use ($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan) {
+            $file = fopen('php://output', 'w');
+
+            // Header Dinamis
+            $csvHeaders = ['No', 'Perusahaan', 'Kategori', 'Kode Barang', 'Merk', 'Nama Barang', 'Satuan'];
+            $namaBulan = [1=>'Jan', 2=>'Feb', 3=>'Mar', 4=>'Apr', 5=>'Mei', 6=>'Jun', 7=>'Jul', 8=>'Agu', 9=>'Sep', 10=>'Okt', 11=>'Nov', 12=>'Des'];
+
+            for ($i = 1; $i <= 12; $i++) {
+                if (empty($bulan) || in_array((string)$i, $bulan)) {
+                    $csvHeaders[] = $namaBulan[$i];
+                }
+            }
+            $csvHeaders[] = 'Total';
+            fputcsv($file, $csvHeaders);
+
+            $db = new InvoiceJual; // Sesuaikan dengan lokasi model fungsi Anda
+            $query = $db->getOmsetBarangBulananQuery($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan)
+                        ->orderBy('barang_nama_id', 'asc'); // Urut berdasarkan nama barang
+
+            $no = 1;
+            $query->chunk(500, function($barangs) use ($file, &$no, $bulan) {
+                foreach ($barangs as $row) {
+                    $csvRow = [
+                        $no++,
+                        $row->unit->nama ?? '-',
+                        $row->kategori->nama ?? '-',
+                        $row->kode,
+                        $row->merk,
+                        $row->barang_nama->nama ?? '-',
+                        $row->satuan->nama ?? '-'
+                    ];
+
+                    for ($i = 1; $i <= 12; $i++) {
+                        if (empty($bulan) || in_array((string)$i, $bulan)) {
+                            $kolom = 'bulan_' . $i;
+                            $csvRow[] = $row->$kolom ?? 0;
+                        }
+                    }
+                    $csvRow[] = $row->total_setahun ?? 0;
+                    fputcsv($file, $csvRow);
+                }
+                flush();
+            });
+            fclose($file);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
+    }
+
+    // --- 3. FUNGSI PRINT PDF ---
+    public function print_omset_barang(Request $request)
+    {
+        ini_set('memory_limit', '256M');
+        set_time_limit(300);
+
+        $tahun = $request->input('tahun', date('Y'));
+        $unitId = $request->input('barang_unit_id');
+        $kategoriId = $request->input('barang_kategori_id');
+        $modeTampil = $request->input('modeTampil', 'qty');
+        $statusOmset = $request->input('status_omset');
+        $bulan = $request->input('bulan', []);
+
+        $db = new InvoiceJual;
+        $laporan = $db->getOmsetBarangBulananQuery($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan)
+            ->orderBy('barang_nama_id', 'asc')
+            ->get();
+
+        $namaUnit = 'Semua Perusahaan';
+        if ($unitId) {
+            $unitDB = DB::table('barang_units')->where('id', $unitId)->first();
+            $namaUnit = $unitDB->nama ?? '-';
+        }
+
+        return view('statistik.omset-barang.bulanan.print', compact('laporan', 'tahun', 'namaUnit', 'bulan', 'modeTampil'));
     }
 }

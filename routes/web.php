@@ -80,6 +80,9 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('omset-barang')->group(function(){
                 Route::prefix('bulanan')->group(function(){
                     Route::get('/', [App\Http\Controllers\StatistikController::class, 'omset_bulanan_barang'])->name('statistik.omset-barang.bulanan');
+                    Route::get('/detail/{barang}/{bulan}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_barang_page'])->name('statistik.omset-barang.bulanan.detail_page');
+                    Route::get('statistik/omset-barang/bulanan/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_barang'])->name('statistik.omset-barang.bulanan.excel');
+                    Route::get('statistik/omset-barang/bulanan/print', [App\Http\Controllers\StatistikController::class, 'print_omset_barang'])->name('statistik.omset-barang.bulanan.print');
                 });
             });
         });
