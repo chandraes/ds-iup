@@ -3,6 +3,7 @@
 namespace App\Models\transaksi;
 
 use App\Models\Config;
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
@@ -1407,6 +1408,75 @@ class InvoiceJual extends Model
             } elseif ($statusOmset == 'nol') {
                 $query->where(function($q) use ($sumExpression) {
                     $q->whereNull('transaksi.total_semua')
+                    ->orWhereRaw("($sumExpression) = 0");
+                });
+            }
+        }
+
+        return $query;
+    }
+
+    public function getOmsetBarangBulananQuery($tahun, $unitId = null, $kategoriId = null, $modeTampil = 'qty', $statusOmset = null, $bulan = [])
+    {
+        $kolomHitung = ($modeTampil === 'nominal') ? 'd.total' : 'd.jumlah';
+
+        // 1. Subquery Transaksi
+        $subquery = DB::table('invoice_juals as i')
+            ->join('invoice_jual_details as d', 'i.id', '=', 'd.invoice_jual_id')
+            ->select('d.barang_id')
+            ->where('i.void', 0)
+            ->whereYear('i.created_at', $tahun);
+
+        $selectsRaw = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $selectsRaw[] = "COALESCE(SUM(CASE WHEN MONTH(i.created_at) = $m THEN $kolomHitung ELSE 0 END), 0) as bulan_$m";
+        }
+        $selectsRaw[] = "COALESCE(SUM($kolomHitung), 0) as total_setahun";
+
+        $subquery->addSelect(DB::raw(implode(',', $selectsRaw)));
+        $subquery->groupBy('d.barang_id');
+
+        // 2. Query Utama
+        $query = Barang::query()
+            ->select([
+                'barangs.id', 'barangs.kode', 'barangs.merk', 'barangs.barang_unit_id',
+                'barangs.barang_kategori_id', 'barangs.barang_nama_id', 'barangs.satuan_id', 'barangs.is_active',
+                'transaksi.bulan_1', 'transaksi.bulan_2', 'transaksi.bulan_3',
+                'transaksi.bulan_4', 'transaksi.bulan_5', 'transaksi.bulan_6',
+                'transaksi.bulan_7', 'transaksi.bulan_8', 'transaksi.bulan_9',
+                'transaksi.bulan_10', 'transaksi.bulan_11', 'transaksi.bulan_12',
+                'transaksi.total_setahun'
+            ])
+            ->with(['unit', 'kategori', 'barang_nama', 'satuan']) // <- Sesuai relasi yang Anda modifikasi
+            ->leftJoinSub($subquery, 'transaksi', function ($join) {
+                $join->on('barangs.id', '=', 'transaksi.barang_id');
+            });
+
+        // --- FILTER DASAR ---
+        if ($unitId) {
+            $query->where('barangs.barang_unit_id', $unitId);
+        }
+        if ($kategoriId) {
+            $query->where('barangs.barang_kategori_id', $kategoriId);
+        }
+
+        // --- FILTER STATUS OMSET & BULAN ---
+        if ($statusOmset) {
+            if (!empty($bulan)) {
+                $sumParts = [];
+                foreach ($bulan as $b) {
+                    $sumParts[] = "COALESCE(transaksi.bulan_" . intval($b) . ", 0)";
+                }
+                $sumExpression = implode(' + ', $sumParts);
+            } else {
+                $sumExpression = "COALESCE(transaksi.total_setahun, 0)";
+            }
+
+            if ($statusOmset == 'ada') {
+                $query->whereRaw("($sumExpression) > 0");
+            } elseif ($statusOmset == 'nol') {
+                $query->where(function($q) use ($sumExpression) {
+                    $q->whereNull('transaksi.total_setahun')
                     ->orWhereRaw("($sumExpression) = 0");
                 });
             }

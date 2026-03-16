@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
@@ -736,5 +737,70 @@ class StatistikController extends Controller
         };
 
         return new StreamedResponse($callback, 200, $headers);
+    }
+
+    public function omset_bulanan_barang(Request $request)
+    {
+        if ($request->ajax()) {
+            $tahun = $request->input('tahun', date('Y'));
+            $unitId = $request->input('barang_unit_id');
+            $kategoriId = $request->input('barang_kategori_id');
+            $modeTampil = $request->input('mode_tampil', 'qty');
+
+            // --- TANGKAP FILTER BARU ---
+            $statusOmset = $request->input('status_omset');
+            $bulan = $request->input('bulan', []); // Berupa array
+
+            $db = new InvoiceJual;
+            $query = $db->getOmsetBarangBulananQuery($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan);
+
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+
+            $grandTotals = DB::table(DB::raw("($sql) as temp_total"))
+                ->setBindings($bindings)
+                ->selectRaw('
+                    COALESCE(SUM(bulan_1), 0) as sum_b1, COALESCE(SUM(bulan_2), 0) as sum_b2,
+                    COALESCE(SUM(bulan_3), 0) as sum_b3, COALESCE(SUM(bulan_4), 0) as sum_b4,
+                    COALESCE(SUM(bulan_5), 0) as sum_b5, COALESCE(SUM(bulan_6), 0) as sum_b6,
+                    COALESCE(SUM(bulan_7), 0) as sum_b7, COALESCE(SUM(bulan_8), 0) as sum_b8,
+                    COALESCE(SUM(bulan_9), 0) as sum_b9, COALESCE(SUM(bulan_10), 0) as sum_b10,
+                    COALESCE(SUM(bulan_11), 0) as sum_b11, COALESCE(SUM(bulan_12), 0) as sum_b12,
+                    COALESCE(SUM(total_setahun), 0) as sum_total
+                ')->first();
+
+            return DataTables::of($query)
+                ->with('grand_totals', $grandTotals)
+                ->with('mode', $modeTampil)
+                ->with('bulan_array', $bulan) // <- PENTING: Untuk kontrol kolom di UI
+                ->addIndexColumn()
+                ->addColumn('perusahaan', fn($row) => $row->unit->nama ?? '-')
+                ->addColumn('kategori', fn($row) => $row->kategori->nama ?? '-')
+                ->addColumn('nama_barang', fn($row) => $row->barang_nama->nama ?? '-')
+                ->addColumn('satuan', fn($row) => $row->satuan->nama ?? '-')
+                ->editColumn('bulan_1', fn($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_2', fn($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_3', fn($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_4', fn($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_5', fn($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_6', fn($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_7', fn($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_8', fn($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_9', fn($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_10', fn($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_11', fn($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_12', fn($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function($row) {
+                    return '<strong>'.number_format($row->total_setahun ?? 0, 0, ',', '.').'</strong>';
+                })
+                ->rawColumns(['total'])
+                ->make(true);
+        }
+
+        $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
+        $kategoris = BarangKategori::select('id', 'nama')->orderBy('nama')->get();
+
+        // Sesuai dengan modifikasi path Blade Anda
+        return view('statistik.omset-barang.bulanan.index', compact('units', 'kategoris'));
     }
 }

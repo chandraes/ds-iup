@@ -153,7 +153,7 @@
                     <td class="text-end align-middle" data-order="{{$d->grand_total}}">{{$d->nf_grand_total}}</td>
                     <td class="text-end align-middle" data-order="{{$d->dp}}">{{$d->nf_dp}}</td>
                     <td class="text-end align-middle" data-order="{{$d->dp_ppn}}">{{$d->nf_dp_ppn}}</td>
-                    <td class="text-end align-middle">
+                    <td class="text-end align-middle" @if ($d->invoice_jual_cicil && $d->invoice_jual_cicil->count() > 0) data-order="{{$d->invoice_jual_cicil->sum('nominal')+$d->invoice_jual_cicil->sum('ppn')}}" @endif>
                         @if ($d->invoice_jual_cicil && $d->invoice_jual_cicil->count() > 0)
                         <a href="#" data-bs-toggle="modal"
                             data-bs-target="#modalHistoriCicilan{{$d->id}}">{{number_format($d->invoice_jual_cicil->sum('nominal')+$d->invoice_jual_cicil->sum('ppn'),
@@ -260,6 +260,7 @@
             "scrollCollapse": true,
             "scrollY": "60vh", // Set scrollY to 50% of the viewport height
             "scrollX": true,
+      
         });
 
         $('#supplier_id').select2({
