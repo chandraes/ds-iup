@@ -47,6 +47,7 @@
                             <th class="text-end">Qty Terjual</th>
                             <th class="text-end">Harga Satuan</th>
                             <th class="text-end">Diskon</th>
+                            <th class="text-end">PPn</th>
                             <th class="text-end">Subtotal (Rp)</th>
                         </tr>
                     </thead>
@@ -60,11 +61,12 @@
                             <td class="text-end fw-bold">{{ number_format($row->jumlah, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($row->harga_satuan, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($row->diskon, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($row->ppn, 0, ',', '.') }}</td>
                             <td class="text-end fw-bold">{{ number_format($row->total, 0, ',', '.') }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center p-4"><h6 class="text-muted">Tidak ada data transaksi.</h6></td>
+                            <td colspan="9" class="text-center p-4"><h6 class="text-muted">Tidak ada data transaksi.</h6></td>
                         </tr>
                         @endforelse
                     </tbody>
