@@ -942,7 +942,7 @@ class StatistikController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $unitId = $request->input('barang_unit_id');
         $kategoriId = $request->input('barang_kategori_id');
-        $modeTampil = $request->input('modeTampil', 'qty');
+        $modeTampil = $request->input('mode_tampil', 'qty');
         $statusOmset = $request->input('status_omset');
         $bulan = $request->input('bulan', []);
 
