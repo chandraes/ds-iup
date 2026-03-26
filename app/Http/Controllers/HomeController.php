@@ -159,7 +159,7 @@ class HomeController extends Controller
         Konsumen::select('id','kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
                 ->filter($filters)
                 ->with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
-                ->orderBy('kode')
+                ->orderBy('kecamatan_id')
                 ->chunk($chunkSize, function($dataChunk) use (&$pdfFiles, $months, &$chunkIndex, &$totalProcessed) {
                     $offset = $totalProcessed; // nomor awal untuk chunk ini
                     $pdf = Pdf::loadView('checklist-sales.pdf', [
