@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
 use App\Models\db\Barang\BarangType;
@@ -217,5 +218,23 @@ class UniversalController extends Controller
             'status' => 'success',
             'data' => $data,
         ]);
+    }
+
+    public function getKategoriByUnit(Request $request)
+    {
+        $unitId = $request->input('barang_unit_id');
+
+        $kategoris = BarangKategori::select('id', 'nama')
+            ->when($unitId, function($query) use ($unitId) {
+                $query->whereIn('id',
+                    Barang::where('barang_unit_id', $unitId)
+                        ->distinct()
+                        ->pluck('barang_kategori_id')
+                );
+            })
+            ->orderBy('nama')
+            ->get();
+
+        return response()->json($kategoris);
     }
 }

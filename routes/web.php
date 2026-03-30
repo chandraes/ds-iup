@@ -37,6 +37,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::prefix('universal')->group(function () {
         Route::get('/get-konsumen', [App\Http\Controllers\UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
         Route::get('/get-unit', [App\Http\Controllers\UniversalController::class, 'getUnit'])->name('universal.get-unit');
+        Route::get('/get-kategori-by-unit', [App\Http\Controllers\UniversalController::class, 'getKategoriByUnit'])->name('universal.get-kategori-by-unit');
 
         Route::get('/search-kecamatan', [App\Http\Controllers\UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
         Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');

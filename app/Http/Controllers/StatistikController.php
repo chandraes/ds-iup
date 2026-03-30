@@ -742,9 +742,19 @@ class StatistikController extends Controller
 
     public function omset_bulanan_barang(Request $request)
     {
+        $unitId = $request->input('barang_unit_id');
+
+         if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+             if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
+        // dd($unitId);
+
         if ($request->ajax()) {
             $tahun = $request->input('tahun', date('Y'));
-            $unitId = $request->input('barang_unit_id');
+
             $kategoriId = $request->input('barang_kategori_id');
             $modeTampil = $request->input('mode_tampil', 'qty');
 
@@ -799,7 +809,19 @@ class StatistikController extends Controller
         }
 
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
-        $kategoris = BarangKategori::select('id', 'nama')->orderBy('nama')->get();
+
+        $kategoris = BarangKategori::select('id', 'nama')
+            ->when($unitId, function($query) use ($unitId) {
+                $query->whereIn('id',
+                    Barang::where('barang_unit_id', $unitId)
+                        ->distinct()
+                        ->pluck('barang_kategori_id')
+                );
+            })
+            ->orderBy('nama')
+            ->get();
+
+        // dd($kategoris, $unitId);
 
         // Sesuai dengan modifikasi path Blade Anda
         return view('statistik.omset-barang.bulanan.index', compact('units', 'kategoris'));
@@ -868,6 +890,12 @@ class StatistikController extends Controller
     {
         $tahun = $request->input('tahun', date('Y'));
         $unitId = $request->input('barang_unit_id');
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+             if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
         $kategoriId = $request->input('barang_kategori_id');
         $modeTampil = $request->input('mode_tampil', 'qty');
         $statusOmset = $request->input('status_omset');
@@ -941,6 +969,12 @@ class StatistikController extends Controller
 
         $tahun = $request->input('tahun', date('Y'));
         $unitId = $request->input('barang_unit_id');
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+             if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
         $kategoriId = $request->input('barang_kategori_id');
         $modeTampil = $request->input('mode_tampil', 'qty');
         $statusOmset = $request->input('status_omset');

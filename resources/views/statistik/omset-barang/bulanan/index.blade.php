@@ -16,7 +16,7 @@
                 <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="20">
                 <span>Dashboard</span>
             </a>
-            @if (auth()->user()->role != 'asisten-admin')
+            @if (auth()->user()->role != 'asisten-admin' && auth()->user()->role != 'perusahaan')
             <a href="{{ route('statistik') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
                 <img src="{{ asset('images/statistik.svg') }}" alt="database" width="20">
                 <span>Statistik</span>
@@ -37,9 +37,9 @@
                         @endfor
                     </select>
                 </div>
-
+                @if (auth()->user()->role != 'perusahaan')
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small">Perusahaan (Unit)</label>
+                    <label class="form-label fw-bold small">Perusahaan</label>
                     <select name="barang_unit_id" id="barang_unit_id" class="form-select form-select-sm">
                         <option value="">-- Semua Perusahaan --</option>
                         @foreach($units as $unit)
@@ -47,11 +47,13 @@
                         @endforeach
                     </select>
                 </div>
+                @endif
+
 
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small">Kategori Barang</label>
+                    <label class="form-label fw-bold small">Kelompok Barang</label>
                     <select name="barang_kategori_id" id="barang_kategori_id" class="form-select form-select-sm">
-                        <option value="">-- Semua Kategori --</option>
+                        <option value="">-- Semua Kelompok --</option>
                         @foreach($kategoris as $kategori)
                             <option value="{{ $kategori->id }}">{{ $kategori->nama }}</option>
                         @endforeach
@@ -124,7 +126,7 @@
                         <tr>
                             <th class="align-middle">No</th>
                             <th class="align-middle">Perusahaan</th>
-                            <th class="align-middle">Kategori</th>
+                            <th class="align-middle">Kelompok</th>
                             <th class="align-middle">Kode</th>
                             <th class="align-middle">Merk</th>
                             <th class="align-middle">Nama Barang</th>
@@ -233,6 +235,35 @@ $(document).ready(function() {
         theme: 'bootstrap-5',
         width: '100%',
         allowClear: true
+    });
+
+    $('#barang_unit_id').on('change', function() {
+        var unitId = $(this).val();
+        var kategoriSelect = $('#barang_kategori_id');
+
+        // Kosongkan dropdown kategori dan beri opsi default
+        kategoriSelect.empty().append('<option value="">-- Semua Kelompok --</option>');
+
+        // Lakukan AJAX request ke route baru
+        $.ajax({
+            url: "{{ route('universal.get-kategori-by-unit') }}",
+            type: "GET",
+            data: {
+                barang_unit_id: unitId
+            },
+            success: function(data) {
+                // Looping data dari response JSON dan masukkan ke dropdown
+                $.each(data, function(key, kategori) {
+                    kategoriSelect.append('<option value="'+ kategori.id +'">'+ kategori.nama +'</option>');
+                });
+
+                // Refresh Select2 UI agar opsi baru muncul
+                kategoriSelect.trigger('change.select2');
+            },
+            error: function() {
+                console.error("Gagal mengambil data kategori.");
+            }
+        });
     });
 
     // Inisialisasi DataTables
