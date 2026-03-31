@@ -1059,7 +1059,16 @@ class StatistikController extends Controller
         }
 
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
-        $kategoris = BarangKategori::select('id', 'nama')->orderBy('nama')->get();
+          $kategoris = BarangKategori::select('id', 'nama')
+            ->when($unitId, function($query) use ($unitId) {
+                $query->whereIn('id',
+                    Barang::where('barang_unit_id', $unitId)
+                        ->distinct()
+                        ->pluck('barang_kategori_id')
+                );
+            })
+            ->orderBy('nama')
+            ->get();
 
         return view('statistik.omset-barang.tahunan.index', compact('units', 'kategoris'));
     }
