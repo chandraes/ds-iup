@@ -993,4 +993,232 @@ class StatistikController extends Controller
 
         return view('statistik.omset-barang.bulanan.print', compact('laporan', 'tahun', 'namaUnit', 'bulan', 'modeTampil'));
     }
+
+    public function omset_tahunan_barang(Request $request)
+    {
+        $unitId = $request->input('barang_unit_id');
+
+        // Filter Proteksi Akses Perusahaan (Sesuai modifikasi Anda)
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+            if (!$unitId) {
+                abort(400, 'Unit tidak ditemukan untuk perusahaan');
+            }
+        }
+
+        if ($request->ajax()) {
+            $tahunAkhir = $request->input('tahun_akhir', date('Y'));
+            $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
+
+            if (($tahunAkhir - $tahunAwal) > 4) {
+                $tahunAwal = $tahunAkhir - 4;
+            }
+            $years = range($tahunAwal, $tahunAkhir);
+
+            $kategoriId = $request->input('barang_kategori_id');
+            $modeTampil = $request->input('mode_tampil', 'qty');
+            $statusOmset = $request->input('status_omset');
+
+            $db = new InvoiceJual;
+
+            $query = $db->getOmsetBarangTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kategoriId, $modeTampil, $statusOmset);
+
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+
+            $grandTotals = DB::table(DB::raw("($sql) as temp_total"))
+                ->setBindings($bindings)
+                ->selectRaw('
+                    COALESCE(SUM(tahun_1), 0) as sum_t1,
+                    COALESCE(SUM(tahun_2), 0) as sum_t2,
+                    COALESCE(SUM(tahun_3), 0) as sum_t3,
+                    COALESCE(SUM(tahun_4), 0) as sum_t4,
+                    COALESCE(SUM(tahun_5), 0) as sum_t5,
+                    COALESCE(SUM(total_semua), 0) as sum_total
+                ')->first();
+
+            return DataTables::of($query)
+                ->with('grand_totals', $grandTotals)
+                ->with('mode', $modeTampil)
+                ->with('years_array', $years)
+                ->addIndexColumn()
+                ->addColumn('perusahaan', fn($row) => $row->unit->nama ?? '-')
+                ->addColumn('kategori', fn($row) => $row->kategori->nama ?? '-')
+                ->addColumn('nama_barang', fn($row) => $row->barang_nama->nama ?? '-')
+                ->addColumn('satuan', fn($row) => $row->satuan->nama ?? '-')
+                ->editColumn('tahun_1', fn($row) => number_format($row->tahun_1 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_2', fn($row) => number_format($row->tahun_2 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_3', fn($row) => number_format($row->tahun_3 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_4', fn($row) => number_format($row->tahun_4 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_5', fn($row) => number_format($row->tahun_5 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function($row) {
+                    return '<strong>'.number_format($row->total_semua ?? 0, 0, ',', '.').'</strong>';
+                })
+                ->rawColumns(['total'])
+                ->make(true);
+        }
+
+        $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
+        $kategoris = BarangKategori::select('id', 'nama')->orderBy('nama')->get();
+
+        return view('statistik.omset-barang.tahunan.index', compact('units', 'kategoris'));
+    }
+
+    // --- FUNGSI DETAIL TAHUNAN ---
+    public function detail_omset_barang_tahunan_page(Request $request, $barang, $tahun)
+    {
+        $dbBarang = Barang::with(['unit', 'kategori', 'barang_nama', 'satuan'])->findOrFail($barang);
+
+        // Proteksi akses untuk role perusahaan
+        if (Auth::user()->role == 'perusahaan') {
+            if ($dbBarang->barang_unit_id != Auth::user()->barang_unit_id) {
+                abort(403, 'Anda tidak memiliki akses ke data barang ini.');
+            }
+        }
+
+        $tahunAwal = $request->input('tahun_awal');
+        $tahunAkhir = $request->input('tahun_akhir');
+
+        $query = DB::table('invoice_juals as i')
+            ->join('invoice_jual_details as d', 'i.id', '=', 'd.invoice_jual_id')
+            ->join('konsumens as k', 'i.konsumen_id', '=', 'k.id')
+            ->select(
+                'i.created_at',
+                'i.nomor',
+                'i.kode as kode_invoice',
+                'k.nama as nama_konsumen',
+                'd.jumlah',
+                'd.harga_satuan',
+                'd.ppn',
+                'd.diskon',
+                'd.total'
+            )
+            ->where('i.void', 0)
+            ->where('d.barang_id', $barang);
+
+        if ($tahun === 'total') {
+            $query->whereBetween(DB::raw('YEAR(i.created_at)'), [$tahunAwal, $tahunAkhir]);
+            $periodeLabel = "Total Tahun $tahunAwal - $tahunAkhir";
+        } else {
+            $query->whereYear('i.created_at', $tahun);
+            $periodeLabel = "Tahun $tahun";
+        }
+
+        $details = $query->orderBy('i.created_at', 'asc')->get();
+
+        return view('statistik.omset-barang.tahunan.detail', compact('dbBarang', 'details', 'periodeLabel', 'tahunAwal', 'tahunAkhir'));
+    }
+
+    // --- FUNGSI EXCEL TAHUNAN ---
+    public function export_excel_omset_barang_tahunan(Request $request)
+    {
+        ini_set('memory_limit', '256M');
+        set_time_limit(300);
+
+        $tahunAkhir = $request->input('tahun_akhir', date('Y'));
+        $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
+        if (($tahunAkhir - $tahunAwal) > 4) $tahunAwal = $tahunAkhir - 4;
+
+        $years = range($tahunAwal, $tahunAkhir);
+        $paddedYears = array_pad($years, 5, null);
+
+        $unitId = $request->input('barang_unit_id');
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+        }
+
+        $kategoriId = $request->input('barang_kategori_id');
+        $modeTampil = $request->input('mode_tampil', 'qty');
+        $statusOmset = $request->input('status_omset');
+
+        $db = new InvoiceJual;
+
+        $query = $db->getOmsetBarangTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kategoriId, $modeTampil, $statusOmset);
+
+        $fileName = "Omset_Barang_Tahunan_{$tahunAwal}-{$tahunAkhir}.csv";
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function () use ($query, $paddedYears) {
+            $file = fopen('php://output', 'w');
+
+            $headerRow = ['No', 'Perusahaan', 'Kategori', 'Kode', 'Merk', 'Nama Barang', 'Satuan'];
+            foreach ($paddedYears as $y) {
+                if ($y !== null) $headerRow[] = "Tahun $y";
+            }
+            $headerRow[] = 'TOTAL';
+            fputcsv($file, $headerRow);
+
+            $no = 1;
+            // Chunk agar RAM tidak jebol
+            $query->orderBy('barangs.barang_nama_id', 'asc')->chunk(500, function ($barangs) use ($file, &$no, $paddedYears) {
+                foreach ($barangs as $row) {
+                    $csvRow = [
+                        $no++,
+                        $row->unit->nama ?? '-',
+                        $row->kategori->nama ?? '-',
+                        $row->kode,
+                        $row->merk,
+                        $row->barang_nama->nama ?? '-',
+                        $row->satuan->nama ?? '-'
+                    ];
+
+                    for ($i = 1; $i <= 5; $i++) {
+                        if ($paddedYears[$i - 1] !== null) {
+                            $col = "tahun_" . $i;
+                            $csvRow[] = $row->$col ?? 0;
+                        }
+                    }
+                    $csvRow[] = $row->total_semua ?? 0;
+
+                    fputcsv($file, $csvRow);
+                }
+                flush();
+            });
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    // --- FUNGSI PRINT PDF TAHUNAN ---
+    public function print_omset_barang_tahunan(Request $request)
+    {
+        ini_set('memory_limit', '256M');
+        set_time_limit(300);
+
+        $tahunAkhir = $request->input('tahun_akhir', date('Y'));
+        $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
+        if (($tahunAkhir - $tahunAwal) > 4) $tahunAwal = $tahunAkhir - 4;
+
+        $years = range($tahunAwal, $tahunAkhir);
+
+        $unitId = $request->input('barang_unit_id');
+        if (Auth::user()->role == 'perusahaan') {
+            $unitId = Auth::user()->barang_unit_id;
+        }
+
+        $kategoriId = $request->input('barang_kategori_id');
+        $modeTampil = $request->input('mode_tampil', 'qty');
+        $statusOmset = $request->input('status_omset');
+
+        $db = new InvoiceJual;
+
+        $laporan = $db->getOmsetBarangTahunanQuery($tahunAwal, $tahunAkhir, $unitId, $kategoriId, $modeTampil, $statusOmset)
+            ->orderBy('barang_nama_id', 'asc')
+            ->get();
+
+        $namaUnit = 'Semua Perusahaan';
+        if ($unitId) {
+            $unitDB = DB::table('barang_units')->where('id', $unitId)->first();
+            $namaUnit = $unitDB->nama ?? '-';
+        }
+
+        return view('statistik.omset-barang.tahunan.print', compact('laporan', 'tahunAwal', 'tahunAkhir', 'years', 'namaUnit', 'modeTampil'));
+    }
 }

@@ -51,8 +51,8 @@
             </a>
         </div>
          <div class="col-lg-3 mt-3 mb-3 text-center">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{route('statistik.omset-barang.tahunan')}}" class="text-decoration-none">
+                <img src="{{asset('images/omset-barang-tahunan.svg')}}" alt="" width="70">
                 <h4 class="mt-3">TAHUNAN</h4>
             </a>
         </div>

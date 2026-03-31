@@ -1484,4 +1484,75 @@ class InvoiceJual extends Model
 
         return $query;
     }
+
+    public function getOmsetBarangTahunanQuery($tahunAwal, $tahunAkhir, $unitId = null, $kategoriId = null, $modeTampil = 'qty', $statusOmset = null)
+    {
+        $kolomHitung = ($modeTampil === 'nominal') ? 'd.total' : 'd.jumlah';
+
+        if (($tahunAkhir - $tahunAwal) > 4) {
+            $tahunAwal = $tahunAkhir - 4;
+        }
+
+        $years = range($tahunAwal, $tahunAkhir);
+        $paddedYears = array_pad($years, 5, null);
+
+        // 1. Subquery Transaksi
+        $subquery = DB::table('invoice_juals as i')
+            ->join('invoice_jual_details as d', 'i.id', '=', 'd.invoice_jual_id')
+            ->select('d.barang_id')
+            ->where('i.void', 0)
+            ->whereBetween(DB::raw('YEAR(i.created_at)'), [$tahunAwal, $tahunAkhir]);
+
+        $selectsRaw = [];
+        for ($i = 0; $i < 5; $i++) {
+            $colName = "tahun_" . ($i + 1);
+            if ($paddedYears[$i] !== null) {
+                $y = $paddedYears[$i];
+                $selectsRaw[] = "COALESCE(SUM(CASE WHEN YEAR(i.created_at) = $y THEN $kolomHitung ELSE 0 END), 0) as $colName";
+            } else {
+                $selectsRaw[] = "0 as $colName";
+            }
+        }
+        $selectsRaw[] = "COALESCE(SUM($kolomHitung), 0) as total_semua";
+
+        $subquery->addSelect(DB::raw(implode(',', $selectsRaw)));
+        $subquery->groupBy('d.barang_id');
+
+        // 2. Query Utama
+        $query = Barang::query()
+            ->select([
+                'barangs.id', 'barangs.kode', 'barangs.merk', 'barangs.barang_unit_id',
+                'barangs.barang_kategori_id', 'barangs.barang_nama_id', 'barangs.satuan_id', 'barangs.is_active',
+                'transaksi.tahun_1', 'transaksi.tahun_2', 'transaksi.tahun_3',
+                'transaksi.tahun_4', 'transaksi.tahun_5', 'transaksi.total_semua'
+            ])
+            ->with(['unit', 'kategori', 'barang_nama', 'satuan'])
+            ->leftJoinSub($subquery, 'transaksi', function ($join) {
+                $join->on('barangs.id', '=', 'transaksi.barang_id');
+            });
+
+        // --- FILTER DASAR ---
+        if ($unitId) {
+            $query->where('barangs.barang_unit_id', $unitId);
+        }
+        if ($kategoriId) {
+            $query->where('barangs.barang_kategori_id', $kategoriId);
+        }
+
+        // --- FILTER STATUS OMSET ---
+        if ($statusOmset) {
+            $sumExpression = "COALESCE(transaksi.total_semua, 0)";
+
+            if ($statusOmset == 'ada') {
+                $query->whereRaw("($sumExpression) > 0");
+            } elseif ($statusOmset == 'nol') {
+                $query->where(function($q) use ($sumExpression) {
+                    $q->whereNull('transaksi.total_semua')
+                      ->orWhereRaw("($sumExpression) = 0");
+                });
+            }
+        }
+
+        return $query;
+    }
 }
