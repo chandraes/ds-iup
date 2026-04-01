@@ -70,6 +70,10 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
+    Route::group(['middleware' => ['role:su,admin,user,sales']], function(){
+        Route::get('billing/invoice-konsumen/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
+     });
+
     // Routing statistik yang bisa di akses hampir seluruh role
     Route::group(['middleware' => ['role:su,admin,user,sales,perusahaan']], function(){
         Route::prefix('statistik')->group(function(){
@@ -979,7 +983,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan'])->name('billing.invoice-konsumen.titipan');
                 Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_non_ppn'])->name('billing.invoice-konsumen.non-ppn');
                 Route::get('/non-ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan_non_ppn'])->name('billing.invoice-konsumen.non-ppn.titipan');
-                Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
+
                 Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_bayar'])->name('billing.invoice-konsumen.bayar');
 
                 Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_void'])->name('billing.invoice-konsumen.void');

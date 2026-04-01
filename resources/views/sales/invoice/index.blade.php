@@ -1,4 +1,5 @@
 @extends('layouts.app')
+
 @section('content')
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -74,9 +75,11 @@
         <table class="table table-hover table-bordered" id="rekapTable" style="font-size: 0.8rem;">
             <thead class="table-success">
                 <tr>
-                    <th class="text-center align-middle">Tanggal</th>
-                    <th class="text-center align-middle">Daerah</th>
+                    <th class="text-center align-middle">No</th>
+                    <th class="text-center align-middle">Kode</th>
                     <th class="text-center align-middle">Konsumen</th>
+                    <th class="text-center align-middle">Kab/Kota</th>
+                    <th class="text-center align-middle">Kecamatan</th>
                     <th class="text-center align-middle">Nota</th>
                     <th class="text-center align-middle">Nilai</th>
                     <th class="text-center align-middle">Total <br>Belanja</th>
@@ -86,7 +89,7 @@
                     <th class="text-center align-middle">Sisa <br>PPN</th>
                     <th class="text-center align-middle">Sisa <br>Tagihan</th>
                     <th class="text-center align-middle">Jatuh <br>Tempo</th>
-
+                    <th class="text-center align-middle">#</th>
                 </tr>
             </thead>
             <tbody>
@@ -94,14 +97,32 @@
                 $sumCicilan = 0;
                 @endphp
                 @foreach ($data as $d)
-                <tr>
-                    <td class="text-center align-middle">{{$d->tanggal_en}}</td>
+                    @php
+                        $jatuhTempo = \Carbon\Carbon::parse($d->jatuh_tempo);
+                        $hariIni = now()->startOfDay();
+                        $tujuhHariLagi = now()->addDays(7)->endOfDay();
+
+                        $classWarna = '';
+                        if ($jatuhTempo < $hariIni) {
+                            $classWarna = 'row-expired'; // Sudah lewat
+                        } elseif ($jatuhTempo <= $tujuhHariLagi) {
+                            $classWarna = 'row-warning-7';
+                        }
+                    @endphp
+               <tr class="{{ $classWarna }}">
+                    <td class="text-center align-middle"></td>
+                    <td class="text-start align-middle text-nowrap" data-order="{{$d->konsumen?->kode}}">
+                        {{$d->konsumen?->full_kode}}
+                    </td>
+                     <td class="text-start align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' :
+                        '' }}{{$d->konsumen->nama}}</td>
                      <td class="text-start align-middle text-wrap">
                             {{$d->konsumen->kabupaten_kota ? $d->konsumen->kabupaten_kota->nama_wilayah.', ' : ''}}
+                    </td>
+                    <td class="text-start align-middle text-wrap">
                             {{$d->konsumen->kecamatan ? $d->konsumen->kecamatan->nama_wilayah : ''}}
                     </td>
-                    <td class="text-start align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode.' ' :
-                        '' }}{{$d->konsumen->nama}}</td>
+
                     <td class="text-start align-middle text-nowrap" data-order="{{$d->nomor}}">
                         {{$d->kode}}
                     </td>
@@ -131,13 +152,18 @@
                     <td class="text-end align-middle {{$d->ppn_dipungut ? '' : 'table-danger'}}">{{$d->nf_sisa_ppn}}
                     </td>
                     <td class="text-end align-middle" data-order="{{$d->sisa_tagihan}}">{{$d->nf_sisa_tagihan}}</td>
-                    <td class="text-end align-middle {{date($d->jatuh_tempo) < now() ? 'text-danger' : ''}}">{{$d->jatuh_tempo}}</td>
+                    <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
+                    <td class="text-end align-middle text-nowrap">
+                        <a href="{{route('billing.invoice-konsumen.detail', $d->id)}}" class="btn btn-sm btn-primary">
+                            <i class="fa fa-eye"></i> Detail
+                        </a>
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="4">Grand Total</th>
+                    <th class="text-end align-middle" colspan="6">Grand Total</th>
                     <th class="text-start text-nowrap align-middle">
 
                         <ul style="margin: 0; padding: 0; list-style: none;">
@@ -155,6 +181,7 @@
                     <th class="text-end align-middle">{{number_format($data->sum('sisa_ppn'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('sisa_tagihan'), 0, ',', '.')}}</th>
                     <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle"></th>
                 </tr>
             </tfoot>
 
@@ -167,36 +194,58 @@
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<style>
+    /* Baris yang sudah expired (Merah) */
+    .row-expired td {
+        color: #dc3545 !important; /* Bootstrap Danger */
+        font-weight: bold;
+    }
+
+    /* Baris yang akan expired dalam 7 hari (Biru) */
+    .row-warning-7 td {
+        color: #0d6efd !important; /* Bootstrap Primary */
+        font-weight: bold
+    }
+
+    /* Opsional: Jika ingin mengubah background tipis agar lebih terlihat */
+    .row-warning-7 {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+</style>
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     $(document).ready(function() {
-        $('#rekapTable').DataTable({
+        var t =$('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,
             "scrollCollapse": true,
             "scrollY": "60vh", // Set scrollY to 50% of the viewport height
             "scrollX": true,
+            "columnDefs": [ {
+                "searchable": false,
+                "orderable": false, // Agar kolom nomor tidak bisa di-sort
+                "targets": 0        // Menargetkan kolom index 0
+            } ],
+            "createdRow": function(row, data, dataIndex) {
+                // Cek atribut data-expired yang kita buat di Blade
+              if ($(row).hasClass('row-expired')) {
+                    $(row).find('td').css('color', '#dc3545');
+                } else if ($(row).hasClass('row-warning-7')) {
+                    $(row).find('td').css('color', '#0d6efd');
+                }
+            }
         });
 
-        $('#supplier_id').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-        });
+        t.on('order.dt search.dt', function () {
+            t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+                cell.innerHTML = i + 1;
+            } );
+        }).draw();
 
-        $('#karyawan_id').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-        });
-
-        $('#kecamatan_id').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-        });
-
-           $('#kabupaten_id').select2({
+        $('#kecamatan_id, #karyawan_id, #kabupaten_id').select2({
             theme: 'bootstrap-5',
             width: '100%',
         });

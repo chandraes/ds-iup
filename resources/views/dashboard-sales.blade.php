@@ -7,7 +7,7 @@
         </a>
     </div>
     <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-        <a href="{{route('sales.check-konsumen')}}" class="text-decoration-none">
+        <a href="{{route('sales.invoice-konsumen')}}" class="text-decoration-none">
             <img src="{{asset('images/check.svg')}}" alt="" width="70">
             <h5 class="mt-2">CHECK INVOICE JATUH TEMPO</h5>
         </a>
@@ -38,16 +38,6 @@
         <a href="{{route('sales.pre-order')}}" class="text-decoration-none">
             <img src="{{asset('images/order-inden.svg')}}" alt="" width="70">
             <h5 class="mt-2">PRE ORDER</h5>
-        </a>
-    </div>
-    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-        <a href="{{route('sales.invoice-konsumen')}}" class="text-decoration-none">
-            <img src="{{asset('images/invoice-konsumen-all.svg')}}" alt="" width="70">
-            <h5 class="mt-2">INVOICE KONSUMEN
-                {{-- @if ($ikn > 0)
-                <span class="text-danger">({{$ikn}})</span>
-                @endif --}}
-            </h5>
         </a>
     </div>
 </div>
