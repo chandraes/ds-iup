@@ -194,7 +194,7 @@
             "ordering": false,
             "searching": false,
             "scrollCollapse": true,
-            "scrollY": "500px",
+
             "responsive": true
         });
     });
