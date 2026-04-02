@@ -48,12 +48,21 @@
                         @endforeach
                     </select>
                 </div>
-                 <div class="col-md-3">
+                 <div class="col-md-2">
                     {{-- tombol filter untuk expired yang akan mengirimkan expired = 1 atau 0 --}}
                     <select name="kecamatan_id" id="kecamatan_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Semua Kecamatan --</option>
                         @foreach ($kecamatan as $k)
                         <option value="{{$k->id}}" {{ request('kecamatan_id')==$k->id ? 'selected' : '' }}>{{$k->nama_wilayah}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    {{-- tombol filter untuk expired yang akan mengirimkan expired = 1 atau 0 --}}
+                    <select name="konsumen_id" id="konsumen_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Semua Konsumen --</option>
+                        @foreach ($konsumen as $kon)
+                        <option value="{{$kon->id}}" {{ request('konsumen_id')==$kon->id ? 'selected' : '' }}>{{$kon->kode_toko?->kode}} {{$kon->nama}}</option>
                         @endforeach
                     </select>
                 </div>
@@ -154,7 +163,7 @@
                     <td class="text-end align-middle" data-order="{{$d->sisa_tagihan}}">{{$d->nf_sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
                     <td class="text-end align-middle text-nowrap">
-                        <a href="{{route('billing.invoice-konsumen.detail', $d->id)}}" class="btn btn-sm btn-primary">
+                        <a href="{{route('sales.invoice-konsumen.detail', $d->id)}}" class="btn btn-sm btn-primary">
                             <i class="fa fa-eye"></i> Detail
                         </a>
                     </td>
@@ -245,7 +254,7 @@
             } );
         }).draw();
 
-        $('#kecamatan_id, #karyawan_id, #kabupaten_id').select2({
+        $('#kecamatan_id, #karyawan_id, #kabupaten_id, #konsumen_id').select2({
             theme: 'bootstrap-5',
             width: '100%',
         });

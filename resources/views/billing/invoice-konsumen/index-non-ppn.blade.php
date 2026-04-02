@@ -115,7 +115,7 @@
                                         class="fa fa-credit-card me-1"></i> Bayar</button>
                             </div>
                         </form>
-                        <div class="row px-3 px-3 pb-2">
+                        <div class="row px-3 pb-2">
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#cicilanModal"
                                 onclick="cicilan({{$d}})">Cicil</button>
                         </div>

@@ -32,10 +32,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Yajra\DataTables\Facades\DataTables;
+use App\Http\Traits\Terbilang;
 
 class SalesController extends Controller
 {
-     public function barang_get_grosir(Request $request)
+    use Terbilang;
+
+    public function barang_get_grosir(Request $request)
     {
         $data = $request->validate([
             'barang_id' => 'required|exists:barangs,id',
@@ -1025,7 +1028,9 @@ class SalesController extends Controller
     {
         $filters = $request->only(['expired', 'apa_ppn', 'konsumen_id', 'kecamatan_id', 'kabupaten_id']);
 
-        $filters['karyawan_id'] = Auth::user()->karyawan_id;
+        $karyawanUserId = Auth::user()->karyawan_id;
+
+        $filters['karyawan_id'] = $karyawanUserId;
 
         $data = InvoiceJual::gabung($filters);
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
@@ -1034,8 +1039,10 @@ class SalesController extends Controller
                 })->select('id', 'nama')->get();
 
         // Get unique kecamatan_id and kabupaten_kota_id directly as arrays to minimize memory usage
-        $kecamatanIds = Konsumen::distinct()->pluck('kecamatan_id')->filter()->all();
-        $kabupatenIds = Konsumen::distinct()->pluck('kabupaten_kota_id')->filter()->all();
+        $kecamatanIds = Konsumen::where('karyawan_id', $karyawanUserId)->distinct()->pluck('kecamatan_id')->filter()->all();
+        $kabupatenIds = Konsumen::where('karyawan_id', $karyawanUserId)->distinct()->pluck('kabupaten_kota_id')->filter()->all();
+
+        $konsumen = Konsumen::with('kode_toko')->where('karyawan_id', $karyawanUserId)->get();
 
         // Fetch only needed Wilayah records
         $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
@@ -1050,11 +1057,45 @@ class SalesController extends Controller
 
         return view('sales.invoice.index',
         [
-              'data' => $data,
+            'data' => $data,
             'ppn' => $ppn,
             'sales' => $sales,
             'kecamatan' => $kecamatan,
             'kabupaten' => $kabupaten,
+            'konsumen' => $konsumen,
+        ]);
+    }
+
+    public function invoice_konsumen_detail(InvoiceJual $invoice)
+    {
+        if ($invoice->karyawan_id != Auth::user()->karyawan_id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat data ini');
+        }
+
+         $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
+
+        $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
+
+        $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
+         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        return view('sales.invoice.detail', [
+             'data' => $invoice->loadMissing([
+                'konsumen',
+                'karyawan',
+                'invoice_detail.stok.type',
+                'invoice_detail.stok.barang',
+                'invoice_detail.stok.barang.satuan',
+                'invoice_detail.stok.unit',
+                'invoice_detail.stok.kategori',
+                'invoice_detail.stok.barang_nama',
+                'invoice_jual_cicil',
+            ]),
+            'jam' => $jam,
+            'ppn' => $ppn,
+            'tanggal_tempo' => $tanggal_tempo,
+            'tanggal' => $tanggal,
+            'terbilang' => $terbilang,
         ]);
     }
 
