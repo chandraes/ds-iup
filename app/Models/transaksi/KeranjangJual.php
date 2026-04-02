@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class KeranjangJual extends Model
 {
@@ -57,7 +58,7 @@ class KeranjangJual extends Model
             DB::beginTransaction();
 
             // dd($data);
-            $keranjang = $this->where('user_id', auth()->user()->id)->get();
+            $keranjang = $this->where('user_id', Auth::user()->id)->get();
 
 
             if ($keranjang->isEmpty()) {
@@ -131,12 +132,12 @@ class KeranjangJual extends Model
                         ->exists();
 
                     // Disabled the check for expired invoices
-                    if ($checkInvoice) {
-                        return [
-                            'status' => 'error',
-                            'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.'
-                        ];
-                    }
+                    // if ($checkInvoice) {
+                    //     return [
+                    //         'status' => 'error',
+                    //         'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.'
+                    //     ];
+                    // }
 
                     $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
 
@@ -279,7 +280,7 @@ class KeranjangJual extends Model
                 $waState = 1;
             }
 
-            $this->where('user_id', auth()->user()->id)->delete();
+            $this->where('user_id', Auth::user()->id)->delete();
 
             DB::commit();
 
