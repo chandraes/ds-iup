@@ -80,12 +80,19 @@ class KasBesar extends Model
 
     public function saldoTerakhir($ppn)
     {
-        return $this->where('ppn_kas', $ppn)->orderBy('id', 'desc')->first()->saldo ?? 0;
+        $lastRecord = $this->where('ppn_kas', $ppn)
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+        return $lastRecord->saldo ?? 0;
     }
 
     public function modalInvestorTerakhir($ppn)
     {
-        return $this->where('ppn_kas', $ppn)->orderBy('id', 'desc')->first()->modal_investor_terakhir ?? 0;
+        $lastRecord = $this->where('ppn_kas', $ppn)
+                        ->orderBy('id', 'desc')
+                        ->first();
+        return $lastRecord->modal_investor_terakhir ?? 0;
     }
 
     public function kasBesar($month, $year, $ppn)
@@ -458,7 +465,7 @@ class KasBesar extends Model
 
     }
 
-    public function generateMessage($isIn, $title, $kasPpn, $uraian, $nominal, $rekening, $additionalMessage = null)
+    public function generateMessage($isIn, $title, $ppnKas, $uraian, $nominal, $rekening, $additionalMessage = null)
     {
 
         $lineHeading = $isIn == 1 ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n" : "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n";
@@ -475,7 +482,7 @@ class KasBesar extends Model
 
         $sisaSaldo = '';
 
-        if ($kasPpn == 1) {
+        if ($ppnKas == 1) {
             $sisaSaldo .= "Sisa Saldo Kas Besar PPN: \n".
                         'Rp. '.number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
                     "Total Modal Investor PPN: \n".
@@ -1167,6 +1174,220 @@ class KasBesar extends Model
             return [
                 'status' => 'error',
                 'message' => 'Gagal Menyimpan Data. '.$th->getMessage(),
+            ];
+        }
+    }
+
+    public function uang_gantung_create($data)
+    {
+
+        try {
+            DB::beginTransaction();
+
+            $data['nominal'] = str_replace('.', '', $data['nominal']);
+            $rek = Rekening::where('untuk', $data['ppn_kas'] == 1 ? "kas-besar-ppn": 'kas-besar-non-ppn')->first();
+
+            $store = $this->create([
+                'uraian' => "Uang Gantung Masuk",
+                'nominal' => $data['nominal'],
+                'ppn_kas' => $data['ppn_kas'],
+                'jenis' => 1,
+                'no_rek' => $rek->no_rek,
+                'bank' => $rek->bank,
+                'nama_rek' => $rek->nama_rek,
+                'saldo' => $this->saldoTerakhir($data['ppn_kas']) + $data['nominal'],
+                'modal_investor_terakhir' => $this->modalInvestorTerakhir($data['ppn_kas']),
+            ]);
+
+            UangGantung::create($data);
+
+            DB::commit();
+
+            $dbWa = new GroupWa;
+
+            $pesan = $dbWa->generateMessage(1, 'FORM UANG GANTUNG', $data['ppn_kas'], $store->uraian, $store->nominal, $rek);
+            $kas = $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+            $group = $dbWa->where('untuk', $kas)->first();
+
+            $dbWa->sendWa($group->nama_group, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil menambahkan data',
+                'data' => $store,
+            ];
+
+        } catch (\Throwable $th) {
+            // throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+    }
+
+    public function uang_gantung_lunas($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $uangGantung = UangGantung::find($id);
+
+            if (!$uangGantung) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Data uang gantung tidak ditemukan',
+                ];
+            }
+
+            if ($this->saldoTerakhir($uangGantung->ppn_kas) < $uangGantung->nominal) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($this->saldoTerakhir($uangGantung->ppn_kas), 0, ',', '.'),
+                ];
+            }
+
+            $store = $this->create([
+                'uraian' => "Uang Gantung Keluar",
+                'nominal' => $uangGantung->nominal,
+                'ppn_kas' => $uangGantung->ppn_kas,
+                'jenis' => 0,
+                'no_rek' => '-',
+                'bank' => '-',
+                'nama_rek' => '-',
+                'saldo' => $this->saldoTerakhir($uangGantung->ppn_kas) - $uangGantung->nominal,
+                'modal_investor_terakhir' => $this->modalInvestorTerakhir($uangGantung->ppn_kas),
+            ]);
+
+            $uangGantung->update([
+                'lunas' => 1,
+            ]);
+
+            DB::commit();
+
+            $rek = [
+                'bank' => '-',
+                'nama_rek' => '-',
+                'no_rek' => '-',
+            ];
+
+             $dbWa = new GroupWa;
+
+            $pesan = $dbWa->generateMessage(0, 'FORM UANG GANTUNG', $uangGantung['ppn_kas'], $store->uraian, $store->nominal, $rek);
+            $kas = $uangGantung['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+            $group = $dbWa->where('untuk', $kas)->first();
+
+            $dbWa->sendWa($group->nama_group, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil melunasi uang gantung',
+                'data' => $store,
+            ];
+
+        } catch (\Throwable $th) {
+            // throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+    }
+
+    public function uang_gantung_void($id, $alasan)
+    {
+        try {
+            DB::beginTransaction();
+
+            $uangGantung = UangGantung::find($id);
+
+            if (!$uangGantung) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Data uang gantung tidak ditemukan',
+                ];
+            }
+
+            if ($this->saldoTerakhir($uangGantung->ppn_kas) < $uangGantung->nominal) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($this->saldoTerakhir($uangGantung->ppn_kas), 0, ',', '.'),
+                ];
+            }
+
+            $store = $this->create([
+                'uraian' => "Uang Gantung Void",
+                'nominal' => $uangGantung->nominal,
+                'ppn_kas' => $uangGantung->ppn_kas,
+                'jenis' => 0,
+                'no_rek' => '-',
+                'bank' => '-',
+                'nama_rek' => '-',
+                'saldo' => $this->saldoTerakhir($uangGantung->ppn_kas) - $uangGantung->nominal,
+                'modal_investor_terakhir' => $this->modalInvestorTerakhir($uangGantung->ppn_kas),
+            ]);
+
+            $updateUg = $uangGantung->update([
+                'void' => 1,
+                'void_reason' => $alasan,
+            ]);
+
+            DB::commit();
+
+            $kasPpn = [
+                'saldo' => $this->saldoTerakhir(1),
+                'modal_investor' => $this->modalInvestorTerakhir(1),
+            ];
+
+            $kasNonPpn = [
+                'saldo' => $this->saldoTerakhir(0),
+                'modal_investor' => $this->modalInvestorTerakhir(0),
+            ];
+
+            $findAgain = UangGantung::find($id);
+            // sum modal investor
+            $totalModal = $kasPpn['modal_investor'] + $kasNonPpn['modal_investor'];
+
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*VOID UANG GANTUNG*\n".
+                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                        'Uraian : '.$findAgain->void_reason."\n".
+                        'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.')."*\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar PPN: \n".
+                        'Rp. '.number_format($kasPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Sisa Saldo Kas Besar  NON PPN: \n".
+                        'Rp. '.number_format($kasNonPpn['saldo'], 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        'Rp. '.number_format($totalModal, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+            $dbWa = new GroupWa;
+
+            $kas = $uangGantung['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+            $group = $dbWa->where('untuk', $kas)->first();
+
+            $dbWa->sendWa($group->nama_group, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil void uang gantung',
+            ];
+
+        } catch (\Throwable $th) {
+            // throw $th;
+            DB::rollBack();
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
             ];
         }
     }

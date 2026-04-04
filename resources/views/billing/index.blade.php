@@ -70,6 +70,24 @@
             </a>
         </div>
     </div>
+    <div class="row justify-content-left">
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.uang-gantung.form')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-uang-gantung.svg')}}" alt="" width="70">
+                <h5 class="mt-3">FORM UANG GANTUNG</h5>
+            </a>
+        </div>
+         <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.uang-gantung')}}" class="text-decoration-none">
+                <img src="{{asset('images/uang-gantung.svg')}}" alt="" width="70">
+                <h5 class="mt-3">UANG GANTUNG
+                       @if ($ug > 0)
+                    <span class="text-danger">({{$ug}})</span>
+                    @endif
+                </h5>
+            </a>
+        </div>
+    </div>
     <hr>
     <br>
     <div class="row justify-content-left">

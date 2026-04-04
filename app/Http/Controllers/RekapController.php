@@ -23,6 +23,7 @@ use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\UangGantung;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -900,5 +901,45 @@ class RekapController extends Controller
                 $query->orderBy('created_at', 'desc');
             })
             ->make(true);
+    }
+
+    public function uang_gantung_selesai()
+    {
+        return view('rekap.uang-gantung.selesai');
+    }
+
+    public function uang_gantung_selesai_data(Request $request)
+    {
+        if ($request->ajax()) {
+            // Ambil data yang sudah selesai (Lunas = 1 atau status void)
+            $query = UangGantung::with(['user'])->where('lunas', 1);
+
+            // Filter berdasarkan Bulan
+            if ($request->has('bulan') && $request->bulan != '') {
+                $query->whereMonth('tanggal', $request->bulan);
+            }
+
+            // Filter berdasarkan Tahun
+            if ($request->has('tahun') && $request->tahun != '') {
+                $query->whereYear('tanggal', $request->tahun);
+            }
+
+            // Filter berdasarkan Kas (jika ada)
+            if ($request->has('ppn_kas') && $request->ppn_kas != '') {
+                $query->where('ppn_kas', $request->ppn_kas);
+            }
+
+            return datatables()->of($query)
+                ->addIndexColumn()
+                ->addColumn('status_kas', function($row){
+                    return ($row->ppn_kas == 1) ? '<span class="badge bg-success">KAS PPN</span>' : '<span class="badge bg-warning">KAS NON PPN</span>';
+                })
+                ->addColumn('status_lunas', function($row){
+                    // Contoh label status
+                    return '<span class="badge bg-primary"><i class="fa fa-check"></i> Selesai</span>';
+                })
+                ->rawColumns(['status_kas', 'status_lunas'])
+                ->make(true);
+        }
     }
 }

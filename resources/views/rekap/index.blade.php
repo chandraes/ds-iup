@@ -66,6 +66,14 @@
             </a>
         </div>
     </div>
+    <div class="row justify-content-left">
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.uang-gantung.selesai')}}" class="text-decoration-none">
+                <img src="{{asset('images/uang-gantung.svg')}}" alt="" width="70">
+                <h5 class="mt-3">UANG GANTUNG SELESAI</h5>
+            </a>
+        </div>
+    </div>
     <hr>
     <br>
     <div class="row justify-content-left">

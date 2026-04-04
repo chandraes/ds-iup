@@ -79,7 +79,7 @@ class GroupWa extends Model
 
     }
 
-    public function generateMessageUniversal($heading, $title,)
+    public function generateMessageUniversal($heading, $title)
     {
         $arrayLineHeading = [
             0 => "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n",

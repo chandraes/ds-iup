@@ -38,6 +38,7 @@ use App\Models\transaksi\KeranjangBeli;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
 use App\Models\transaksi\OrderIndenDetail;
+use App\Models\UangGantung;
 use App\Models\User;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -139,12 +140,14 @@ class BillingController extends Controller
         $br = BarangRetur::whereIn('status', [1,2])->count();
         $sr = StokRetur::where('status', 0)->count();
         $ps = ReturSupplier::whereNot('tipe', 99)->count();
+        $ug = UangGantung::where('lunas', 0)->where('void', 0)->count();
 
         $asistenAdm = User::where('role', 'asisten-admin')->select('id', 'name')->withCount('keranjangBeli')->get();
         $sumKeranjangBeli = $asistenAdm->sum('keranjang_beli_count');
 
         return view('billing.index', [
             'is' => $is,
+            'ug' => $ug,
             'ps' => $ps,
             'ik' => $invoiceJualCounts->ik,
             'isn' => $isn,
@@ -1334,6 +1337,110 @@ class BillingController extends Controller
         }
 
         return redirect()->route('billing')->with($res['status'], $res['message']);
+    }
+
+    public function uang_gantung_form()
+    {
+        return view('billing.uang-gantung.form');
+    }
+
+    public function uang_gantung_form_store(Request $request)
+    {
+        $data = $request->validate([
+            'ppn_kas' => 'required|boolean',
+            'tanggal' => 'required|date',
+            'keterangan' => 'required',
+            'nominal' => 'required',
+        ]);
+
+        $data['user_id'] = Auth::id();
+
+        $db = new KasBesar;
+
+        $res = $db->uang_gantung_create($data);
+
+        if ($res['status'] != 'success') {
+            return redirect()->back()->with($res['status'], $res['message']);
+        }
+
+        return redirect()->route('billing')->with($res['status'], $res['message']);
+
+
+    }
+
+    public function uang_gantung_data(Request $request)
+    {
+          if ($request->ajax()) {
+            $query = UangGantung::with(['user'])->where('lunas', 0)->where('void', 0);
+
+            // --- Logic Filter ---
+            if ($request->has('ppn_kas') && $request->ppn_kas != '') {
+                $query->where('ppn_kas', $request->ppn_kas);
+            }
+
+            // Menggunakan Yajra DataTables (Recommended)
+            return datatables()->of($query)
+                ->addIndexColumn()
+                ->addColumn('status_kas', function($row){
+                    // Logika PPN (Sesuaikan dengan kolom database Anda)
+                    return ($row->ppn_kas == 1) ? '<span class="badge bg-success">KAS PPN</span>' : '<span class="badge bg-warning">KAS NON PPN</span>';
+                })
+                ->addColumn('tanggal_input', function($row){
+                    return Carbon::parse($row->created_at)->format('Y-m-d');
+                })
+                ->addColumn('aksi', function($row){
+                    $btn = '';
+                    $role = ['su', 'admin'];
+
+                    if (!in_array(Auth::user()->role, $role)) {
+                        return '-';
+                    }
+                    // Asumsi: jika lunas = 0, tampilkan tombol Selesaikan. Jika sudah 1, tampilkan teks Lunas.
+                    if ($row->lunas == 0) {
+                        $btn .= '<button type="button" class="btn btn-success btn-sm me-1 btn-selesaikan" data-id="'.$row->id.'">
+                                    <i class="fa fa-check-circle"></i> Selesaikan
+                                </button>';
+                    // Tombol Void (Hapus)
+                    $btn .= '<button type="button" class="btn btn-danger btn-sm btn-void" data-id="'.$row->id.'">
+                                <i class="fa fa-trash"></i> Void
+                            </button>';
+                    }
+                    return $btn;
+                })
+                ->rawColumns(['status_kas', 'aksi'])
+                ->make(true);
+        }
+    }
+
+    public function uang_gantung()
+    {
+        return view('billing.uang-gantung.index');
+    }
+
+    public function uang_gantung_lunas($id)
+    {
+        $db = new KasBesar;
+
+        $res = $db->uang_gantung_lunas($id);
+
+        return response()->json($res);
+    }
+
+    public function uang_gantung_void(Request $request, $id)
+    {
+        // 1. Validasi inputan dari sisi server
+        $request->validate([
+            'alasan' => 'required|string'
+        ]);
+
+        // 2. Akses nilai alasan
+        $alasan_void = $request->alasan;
+
+        $db = new KasBesar;
+
+        $res = $db->uang_gantung_void($id, $alasan_void);
+
+        return response()->json($res);
     }
 
 
