@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('keranjang_juals', function (Blueprint $table) {
-            $table->decimal('ppn', 10, 2)->change();
-            $table->decimal('total_ppn', 10, 2)->change();
-        });
+        // Schema::table('keranjang_juals', function (Blueprint $table) {
+        //     $table->decimal('ppn', 10, 2)->change();
+        //     $table->decimal('total_ppn', 10, 2)->change();
+        // });
 
-        Schema::table('invoice_jual_sales_details', function (Blueprint $table) {
-            $table->decimal('ppn', 10, 2)->change();
-        });
+        // Schema::table('invoice_jual_sales_details', function (Blueprint $table) {
+        //     $table->decimal('ppn', 10, 2)->change();
+        // });
 
-         Schema::table('invoice_jual_details', function (Blueprint $table) {
-            $table->decimal('ppn', 10, 2)->change();
-        });
+        //  Schema::table('invoice_jual_details', function (Blueprint $table) {
+        //     $table->decimal('ppn', 10, 2)->change();
+        // });
     }
 
     /**
