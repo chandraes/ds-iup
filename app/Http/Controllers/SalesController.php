@@ -1030,9 +1030,14 @@ class SalesController extends Controller
 
         $karyawanUserId = Auth::user()->karyawan_id;
 
-        $filters['karyawan_id'] = $karyawanUserId;
+        // $filters['karyawan_id'] = $karyawanUserId;
 
-        $data = InvoiceJual::gabung($filters);
+        $konsumen = Konsumen::with('kode_toko')->where('karyawan_id', $karyawanUserId)->get();
+
+        // get konsumen id from $konsumen collection
+        $konsumenIds = $konsumen->pluck('id')->all();
+
+        $data = InvoiceJual::gabung($filters)->whereIn('konsumen_id', $konsumenIds);
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
                     $query->where('is_sales', 1);
@@ -1041,8 +1046,6 @@ class SalesController extends Controller
         // Get unique kecamatan_id and kabupaten_kota_id directly as arrays to minimize memory usage
         $kecamatanIds = Konsumen::where('karyawan_id', $karyawanUserId)->distinct()->pluck('kecamatan_id')->filter()->all();
         $kabupatenIds = Konsumen::where('karyawan_id', $karyawanUserId)->distinct()->pluck('kabupaten_kota_id')->filter()->all();
-
-        $konsumen = Konsumen::with('kode_toko')->where('karyawan_id', $karyawanUserId)->get();
 
         // Fetch only needed Wilayah records
         $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
