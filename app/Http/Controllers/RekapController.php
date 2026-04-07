@@ -912,7 +912,9 @@ class RekapController extends Controller
     {
         if ($request->ajax()) {
             // Ambil data yang sudah selesai (Lunas = 1 atau status void)
-            $query = UangGantung::with(['user'])->where('lunas', 1);
+            $query = UangGantung::with('user')->where(function ($q) {
+                $q->where('lunas', 1)->orWhere('void', 1);
+            });
 
             // Filter berdasarkan Bulan
             if ($request->has('bulan') && $request->bulan != '') {

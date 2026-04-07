@@ -646,6 +646,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::prefix('checklist-sales')->group(function () {
             Route::get('/', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
             Route::get('/download', [App\Http\Controllers\HomeController::class, 'checklist_sales_download'])->name('checklist-sales.download');
+            Route::post('/update', [App\Http\Controllers\HomeController::class, 'update_checklist'])->name('checklist-sales.update');
+            Route::post('/uncheck', [App\Http\Controllers\HomeController::class, 'uncheck_checklist'])->name('checklist-sales.uncheck');
         });
 
 

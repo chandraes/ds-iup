@@ -24,7 +24,7 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="tanggal" class="form-label fw-semibold">Tanggal</label>
+                                <label for="tanggal" class="form-label fw-semibold">Tanggal di Rekening</label>
                                 <input type="date" class="form-control @error('tanggal') is-invalid @enderror"
                                     name="tanggal" id="tanggal" value="{{date('Y-m-d')}}" max="{{date('Y-m-d')}}"
                                     required>

@@ -2,6 +2,7 @@
 
 namespace App\Models\db;
 
+use App\Models\ChecklistKunjungan;
 use App\Models\KasKonsumen;
 use App\Models\Wilayah;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +23,11 @@ class Konsumen extends Model
     public function docs()
     {
         return $this->hasMany(KonsumenDoc::class, 'konsumen_id');
+    }
+
+    public function checklists()
+    {
+        return $this->hasMany(ChecklistKunjungan::class, 'konsumen_id');
     }
 
     public function provinsi()
