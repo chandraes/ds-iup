@@ -313,6 +313,10 @@ class HomeController extends Controller
 
     public function uncheck_checklist(Request $request)
     {
+        if (!in_array(Auth::user()->role, ['su', 'admin'])) {
+            return response()->json(['message' => 'Akses ditolak. Tindakan ini hanya untuk Admin.'], 403);
+        }
+        
         $request->validate([
             'konsumen_id' => 'required',
             'bulan' => 'required',
