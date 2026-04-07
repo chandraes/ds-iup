@@ -138,8 +138,26 @@ class HomeController extends Controller
         if ($request->ajax()) {
             $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']);
 
+            if (Auth::user()->role == 'sales') {
+                $filters['area'] = Auth::user()->karyawan_id;
+            }
+
             // 1. Query Dasar Konsumen
-            $baseQuery = Konsumen::select('id', 'kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
+            $baseQuery = Konsumen::select([
+                    'konsumens.id',
+                    'konsumens.kode_toko_id',
+                    'konsumens.nama',
+                    'konsumens.kecamatan_id',
+                    'konsumens.karyawan_id',
+                    'konsumens.kode',
+                    'wilayahs.nama_wilayah',
+                    'karyawans.nickname',
+                    'kode_tokos.kode as kode_toko_str'
+                ])
+                ->leftJoin('wilayahs', 'konsumens.kecamatan_id', '=', 'wilayahs.id')
+                ->leftJoin('karyawans', 'konsumens.karyawan_id', '=', 'karyawans.id')
+                ->leftJoin('kode_tokos', 'konsumens.kode_toko_id', '=', 'kode_tokos.id')
+                ->where('konsumens.active', 1)
                 ->filter($filters);
 
             if ($request->filled('status_kunjungan')) {
@@ -162,7 +180,7 @@ class HomeController extends Controller
             }
 
             $totalKonsumen = (clone $baseQuery)->count();
-            $filteredIdsQuery = (clone $baseQuery)->select('id');
+            $filteredIdsQuery = (clone $baseQuery)->select('konsumens.id');
 
             // 2. PERHITUNGAN STATISTIK DENGAN QUERY OPTIMAL
             $checklistsSummary = ChecklistKunjungan::whereIn('konsumen_id', $filteredIdsQuery)
@@ -211,9 +229,10 @@ class HomeController extends Controller
 
             $dataTable = DataTables::of($query)
                 ->addColumn('full_kode', fn($row) => $row->full_kode)
-                ->addColumn('nama_toko', fn($row) => ($row->kode_toko ? $row->kode_toko->kode : '') . ' ' . $row->nama)
-                ->addColumn('nama_kecamatan', fn($row) => $row->kecamatan ? str_replace('Kec. ', '', $row->kecamatan->nama_wilayah) : '')
-                ->addColumn('sales_area', fn($row) => $row->karyawan ? $row->karyawan->nickname : '');
+                // Sekarang datanya langsung dari property SQL, bukan relasi Eloquent
+                ->addColumn('nama_toko', fn($row) => $row->kode_toko_str . ' ' . $row->nama)
+                ->addColumn('nama_kecamatan', fn($row) => str_replace('Kec. ', '', $row->nama_wilayah))
+                ->addColumn('sales_area', fn($row) => $row->nickname);
 
             foreach (range(1, 12) as $m) {
                 $dataTable->addColumn('bulan_' . $m, function ($row) use ($m, $tahunFilter) {
@@ -238,13 +257,19 @@ class HomeController extends Controller
                 ]
             ])->make(true);
         }
+        $kecamatanAreaSales = Auth::user()->role == 'sales' ? Konsumen::where('karyawan_id', Auth::user()->karyawan_id)->pluck('kecamatan_id')->unique() : [];
 
+        $kecamatan_filter = Wilayah::when(Auth::user()->role == 'sales', function ($q) use ($kecamatanAreaSales) {
+                    $q->whereIn('id', $kecamatanAreaSales);
+                })->get();
+
+        // dd($kecamatanAreaSales);
         // TAMPILAN AWAL HALAMAN (Load master data untuk select2)
-        $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
-            $query->select('id_wilayah')->from('wilayahs')->where('id_induk_wilayah', '110000');
-        })->where('id_level_wilayah', 3)->get();
+        // $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
+        //     $query->select('id_wilayah')->from('wilayahs')->where('id_induk_wilayah', '110000');
+        // })->where('id_level_wilayah', 3)->get();
 
-        $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
+        // $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
         $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
             $query->where('is_sales', 1);
         })->select('id', 'nama')->get();
@@ -252,7 +277,7 @@ class HomeController extends Controller
         return view('checklist-sales.index', [
             'kecamatan_filter' => $kecamatan_filter,
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
-            'provinsi' => $provinsi,
+            // 'provinsi' => $provinsi,
             'sales_area' => $sales_area,
             'months' => $months,
             'tahun_aktif' => $tahunFilter,
@@ -331,6 +356,7 @@ class HomeController extends Controller
         // 1. Query Dasar Konsumen
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']);
         $baseQuery = Konsumen::select('id', 'kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
+            ->where('active', 1)
             ->filter($filters);
 
         if ($request->filled('status_kunjungan')) {
@@ -353,7 +379,7 @@ class HomeController extends Controller
         }
 
         $totalKonsumen = (clone $baseQuery)->count();
-        $filteredIdsQuery = (clone $baseQuery)->select('id');
+        $filteredIdsQuery = (clone $baseQuery)->select('konsumens.id');
 
         // 2. PERHITUNGAN STATISTIK
         $checklistsSummary = ChecklistKunjungan::whereIn('konsumen_id', $filteredIdsQuery)
@@ -499,8 +525,5 @@ class HomeController extends Controller
 
         return response()->download($filePath, $katalog->nama . '.pdf');
     }
-
-
-
 
 }

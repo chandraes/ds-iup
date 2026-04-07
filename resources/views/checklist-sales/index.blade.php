@@ -12,9 +12,12 @@
             <a href="{{route('home')}}" class="btn btn-light shadow-sm me-2">
                 <i class="fas fa-home text-primary"></i> Dashboard
             </a>
-            <button onclick="downloadPDF()" class="btn btn-primary shadow-sm">
+            @if (auth()->user()->role !== 'sales')
+           <button onclick="downloadPDF()" class="btn btn-primary shadow-sm">
                 <i class="fas fa-print"></i> Cetak PDF
             </button>
+            @endif
+
         </div>
     </div>
 
@@ -116,6 +119,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @if (auth()->user()->role !== 'sales')
                     <div class="col-md-3 mb-2 mb-md-0">
                         <label for="filterSalesArea" class="form-label text-muted" style="font-size:0.85rem;">Sales Area</label>
                         <select id="filterSalesArea" name="area" class="form-select border-0 bg-light">
@@ -125,6 +129,8 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
+
                     <div class="col-md-2 mb-2 mb-md-0">
                         <label for="filterKecamatan" class="form-label text-muted" style="font-size:0.85rem;">Kecamatan</label>
                         <select id="filterKecamatan" name="kecamatan" class="form-select border-0 bg-light">
@@ -143,7 +149,7 @@
             </form>
         </div>
 
-        <div class="card-body p-0">
+        <div class="card-body p-0 mx-2 my-3">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover w-100 m-0" id="data">
                     <thead class="table-success">
@@ -290,6 +296,8 @@
         let serverMonth = {{ date('n') }};
         let serverYear = {{ date('Y') }};
 
+        let userRole = "{{ auth()->user()->role ?? '' }}";
+
         var table = $('#data').DataTable({
             processing: true,
             serverSide: true,
@@ -298,6 +306,7 @@
             scrollY: "550px",
             scrollCollapse: true,
             stateSave: true,
+            scrollX: true,
             language: {
                 processing: '<i class="fas fa-spinner fa-spin fa-2x text-primary"></i>'
             },
@@ -312,10 +321,10 @@
                 }
             },
             columns: [
-                {data: 'full_kode', name: 'full_kode', className: 'text-center align-middle text-muted', width: '8%'},
-                {data: 'nama_toko', name: 'nama_toko', className: 'text-start align-middle col-nama-toko text-dark'},
-                {data: 'nama_kecamatan', name: 'nama_kecamatan', className: 'text-start align-middle text-muted', width: '12%'},
-                {data: 'sales_area', name: 'sales_area', className: 'text-center align-middle', width: '10%'},
+                {data: 'full_kode', name: 'kode', className: 'text-center align-middle text-muted', width: '8%'},
+                {data: 'nama_toko', name: 'nama', className: 'text-start align-middle col-nama-toko text-dark'},
+                {data: 'nama_kecamatan', name: 'kecamatan_id', className: 'text-start align-middle text-muted', width: '12%'},
+                {data: 'sales_area', name: 'karyawan_id', className: 'text-center align-middle', width: '10%'},
 
                 @for($i = 1; $i <= 12; $i++)
                 {
@@ -390,7 +399,16 @@
             let tahun = parseInt(cell.data('tahun'));
             let status = cell.data('status');
 
+            if (userRole !== 'su' && userRole !== 'admin' && userRole !== 'user') {
+
+                return;
+            }
+
             if (!canEdit) {
+                if (userRole !== 'su' && userRole !== 'admin') {
+
+                    return; // Hentikan proses jika bukan su/admin
+                }
                 let errorMsg = (tahun < serverYear || (tahun === serverYear && bulan < serverMonth))
                     ? 'Waktu pengisian bulan ke-' + bulan + ' sudah terlewat.'
                     : (tahun > serverYear || (tahun === serverYear && bulan > serverMonth))
@@ -414,6 +432,12 @@
                     else if (result.dismiss === Swal.DismissReason.cancel) simpanStatus(konsumenId, bulan, tahun, 'not_visited', cell);
                 });
             } else {
+
+                if (userRole !== 'su' && userRole !== 'admin') {
+
+                    return; // Hentikan proses jika bukan su/admin
+                }
+
                 Swal.fire({
                     title: 'Batalkan Status',
                     icon: 'warning',
