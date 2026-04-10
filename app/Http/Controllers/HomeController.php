@@ -158,6 +158,7 @@ class HomeController extends Controller
                 ->leftJoin('karyawans', 'konsumens.karyawan_id', '=', 'karyawans.id')
                 ->leftJoin('kode_tokos', 'konsumens.kode_toko_id', '=', 'kode_tokos.id')
                 ->where('konsumens.active', 1)
+                ->where('konsumens.checklist_kunjungan', 1) // Filter Konsumen yang memiliki checklist_kunjungan = true
                 ->filter($filters);
 
             if ($request->filled('status_kunjungan')) {
@@ -292,47 +293,6 @@ class HomeController extends Controller
             }
 
 
-
-            // Mengambil jumlah hari pada bulan saat ini di tahun yang difilter
-            // $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $tahunFilter);
-
-            // $totalHariKerja = 0;
-            // $hariKerjaSampaiHariIni = 0;
-
-            // for ($d = 1; $d <= $daysInMonth; $d++) {
-            //     // Tentukan hari dalam minggu (0 = Minggu)
-            //     $timestamp = mktime(0, 0, 0, $currentMonth, $d, $tahunFilter);
-            //     $hari = date('w', $timestamp);
-
-            //     if ($hari != 0) { // Selain hari Minggu
-            //         $totalHariKerja++;
-
-            //         // Hitung hari kerja sampai "hari ini" (hanya relevan jika tahun filter = tahun berjalan)
-            //         if ($tahunFilter == $currentYear) {
-            //             if ($d <= $today) {
-            //                 $hariKerjaSampaiHariIni++;
-            //             }
-            //         } elseif ($tahunFilter < $currentYear) {
-            //             // Jika filter tahun lalu, anggap semua hari kerja di bulan tersebut sudah terlewati
-            //             $hariKerjaSampaiHariIni++;
-            //         }
-            //     }
-            // }
-
-            // $sisaHariKerja = max(0, $totalHariKerja - $hariKerjaSampaiHariIni);
-            // $visitedBulanIni = $monthlyData[$currentMonth]['visited'];
-            // $sisaTokoBelumDikunjungi = max(0, $totalKonsumen - $visitedBulanIni);
-
-            // // 1. Rata-rata sales wajib kunjungi per hari kerja
-            // $avgWajib = $totalHariKerja > 0 ? round($totalKonsumen / $totalHariKerja) : 0;
-
-            // // 2. Rata-rata kunjungan real per hari ini
-            // $avgReal = $hariKerjaSampaiHariIni > 0 ? round($visitedBulanIni / $hariKerjaSampaiHariIni) : 0;
-
-            // // 3. Target rata-rata yang harus dikunjungi mulai hari ini (sisa toko / sisa hari kerja)
-            // // Jika sisa hari kerja 0 tapi masih ada toko, tampilkan sisa tokonya agar sales tahu tanggungan yang belum selesai
-            // $avgTarget = $sisaHariKerja > 0 ? round($sisaTokoBelumDikunjungi / $sisaHariKerja) : ($sisaTokoBelumDikunjungi > 0 ? $sisaTokoBelumDikunjungi : 0);
-
             return $dataTable->with([
                 'summary' => [
                     'total_konsumen' => number_format($totalKonsumen, 0, ',', '.'),
@@ -340,9 +300,6 @@ class HomeController extends Controller
                     'total_not_visited' => number_format($totalNotVisited, 0, ',', '.'),
                     'persentase_tahun' => $persentaseTahunan,
                     'monthly' => $monthlyData,
-                    // 'avg_wajib' => $avgWajib,
-                    // 'avg_real' => $avgReal,
-                    // 'avg_target' => $avgTarget,
                 ]
             ])->make(true);
         }

@@ -494,6 +494,41 @@ class DatabaseController extends Controller
         }
     }
 
+    public function konsumen(Request $request)
+    {
+        // $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
+
+        // $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
+        //     ->filter($filters) // Gunakan scope filter
+        //     // ->limit(10)
+        //     ->get();
+
+        $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
+
+        $kab_filter = Wilayah::whereIn('id', $kabupatenKotaIds)->get();
+
+        // $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
+        //     $query->select('id_wilayah')
+        //         ->from('wilayahs')
+        //         ->where('id_induk_wilayah', '110000');
+        // })->where('id_level_wilayah', 3)->get();
+
+        $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
+
+        $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
+
+        return view('db.konsumen.index', [
+            // 'data' => $data,
+            'provinsi' => $provinsi,
+            'sales_area' => $sales_area,
+            'kab_filter' => $kab_filter,
+            'kode_toko' => KodeToko::select('id', 'kode')->get(),
+            // 'kecamatan_filter' => $kecamatan_filter,
+        ]);
+    }
+
 
     public function konsumen_data(Request $request)
     {
@@ -543,8 +578,30 @@ class DatabaseController extends Controller
             ->addColumn('dokumen', function ($d) {
                 return view('db.konsumen._dokumen', compact('d'))->render();
             })
-            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen'])
+            ->addColumn('checklist_kunjungan', function ($d) {
+                $checked = $d->checklist_kunjungan ? 'checked' : '';
+                return '
+                    <div class="text-center">
+                        <input class="form-check-input shadow-none" type="checkbox"
+                               onchange="toggleChecklist(' . $d->id . ', this)" ' . $checked . '
+                               style="cursor: pointer; transform: scale(2.3);">
+                    </div>
+                ';
+            })
+            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan'])
             ->make(true);
+    }
+
+    public function toggleChecklist(Request $request, $id)
+    {
+        $konsumen = Konsumen::findOrFail($id);
+        $konsumen->checklist_kunjungan = filter_var($request->status, FILTER_VALIDATE_BOOLEAN);
+        $konsumen->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status checklist kunjungan berhasil diperbarui.'
+        ]);
     }
 
     public function konsumen_dokumen(Request $request)
@@ -618,41 +675,6 @@ class DatabaseController extends Controller
 
             return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menyimpan dokumen. '. $e->getMessage() ], 500);
         }
-    }
-
-    public function konsumen(Request $request)
-    {
-        // $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
-
-        // $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
-        //     ->filter($filters) // Gunakan scope filter
-        //     // ->limit(10)
-        //     ->get();
-
-        $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
-
-        $kab_filter = Wilayah::whereIn('id', $kabupatenKotaIds)->get();
-
-        // $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
-        //     $query->select('id_wilayah')
-        //         ->from('wilayahs')
-        //         ->where('id_induk_wilayah', '110000');
-        // })->where('id_level_wilayah', 3)->get();
-
-        $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
-
-        $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-            $query->where('is_sales', 1);
-        })->select('id', 'nama')->get();
-
-        return view('db.konsumen.index', [
-            // 'data' => $data,
-            'provinsi' => $provinsi,
-            'sales_area' => $sales_area,
-            'kab_filter' => $kab_filter,
-            'kode_toko' => KodeToko::select('id', 'kode')->get(),
-            // 'kecamatan_filter' => $kecamatan_filter,
-        ]);
     }
 
     public function konsumen_diskon_khusus(Konsumen $konsumen, Request $request)

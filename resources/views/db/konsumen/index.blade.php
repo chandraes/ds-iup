@@ -117,6 +117,7 @@
                 <th class="text-center align-middle">Sistem<br>Pembayaran</th>
                 <th class="text-center align-middle">Limit<br>Plafon</th>
                 <th class="text-center align-middle">Diskon Khusus (%)</th>
+                <th class="text-center align-middle">Checklist<br>Kunjungan</th>
                 <th class="text-center align-middle">Aksi</th>
             </tr>
         </thead>
@@ -199,6 +200,7 @@
             { data: 'pembayaran_raw', name: 'pembayaran_raw', className: 'text-wrap', searchable: false },
             { data: 'limit_plafon', name: 'plafon', className: 'text-end', searchable: false },
             { data: 'diskon', name: 'diskon_khusus', className: 'text-end', searchable: false },
+            { data: 'checklist_kunjungan', name: 'checklist_kunjungan', className: 'text-center align-middle', orderable: false, searchable: false },
             { data: 'aksi', name: 'aksi', orderable: false, searchable: false }
         ]
     });
@@ -660,5 +662,70 @@ $('#edit_karyawan_id').select2({
     }
 
 
+</script>
+<script>
+    function toggleChecklist(id, checkboxElem) {
+        // Simpan status yang diinginkan user dan status aslinya
+        let newStatus = checkboxElem.checked;
+        let originalStatus = !newStatus;
+
+        // Teks dinamis berdasarkan tindakan
+        let actionText = newStatus ? "MENGAKTIFKAN" : "MENONAKTIFKAN";
+
+        Swal.fire({
+            title: 'Konfirmasi Perubahan',
+            text: `Apakah Anda yakin ingin ${actionText} checklist kunjungan ini?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, ubah!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Jika user klik "Ya", jalankan AJAX
+                $.ajax({
+                    url: `/db/konsumen/${id}/toggle-checklist`,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        status: newStatus
+                    },
+                    success: function(response) {
+                        if(response.status === 'success') {
+                            // Opsional: Tampilkan notifikasi sukses kecil (toast)
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            // Jika respons gagal, kembalikan checkbox ke status awal
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: response.message
+                            });
+                            checkboxElem.checked = originalStatus;
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // Jika server error, kembalikan checkbox ke status awal
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan pada server: ' + textStatus
+                        });
+                        checkboxElem.checked = originalStatus;
+                    }
+                });
+            } else {
+                // Jika user klik "Batal", kembalikan checkbox ke status awal
+                checkboxElem.checked = originalStatus;
+            }
+        });
+    }
 </script>
 @endpush

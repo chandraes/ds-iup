@@ -305,6 +305,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('konsumen')->group(function () {
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'konsumen'])->name('db.konsumen');
                 Route::get('/data', [App\Http\Controllers\DatabaseController::class, 'konsumen_data'])->name('db.konsumen.data');
+                Route::post('/{id}/toggle-checklist', [App\Http\Controllers\DatabaseController::class, 'toggleChecklist'])->name('db.konsumen.toggle-checklist');
 
                 Route::get('/dokumen', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen'])->name('db.konsumen.dokumen');
                 Route::post('/dokumen/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen_store'])->name('db.konsumen.dokumen.store');
