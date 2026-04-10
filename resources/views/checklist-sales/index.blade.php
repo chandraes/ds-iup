@@ -81,8 +81,47 @@
                         <i class="fas fa-chart-pie fa-lg text-info"></i>
                     </div>
                     <div>
-                        <p class="text-muted mb-0 font-weight-bold text-uppercase" style="font-size: 0.75rem;">Persentase (Bln Ini)</p>
+                        <p class="text-muted mb-0 font-weight-bold text-uppercase" style="font-size: 0.75rem;">Persentase Kunjungan (Bln Ini)</p>
                         <h4 class="mb-0 font-weight-bold text-dark" id="kpi-percent">0%</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col mb-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100 kpi-card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="bg-secondary bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-bullseye fa-lg text-secondary"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 font-weight-bold text-uppercase" style="font-size: 0.70rem;">Rata2 Wajib Kunjungan / Hari</p>
+                        <h4 class="mb-0 font-weight-bold text-dark" id="kpi-avg-wajib">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col mb-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100 kpi-card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-walking fa-lg text-primary"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 font-weight-bold text-uppercase" style="font-size: 0.70rem;">Rata2 Kunjungan Real / Hari</p>
+                        <h4 class="mb-0 font-weight-bold text-dark" id="kpi-avg-real">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col mb-3">
+            <div class="card border-0 shadow-sm rounded-3 h-100 kpi-card">
+                <div class="card-body d-flex align-items-center">
+                    <div class="bg-danger bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="fas fa-route fa-lg text-danger"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 font-weight-bold text-uppercase" style="font-size: 0.70rem;">Target Rata2 Kunjungan / Sisa Hari</p>
+                        <h4 class="mb-0 font-weight-bold text-dark" id="kpi-avg-target">0</h4>
                     </div>
                 </div>
             </div>
@@ -210,6 +249,30 @@
                                 <td class="align-middle font-weight-bold text-secondary" id="rekap-empty-{{ $i }}">0</td>
                             @endfor
                         </tr>
+                        {{-- <tr class="bg-light">
+                            <td class="text-start font-weight-bold text-secondary align-middle">
+                                <i class="fas fa-bullseye me-1"></i> Rata-rata Wajib / Hari
+                            </td>
+                            @for($i = 1; $i <= 12; $i++)
+                                <td class="align-middle font-weight-bold text-secondary" id="rekap-avg-wajib-{{ $i }}">0</td>
+                            @endfor
+                        </tr>
+                        <tr class="bg-light">
+                            <td class="text-start font-weight-bold text-primary align-middle">
+                                <i class="fas fa-walking me-1"></i> Rata-rata Real / Hari
+                            </td>
+                            @for($i = 1; $i <= 12; $i++)
+                                <td class="align-middle font-weight-bold text-primary" id="rekap-avg-real-{{ $i }}">0</td>
+                            @endfor
+                        </tr>
+                        <tr class="bg-light">
+                            <td class="text-start font-weight-bold text-danger align-middle">
+                                <i class="fas fa-route me-1"></i> Target / Sisa Hari
+                            </td>
+                            @for($i = 1; $i <= 12; $i++)
+                                <td class="align-middle font-weight-bold text-danger" id="rekap-avg-target-{{ $i }}">0</td>
+                            @endfor
+                        </tr> --}}
                         <tr class="bg-light">
                             <td class="text-start font-weight-bold text-info align-middle">
                                 <i class="fas fa-percent me-1"></i> Persentase Capaian
@@ -365,6 +428,10 @@
                 $('#kpi-empty').fadeOut(150, function() { $(this).text(currentMonthData.empty).fadeIn(150); });
                 $('#kpi-percent').fadeOut(150, function() { $(this).text(currentMonthData.percentage + '%').fadeIn(150); });
 
+               $('#kpi-avg-wajib').fadeOut(150, function() { $(this).text(currentMonthData.avg_wajib).fadeIn(150); });
+                $('#kpi-avg-real').fadeOut(150, function() { $(this).text(currentMonthData.avg_real).fadeIn(150); });
+                $('#kpi-avg-target').fadeOut(150, function() { $(this).text(currentMonthData.avg_target).fadeIn(150); });
+
                 // Update Tabel Rekap Bulanan (Bawah)
                 for (let i = 1; i <= 12; i++) {
                     let dataBulan = json.summary.monthly[i];
@@ -372,6 +439,13 @@
                     $('#rekap-visit-' + i).text(dataBulan.visited);
                     $('#rekap-notvisit-' + i).text(dataBulan.not_visited);
                     $('#rekap-empty-' + i).text(dataBulan.empty); // Rekap Belum Dikunjungi Baru
+
+                    $('#rekap-avg-wajib-' + i).text(dataBulan.avg_wajib);
+                    $('#rekap-avg-real-' + i).text(dataBulan.avg_real);
+
+                    // Khusus Target Sisa hari, jika 0 tampilkan "-" supaya tabel lebih bersih untuk bulan lalu
+                    let textTarget = dataBulan.avg_target == 0 ? '-' : dataBulan.avg_target;
+                    $('#rekap-avg-target-' + i).text(textTarget);
 
                     let cellPercent = $('#rekap-percent-' + i);
                     cellPercent.text(dataBulan.percentage + '%');

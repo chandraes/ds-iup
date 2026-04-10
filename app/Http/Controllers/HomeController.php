@@ -212,6 +212,10 @@ class HomeController extends Controller
             $targetTahunan = $totalKonsumen * 12;
             $persentaseTahunan = $targetTahunan > 0 ? round(($totalVisited / $targetTahunan) * 100, 2) : 0;
 
+            $currentMonth = (int) date('n');
+            $currentYear = (int) date('Y');
+            $today = (int) date('j');
+
             foreach (range(1, 12) as $m) {
                 $visited = $monthlyData[$m]['visited'];
                 $notVisited = $monthlyData[$m]['not_visited'];
@@ -220,6 +224,46 @@ class HomeController extends Controller
                 $monthlyData[$m]['empty'] = max(0, $totalKonsumen - ($visited + $notVisited));
 
                 $monthlyData[$m]['percentage'] = $totalKonsumen > 0 ? round(($visited / $totalKonsumen) * 100, 2) : 0;
+
+                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $m, $tahunFilter);
+                $totalHariKerja = 0;
+                $hariKerjaTerlewati = 0;
+
+                for ($d = 1; $d <= $daysInMonth; $d++) {
+                    $hari = date('w', mktime(0, 0, 0, $m, $d, $tahunFilter));
+
+                    if ($hari != 0) { // Selain hari Minggu
+                        $totalHariKerja++;
+
+                        // Hitung hari kerja yang sudah terlewati
+                        if ($tahunFilter < $currentYear || ($tahunFilter == $currentYear && $m < $currentMonth)) {
+                            // Jika tahun/bulan sudah berlalu, semua hari kerja di bulan itu dianggap sudah terlewati
+                            $hariKerjaTerlewati++;
+                        } elseif ($tahunFilter == $currentYear && $m == $currentMonth) {
+                            // Jika bulan berjalan, hitung sampai tanggal hari ini
+                            if ($d <= $today) {
+                                $hariKerjaTerlewati++;
+                            }
+                        }
+                    }
+                }
+
+                $sisaHariKerja = max(0, $totalHariKerja - $hariKerjaTerlewati);
+                $sisaTokoBelumDikunjungi = max(0, $totalKonsumen - $visited);
+
+                // 1. Rata-rata wajib / Hari (Tanpa Koma)
+                $monthlyData[$m]['avg_wajib'] = $totalHariKerja > 0 ? round($totalKonsumen / $totalHariKerja, 0) : 0;
+
+                // 2. Rata-rata real / Hari (Tanpa Koma)
+                $monthlyData[$m]['avg_real'] = $hariKerjaTerlewati > 0 ? round($visited / $hariKerjaTerlewati, 0) : 0;
+
+                // 3. Target rata-rata sisa hari (Tanpa Koma)
+                if ($tahunFilter < $currentYear || ($tahunFilter == $currentYear && $m < $currentMonth)) {
+                    // Jika bulan/tahun sudah berlalu, target sisa hari sudah tidak relevan (bisa di set 0)
+                    $monthlyData[$m]['avg_target'] = 0;
+                } else {
+                    $monthlyData[$m]['avg_target'] = $sisaHariKerja > 0 ? round($sisaTokoBelumDikunjungi / $sisaHariKerja, 0) : ($sisaTokoBelumDikunjungi > 0 ? $sisaTokoBelumDikunjungi : 0);
+                }
             }
 
             // 3. Render Datatable
@@ -247,13 +291,58 @@ class HomeController extends Controller
                 });
             }
 
+
+
+            // Mengambil jumlah hari pada bulan saat ini di tahun yang difilter
+            // $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $tahunFilter);
+
+            // $totalHariKerja = 0;
+            // $hariKerjaSampaiHariIni = 0;
+
+            // for ($d = 1; $d <= $daysInMonth; $d++) {
+            //     // Tentukan hari dalam minggu (0 = Minggu)
+            //     $timestamp = mktime(0, 0, 0, $currentMonth, $d, $tahunFilter);
+            //     $hari = date('w', $timestamp);
+
+            //     if ($hari != 0) { // Selain hari Minggu
+            //         $totalHariKerja++;
+
+            //         // Hitung hari kerja sampai "hari ini" (hanya relevan jika tahun filter = tahun berjalan)
+            //         if ($tahunFilter == $currentYear) {
+            //             if ($d <= $today) {
+            //                 $hariKerjaSampaiHariIni++;
+            //             }
+            //         } elseif ($tahunFilter < $currentYear) {
+            //             // Jika filter tahun lalu, anggap semua hari kerja di bulan tersebut sudah terlewati
+            //             $hariKerjaSampaiHariIni++;
+            //         }
+            //     }
+            // }
+
+            // $sisaHariKerja = max(0, $totalHariKerja - $hariKerjaSampaiHariIni);
+            // $visitedBulanIni = $monthlyData[$currentMonth]['visited'];
+            // $sisaTokoBelumDikunjungi = max(0, $totalKonsumen - $visitedBulanIni);
+
+            // // 1. Rata-rata sales wajib kunjungi per hari kerja
+            // $avgWajib = $totalHariKerja > 0 ? round($totalKonsumen / $totalHariKerja) : 0;
+
+            // // 2. Rata-rata kunjungan real per hari ini
+            // $avgReal = $hariKerjaSampaiHariIni > 0 ? round($visitedBulanIni / $hariKerjaSampaiHariIni) : 0;
+
+            // // 3. Target rata-rata yang harus dikunjungi mulai hari ini (sisa toko / sisa hari kerja)
+            // // Jika sisa hari kerja 0 tapi masih ada toko, tampilkan sisa tokonya agar sales tahu tanggungan yang belum selesai
+            // $avgTarget = $sisaHariKerja > 0 ? round($sisaTokoBelumDikunjungi / $sisaHariKerja) : ($sisaTokoBelumDikunjungi > 0 ? $sisaTokoBelumDikunjungi : 0);
+
             return $dataTable->with([
                 'summary' => [
                     'total_konsumen' => number_format($totalKonsumen, 0, ',', '.'),
                     'total_visited' => number_format($totalVisited, 0, ',', '.'),
                     'total_not_visited' => number_format($totalNotVisited, 0, ',', '.'),
                     'persentase_tahun' => $persentaseTahunan,
-                    'monthly' => $monthlyData
+                    'monthly' => $monthlyData,
+                    // 'avg_wajib' => $avgWajib,
+                    // 'avg_real' => $avgReal,
+                    // 'avg_target' => $avgTarget,
                 ]
             ])->make(true);
         }
@@ -316,7 +405,7 @@ class HomeController extends Controller
         if (!in_array(Auth::user()->role, ['su', 'admin'])) {
             return response()->json(['message' => 'Akses ditolak. Tindakan ini hanya untuk Admin.'], 403);
         }
-        
+
         $request->validate([
             'konsumen_id' => 'required',
             'bulan' => 'required',
