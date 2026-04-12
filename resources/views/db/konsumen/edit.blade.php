@@ -51,13 +51,13 @@
                                 placeholder="" required>
                         </div>
                         <hr>
-                        <div class="col-md-3 col-sm-6 mb-3">
+                        {{-- <div class="col-md-3 col-sm-6 mb-3">
                             <label for="plafon" class="form-label">Limit Plafon</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control" name="plafon" id="edit_plafon" required>
                               </div>
-                        </div>
+                        </div> --}}
                         <div class="col-md-3 col-sm-6 mb-3">
                             <label for="tempo_hari" class="form-label">Tempo</label>
                             <div class="input-group mb-3">
@@ -136,12 +136,6 @@
 </div>
 @push('js')
 <script>
-     var edit_plafon = new Cleave('#edit_plafon', {
-        numeral: true,
-        numeralThousandsGroupStyle: 'thousand',
-        numeralDecimalMark: ',',
-        delimiter: '.'
-    });
 
     var edit_no_kantor = new Cleave('#edit_no_kantor', {
         delimiter: '-',

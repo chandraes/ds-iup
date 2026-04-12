@@ -18,6 +18,7 @@ use App\Models\db\KelompokRute;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\KonsumenDoc;
+use App\Models\db\KonsumenPlafonHistory;
 use App\Models\db\Kreditor;
 use App\Models\db\Pajak;
 use App\Models\db\SalesArea;
@@ -30,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Yajra\DataTables\Facades\DataTables;
@@ -494,24 +496,11 @@ class DatabaseController extends Controller
         }
     }
 
-    public function konsumen(Request $request)
+    public function konsumen()
     {
-        // $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
-
-        // $data = Konsumen::with(['provinsi', 'kabupaten_kota', 'kecamatan', 'sales_area', 'kode_toko', 'karyawan'])
-        //     ->filter($filters) // Gunakan scope filter
-        //     // ->limit(10)
-        //     ->get();
-
         $kabupatenKotaIds = Konsumen::select('kabupaten_kota_id')->distinct()->pluck('kabupaten_kota_id')->filter()->toArray();
 
         $kab_filter = Wilayah::whereIn('id', $kabupatenKotaIds)->get();
-
-        // $kecamatan_filter = Wilayah::whereIn('id_induk_wilayah', function ($query) {
-        //     $query->select('id_wilayah')
-        //         ->from('wilayahs')
-        //         ->where('id_induk_wilayah', '110000');
-        // })->where('id_level_wilayah', 3)->get();
 
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
 
@@ -520,12 +509,10 @@ class DatabaseController extends Controller
         })->select('id', 'nama')->get();
 
         return view('db.konsumen.index', [
-            // 'data' => $data,
             'provinsi' => $provinsi,
             'sales_area' => $sales_area,
             'kab_filter' => $kab_filter,
             'kode_toko' => KodeToko::select('id', 'kode')->get(),
-            // 'kecamatan_filter' => $kecamatan_filter,
         ]);
     }
 
@@ -560,6 +547,15 @@ class DatabaseController extends Controller
                     </ul>
                 ";
             })
+            ->filterColumn('cp', function($query, $keyword) {
+                // Gunakan where() dengan closure agar kueri dikelompokkan dengan tanda kurung (...)
+                // Ini mencegah orWhere merusak kueri utama kamu.
+                $query->where(function($q) use ($keyword) {
+                    $q->where('no_hp', 'like', "%{$keyword}%")
+                    ->orWhere('cp', 'like', "%{$keyword}%")
+                    ->orWhere('no_kantor', 'like', "%{$keyword}%");
+                });
+            })
             ->addColumn('pembayaran_raw', function ($d){
                 return "
                     $d->sistem_pembayaran <br>
@@ -578,6 +574,16 @@ class DatabaseController extends Controller
             ->addColumn('dokumen', function ($d) {
                 return view('db.konsumen._dokumen', compact('d'))->render();
             })
+            ->addColumn('limit_plafon', function ($d) {
+                // Kita passing ID, Nama, dan nilai plafon raw (tanpa format) untuk dimasukkan ke input
+                return '
+                    <a href="javascript:void(0)"
+                    class="text-primary fw-bold text-decoration-none"
+                    onclick="openPlafonModal('.$d->id.', \''.addslashes($d->nama).'\', '.$d->plafon.')">
+                    '.$d->nf_plafon.' <i class="fa fa-edit ms-1"></i>
+                    </a>
+                ';
+            })
             ->addColumn('checklist_kunjungan', function ($d) {
                 $checked = $d->checklist_kunjungan ? 'checked' : '';
                 return '
@@ -588,8 +594,76 @@ class DatabaseController extends Controller
                     </div>
                 ';
             })
-            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan'])
+            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon'])
             ->make(true);
+    }
+
+    public function histori_plafon($id)
+    {
+        $konsumen = Konsumen::findOrFail($id);
+
+        // Mengambil data dari relationship 'plafon_histories'
+        $query = $konsumen->plafon_histories()->with('updatedBy')->select('konsumen_plafon_histories.*');
+
+        return DataTables::of($query)
+            ->editColumn('created_at', function ($d) {
+                return $d->created_at->format('d/m/Y H:i');
+            })
+            ->editColumn('plafon_lama', function ($d) {
+                return 'Rp ' . number_format($d->nominal_lama, 0, ',', '.');
+            })
+            ->editColumn('plafon_baru', function ($d) {
+                return 'Rp ' . number_format($d->nominal_baru, 0, ',', '.');
+            })
+            ->addColumn('user', function ($d) {
+                return $d->updatedBy->name ?? '-';
+            })
+            ->make(true);
+    }
+
+    public function update_plafon(Request $request, $id)
+    {
+        $request->validate([
+            'plafon' => 'required',
+            // 'keterangan' => 'nullable|string|max:255',
+        ]);
+
+        // Bersihkan format titik dari Cleave.js (contoh: 1.000.000 -> 1000000)
+        $plafonBaru = str_replace('.', '', $request->plafon);
+
+        DB::beginTransaction();
+        try {
+            $konsumen = Konsumen::findOrFail($id);
+            $plafonLama = $konsumen->plafon;
+
+            // 1. Update plafon di tabel konsumen
+            $konsumen->update([
+                'plafon' => $plafonBaru
+            ]);
+
+            // 2. Simpan ke tabel histori
+            KonsumenPlafonHistory::create([
+                'konsumen_id' => $id,
+                'nominal_lama' => $plafonLama,
+                'nominal_baru' => $plafonBaru,
+                // 'keterangan' => $request->keterangan ?? 'Perubahan limit plafon',
+                'updated_by' => Auth::id(), // Mencatat siapa yang mengubah
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Limit plafon berhasil diperbarui.'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function toggleChecklist(Request $request, $id)
@@ -776,12 +850,12 @@ class DatabaseController extends Controller
             'kecamatan_id' => 'nullable',
             'alamat' => 'required',
             'pembayaran' => 'required',
-            'plafon' => 'required',
+            // 'plafon' => 'required',
             'tempo_hari' => 'required',
             'karyawan_id' => 'required|exists:karyawans,id',
         ]);
 
-        $data['plafon'] = str_replace('.', '', $data['plafon']);
+        // $data['plafon'] = str_replace('.', '', $data['plafon']);
         $konsumen->update($data);
 
         return redirect()->route('db.konsumen')->with('success', 'Data berhasil diupdate');

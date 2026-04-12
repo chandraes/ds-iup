@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1 class="display-6 fw-bold">REKAP UANG GANTUNG SELESAI</h1>
+            <h1 class="display-6 fw-bold">REKAP UANG GANTUNG</h1>
         </div>
     </div>
 
@@ -124,6 +124,16 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/scroller.bootstrap5.min.js')}}"></script>
 <script>
+    function showReason(reason) {
+            Swal.fire({
+                title: 'Alasan Void',
+                text: reason,
+                icon: 'info',
+                confirmButtonText: 'Tutup'
+            });
+        }
+</script>
+<script>
     $(document).ready(function() {
 
         var table = $('#rekapSelesaiTable').DataTable({
@@ -154,7 +164,7 @@
                 { "data": "status_kas", "name": "ppn_kas", "searchable": false , className: "text-center align-middle"},
                 { "data": "keterangan", "name": "keterangan", className: "align-middle" },
                 { "data": "nf_nominal", "name": "nominal", className: "text-end align-middle" },
-                { "data": "status_lunas", "name": "lunas", "searchable": false, className: "text-center align-middle text-nowrap" },
+                { "data": "status", "name": "status", "searchable": false, className: "text-center align-middle text-nowrap" },
             ],
         });
 
@@ -178,6 +188,8 @@
 
             table.draw();
         });
+
+
 
     });
 </script>

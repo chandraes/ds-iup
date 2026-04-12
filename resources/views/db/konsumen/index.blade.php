@@ -36,6 +36,7 @@
 @include('db.konsumen.upload-foto')
 @include('db.konsumen.diskon-khusus')
 @include('db.konsumen.dokumen')
+@include('db.konsumen.plafon')
 
 <div class="container-fluid mt-5 table-responsive">
     <div class="row mb-3">
@@ -108,7 +109,6 @@
                 <th class="text-center align-middle">NPWP</th>
                 <th class="text-center align-middle">NIK</th>
                 <th class="text-center align-middle">KTP</th>
-
                 <th class="text-center align-middle">Sales Area</th>
                 <th class="text-center align-middle">Provinsi</th>
                 <th class="text-center align-middle">Kab/Kota</th>
@@ -118,6 +118,7 @@
                 <th class="text-center align-middle">Limit<br>Plafon</th>
                 <th class="text-center align-middle">Diskon Khusus (%)</th>
                 <th class="text-center align-middle">Checklist<br>Kunjungan</th>
+                <th class="text-center align-middle">Alasan Penonaktifan</th>
                 <th class="text-center align-middle">Aksi</th>
             </tr>
         </thead>
@@ -188,7 +189,7 @@
             { data: 'kode_toko', name: 'kode_toko.kode', className: 'text-center' },
             { data: 'nama', name: 'nama', className: 'text-wrap' },
             { data: 'dokumen', name: 'dokumen', searchable: false, orderable: false },
-            { data: 'cp', name: 'cp', searchable: false, },
+            { data: 'cp', name: 'cp', searchable: true, },
             { data: 'npwp', name: 'npwp' },
             { data: 'nik', name: 'nik' },
             { data: 'ktp', name: 'ktp', searchable: false, orderable: false },
@@ -201,6 +202,7 @@
             { data: 'limit_plafon', name: 'plafon', className: 'text-end', searchable: false },
             { data: 'diskon', name: 'diskon_khusus', className: 'text-end', searchable: false },
             { data: 'checklist_kunjungan', name: 'checklist_kunjungan', className: 'text-center align-middle', orderable: false, searchable: false },
+            { data: 'alasan', name: 'alasan', className: 'text-wrap', visible: ($('#filterStatus').val() === '0') },
             { data: 'aksi', name: 'aksi', orderable: false, searchable: false }
         ]
     });
@@ -211,6 +213,10 @@
         theme: 'bootstrap-5',
         width: '100%'
     }).on('change', function () {
+        // Tambahkan 2 baris ini untuk mengatur visibilitas kolom
+        let isNonAktif = $('#filterStatus').val() === '0';
+        table.column('alasan:name').visible(isNonAktif);
+
         table.draw();
     });
 
@@ -727,5 +733,92 @@ $('#edit_karyawan_id').select2({
             }
         });
     }
+</script>
+
+<script>
+    // Inisiasi Cleave untuk input plafon baru
+    let cleavePlafonBaru = new Cleave('#input_plafon_baru', {
+        numeral: true,
+        numeralThousandsGroupStyle: 'thousand',
+        numeralDecimalMark: ',',
+        delimiter: '.'
+    });
+
+    let historyPlafonTable;
+
+    function openPlafonModal(id, nama, currentPlafon) {
+        // Set nilai ke dalam modal
+        $('#plafon_konsumen_id').val(id);
+        $('#plafonKonsumenName').text(nama);
+        cleavePlafonBaru.setRawValue(currentPlafon);
+        $('#input_keterangan_plafon').val(''); // Reset keterangan
+
+        // Tampilkan Modal
+        $('#modalPlafon').modal('show');
+
+        // Destroy datatable histori jika sudah pernah dibuat sebelumnya agar tidak bentrok
+        if ($.fn.DataTable.isDataTable('#tableHistoriPlafon')) {
+            $('#tableHistoriPlafon').DataTable().destroy();
+        }
+
+        // Inisialisasi DataTable Histori secara Server-Side
+        historyPlafonTable = $('#tableHistoriPlafon').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: `/db/konsumen/${id}/histori-plafon`, // Endpoint API untuk histori
+                type: 'GET'
+            },
+            order: [[0, 'desc']], // Urutkan dari yang terbaru
+            pageLength: 5,
+            lengthChange: false,
+            columns: [
+                { data: 'created_at', name: 'created_at', className: 'text-center' },
+                { data: 'plafon_lama', name: 'plafon_lama', className: 'text-end' },
+                { data: 'plafon_baru', name: 'plafon_baru', className: 'text-end' },
+                { data: 'user', name: 'user.name', className: 'text-center', searchable: false }
+            ]
+        });
+    }
+
+    // Handle submit form update plafon dengan AJAX
+    $('#formUpdatePlafon').on('submit', function(e) {
+        e.preventDefault();
+
+        let id = $('#plafon_konsumen_id').val();
+        let btn = $('#btnSavePlafon');
+        let form = $(this);
+
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: `/db/konsumen/${id}/update-plafon`, // Endpoint API untuk update
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                btn.prop('disabled', false).text('Update');
+                if(response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: response.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Reload tabel histori & tabel utama tanpa refresh halaman
+                    historyPlafonTable.ajax.reload(null, false);
+                    $('#data').DataTable().ajax.reload(null, false);
+
+                } else {
+                    Swal.fire('Gagal!', response.message, 'error');
+                }
+            },
+            error: function(jqXHR, textStatus) {
+                btn.prop('disabled', false).text('Update');
+                Swal.fire('Error!', 'Terjadi kesalahan pada server.', 'error');
+            }
+        });
+    });
 </script>
 @endpush

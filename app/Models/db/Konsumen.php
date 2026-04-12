@@ -30,6 +30,11 @@ class Konsumen extends Model
         return $this->hasMany(ChecklistKunjungan::class, 'konsumen_id');
     }
 
+    public function plafon_histories()
+    {
+        return $this->hasMany(KonsumenPlafonHistory::class, 'konsumen_id');
+    }
+
     public function provinsi()
     {
         return $this->belongsTo(Wilayah::class, 'provinsi_id', 'id');

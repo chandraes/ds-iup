@@ -936,11 +936,21 @@ class RekapController extends Controller
                 ->addColumn('status_kas', function($row){
                     return ($row->ppn_kas == 1) ? '<span class="badge bg-success">KAS PPN</span>' : '<span class="badge bg-warning">KAS NON PPN</span>';
                 })
-                ->addColumn('status_lunas', function($row){
+                ->addColumn('status', function($row){
                     // Contoh label status
-                    return '<span class="badge bg-primary"><i class="fa fa-check"></i> Selesai</span>';
+                    $label = '';
+                    if ($row->void == 1) {
+                        $label = '<span class="badge bg-danger"><i class="fa fa-times"></i> Void</span>';
+                        if ($row->void_reason) {
+                            $label .= ' <span class="badge bg-secondary cursor-pointer" onclick="showReason(\''.$row->void_reason.'\')" style="cursor: pointer;">?</span>';
+                        }
+                    } elseif ($row->lunas == 1) {
+                        $label = '<span class="badge bg-primary"><i class="fa fa-check"></i> Selesai</span>';
+                    }
+
+                    return $label;
                 })
-                ->rawColumns(['status_kas', 'status_lunas'])
+                ->rawColumns(['status_kas', 'status'])
                 ->make(true);
         }
     }
