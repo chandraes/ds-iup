@@ -70,7 +70,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.uang-gantung.selesai')}}" class="text-decoration-none">
                 <img src="{{asset('images/uang-gantung.svg')}}" alt="" width="70">
-                <h5 class="mt-3">UANG GANTUNG SELESAI</h5>
+                <h5 class="mt-3">UANG GANTUNG</h5>
             </a>
         </div>
     </div>
