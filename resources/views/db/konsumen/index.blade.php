@@ -280,7 +280,6 @@
         document.getElementById('edit_npwp').value = data.npwp;
         document.getElementById('edit_nik').value = data.nik;
         document.getElementById('edit_pembayaran').value = data.pembayaran;
-        document.getElementById('edit_plafon').value = data.nf_plafon;
         document.getElementById('edit_tempo_hari').value = data.tempo_hari;
         document.getElementById('edit_alamat').value = data.alamat;
         document.getElementById('edit_karyawan_id').value = data.karyawan_id;
