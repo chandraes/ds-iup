@@ -711,21 +711,21 @@ class InvoiceJual extends Model
                 }
 
                 // jika invoice pembayaran adalah tempo, cek apakah konsumen memiliki tagihan yang jatuh tempo
-                if ($data['pembayaran'] == 2) {
-                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
-                        ->where('titipan', 0)
-                        ->where('lunas', 0)
-                        ->where('void', 0)
-                        ->where('jatuh_tempo', '<', today())
-                        ->exists();
+                // if ($data['pembayaran'] == 2) {
+                //     $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                //         ->where('titipan', 0)
+                //         ->where('lunas', 0)
+                //         ->where('void', 0)
+                //         ->where('jatuh_tempo', '<', today())
+                //         ->exists();
 
-                    if ($checkInvoice) {
-                        return [
-                            'status' => 'error',
-                            'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.',
-                        ];
-                    }
-                }
+                //     if ($checkInvoice) {
+                //         return [
+                //             'status' => 'error',
+                //             'message' => 'Konsumen memiliki tagihan yang telah jatuh tempo.',
+                //         ];
+                //     }
+                // }
 
                 $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
 

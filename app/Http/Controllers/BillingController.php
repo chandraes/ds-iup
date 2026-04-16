@@ -129,11 +129,8 @@ class BillingController extends Controller
             ->where('void', 0)
             ->first();
 
-        $salesOrderCounts = InvoiceJualSales::select(
-            DB::raw('COUNT(CASE WHEN kas_ppn = 1 THEN 1 END) as sales_order_ppn'),
-            DB::raw('COUNT(CASE WHEN kas_ppn = 0 THEN 1 END) as sales_order_non_ppn'),
-        )->where('is_finished', 0)
-            ->first();
+        $sales_order_all = InvoiceJualSales::where('is_finished', 0)
+            ->count();
 
         $gr = GantiRugi::where('lunas', 0)->count();
 
@@ -157,8 +154,7 @@ class BillingController extends Controller
             'ikt' => $invoiceJualCounts->ikt,
             'iktn' => $invoiceJualCounts->iktn,
             'sr' => $sr,
-            'sales_order_ppn' => $salesOrderCounts->sales_order_ppn,
-            'sales_order_non_ppn' => $salesOrderCounts->sales_order_non_ppn,
+            'sales_order_all' => $sales_order_all,
             'asistenAdm' => $asistenAdm,
             'sumKeranjangBeli' => $sumKeranjangBeli
         ]);
@@ -480,12 +476,11 @@ class BillingController extends Controller
     public function sales_order(Request $request)
     {
         $req = $request->validate([
-            'kas_ppn' => 'required|boolean',
             'karyawan_id' => 'nullable|exists:karyawans,id',
             'kelompok_rute' => 'nullable|exists:kelompok_rutes,id',
         ]);
 
-        $data = InvoiceJualSales::with(['karyawan', 'konsumen.kode_toko', 'konsumen.kecamatan'])->where('is_finished', 0)->where('kas_ppn', $req['kas_ppn']);
+        $data = InvoiceJualSales::with(['karyawan', 'konsumen.kode_toko', 'konsumen.kecamatan'])->where('is_finished', 0);
 
         if (isset($req['karyawan_id']) && $req['karyawan_id'] != '') {
             $data->where('karyawan_id', $req['karyawan_id']);

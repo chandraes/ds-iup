@@ -74,11 +74,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('billing/invoice-konsumen/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
         Route::get('sales/invoice-konsumen/detail/{invoice}', [App\Http\Controllers\SalesController::class, 'invoice_konsumen_detail'])->name('sales.invoice-konsumen.detail');
 
-        Route::get('/checklist-sales', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
      });
 
     // Routing statistik yang bisa di akses hampir seluruh role
     Route::group(['middleware' => ['role:su,admin,user,sales,perusahaan']], function(){
+        Route::get('/checklist-sales', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
         Route::prefix('statistik')->group(function(){
             Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
             Route::get('/omset-tahunan-konsumen/detail/{konsumen}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_tahunan_page'])->name('statistik.omset.detail_tahunan_page');

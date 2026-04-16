@@ -178,16 +178,16 @@
             </a>
         </div> --}}
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.sales-order', ['kas_ppn' => 1])}}" class="text-decoration-none">
+            <a href="{{route('billing.sales-order')}}" class="text-decoration-none">
                 <img src="{{asset('images/order-ppn.svg')}}" alt="" width="70">
-                <h5 class="mt-3">SALES ORDER<br>PPN
-                    @if ($sales_order_ppn > 0)
-                    <span class="text-danger">({{$sales_order_ppn}})</span>
+                <h5 class="mt-3">SALES ORDER
+                    @if ($sales_order_all > 0)
+                    <span class="text-danger">({{$sales_order_all}})</span>
                     @endif
                 </h5>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.sales-order', ['kas_ppn' => 0])}}" class="text-decoration-none">
                 <img src="{{asset('images/order-non-ppn.svg')}}" alt="" width="70">
                 <h5 class="mt-3">SALES ORDER<br>NON PPN
@@ -196,7 +196,7 @@
                     @endif
                 </h5>
             </a>
-        </div>
+        </div> --}}
 
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.pre-order')}}" class="text-decoration-none">

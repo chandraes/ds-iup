@@ -636,6 +636,13 @@ class DatabaseController extends Controller
             $konsumen = Konsumen::findOrFail($id);
             $plafonLama = $konsumen->plafon;
 
+            if ($plafonLama == $plafonBaru) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Nilai plafon sama.'
+                ]);
+            }
+
             // 1. Update plafon di tabel konsumen
             $konsumen->update([
                 'plafon' => $plafonBaru

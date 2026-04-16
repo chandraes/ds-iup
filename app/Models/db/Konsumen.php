@@ -25,6 +25,11 @@ class Konsumen extends Model
         return $this->hasMany(KonsumenDoc::class, 'konsumen_id');
     }
 
+    public function sisaHuntang()
+    {
+        return $this->kas()->orderBy('id', 'desc')->first()->sisa ?? 0;
+    }
+
     public function checklists()
     {
         return $this->hasMany(ChecklistKunjungan::class, 'konsumen_id');

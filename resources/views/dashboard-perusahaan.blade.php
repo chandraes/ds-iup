@@ -68,7 +68,7 @@
             <h5 class="mt-2">ORDER</h5>
         </a>
     </div>
-      <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
         <a href="{{route('perusahaan.omset-bulanan-konsumen')}}" class="text-decoration-none">
             <img src="{{asset('images/omset-tahunan-konsumen.svg')}}" alt="" width="70">
             <h5 class="mt-2">OMSET KONSUMEN BULANAN</h5>
@@ -81,17 +81,23 @@
         </a>
     </div>
     <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('statistik.omset-barang.bulanan')}}" class="text-decoration-none">
-                <img src="{{asset('images/omset-barang-bulanan.svg')}}" alt="" width="70">
-                <h5 class="mt-2">OMSET BARANG BULANAN</h5>
-            </a>
-        </div>
-              <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
-            <a href="{{route('statistik.omset-barang.tahunan')}}" class="text-decoration-none">
-                <img src="{{asset('images/omset-barang-tahunan.svg')}}" alt="" width="70">
-                <h5 class="mt-2">TAHUNAN</h5>
-            </a>
-        </div>
+        <a href="{{route('statistik.omset-barang.bulanan')}}" class="text-decoration-none">
+            <img src="{{asset('images/omset-barang-bulanan.svg')}}" alt="" width="70">
+            <h5 class="mt-2">OMSET BARANG BULANAN</h5>
+        </a>
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{route('statistik.omset-barang.tahunan')}}" class="text-decoration-none">
+            <img src="{{asset('images/omset-barang-tahunan.svg')}}" alt="" width="70">
+            <h5 class="mt-2">OMSET BARANG TAHUNAN</h5>
+        </a>
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{route('checklist-sales')}}" class="text-decoration-none">
+            <img src="{{asset('images/checklist-sales.svg')}}" alt="" width="70">
+            <h5 class="mt-2">CHECKLIST KUNJUNGAN SALES</h5>
+        </a>
+    </div>
 </div>
 {{-- <div class="row justify-content-left">
     <h3>REKAP</h3>

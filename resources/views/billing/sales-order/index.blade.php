@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>SALES ORDER<br>{{ request()->get('kas_ppn') == 1 ? 'PPN' : 'NON PPN' }}</u></h1>
+            <h1><u>SALES ORDER</u></h1>
         </div>
     </div>
     <div class="row justify-content-between mt-3">
@@ -57,6 +57,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Kas</th>
                     <th class="text-center align-middle">Karyawan</th>
                     <th class="text-center align-middle">Konsumen</th>
                     <th class="text-center align-middle">Kecamatan</th>
@@ -80,6 +81,13 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal_en}}</td>
+                    <td class="text-start align-middle">
+                        @if ($d->kas_ppn == 1)
+                        <span class="badge bg-success">KAS PPN</span>
+                        @else
+                        <span class="badge bg-primary">KAS NON PPN</span>
+                        @endif
+                    </td>
                     <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
                     <td class="text-center align-middle">{{$d->konsumen->kode_toko->kode}} {{$d->konsumen->nama}}</td>
                     <td class="text-start align-middle">{{$d->konsumen->kecamatan->nama_wilayah}}</td>

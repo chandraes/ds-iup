@@ -299,12 +299,17 @@ class SalesController extends Controller
         $dbPajak = new Pajak;
         $keranjang = $keranjang->keranjang_jual;
         $total = $keranjang->sum('total');
-        $konsumen = Konsumen::find($info->konsumen_id);
+        $konsumen = $info->konsumen;
         $adaPpn = $keranjang->where('barang_ppn', 1)->count() > 0 ? 1 : 0;
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
         $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
 
+        $infoPlafon = [
+            'total_plafon' => $konsumen->plafon,
+            'sisa_plafon' => $konsumen->sisaHuntang(),
+        ];
 
+        // dd($infoPlafon);
         Carbon::setLocale('id');
 
         $barang = Barang::with(['barang_nama', 'satuan'])->get();
@@ -324,7 +329,8 @@ class SalesController extends Controller
             'konsumen' => $konsumen,
             'tanggal' => $tanggal,
             'jam' => $jam,
-            'adaPpn' => $adaPpn
+            'adaPpn' => $adaPpn,
+            'infoPlafon' => $infoPlafon,
         ]);
     }
 
