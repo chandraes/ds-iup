@@ -86,7 +86,7 @@
                         <div class="col-md-12 my-3" id="konsumenRow">
                             <div class="card shadow-sm border-0 mb-4">
                                 <div class="card-header bg-light py-3 fw-bold">
-                                    <i class="fa fa-file-invoice me-2 text-primary"></i> Informasi Konsumen & Detail
+                                    <i class="fa fa-file me-2 text-primary"></i> Informasi Konsumen & Detail
                                     Dokumen
                                 </div>
                                 <div class="card-body">
