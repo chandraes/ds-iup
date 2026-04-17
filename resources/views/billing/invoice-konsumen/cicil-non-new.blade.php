@@ -11,20 +11,19 @@
             <form action="" method="post" id="cicilNonForm">
                 @csrf
 
-                <input type="hidden" name="apa_ppn" id="edit_apa_ppn">
+               <input type="hidden" name="apa_ppn" id="edit_apa_ppn_non">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="edit_konsumen_nama" class="form-label">Kosumen</label>
-                                <input type="text" class="form-control" name="edit_konsumen_nama"
-                                    id="edit_konsumen_nama" disabled />
+                                <input type="text" class="form-control" name="edit_konsumen_nama" id="edit_konsumen_nama_non" disabled />
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="edit_nota" class="form-label">Nota</label>
-                                <input type="text" class="form-control" name="edit_nota" id="edit_nota" disabled />
+                                <input type="text" class="form-control" name="edit_nota" id="edit_nota_non" disabled />
                             </div>
                         </div>
                     </div>
@@ -35,8 +34,7 @@
                                 <label for="edit_sisa_tagihan" class="form-label">Total Tagihan</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1">Rp</span>
-                                    <input type="text" class="form-control text-end" name="edit_sisa_tagihan"
-                                        id="edit_sisa_tagihan" disabled>
+                                   <input type="text" class="form-control text-end" name="edit_sisa_tagihan" id="edit_sisa_tagihan_non" disabled>
                                 </div>
                             </div>
                         </div>
@@ -48,8 +46,7 @@
                                 <label for="edit_sisa_tagihan" class="form-label">Cicilan </label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1">Rp</span>
-                                    <input type="text" class="form-control text-end" name="nominal" id="edit_nominal"
-                                        required onkeyup="cekSisaNon()">
+                                   <input type="text" class="form-control text-end" name="nominal" id="edit_nominal_non" required onkeyup="cekSisaNon()">
                                 </div>
                             </div>
                         </div>
@@ -59,7 +56,7 @@
                                 <label for="edit_total" class="form-label">Sisa Tagihan</label>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text" id="basic-addon1">Rp</span>
-                                    <input type="text" class="form-control text-end" name="total" id="edit_total" disabled>
+                                    <input type="text" class="form-control text-end" name="total" id="edit_total_non" disabled>
                                 </div>
                             </div>
                         </div>
@@ -78,29 +75,28 @@
 @push('js')
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
-    var nominal = new Cleave('#edit_nominal', {
+    var nominalNon = new Cleave('#edit_nominal_non', {
         numeral: true,
         numeralThousandsGroupStyle: 'thousand',
         numeralDecimalMark: ',',
         delimiter: '.'
     });
 
-    confirmAndSubmit('#cicilForm', "Apakah anda yakin?");
+    confirmAndSubmit('#cicilNonForm', "Apakah anda yakin?"); // Pastikan id ini benar
 
     function cekSisaNon(){
-        var sisa = parseInt($('#edit_sisa_tagihan').val().replace(/\./g, '').replace(/\,/g, '.')) ?? 0;
-        var nominal = parseInt($('#edit_nominal').val().replace(/\./g, '').replace(/\,/g, '.'));
+        var sisa = parseInt($('#edit_sisa_tagihan_non').val().replace(/\./g, '').replace(/\,/g, '.')) ?? 0;
+        var nominal = parseInt($('#edit_nominal_non').val().replace(/\./g, '').replace(/\,/g, '.'));
 
         if (nominal > sisa) {
             alert('Nominal cicilan tidak boleh melebihi sisa tagihan');
-            $('#edit_nominal').val('');
-            $('#edit_total').val('');
+            $('#edit_nominal_non').val('');
+            $('#edit_total_non').val('');
             return;
-
         }
 
         var total = sisa - nominal;
-        $('#edit_total').val(total.toLocaleString('id-ID'));
+        $('#edit_total_non').val(total.toLocaleString('id-ID'));
     }
 </script>
 @endpush

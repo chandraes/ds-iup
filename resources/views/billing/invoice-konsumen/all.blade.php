@@ -260,7 +260,7 @@
             "scrollCollapse": true,
             "scrollY": "60vh", // Set scrollY to 50% of the viewport height
             "scrollX": true,
-      
+
         });
 
         $('#supplier_id').select2({
@@ -366,7 +366,7 @@
     function cicilan(data) {
 
         console.log(data);
-        document.getElementById('edit_konsumen_nama').value = data.konsumen.nama;
+        document.getElementById('edit_konsumen_nama').value = data.konsumen.kode_toko.kode + ' ' + data.konsumen.nama;
         document.getElementById('edit_sisa_dpp').value = (data.sisa_tagihan - data.sisa_ppn).toLocaleString('id-ID');
         document.getElementById('edit_nota').value = data.kode;
         document.getElementById('edit_sisa_tagihan').value = data.nf_sisa_tagihan;
@@ -381,18 +381,14 @@
     }
 
     function cicilanNonPpn(data) {
-
-        document.getElementById('edit_konsumen_nama').value = data.konsumen.nama;
-        document.getElementById('edit_nota').value = data.kode;
-        document.getElementById('edit_sisa_tagihan').value = data.nf_sisa_tagihan;
-        document.getElementById('edit_apa_ppn').value = 0;
-        document.getElementById('edit_nominal').value = '';
-        document.getElementById('edit_total').value = '';
-        document.getElementById('cicilForm').action = '/billing/invoice-konsumen/cicil/' + data.id;
-
+        document.getElementById('edit_konsumen_nama_non').value = data.konsumen.kode_toko.kode + ' ' + data.konsumen.nama;
+        document.getElementById('edit_nota_non').value = data.kode;
+        document.getElementById('edit_sisa_tagihan_non').value = data.nf_sisa_tagihan;
+        document.getElementById('edit_apa_ppn_non').value = 0;
+        document.getElementById('edit_nominal_non').value = '';
+        document.getElementById('edit_total_non').value = '';
+        document.getElementById('cicilNonForm').action = '/billing/invoice-konsumen/cicil/' + data.id;
     }
-
-
 
 </script>
 @endpush
