@@ -299,14 +299,15 @@ class SalesController extends Controller
         $dbPajak = new Pajak;
         $keranjang = $keranjang->keranjang_jual;
         $total = $keranjang->sum('total');
-        $konsumen = $info->konsumen;
+        $konsumen = $info->konsumen->load('kas');
         $adaPpn = $keranjang->where('barang_ppn', 1)->count() > 0 ? 1 : 0;
         $ppn = $dbPajak->where('untuk', 'ppn')->first()->persen;
         $penyesuaian = Pengaturan::where('untuk', 'penyesuaian_jual')->first()->nilai;
 
         $infoPlafon = [
             'total_plafon' => $konsumen->plafon,
-            'sisa_plafon' => $konsumen->sisaHuntang(),
+            'total_tagihan' => $konsumen->sisaHutang(),
+            'sisa_plafon' => $konsumen->plafon - $konsumen->sisaHutang(),
         ];
 
         // dd($infoPlafon);

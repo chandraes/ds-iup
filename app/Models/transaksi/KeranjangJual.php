@@ -561,17 +561,19 @@ class KeranjangJual extends Model
         $konsumen = Konsumen::find($master['konsumen_id']);
 
         $data['lunas'] = $konsumen->pembayaran == 1 || $master['pembayaran'] == 1 ? 1 : 0;
-        // dd($data);
+
+        $totalSeluruh = $this->where('keranjang_jual_konsumen_id', $master['id'])->sum('total');
         // kalau sistem pembayaran konsumen adalah tempo dan sistem pembayaran invoice bukan tunai
         // maka cek sisa plafon konsumen
+        // dd($totalSeluruh);
         if ($konsumen->pembayaran == 2 && $master['pembayaran'] != 1) {
-            // $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
-            // if ($sisaTerakhir + $data['grand_total'] > $konsumen->plafon) {
-            //     return [
-            //         'status' => 'error',
-            //         'message' => 'Plafon konsumen sudah melebihi batas.',
-            //     ];
-            // }
+            $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+            if ($sisaTerakhir + $totalSeluruh > $konsumen->plafon) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Plafon konsumen sudah melebihi batas.',
+                ];
+            }
 
             // jika invoice pembayaran adalah tempo, cek apakah konsumen memiliki tagihan yang jatuh tempo
             if ($master['pembayaran'] == 2) {
