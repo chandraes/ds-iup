@@ -157,7 +157,7 @@ class HomeController extends Controller
                 ->leftJoin('wilayahs', 'konsumens.kecamatan_id', '=', 'wilayahs.id')
                 ->leftJoin('karyawans', 'konsumens.karyawan_id', '=', 'karyawans.id')
                 ->leftJoin('kode_tokos', 'konsumens.kode_toko_id', '=', 'kode_tokos.id')
-                ->where('konsumens.active', 1)
+                // ->where('konsumens.active', 1)
                 ->where('konsumens.checklist_kunjungan', 1) // Filter Konsumen yang memiliki checklist_kunjungan = true
                 ->filter($filters);
 
