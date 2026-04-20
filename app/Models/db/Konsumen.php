@@ -135,9 +135,9 @@ class Konsumen extends Model
         return $query;
     }
 
-    public function scopFilterNoStatus($query, $filters)
+    public function scopeFilterNoStatus($query, $filters)
     {
-        if (isset($filters['area']) && $filters['area'] !== '') {
+         if (isset($filters['area']) && $filters['area'] !== '') {
             $query->where('karyawan_id', $filters['area']);
         }
 
@@ -155,6 +155,10 @@ class Konsumen extends Model
 
         if (isset($filters['kode_toko']) && $filters['kode_toko'] !== '') {
             $query->where('kode_toko_id', $filters['kode_toko']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $query->where('active', $filters['status']);
         }
 
         return $query;
