@@ -159,7 +159,7 @@ class HomeController extends Controller
                 ->leftJoin('kode_tokos', 'konsumens.kode_toko_id', '=', 'kode_tokos.id')
                 // ->where('konsumens.active', 1)
                 ->where('konsumens.checklist_kunjungan', 1) // Filter Konsumen yang memiliki checklist_kunjungan = true
-                ->filterNoStatus($filters);
+                ->filternostatus($filters);
 
             if ($request->filled('status_kunjungan')) {
                 $statusFilter = $request->status_kunjungan;
@@ -407,7 +407,7 @@ class HomeController extends Controller
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']);
         $baseQuery = Konsumen::select('id', 'kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
             // ->where('active', 1)
-            ->filterNoStatus($filters);
+            ->filternostatus($filters);
 
         if ($request->filled('status_kunjungan')) {
             $statusFilter = $request->status_kunjungan;

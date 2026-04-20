@@ -135,7 +135,7 @@ class Konsumen extends Model
         return $query;
     }
 
-    public function scopeFilterNoStatus($query, $filters)
+    public function scopeFilternostatus($query, $filters)
     {
          if (isset($filters['area']) && $filters['area'] !== '') {
             $query->where('karyawan_id', $filters['area']);
