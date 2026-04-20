@@ -134,4 +134,29 @@ class Konsumen extends Model
 
         return $query;
     }
+
+    public function scopFilterNoStatus($query, $filters)
+    {
+        if (isset($filters['area']) && $filters['area'] !== '') {
+            $query->where('karyawan_id', $filters['area']);
+        }
+
+        if (isset($filters['kecamatan']) && $filters['kecamatan'] !== '') {
+            $query->where('kecamatan_id', $filters['kecamatan']);
+        }
+
+        if (isset($filters['provinsi']) && $filters['provinsi'] !== '') {
+            $query->where('provinsi_id', $filters['provinsi']);
+        }
+
+        if (isset($filters['kabupaten_kota']) && $filters['kabupaten_kota'] !== '') {
+            $query->where('kabupaten_kota_id', $filters['kabupaten_kota']);
+        }
+
+        if (isset($filters['kode_toko']) && $filters['kode_toko'] !== '') {
+            $query->where('kode_toko_id', $filters['kode_toko']);
+        }
+
+        return $query;
+    }
 }
