@@ -405,9 +405,23 @@ class HomeController extends Controller
 
         // 1. Query Dasar Konsumen
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']);
-        $baseQuery = Konsumen::select('id', 'kode_toko_id', 'nama', 'kecamatan_id', 'karyawan_id', 'kode')
-            // ->where('active', 1)
-            ->filternostatus($filters);
+         $baseQuery = Konsumen::select([
+                    'konsumens.id',
+                    'konsumens.kode_toko_id',
+                    'konsumens.nama',
+                    'konsumens.kecamatan_id',
+                    'konsumens.karyawan_id',
+                    'konsumens.kode',
+                    'wilayahs.nama_wilayah',
+                    'karyawans.nickname',
+                    'kode_tokos.kode as kode_toko_str'
+                ])
+                ->leftJoin('wilayahs', 'konsumens.kecamatan_id', '=', 'wilayahs.id')
+                ->leftJoin('karyawans', 'konsumens.karyawan_id', '=', 'karyawans.id')
+                ->leftJoin('kode_tokos', 'konsumens.kode_toko_id', '=', 'kode_tokos.id')
+                // ->where('konsumens.active', 1)
+                ->where('konsumens.checklist_kunjungan', 1) // Filter Konsumen yang memiliki checklist_kunjungan = true
+                ->filternostatus($filters);
 
         if ($request->filled('status_kunjungan')) {
             $statusFilter = $request->status_kunjungan;
@@ -417,13 +431,13 @@ class HomeController extends Controller
             if ($statusFilter === 'visited' || $statusFilter === 'not_visited') {
                 $baseQuery->whereHas('checklists', function ($query) use ($currentMonth, $currentYear, $statusFilter) {
                     $query->where('bulan', $currentMonth)
-                        ->where('tahun', $currentYear)
-                        ->where('status', $statusFilter);
+                            ->where('tahun', $currentYear)
+                            ->where('status', $statusFilter);
                 });
             } elseif ($statusFilter === 'empty') {
                 $baseQuery->whereDoesntHave('checklists', function ($query) use ($currentMonth, $currentYear) {
                     $query->where('bulan', $currentMonth)
-                        ->where('tahun', $currentYear);
+                            ->where('tahun', $currentYear);
                 });
             }
         }
@@ -446,7 +460,7 @@ class HomeController extends Controller
             $monthlyData[$i] = ['visited' => 0, 'not_visited' => 0, 'empty' => 0, 'percentage' => 0];
         }
 
-        foreach ($checklistsSummary as $stat) {
+       foreach ($checklistsSummary as $stat) {
             if ($stat->status === 'visited') {
                 $totalVisited += $stat->total;
                 $monthlyData[$stat->bulan]['visited'] = $stat->total;
