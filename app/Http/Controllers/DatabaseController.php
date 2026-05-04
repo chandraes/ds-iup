@@ -876,6 +876,7 @@ class DatabaseController extends Controller
 
         $konsumen->update([
             'active' => !$konsumen->active,
+            'checklist_kunjungan' => !$konsumen->checlist_kunjungan,
             'alasan' => $data['alasan'] ?? null,
         ]);
 
