@@ -835,37 +835,43 @@ class BarangController extends Controller
         ]);
     }
 
-    public function edit_stok_su(BarangStokHarga $stok, Request $request)
+   public function edit_stok_su(BarangStokHarga $stok, Request $request)
     {
-        $data = $request->validate([
-            'stok_awal' => 'required',
-            'stok' => 'required',
-            'harga_beli' => 'required'
-        ]);
-
-        if (Auth::user()->role != 'su') {
+        if (Auth::user()->role !== 'su') {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk eksekusi ini!!');
         }
 
+        $validatedData = $request->validate([
+            'stok_awal'  => 'required|numeric',
+            'stok'       => 'required|numeric',
+            'harga_beli' => 'required|numeric'
+        ]);
+
         try {
+            // KARENA KITA PAKAI LOCK, KITA WAJIB MENGGUNAKAN TRANSACTION LAGI
             DB::beginTransaction();
 
-            $stok->update([
-                'stok_awal' => $data['stok_awal'],
-                'stok' => $data['stok'],
-                'harga_beli' => $data['harga_beli'],
-            ]);
+            // 1. Ambil ulang baris spesifik ini dan KUNCI (Lock)
+            // Proses lain yang mencoba mengubah baris dengan ID ini akan disuruh antre
+            // sampai DB::commit() di bawah dipanggil.
+            $stokDikunci = BarangStokHarga::where('id', $stok->id)
+                                ->lockForUpdate()
+                                ->first();
 
+            // 2. Lakukan update pada baris yang sudah dikunci
+            $stokDikunci->update($validatedData);
+
+            // 3. Simpan perubahan dan LEPASKAN KUNCI (Unlock)
             DB::commit();
 
-        } catch (\Throwable $th) {
-            //throw $th;
+            return redirect()->back()->with('success', 'Data Berhasil Diupdate dan aman dari bentrokan!!');
+
+        } catch (\Exception $e) {
+            // Jika terjadi error, batalkan semua dan lepaskan kunci
             DB::rollBack();
 
-            return redirect()->back()->with('error', 'Terjadi Kesalahan');
+            return redirect()->back()->with('error', 'Terjadi Kesalahan pada sistem.');
         }
-
-        return redirect()->back()->with('success', 'Data Berhasil Di update!!');
     }
 
     public function stok_data(Request $request)
