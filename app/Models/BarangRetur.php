@@ -286,7 +286,7 @@ class BarangRetur extends Model
 
             // check length no hp
             if (strlen($no_konsumen) > 10) {
-                $dbWa->sendWa($no_konsumen, $pesan);
+                // $dbWa->sendWa($no_konsumen, $pesan);
             }
 
         } catch (\Throwable $th) {
@@ -374,7 +374,7 @@ class BarangRetur extends Model
 
             // check length no hp
             if (strlen($no_konsumen) > 10) {
-                $dbWa->sendWa($no_konsumen, $pesan);
+                // $dbWa->sendWa($no_konsumen, $pesan);
             }
 
         } catch (\Throwable $th) {

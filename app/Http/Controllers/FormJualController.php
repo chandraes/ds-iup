@@ -426,7 +426,7 @@ class FormJualController extends Controller
 
             // $file = $pdfUrl;
             if (strlen($tujuan) > 10) {
-                $wa = $dbWa->sendWa($tujuan, $pesan);
+                // $dbWa->sendWa($tujuan, $pesan);
             }
 
 
