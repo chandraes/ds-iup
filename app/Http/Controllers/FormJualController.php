@@ -349,7 +349,7 @@ class FormJualController extends Controller
             $pembayaran = 'Lunas';
         }
 
-        if ($konsumen && $konsumen->no_hp && $invoice->send_wa == 0) {
+        if ($konsumen && $konsumen->no_hp && $invoice->send_wa == 0 && $konsumen->wa_notif == 1) {
             $tujuan = str_replace('-', '', $konsumen->no_hp);
             $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
                     "*Invoice Pembelian*\n".
@@ -426,7 +426,7 @@ class FormJualController extends Controller
 
             // $file = $pdfUrl;
             if (strlen($tujuan) > 10) {
-                // $dbWa->sendWa($tujuan, $pesan);
+                $dbWa->sendWa($tujuan, $pesan);
             }
 
 

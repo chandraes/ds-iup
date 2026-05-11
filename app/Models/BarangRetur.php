@@ -285,8 +285,8 @@ class BarangRetur extends Model
             $no_konsumen = str_replace('-', '', $no_konsumen);
 
             // check length no hp
-            if (strlen($no_konsumen) > 10) {
-                // $dbWa->sendWa($no_konsumen, $pesan);
+            if (strlen($no_konsumen) > 10 && $data->konsumen->wa_notif == 1) {
+                $dbWa->sendWa($no_konsumen, $pesan);
             }
 
         } catch (\Throwable $th) {
@@ -373,8 +373,8 @@ class BarangRetur extends Model
             $no_konsumen = str_replace('-', '', $no_konsumen);
 
             // check length no hp
-            if (strlen($no_konsumen) > 10) {
-                // $dbWa->sendWa($no_konsumen, $pesan);
+            if (strlen($no_konsumen) > 10 && $data->konsumen->wa_notif == 1) {
+                $dbWa->sendWa($no_konsumen, $pesan);
             }
 
         } catch (\Throwable $th) {

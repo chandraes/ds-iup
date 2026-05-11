@@ -308,6 +308,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/{id}/histori-plafon', [App\Http\Controllers\DatabaseController::class, 'histori_plafon'])->name('db.konsumen.histori_plafon');
                 Route::post('/{id}/update-plafon', [App\Http\Controllers\DatabaseController::class, 'update_plafon'])->name('db.konsumen.update_plafon');
                 Route::post('/{id}/toggle-checklist', [App\Http\Controllers\DatabaseController::class, 'toggleChecklist'])->name('db.konsumen.toggle-checklist');
+                Route::post('/{id}/toggle-notif', [App\Http\Controllers\DatabaseController::class, 'toggleNotif'])->name('db.konsumen.toggle-notif');
 
                 Route::get('/dokumen', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen'])->name('db.konsumen.dokumen');
                 Route::post('/dokumen/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen_store'])->name('db.konsumen.dokumen.store');

@@ -594,7 +594,17 @@ class DatabaseController extends Controller
                     </div>
                 ';
             })
-            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon'])
+            ->addColumn('notif', function ($d) {
+                $checked = $d->wa_notif ? 'checked' : '';
+                return '
+                    <div class="text-center">
+                        <input class="form-check-input shadow-none" type="checkbox"
+                               onchange="toggleNotif(' . $d->id . ', this)" ' . $checked . '
+                               style="cursor: pointer; transform: scale(2.3);">
+                    </div>
+                ';
+            })
+            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon', 'notif'])
             ->make(true);
     }
 
@@ -682,6 +692,18 @@ class DatabaseController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Status checklist kunjungan berhasil diperbarui.'
+        ]);
+    }
+
+    public function toggleNotif(Request $request, $id)
+    {
+        $konsumen = Konsumen::findOrFail($id);
+        $konsumen->wa_notif = filter_var($request->status, FILTER_VALIDATE_BOOLEAN);
+        $konsumen->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status whatsapp notifikasi berhasil diperbarui.'
         ]);
     }
 
