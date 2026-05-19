@@ -634,6 +634,45 @@ class InvoiceJual extends Model
         return $data;
     }
 
+     public function scopeJanjiBayar($query, $filters)
+    {
+        $query->with(['konsumen.kode_toko', 'konsumen.kecamatan', 'konsumen.kabupaten_kota','invoice_jual_cicil', 'karyawan'])
+            ->where('void', 0)
+            ->where('titipan', 0)
+            ->where('lunas', 0);
+
+        if (isset($filters['expired']) && $filters['expired'] != '') {
+            $query->where('jatuh_tempo', $filters['expired'] == 'no' ? '>' : '<=', \Carbon\Carbon::now());
+        }
+
+        if (isset($filters['konsumen_id']) && $filters['konsumen_id'] != ''){
+            $query->where('konsumen_id', $filters['konsumen_id']);
+        }
+
+        if (isset($filters['karyawan_id']) && $filters['karyawan_id'] != ''){
+            $query->where('karyawan_id', $filters['karyawan_id']);
+        }
+
+        if (isset($filters['kecamatan_id']) && $filters['kecamatan_id'] != '') {
+            $query->whereHas('konsumen', function ($q) use ($filters) {
+                $q->where('kecamatan_id', $filters['kecamatan_id']);
+            });
+        }
+
+        if(isset($filters['kabupaten_id']) && $filters['kabupaten_id'] != ''){
+            $query->whereHas('konsumen', function ($q) use ($filters) {
+                $q->where('kabupaten_kota_id', $filters['kabupaten_id']);
+            });
+        }
+
+        if(isset($filters['apa_ppn']) && $filters['apa_ppn'] != ''){
+            $ppn = $filters['apa_ppn'] == 'yes' ? 1 : 0;
+            $query->where('kas_ppn', $ppn);
+        }
+
+        return $query;
+    }
+
     private function ppn_keluaran($invoice_id, $ppn, $dipungut)
     {
         $db = new PpnKeluaran;

@@ -34,12 +34,16 @@ use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\InvoiceJualSales;
 use App\Models\transaksi\InvoiceJualSalesDetail;
+use App\Models\transaksi\JanjiBayar;
+use App\Models\transaksi\JanjiBayarDetail;
+use App\Models\transaksi\JanjiBayarKeranjang;
 use App\Models\transaksi\KeranjangBeli;
 use App\Models\transaksi\KeranjangJual;
 use App\Models\transaksi\OrderInden;
 use App\Models\transaksi\OrderIndenDetail;
 use App\Models\UangGantung;
 use App\Models\User;
+use App\Models\Wilayah;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -1438,5 +1442,447 @@ class BillingController extends Controller
         return response()->json($res);
     }
 
+    public function form_janji_bayar(Request $request)
+    {
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+                    $query->where('is_sales', 1);
+                })->select('id', 'nama')->get();
 
+        $kecamatanIds = Konsumen::distinct()->pluck('kecamatan_id')->filter()->all();
+        $kabupatenIds = Konsumen::distinct()->pluck('kabupaten_kota_id')->filter()->all();
+
+        $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
+        $kecamatan = Wilayah::whereIn('id', $kecamatanIds)
+                    ->when(
+                        ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
+                        function ($query) use ($request) {
+                            $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
+                            return $query->where('id_induk_wilayah', $wilayah);
+                        }
+                    )->get();
+
+
+        return view('billing.form-janji-bayar.index', [
+            'ppn' => $ppn,
+            'sales' => $sales,
+            'kecamatan' => $kecamatan,
+            'kabupaten' => $kabupaten,
+        ]);
+    }
+
+   public function form_janji_bayar_data(Request $request)
+    {
+        if ($request->ajax()) {
+            $filters = $request->only(['expired', 'apa_ppn', 'karyawan_id', 'kecamatan_id', 'kabupaten_id']);
+
+            $query = InvoiceJual::janjiBayar($filters);
+
+            // Hitung grand total server-side
+            $totalsQuery = clone $query;
+            $totals = $totalsQuery->select(
+                DB::raw('SUM(total) as sum_total'),
+                DB::raw('SUM(diskon) as sum_diskon'),
+                DB::raw('SUM(ppn) as sum_ppn'),
+                DB::raw('SUM(add_fee) as sum_add_fee'),
+                DB::raw('SUM(grand_total) as sum_grand_total'),
+                DB::raw('SUM(dp) as sum_dp'),
+                DB::raw('SUM(dp_ppn) as sum_dp_ppn'),
+                DB::raw('SUM(sisa_ppn) as sum_sisa_ppn'),
+                DB::raw('SUM(sisa_tagihan) as sum_sisa_tagihan')
+            )->first();
+
+            $query->with(['karyawan', 'konsumen.kabupaten_kota', 'konsumen.kecamatan', 'konsumen.kode_toko', 'invoice_jual_cicil']);
+
+            // ==========================================
+            // OPTIMASI SERVER-LIGHT: Tarik Data Keranjang Aktif User
+            // ==========================================
+            $userId = Auth::id();
+            $cartItems = JanjiBayarKeranjang::where('user_id', $userId)->get();
+            $inCartIds = $cartItems->pluck('invoice_jual_id')->toArray();
+
+            $currentCartKonsumen = null;
+            if ($cartItems->isNotEmpty()) {
+                $firstItem = $cartItems->first();
+                $currentCartKonsumen = $firstItem->konsumen ? $firstItem->konsumen->kode_toko?->kode .' '.$firstItem->konsumen->nama : 'Konsumen Terpilih';
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->filterColumn('sales', function($query, $keyword) {
+                    $query->whereHas('karyawan', function($q) use ($keyword) {
+                        $q->where('nama', 'LIKE', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('konsumen_kode', function($query, $keyword) {
+                    $query->whereHas('konsumen', function($q) use ($keyword) {
+                        $q->where('kode', 'LIKE', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('konsumen_nama', function($query, $keyword) {
+                    $query->whereHas('konsumen', function($q) use ($keyword) {
+                        $q->where('nama', 'LIKE', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('konsumen_plafon', function($query, $keyword) {
+                    $query->whereHas('konsumen', function($q) use ($keyword) {
+                        $q->where('plafon', 'LIKE', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('daerah', function($query, $keyword) {
+                    $query->whereHas('konsumen.kabupaten_kota', function($q) use ($keyword) {
+                        $q->where('nama_wilayah', 'LIKE', "%{$keyword}%");
+                    })->orWhereHas('konsumen.kecamatan', function($q) use ($keyword) {
+                        $q->where('nama_wilayah', 'LIKE', "%{$keyword}%");
+                    });
+                })
+                ->orderColumn('tanggal_en', function ($query, $order) {
+                    $query->orderBy('created_at', $order);
+                })
+                ->orderColumn('sales', function ($query, $order) {
+                    $query->orderBy('karyawan_id', $order);
+                })
+                ->orderColumn('konsumen_kode', function ($query, $order) {
+                    $query->orderBy(
+                        Konsumen::select('kode')->whereColumn('konsumens.id', 'invoice_juals.konsumen_id'), $order
+                    );
+                })
+                ->orderColumn('konsumen_nama', function ($query, $order) {
+                    $query->orderBy(
+                        Konsumen::select('nama')->whereColumn('konsumens.id', 'invoice_juals.konsumen_id'), $order
+                    );
+                })
+                ->orderColumn('konsumen_plafon', function ($query, $order) {
+                    $query->orderBy(
+                        Konsumen::select('plafon')->whereColumn('konsumens.id', 'invoice_juals.konsumen_id'), $order
+                    );
+                })
+                ->addColumn('sales', function ($row) {
+                    return $row->karyawan ? $row->karyawan->nama : '';
+                })
+                ->addColumn('daerah', function ($row) {
+                    $kab = $row->konsumen->kabupaten_kota ? $row->konsumen->kabupaten_kota->nama_wilayah . ', ' : '';
+                    $kec = $row->konsumen->kecamatan ? $row->konsumen->kecamatan->nama_wilayah : '';
+                    return $kab . $kec;
+                })
+                ->addColumn('konsumen_kode', function ($row) {
+                    return $row->konsumen->full_kode;
+                })
+                ->addColumn('konsumen_nama', function ($row) {
+                    return ($row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode . ' ' : '') . $row->konsumen->nama;
+                })
+                ->addColumn('nota_data', function ($row) {
+                    return [
+                        'url' => route('billing.invoice-konsumen.detail', $row->id),
+                        'kode' => $row->kode
+                    ];
+                })
+                ->addColumn('nilai_data', function ($row) {
+                    return [
+                        'dpp' => $row->dpp,
+                        'diskon' => $row->nf_diskon,
+                        'ppn' => $row->nf_ppn,
+                        'add_fee' => $row->nf_add_fee
+                    ];
+                })
+                ->addColumn('cicilan_data', function ($row) {
+                    $cicilan = $row->invoice_jual_cicil ? $row->invoice_jual_cicil->sum('nominal') + $row->invoice_jual_cicil->sum('ppn') : 0;
+                    $history = [];
+                    if ($row->invoice_jual_cicil) {
+                        foreach ($row->invoice_jual_cicil as $index => $c) {
+                            $history[] = [
+                                'no' => $index + 1,
+                                'tanggal' => $c->tanggal ?? '-',
+                                'nominal' => number_format($c->nominal + $c->ppn, 0, ',', '.')
+                            ];
+                        }
+                    }
+                    return [
+                        'total_formatted' => number_format($cicilan, 0, ',', '.'),
+                        'history' => $history,
+                        'kode_nota' => $row->kode
+                    ];
+                })
+
+                // ==========================================
+                // UBAH BAGIAN ACTION_DATA: Untuk Status Keranjang
+                // ==========================================
+                ->addColumn('action_data', function ($row) use ($inCartIds) {
+                    return [
+                        'id' => $row->id,
+                        'konsumen_id' => $row->konsumen_id,
+                        'in_cart' => in_array($row->id, $inCartIds), // O(1) Lookup Array cepat
+                        'sisa_tagihan' => $row->nf_sisa_tagihan,
+                        'ppn_dipungut' => $row->ppn_dipungut,
+                        'nf_sisa_ppn' => $row->nf_sisa_ppn
+                    ];
+                })
+                ->with([
+                    'totals' => [
+                        'dpp' => number_format($totals->sum_total ?? 0, 0, ',', '.'),
+                        'diskon' => number_format($totals->sum_diskon ?? 0, 0, ',', '.'),
+                        'ppn' => number_format($totals->sum_ppn ?? 0, 0, ',', '.'),
+                        'add_fee' => number_format($totals->sum_add_fee ?? 0, 0, ',', '.'),
+                        'grand_total' => number_format($totals->sum_grand_total ?? 0, 0, ',', '.'),
+                        'dp' => number_format($totals->sum_dp ?? 0, 0, ',', '.'),
+                        'dp_ppn' => number_format($totals->sum_dp_ppn ?? 0, 0, ',', '.'),
+                        'sisa_ppn' => number_format($totals->sum_sisa_ppn ?? 0, 0, ',', '.'),
+                        'sisa_tagihan' => number_format($totals->sum_sisa_tagihan ?? 0, 0, ',', '.'),
+                    ],
+                    // Kirim metadata keranjang ter-update ke DataTables Frontend
+                    'cart_meta' => [
+                        'count' => count($inCartIds),
+                        'konsumen_nama' => $currentCartKonsumen
+                    ]
+                ])
+                ->make(true);
+        }
+    }
+
+    public function form_janji_bayar_keranjang()
+    {
+        $userId = Auth::id();
+
+        // Tarik semua item keranjang milik user ini beserta relasi invoice dan konsumennya
+        $cartItems = JanjiBayarKeranjang::with(['invoice_jual.konsumen'])
+            ->where('user_id', $userId)
+            ->get();
+
+        // Jika keranjang kosong, kembalikan ke halaman utama dengan pesan warning
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('billing.form-janji-bayar.index')->with('error', 'Keranjang Anda masih kosong.');
+        }
+
+        // Ambil data konsumen dari item pertama (karena konsumen dipastikan sama melalui validasi Opsi B)
+        $konsumen = $cartItems->first()->invoice_jual->konsumen;
+
+        // Hitung total sisa tagihan dari semua invoice di keranjang
+        $totalSisaTagihan = 0;
+        foreach ($cartItems as $item) {
+            $totalSisaTagihan += $item->invoice_jual->sisa_tagihan;
+        }
+
+        return view('billing.form-janji-bayar.keranjang', compact('cartItems', 'konsumen', 'totalSisaTagihan'));
+    }
+
+    public function form_janji_bayar_tambah_keranjang(Request $request)
+    {
+        $invoice = InvoiceJual::findOrFail($request->invoice_jual_id);
+        $userId = Auth::id();
+
+        // Validasi Opsi B: Cek apakah sudah ada konsumen lain yang mengisi keranjang user ini
+        $existingCart = JanjiBayarKeranjang::where('user_id', $userId)->first();
+
+        if ($existingCart && $existingCart->konsumen_id != $invoice->konsumen_id) {
+            $namaKonsumenAktif = $existingCart->konsumen ? $existingCart->konsumen->kode_toko?->kode . ' '. $existingCart->konsumen->nama : 'Konsumen Lain';
+            return response()->json([
+                'status' => 'error',
+                'code' => 'DIFFERENT_CONSUMER',
+                'message' => "Keranjang Anda sedang mengunci invoice milik [{$namaKonsumenAktif}]."
+            ], 400);
+        }
+
+        // Input data aman dari duplikasi
+        JanjiBayarKeranjang::firstOrCreate([
+            'user_id' => $userId,
+            'invoice_jual_id' => $invoice->id,
+        ], [
+            'konsumen_id' => $invoice->konsumen_id
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Berhasil dimasukkan ke keranjang.']);
+    }
+
+    // 2. Aksi Hapus Item Tertentu dari Keranjang
+    public function form_janji_bayar_hapus_keranjang(Request $request)
+    {
+        JanjiBayarKeranjang::where('user_id', Auth::id())
+            ->where('invoice_jual_id', $request->invoice_jual_id)
+            ->delete();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    // 3. Aksi Kosongkan Seluruh isi Keranjang User
+    public function form_janji_bayar_kosongkan_keranjang()
+    {
+        JanjiBayarKeranjang::where('user_id', Auth::id())->delete();
+        return response()->json(['status' => 'success']);
+    }
+
+    // 4. Eksekusi Checkout Akhir Menyimpan ke Tabel JanjiBayar & Detail
+   public function form_janji_bayar_checkout(Request $request)
+    {
+        $userId = Auth::id();
+        $cartItems = JanjiBayarKeranjang::where('user_id', $userId)->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('billing.form-janji-bayar')->with('error', 'Keranjang belanja Anda kosong.');
+        }
+
+        // SANITASI INPUT NOMINAL
+        if ($request->has('nominal')) {
+            $cleanNominal = str_replace('.', '', $request->nominal);
+            $request->merge(['nominal' => (float) $cleanNominal]);
+        }
+
+        // Hitung ulang sisa tagihan asli dari DB untuk validasi keamanan
+        $inCartIds = $cartItems->pluck('invoice_jual_id')->toArray();
+        $totalSisaTagihanCart = InvoiceJual::whereIn('id', $inCartIds)->sum('sisa_tagihan');
+
+        $request->validate([
+            'kode' => 'required|unique:janji_bayars,kode',
+            'metode' => 'required|in:giro,cek,nota',
+            'nominal' => 'required|numeric|min:' . $totalSisaTagihanCart,
+            'jatuh_tempo' => 'required|date',
+        ], [
+            'nominal.min' => 'Nominal janji bayar tidak boleh lebih kecil dari total sisa tagihan (Rp ' . number_format($totalSisaTagihanCart, 0, ',', '.') . ').',
+            'kode.unique' => 'Kode unik ini sudah terdaftar di database.'
+        ]);
+
+        $konsumenId = $cartItems->first()->konsumen_id;
+
+        DB::beginTransaction();
+        try {
+            // 1. Simpan ke JanjiBayar
+            $janjiBayar = JanjiBayar::create([
+                'kode' => $request->kode,
+                'konsumen_id' => $konsumenId,
+                'metode' => $request->metode,
+                'nominal' => $request->nominal,
+                'jatuh_tempo' => $request->jatuh_tempo,
+                'status' => 0,
+            ]);
+
+            // 2. Simpan ke JanjiBayarDetail (Bulk Insert Optimasi)
+            $details = [];
+            foreach ($cartItems as $item) {
+                $details[] = [
+                    'janji_bayar_id' => $janjiBayar->id,
+                    'invoice_jual_id' => $item->invoice_jual_id,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+            JanjiBayarDetail::insert($details);
+
+            // OPTIMASI: Update status lunas sekaligus menggunakan whereIn (Menghindari N+1 Query)
+            InvoiceJual::whereIn('id', $inCartIds)->update(['lunas' => 1]);
+
+            // 3. Kosongkan Keranjang
+            JanjiBayarKeranjang::where('user_id', $userId)->delete();
+
+            DB::commit();
+            return redirect()->route('billing.form-janji-bayar')->with('success', 'Data Janji Bayar berhasil dieksekusi dan disimpan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal memproses data: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function invoice_janji_bayar(Request $request)
+    {
+        return view('billing.invoice-janji-bayar.index');
+    }
+
+    public function invoice_janji_bayar_data(Request $request)
+    {
+       if ($request->ajax()) {
+            // PERUBAHAN 1: Filter query agar HANYA mengambil status = 0 (Pending)
+            $query = JanjiBayar::with(['konsumen.kode_toko'])
+                ->where('status', 0)
+                ->select('janji_bayars.*');
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+
+                ->editColumn('nominal', function ($row) {
+                    return 'Rp ' . number_format($row->nominal, 0, ',', '.');
+                })
+
+                ->editColumn('jatuh_tempo', function ($row) {
+                    return \Carbon\Carbon::parse($row->jatuh_tempo)->format('d-m-Y');
+                })
+
+                ->addColumn('konsumen_nama', function ($row) {
+                    if (!$row->konsumen) return '-';
+                    $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode . ' ' : '';
+                    return $kode . $row->konsumen->nama;
+                })
+
+                // Menyesuaikan tampilan status berdasarkan nilai 0
+                ->editColumn('status', function ($row) {
+                    if ($row->status == 0) {
+                        return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock-o"></i> Pending</span>';
+                    }
+                    return '<span class="badge bg-success px-2 py-1"><i class="fa fa-check"></i> Selesai</span>';
+                })
+
+                // PERUBAHAN 2: Validasi Role untuk Tombol Void di Sisi Server
+                ->addColumn('action', function ($row) {
+                    $btn = '<a href="' . route('billing.invoice-janji-bayar.detail', $row->id) . '" class="btn btn-sm btn-info text-white px-3 shadow-sm me-1">' .
+                        '<i class="fa fa-eye"></i> Detail</a>';
+
+                    // Cek hak akses user untuk tombol Void
+                    if (Auth::check() && in_array(Auth::user()->role, ['admin', 'su'])) {
+                        $btn .= '<button type="button" class="btn btn-sm btn-danger px-3 shadow-sm btn-void-document" data-id="' . $row->id . '" data-kode="' . $row->kode . '">' .
+                            '<i class="fa fa-ban"></i> Void</button>';
+                    }
+
+                    return $btn;
+                })
+
+                ->filterColumn('konsumen_nama', function ($query, $keyword) {
+                    $query->whereHas('konsumen', function ($q) use ($keyword) {
+                        $q->where('nama', 'LIKE', "%{$keyword}%");
+                    });
+                })
+
+                ->rawColumns(['status', 'action'])
+                ->make(true);
+        }
+    }
+
+    public function invoice_janji_bayar_detail($id)
+    {
+        $janjiBayar = JanjiBayar::with(['konsumen.kode_toko'])->findOrFail($id);
+
+        $details = JanjiBayarDetail::with(['invoice_jual'])
+            ->where('janji_bayar_id', $id)
+            ->get();
+
+        return view('billing.invoice-janji-bayar.detail', compact('janjiBayar', 'details'));
+    }
+
+    public function invoice_janji_bayar_void($id)
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'su'])) {
+            return response()->json(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses untuk melakukan void.'], 403);
+        }
+
+        DB::beginTransaction();
+        try {
+            $janjiBayar = JanjiBayar::findOrFail($id);
+
+            // Ambil semua ID invoice jual yang terikat dengan dokumen janji bayar ini
+            $invoiceIds = JanjiBayarDetail::where('janji_bayar_id', $id)->pluck('invoice_jual_id')->toArray();
+
+            if (!empty($invoiceIds)) {
+                // Kembalikan status lunas menjadi 0 pada tabel invoice_juals
+                InvoiceJual::whereIn('id', $invoiceIds)->update(['lunas' => 0]);
+            }
+
+            // Hapus detail janji bayar secara eksplisit (jika tidak menggunakan cascade delete di migration)
+            JanjiBayarDetail::where('janji_bayar_id', $id)->delete();
+
+            // Hapus data induk janji bayar
+            $janjiBayar->delete();
+
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Dokumen janji bayar ' . $janjiBayar->kode . ' berhasil di-void. Status invoice dikembalikan.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => 'Gagal melakukan void: ' . $e->getMessage()], 500);
+        }
+    }
 }

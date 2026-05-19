@@ -1016,6 +1016,24 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/pdf-all', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_all_download'])->name('billing.invoice-konsumen.pdf-all');
             });
 
+            Route::prefix('form-janji-bayar')->group(function () {
+                Route::get('/', [BillingController::class, 'form_janji_bayar'])->name('billing.form-janji-bayar');
+                Route::get('/data', [BillingController::class, 'form_janji_bayar_data'])->name('billing.form-janji-bayar.data');
+                Route::get('/keranjang', [BillingController::class, 'form_janji_bayar_keranjang'])->name('billing.form-janji-bayar.keranjang');
+                Route::post('/tambah-keranjang', [BillingController::class, 'form_janji_bayar_tambah_keranjang'])->name('billing.form-janji-bayar.tambah-keranjang');
+                Route::post('/hapus-keranjang', [BillingController::class, 'form_janji_bayar_hapus_keranjang'])->name('billing.form-janji-bayar.hapus-keranjang');
+                Route::post('/kosongkan-keranjang', [BillingController::class, 'form_janji_bayar_kosongkan_keranjang'])->name('billing.form-janji-bayar.kosongkan-keranjang');
+                Route::post('/checkout', [BillingController::class, 'form_janji_bayar_checkout'])->name('billing.form-janji-bayar.checkout');
+            });
+
+            Route::prefix('invoice-janji-bayar')->group(function () {
+                Route::get('/', [BillingController::class, 'invoice_janji_bayar'])->name('billing.invoice-janji-bayar');
+                Route::get('/data', [BillingController::class, 'invoice_janji_bayar_data'])->name('billing.invoice-janji-bayar.data');
+                Route::get('/detail/{id}', [BillingController::class, 'invoice_janji_bayar_detail'])->name('billing.invoice-janji-bayar.detail');
+                Route::post('/void/{id}', [BillingController::class, 'invoice_janji_bayar_void'])->name('billing.invoice-janji-bayar.void');
+
+            });
+
             Route::prefix('nota-ppn-masukan')->group(function () {
                 Route::get('/', [BillingController::class, 'nota_ppn_masukan'])->name('nota-ppn-masukan');
                 Route::post('/claim/{invoice}', [BillingController::class, 'claim_ppn'])->name('nota-ppn-masukan.claim');

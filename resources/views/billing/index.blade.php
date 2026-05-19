@@ -77,11 +77,11 @@
                 <h5 class="mt-3">FORM UANG GANTUNG</h5>
             </a>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.uang-gantung')}}" class="text-decoration-none">
                 <img src="{{asset('images/uang-gantung.svg')}}" alt="" width="70">
                 <h5 class="mt-3">UANG GANTUNG
-                       @if ($ug > 0)
+                    @if ($ug > 0)
                     <span class="text-danger">({{$ug}})</span>
                     @endif
                 </h5>
@@ -165,7 +165,7 @@
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalOtorisasi">
                 <img src="{{asset('images/otorisasi-pembelian.svg')}}" alt="" width="70">
                 <h5 class="mt-3">OTORISASI PEMBELIAN
-                     @if ($sumKeranjangBeli > 0)
+                    @if ($sumKeranjangBeli > 0)
                     <span class="text-danger">({{$sumKeranjangBeli}})</span>
                     @endif
                 </h5>
@@ -252,6 +252,7 @@
             </a>
         </div>
     </div>
+
     <hr>
     <br>
     <div class="row justify-content-left">
@@ -311,6 +312,25 @@
                 </h5>
             </a>
         </div>
+
+    </div>
+    <div class="row justify-content-left">
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.form-janji-bayar')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-janji-bayar.svg')}}" alt="" width="70">
+                <h5 class="mt-3">FORM JANJI BAYAR
+
+                </h5>
+            </a>
+        </div>
+         <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.invoice-janji-bayar')}}" class="text-decoration-none">
+                <img src="{{asset('images/janji-bayar.svg')}}" alt="" width="70">
+                <h5 class="mt-3">INVOICE JANJI BAYAR
+
+                </h5>
+            </a>
+        </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
@@ -319,7 +339,6 @@
                 </h5>
             </a>
         </div>
-
     </div>
 </div>
 

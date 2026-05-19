@@ -11,7 +11,6 @@ use App\Models\db\Satuan;
 use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KasKonsumen;
-use App\Models\Katalog;
 use App\Models\KonsumenTemp;
 use App\Models\Pajak\RekapPpn;
 use App\Models\PpnKeluaran;
@@ -81,6 +80,17 @@ class KeranjangJual extends Model
     public function getNfTotalAttribute()
     {
         return number_format($this->total, 0, ',', '.');
+    }
+
+    public function checkJanjiBayarJatuhTempo($konsumenId)
+    {
+        $checkInvoice = JanjiBayar::where('konsumen_id', $konsumenId)
+            ->where('status', 0)
+            ->where('jatuh_tempo', '<', today())
+            ->exists();
+
+
+        return $checkInvoice;
     }
 
     public function checkout($data)
@@ -588,6 +598,15 @@ class KeranjangJual extends Model
                     return [
                         'status' => 'error',
                         'message' => 'Tidak Bisa melanjutkan Proses karena Konsumen memiliki tagihan yang telah jatuh tempo.',
+                    ];
+                }
+
+                $checkJanjiBayar = $this->checkJanjiBayarJatuhTempo($konsumen->id);
+
+                if ($checkJanjiBayar) {
+                    return [
+                        'status' => 'error',
+                        'message' => 'Tidak Bisa melanjutkan Proses karena Konsumen memiliki janji bayar yang telah jatuh tempo.',
                     ];
                 }
             }
