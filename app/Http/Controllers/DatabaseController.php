@@ -520,7 +520,7 @@ class DatabaseController extends Controller
 
     public function konsumen_data(Request $request)
     {
-        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'kabupaten_kota']); // Ambil filter dari request
+        $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'kabupaten_kota', 'status_wa']); // Ambil filter dari request
 
         $data = Konsumen::query()->with(['kode_toko', 'provinsi', 'kabupaten_kota', 'kecamatan', 'karyawan'])
                 ->withCount('docs')

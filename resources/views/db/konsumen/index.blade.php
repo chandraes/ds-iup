@@ -39,108 +39,133 @@
 @include('db.konsumen.plafon')
 
 <div class="container-fluid mt-5 table-responsive">
-    <div class="row mb-3">
-        <div class="col-2">
-            <label for="filterKodeToko" class="form-label">Kode Toko</label>
-            <select id="filterKodeToko" name="kode_toko" class="form-select form-select-sm">
-                <option value="" selected>-- Semua Kode Toko --</option>
-                @foreach ($kode_toko as $k)
-                <option value="{{ $k->id }}">
-                    {{ $k->kode }}
-                </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-2">
-            <label for="filterSalesArea" class="form-label">Sales Area</label>
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4 bg-light bg-opacity-50">
 
-            <select id="filterSalesArea" name="area" class="form-select form-select-sm">
-                <option value="" selected>-- Semua Sales Area --</option>
-                @foreach ($sales_area as $salesArea)
-                <option value="{{ $salesArea->id }}">
-                    {{ $salesArea->nama }}
-                </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-2">
-            <label for="kota" class="form-label">Kabupaten / Kota</label>
-            <select name="kab_kot_id" id="filterKab" class="form-select form-select-sm" onchange="filterKecamatan()">
-                <option value="">-- Pilih Kabupaten / Kota --</option>
-                @foreach ($kab_filter as $kab)
-                    <option value="{{ $kab->id }}">{{ $kab->nama_wilayah }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label for="filterKecamatan" class="form-label">Kecamatan</label>
-            <select id="filterKecamatan" name="kecamatan" class="form-select form-select-sm" >
-                <option value="">-- Semua Kecamatan --</option>
-                {{-- @foreach ($kecamatan_filter as $kec)
-                <option value="{{ $kec->id }}">
-                    {{ $kec->nama_wilayah }}
-                </option>
-                @endforeach --}}
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label for="filterKecamatan" class="form-label">Status</label>
-            <select id="filterStatus" name="status" class="form-select form-select-sm">
-                <option value="1">Aktif</option>
-                <option value="0">Non
-                    Aktif</option>
-            </select>
-        </div>
-        <div class="col-md-1 mt-4">
-            <div class="row">
-                <button type="button" id="resetFilter" class="btn btn-secondary btn-sm mt-2">Reset</button>
+            <div class="d-flex align-items-center mb-3">
+                <i class="fa fa-filter text-primary me-2"></i>
+                <h6 class="mb-0 fw-bold text-secondary text-uppercase"
+                    style="font-size: 0.85rem; letter-spacing: 0.5px;">Filter Pencarian</h6>
             </div>
 
+            <div class="row g-3">
+
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <label for="filterKodeToko" class="form-label small fw-bold text-muted mb-1">Kode Toko</label>
+                    <select id="filterKodeToko" name="kode_toko"
+                        class="form-select form-select-sm shadow-none border-secondary-subtle">
+                        <option value="" selected>-- Semua Kode --</option>
+                        @foreach ($kode_toko as $k)
+                        <option value="{{ $k->id }}">{{ $k->kode }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <label for="filterSalesArea" class="form-label small fw-bold text-muted mb-1">Sales Area</label>
+                    <select id="filterSalesArea" name="area"
+                        class="form-select form-select-sm shadow-none border-secondary-subtle">
+                        <option value="" selected>-- Semua Area --</option>
+                        @foreach ($sales_area as $salesArea)
+                        <option value="{{ $salesArea->id }}">{{ $salesArea->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <label for="filterKab" class="form-label small fw-bold text-muted mb-1">Kabupaten / Kota</label>
+                    <select id="filterKab" name="kab_kot_id"
+                        class="form-select form-select-sm shadow-none border-secondary-subtle"
+                        onchange="filterKecamatan()">
+                        <option value="">-- Semua Kab / Kota --</option>
+                        @foreach ($kab_filter as $kab)
+                        <option value="{{ $kab->id }}">{{ $kab->nama_wilayah }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <label for="filterKecamatan" class="form-label small fw-bold text-muted mb-1">Kecamatan</label>
+                    <select id="filterKecamatan" name="kecamatan"
+                        class="form-select form-select-sm shadow-none border-secondary-subtle">
+                        <option value="">-- Semua Kecamatan --</option>
+                        {{-- @foreach ($kecamatan_filter as $kec)
+                        <option value="{{ $kec->id }}">{{ $kec->nama_wilayah }}</option>
+                        @endforeach --}}
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <label for="filterStatus" class="form-label small fw-bold text-muted mb-1">Status</label>
+                    <select id="filterStatus" name="status"
+                        class="form-select form-select-sm shadow-none border-secondary-subtle">
+                        <option value="1">Aktif</option>
+                        <option value="0">Non Aktif</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <label for="filterStatusWa" class="form-label small fw-bold text-muted mb-1">WA Notif</label>
+                    <select id="filterStatusWa" name="status_wa"
+                        class="form-select form-select-sm shadow-none border-secondary-subtle">
+                        <option value="">-- Semua --</option>
+                        <option value="1">Aktif</option>
+                        <option value="0">Non Aktif</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-6 col-md-12 col-sm-12 d-flex align-items-end justify-content-end">
+                    <button type="button" id="resetFilter" class="btn btn-secondary btn-sm px-4 shadow-sm">
+                        <i class="fa fa-sync-alt me-1"></i>Reset Filter
+                    </button>
+                </div>
+
+            </div>
         </div>
-    </div>
-    <table id="data" class="table table-bordered table-hover" style="font-size: 0.8rem;">
-        <thead class="table-warning bg-gradient">
-            <tr>
-                <th class="text-center align-middle">KODE</th>
-                <th class="text-center align-middle">KODE TOKO</th>
-                <th class="text-center align-middle">NAMA</th>
-                <th class="text-center align-middle">DOKUMEN</th>
-                <th class="text-center align-middle">CP</th>
-                <th class="text-center align-middle">NPWP</th>
-                <th class="text-center align-middle">NIK</th>
-                <th class="text-center align-middle">KTP</th>
-                <th class="text-center align-middle">Sales Area</th>
-                <th class="text-center align-middle">Provinsi</th>
-                <th class="text-center align-middle">Kab/Kota</th>
-                <th class="text-center align-middle">Kecamatan</th>
-                <th class="text-center align-middle">Alamat</th>
-                <th class="text-center align-middle">Sistem<br>Pembayaran</th>
-                <th class="text-center align-middle">Limit<br>Plafon</th>
-                <th class="text-center align-middle">Diskon Khusus (%)</th>
-                <th class="text-center align-middle">Checklist<br>Kunjungan</th>
-                <th class="text-center align-middle">WA Notif</th>
-                <th class="text-center align-middle">Alasan Penonaktifan</th>
-                <th class="text-center align-middle">Aksi</th>
-            </tr>
-        </thead>
-    </table>
+</div>
+<table id="data" class="table table-bordered table-hover" style="font-size: 0.8rem;">
+    <thead class="table-warning bg-gradient">
+        <tr>
+            <th class="text-center align-middle">KODE</th>
+            <th class="text-center align-middle">KODE TOKO</th>
+            <th class="text-center align-middle">NAMA</th>
+            <th class="text-center align-middle">DOKUMEN</th>
+            <th class="text-center align-middle">CP</th>
+            <th class="text-center align-middle">NPWP</th>
+            <th class="text-center align-middle">NIK</th>
+            <th class="text-center align-middle">KTP</th>
+            <th class="text-center align-middle">Sales Area</th>
+            <th class="text-center align-middle">Provinsi</th>
+            <th class="text-center align-middle">Kab/Kota</th>
+            <th class="text-center align-middle">Kecamatan</th>
+            <th class="text-center align-middle">Alamat</th>
+            <th class="text-center align-middle">Sistem<br>Pembayaran</th>
+            <th class="text-center align-middle">Limit<br>Plafon</th>
+            <th class="text-center align-middle">Diskon Khusus (%)</th>
+            <th class="text-center align-middle">Checklist<br>Kunjungan</th>
+            <th class="text-center align-middle">WA Notif</th>
+            <th class="text-center align-middle">Alasan Penonaktifan</th>
+            <th class="text-center align-middle">Aksi</th>
+        </tr>
+    </thead>
+</table>
 </div>
 
 @endsection
 @push('css')
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-    <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.1.1/css/scroller.dataTables.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet" />
+<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.1.1/css/scroller.dataTables.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet" />
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
-    <script src="{{asset('assets/js/dt5.min.js')}}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
-    <script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
-    <script>
+<script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+<script src="https://cdn.datatables.net/scroller/2.1.1/js/dataTables.scroller.min.js"></script>
+<script>
     function filterKecamatan() {
         var kabupatenKotaId = $('#filterKab').val();
         $('#filterKecamatan').val(null).trigger('change'); // Reset kecamatan
@@ -176,6 +201,7 @@
                 d.kecamatan = $('#filterKecamatan').val();
                 d.status = $('#filterStatus').val();
                 d.kabupaten_kota = $('#filterKab').val();
+                d.status_wa = $('#filterStatusWa').val();
             }
         },
         scrollY: '70vh', // tinggi area scroll, bisa disesuaikan
@@ -209,7 +235,7 @@
         ]
     });
 
-    const filters = $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus, #filterKab');
+    const filters = $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus, #filterKab, #filterStatusWa');
 
      filters.select2({
         theme: 'bootstrap-5',
@@ -223,7 +249,7 @@
     });
 
    $('#resetFilter').on('click', function () {
-        $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus, #filterKab')
+        $('#filterKodeToko, #filterSalesArea, #filterKecamatan, #filterStatus, #filterKab, #filterStatusWa')
             .val('')
             .trigger('change');
 
@@ -546,8 +572,6 @@ $('#edit_karyawan_id').select2({
 
 </script>
 <script>
-
-
     function dokumen(id, nama, kode)
     {
         document.getElementById('dokumen_konsumen_nama').value = kode + ' ' + nama;

@@ -126,6 +126,10 @@ class Konsumen extends Model
             $query->where('kode_toko_id', $filters['kode_toko']);
         }
 
+        if (isset($filters['status_wa']) && $filters['status_wa'] !== '') {
+            $query->where('wa_notif', $filters['status_wa']);
+        }
+
         if (isset($filters['status']) && $filters['status'] !== '') {
             $query->where('active', $filters['status']);
         } else {
