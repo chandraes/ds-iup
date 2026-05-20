@@ -272,6 +272,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::group(['middleware' => ['role:su,admin']], function () {
             Route::post('/approval-ajuan-harga/{harga}', [BarangController::class, 'harga_ajuan_approve'])->name('db.harga-ajuan-approve');
 
+            Route::prefix('metode-bayar')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'metode_bayar'])->name('db.metode-bayar');
+                Route::post('/update/{metodeBayar}', [App\Http\Controllers\DatabaseController::class, 'metode_bayar_update'])->name('db.metode-bayar.update');
+            });
+
             Route::prefix('subpg')->group(function () {
                 Route::get('/', [App\Http\Controllers\BarangController::class, 'subpg'])->name('db.subpg');
                 Route::post('/store', [App\Http\Controllers\BarangController::class, 'subpg_store'])->name('db.subpg.store');
@@ -506,6 +511,10 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
+
+            Route::prefix('janji-bayar')->group(function(){
+                Route::get('/', [RekapController::class, 'janji_bayar'])->name('rekap.janji-bayar');
+            });
 
             Route::prefix('bunga-investor')->group(function () {
                 Route::get('/', [RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
@@ -1029,6 +1038,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('invoice-janji-bayar')->group(function () {
                 Route::get('/', [BillingController::class, 'invoice_janji_bayar'])->name('billing.invoice-janji-bayar');
                 Route::get('/data', [BillingController::class, 'invoice_janji_bayar_data'])->name('billing.invoice-janji-bayar.data');
+                Route::post('/complete/{id}', [BillingController::class, 'invoice_janji_bayar_complete'])->name('billing.invoice-janji-bayar.complete');
                 Route::get('/detail/{id}', [BillingController::class, 'invoice_janji_bayar_detail'])->name('billing.invoice-janji-bayar.detail');
                 Route::post('/void/{id}', [BillingController::class, 'invoice_janji_bayar_void'])->name('billing.invoice-janji-bayar.void');
 

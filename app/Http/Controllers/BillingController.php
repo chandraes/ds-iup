@@ -23,10 +23,16 @@ use App\Models\GroupWa;
 use App\Models\Investor;
 use App\Models\InvestorModal;
 use App\Models\KasBesar;
+use App\Models\KasKonsumen;
+use App\Models\MetodeBayar;
+use App\Models\Pajak\RekapPpn;
 use App\Models\Pengaturan;
 use App\Models\Pengelola;
+use App\Models\PpnKeluaran;
+use App\Models\PpnMasukan;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\Rekening;
 use App\Models\ReturSupplier;
 use App\Models\StokRetur;
 use App\Models\transaksi\InventarisInvoice;
@@ -50,6 +56,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -142,6 +149,7 @@ class BillingController extends Controller
         $sr = StokRetur::where('status', 0)->count();
         $ps = ReturSupplier::whereNot('tipe', 99)->count();
         $ug = UangGantung::where('lunas', 0)->where('void', 0)->count();
+        $jb = JanjiBayar::where('status', 0)->count();
 
         $asistenAdm = User::where('role', 'asisten-admin')->select('id', 'name')->withCount('keranjangBeli')->get();
         $sumKeranjangBeli = $asistenAdm->sum('keranjang_beli_count');
@@ -149,6 +157,7 @@ class BillingController extends Controller
         return view('billing.index', [
             'is' => $is,
             'ug' => $ug,
+            'jb' => $jb,
             'ps' => $ps,
             'ik' => $invoiceJualCounts->ik,
             'isn' => $isn,
@@ -1662,7 +1671,9 @@ class BillingController extends Controller
             $totalSisaTagihan += $item->invoice_jual->sisa_tagihan;
         }
 
-        return view('billing.form-janji-bayar.keranjang', compact('cartItems', 'konsumen', 'totalSisaTagihan'));
+        $metodeBayars = MetodeBayar::all();
+
+        return view('billing.form-janji-bayar.keranjang', compact('cartItems', 'konsumen', 'totalSisaTagihan', 'metodeBayars'));
     }
 
     public function form_janji_bayar_tambah_keranjang(Request $request)
@@ -1730,14 +1741,21 @@ class BillingController extends Controller
         $inCartIds = $cartItems->pluck('invoice_jual_id')->toArray();
         $totalSisaTagihanCart = InvoiceJual::whereIn('id', $inCartIds)->sum('sisa_tagihan');
 
+        $metodeBayarConfig = MetodeBayar::where('slug', $request->metode)->first();
+
+        // Default fallback jika tidak ditemukan (misal 30 hari)
+        $maxDays = $metodeBayarConfig ? $metodeBayarConfig->max_hari : 30;
+        $maxDateAllowed = now()->addDays($maxDays)->format('Y-m-d');
+
         $request->validate([
             'kode' => 'required|unique:janji_bayars,kode',
-            'metode' => 'required|in:giro,cek,nota',
+            'metode' => 'required|exists:metode_bayars,slug', // Validasi terhadap database tabel baru
             'nominal' => 'required|numeric|min:' . $totalSisaTagihanCart,
-            'jatuh_tempo' => 'required|date',
+            'jatuh_tempo' => 'required|date|after_or_equal:today|before_or_equal:' . $maxDateAllowed,
         ], [
             'nominal.min' => 'Nominal janji bayar tidak boleh lebih kecil dari total sisa tagihan (Rp ' . number_format($totalSisaTagihanCart, 0, ',', '.') . ').',
-            'kode.unique' => 'Kode unik ini sudah terdaftar di database.'
+            'kode.unique' => 'Kode unik ini sudah terdaftar di database.',
+            'jatuh_tempo.before_or_equal' => 'Tanggal jatuh tempo untuk metode ' . ($metodeBayarConfig ? $metodeBayarConfig->nama : '') . ' maksimal tanggal ' . \Carbon\Carbon::parse($maxDateAllowed)->format('d-m-Y') . ' (+' . $maxDays . ' hari).',
         ]);
 
         $konsumenId = $cartItems->first()->konsumen_id;
@@ -1772,6 +1790,22 @@ class BillingController extends Controller
             // 3. Kosongkan Keranjang
             JanjiBayarKeranjang::where('user_id', $userId)->delete();
 
+            $dbKasKonsumen = new KasKonsumen;
+            $sisaTerakhir = $dbKasKonsumen->sisaTerakhir($konsumenId);
+            $penguranganSisa = $sisaTerakhir - $request->nominal;
+
+            if($penguranganSisa < 0) {
+                $penguranganSisa = 0; // Pastikan tidak menjadi negatif
+            }
+
+            $dbKasKonsumen->create([
+                'konsumen_id' => $konsumenId,
+                'janji_bayar_id' => $janjiBayar->id,
+                'uraian' => 'Janji Bayar - ' . $janjiBayar->kode,
+                'bayar' => $request->nominal,
+                'sisa' => $penguranganSisa,
+            ]);
+
             DB::commit();
             return redirect()->route('billing.form-janji-bayar')->with('success', 'Data Janji Bayar berhasil dieksekusi dan disimpan.');
         } catch (\Exception $e) {
@@ -1780,7 +1814,7 @@ class BillingController extends Controller
         }
     }
 
-    public function invoice_janji_bayar(Request $request)
+    public function invoice_janji_bayar()
     {
         return view('billing.invoice-janji-bayar.index');
     }
@@ -1819,9 +1853,13 @@ class BillingController extends Controller
                 })
 
                 // PERUBAHAN 2: Validasi Role untuk Tombol Void di Sisi Server
-                ->addColumn('action', function ($row) {
+               ->addColumn('action', function ($row) {
                     $btn = '<a href="' . route('billing.invoice-janji-bayar.detail', $row->id) . '" class="btn btn-sm btn-info text-white px-3 shadow-sm me-1">' .
                         '<i class="fa fa-eye"></i> Detail</a>';
+
+                    // TAMBAHAN: Tombol Selesai
+                    $btn .= '<button type="button" class="btn btn-sm btn-success px-3 shadow-sm btn-complete-document me-1" data-id="' . $row->id . '" data-kode="' . $row->kode . '">' .
+                        '<i class="fa fa-check-circle"></i> Selesai</button>';
 
                     // Cek hak akses user untuk tombol Void
                     if (Auth::check() && in_array(Auth::user()->role, ['admin', 'su'])) {
@@ -1872,11 +1910,18 @@ class BillingController extends Controller
                 InvoiceJual::whereIn('id', $invoiceIds)->update(['lunas' => 0]);
             }
 
-            // Hapus detail janji bayar secara eksplisit (jika tidak menggunakan cascade delete di migration)
-            JanjiBayarDetail::where('janji_bayar_id', $id)->delete();
+            $janjiBayar->update(['status' => 99]);
 
-            // Hapus data induk janji bayar
-            $janjiBayar->delete();
+            $dbKasKonsumen = new KasKonsumen;
+            $sisaTerakhir = $dbKasKonsumen->sisaTerakhir($janjiBayar->konsumen_id);
+            $penambahanSisa = $sisaTerakhir + $janjiBayar->nominal;
+
+            $dbKasKonsumen->create([
+                'konsumen_id' => $janjiBayar->konsumen_id,
+                'janji_bayar_id' => $janjiBayar->id,
+                'uraian' => 'Void Janji Bayar - ' . $janjiBayar->kode,
+                'sisa' => $penambahanSisa,
+            ]);
 
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Dokumen janji bayar ' . $janjiBayar->kode . ' berhasil di-void. Status invoice dikembalikan.']);
@@ -1884,5 +1929,170 @@ class BillingController extends Controller
             DB::rollBack();
             return response()->json(['status' => 'error', 'message' => 'Gagal melakukan void: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function invoice_janji_bayar_complete(JanjiBayar $id)
+    {
+        $janjiBayar = $id;
+
+        if ($janjiBayar->status !== 0) {
+            return response()->json(['status' => 'error', 'message' => 'Hanya dokumen dengan status Pending yang dapat diselesaikan.']);
+        }
+
+        $dbInv = new InvoiceJual;
+        $kas = new KasBesar;
+
+        // Ambil data statis (rekening & group WA) bisa tetap di luar transaction
+        $rekenings = Rekening::whereIn('untuk', ['kas-besar-ppn', 'kas-besar-non-ppn'])->get()->keyBy('untuk');
+        $groupWas = GroupWa::whereIn('untuk', ['kas-besar-ppn', 'kas-besar-non-ppn'])->get()->keyBy('untuk');
+
+        $waNotifications = [];
+
+        // =================================================================
+        // 1. BLOK PROSES TRANSAKSI DATABASE (SEKARANG DENGAN PESSIMISTIC LOCK)
+        // =================================================================
+        DB::beginTransaction();
+        try {
+
+            // AMANKAN DI SINI: Pindahkan pencarian saldo ke dalam Transaction + lockForUpdate()
+            // Ini akan mengunci baris terakhir kas besar agar user lain mengantre
+            $lastKasPpn = KasBesar::where('ppn_kas', 1)->orderBy('id', 'desc')->lockForUpdate()->first();
+            $saldoPpn = $lastKasPpn?->saldo ?? 0;
+            $modalPpn = $lastKasPpn?->modal_investor_terakhir ?? 0;
+
+            $lastKasNonPpn = KasBesar::where('ppn_kas', 0)->orderBy('id', 'desc')->lockForUpdate()->first();
+            $saldoNonPpn = $lastKasNonPpn?->saldo ?? 0;
+            $modalNonPpn = $lastKasNonPpn?->modal_investor_terakhir ?? 0;
+
+            $details = $janjiBayar->details()->with('invoice_jual')->get();
+
+            foreach ($details as $detail) {
+                $inv = $detail->invoice_jual;
+                if ($inv) {
+                    $kas_ppn = $inv->ppn > 0 ? 1 : 0;
+                    $kasMana = $kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+
+                    if ($kas_ppn == 1) {
+                        $dbInv->store_ppn($inv->id, $inv->sisa_ppn);
+                    }
+
+                    $sisa_tagihan = (float) str_replace('.', '', $inv->sisa_tagihan);
+                    $rekening = $rekenings->get($kasMana);
+
+                    // Update running balance dengan aman di memori
+                    if ($kas_ppn == 1) {
+                        $saldoPpn += $sisa_tagihan;
+                        $currentSaldo = $saldoPpn;
+                        $currentModal = $modalPpn;
+                    } else {
+                        $saldoNonPpn += $sisa_tagihan;
+                        $currentSaldo = $saldoNonPpn;
+                        $currentModal = $modalNonPpn;
+                    }
+
+                    $store = $kas->create([
+                        'invoice_jual_id' => $inv->id,
+                        'ppn_kas' => $kas_ppn,
+                        'uraian' => 'Pelunasan '.$inv->kode,
+                        'jenis' => '1',
+                        'nominal' => $sisa_tagihan,
+                        'saldo' => $currentSaldo,
+                        'nama_rek' => $rekening?->nama_rek,
+                        'no_rek' => $rekening?->no_rek,
+                        'bank' => $rekening?->bank,
+                        'modal_investor_terakhir' => $currentModal,
+                    ]);
+
+                    $waNotifications[] = [
+                        'kasMana' => $kasMana,
+                        'kas_ppn' => $kas_ppn,
+                        'uraian' => $store->uraian,
+                        'saldo' => $store->saldo,
+                        'nominal' => $store->nominal,
+                        'bank' => $store->bank,
+                        'nama_rek' => $store->nama_rek,
+                        'no_rek' => $store->no_rek,
+                    ];
+                }
+            }
+
+            $janjiBayar->update(['status' => 1]);
+
+            DB::commit(); // Selesai commit, kunci (lock) dilepas otomatis untuk digunakan user berikutnya
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Jika gagal, kunci juga dilepas dan data aman
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menyelesaikan dokumen janji bayar: ' . $e->getMessage()
+            ], 500);
+        }
+        // =================================================================
+        // 2. BLOK PROSES INTEGRASI WHATSAPP (TERISOLASI DI LUAR TRANSACTION)
+        // =================================================================
+        if (!empty($waNotifications)) {
+            try {
+                // Query agregat berat dijalankan di luar transaction dan cukup 1 kali saja
+                $getKas = $kas->getKas();
+                $saldoTerakhirPpn = (new RekapPpn())->saldoTerakhir();
+                $ppnMasukan = (new PpnMasukan())->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $ppnKeluaran = (new PpnKeluaran())->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+
+                foreach ($waNotifications as $notif) {
+                    try {
+                        $kasMana = $notif['kasMana'];
+                        $kas_ppn = $notif['kas_ppn'];
+                        $group = $groupWas->get($kasMana)?->nama_group;
+
+                        if (!$group) continue;
+
+                        if ($kas_ppn == 1) {
+                            $addPesan = "Sisa Saldo Kas Besar: \n".
+                                        'Rp. '.number_format($notif['saldo'], 0, ',', '.')."\n\n".
+                                        "Total Modal Investor PPN: \n".
+                                        'Rp. '.number_format($kas->modalInvestorTerakhir(1), 0, ',', '.')."\n\n";
+                        } else {
+                            $addPesan = "Sisa Saldo Kas Besar: \n".
+                                        'Rp. '.number_format($notif['saldo'], 0, ',', '.')."\n\n".
+                                        "Total Modal Investor Non PPN: \n".
+                                        'Rp. '.number_format($getKas['modal_investor_non_ppn'], 0, ',', '.')."\n\n";
+                        }
+
+                        $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                                    "*PELUNASAN JUAL BARANG*\n".
+                                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                                    'Uraian :  *'.$notif['uraian']."*\n\n".
+                                    'Nilai    :  *Rp. '.number_format($notif['nominal'], 0, ',', '.')."*\n\n".
+                                    "Ditransfer ke rek:\n\n".
+                                    'Bank      : '.$notif['bank']."\n".
+                                    'Nama    : '.$notif['nama_rek']."\n".
+                                    'No. Rek : '.$notif['no_rek']."\n\n".
+                                    "==========================\n".
+                                    $addPesan.
+                                    "Total PPn Masukan : \n".
+                                    'Rp. '.number_format($ppnMasukan, 0, ',', '.')."\n\n".
+                                    "Total PPn Keluaran : \n".
+                                    'Rp. '.number_format($ppnKeluaran, 0, ',', '.')."\n\n".
+                                    "Terima kasih 🙏🙏🙏\n";
+
+                        // Panggil API WA 3rd Party
+                        $kas->sendWa($group, $pesan);
+
+                    } catch (\Exception $waEx) {
+                        // Mencegah looping WA terhenti jika salah satu pesan gagal terkirim/gagal simpan ke model PesanWa
+                        Log::error('Gagal memproses salah satu pesan WhatsApp Pelunasan Janji Bayar (Uraian: '.$notif['uraian'].'): ' . $waEx->getMessage());
+                    }
+                }
+            } catch (\Exception $waAgregatEx) {
+                // Menangkap error jika query agregat di atas (getKas, sum PPN) bermasalah agar tidak merusak response sukses
+                Log::error('Gagal memproses data agregat WhatsApp pada Pelunasan Janji Bayar ID '. $janjiBayar->id .': ' . $waAgregatEx->getMessage());
+            }
+        }
+
+        // Selalu kembalikan response sukses karena status database sudah resmi berubah menjadi Selesai (1)
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Dokumen janji bayar ' . $janjiBayar->kode . ' berhasil diselesaikan dengan sukses.'
+        ]);
     }
 }

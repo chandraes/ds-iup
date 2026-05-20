@@ -73,7 +73,7 @@
                 <th class="text-center align-middle">Cash</th>
                 <th class="text-center align-middle">Bayar</th>
                 <th class="text-center align-middle">Hutang</th>
-                <th class="text-center align-middle">Sisa Plafon</th>
+                <th class="text-center align-middle">Sisa Hutang</th>
             </tr>
             </thead>
             <tbody>

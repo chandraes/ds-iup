@@ -91,24 +91,26 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Metode Pembayaran</label>
-                        <select name="metode" class="form-select @error('metode') is-invalid @enderror" required>
+                        <select name="metode" id="selectMetode" class="form-select @error('metode') is-invalid @enderror" required>
                             <option value="">-- Pilih Metode Pembayaran --</option>
-                            <option value="giro" {{ old('metode') == 'giro' ? 'selected' : '' }}>Giro</option>
-                            <option value="cek" {{ old('metode') == 'cek' ? 'selected' : '' }}>Cek</option>
-                            <option value="nota" {{ old('metode') == 'nota' ? 'selected' : '' }}>Nota</option>
+                            @foreach($metodeBayars as $mb)
+                                <option value="{{ $mb->slug }}" data-maxhari="{{ $mb->max_hari }}" {{ old('metode') == $mb->slug ? 'selected' : '' }}>
+                                    {{ $mb->nama }} (Maks +{{ $mb->max_hari }} Hari)
+                                </option>
+                            @endforeach
                         </select>
                         @error('metode')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                   <div class="mb-3">
+                  <div class="mb-3">
                         <label class="form-label fw-bold">Nominal Janji Bayar</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
-                            <input type="text" name="nominal" id="inputNominal" class="form-control nominal-cleave @error('nominal') is-invalid @enderror" value="{{ old('nominal', $totalSisaTagihan) }}" placeholder="0" required>
+                            <input type="text" name="nominal" id="inputNominal" class="form-control nominal-cleave bg-light @error('nominal') is-invalid @enderror" value="{{ old('nominal', $totalSisaTagihan) }}" placeholder="0" readonly required>
                         </div>
-                        <div class="form-text text-muted small"><i class="fa fa-info-circle"></i> Nominal pengisian minimal senilai total sisa tagihan.</div>
+                        <div class="form-text text-muted small"><i class="fa fa-info-circle"></i> Nominal otomatis disesuaikan dengan total sisa tagihan di keranjang dan tidak dapat diubah.</div>
                         @error('nominal')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
@@ -116,7 +118,7 @@
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">Tanggal Jatuh Tempo</label>
-                        <input type="date" name="jatuh_tempo" class="form-control @error('jatuh_tempo') is-invalid @enderror" value="{{ old('jatuh_tempo') }}" required>
+                        <input type="date" name="jatuh_tempo" id="inputJatuhTempo" class="form-control @error('jatuh_tempo') is-invalid @enderror" value="{{ old('jatuh_tempo') }}" disabled required>
                         @error('jatuh_tempo')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -135,6 +137,46 @@
 @push('js')
 <script>
     $(document).ready(function() {
+
+       let todayStr = new Date().toISOString().split('T')[0];
+        $('#inputJatuhTempo').attr('min', todayStr);
+
+        // 2. Logika Interaksi antar Input (Metode -> Jatuh Tempo)
+        $('#selectMetode').change(function() {
+            let selectedOption = $(this).find(':selected');
+            let maxHari = selectedOption.data('maxhari');
+            let valueMetode = $(this).val();
+
+            // Cek apakah user sudah memilih metode pembayaran (bukan opsi kosong)
+            if (valueMetode !== "") {
+                // Buka proteksi disabled pada input tanggal
+                $('#inputJatuhTempo').removeAttr('disabled');
+
+                if (maxHari !== undefined) {
+                    let maxDate = new Date();
+                    maxDate.setDate(maxDate.getDate() + parseInt(maxHari));
+                    let maxDateStr = maxDate.toISOString().split('T')[0];
+
+                    // Pasang batasan maksimal tanggal kalender yang bisa diklik user
+                    $('#inputJatuhTempo').attr('max', maxDateStr);
+
+                    // Reset tanggal jika tanggal yang terpilih sebelumnya melampaui batas baru
+                    if($('#inputJatuhTempo').val() > maxDateStr){
+                        $('#inputJatuhTempo').val('');
+                    }
+                } else {
+                    $('#inputJatuhTempo').removeAttr('max');
+                }
+            } else {
+                // Jika user mengembalikan pilihan ke "-- Pilih Metode --", kunci kembali dan bersihkan nilainya
+                $('#inputJatuhTempo').attr('disabled', true).val('').removeAttr('max');
+            }
+        });
+
+        // 3. Trigger change saat halaman reload jika ada nilai 'old' input dari Laravel (Gagal validasi server)
+        if($('#selectMetode').val()) {
+            $('#selectMetode').trigger('change');
+        }
         // Simpan nilai totalSisaTagihan awal dari PHP ke variabel JavaScript global
         let totalSisaTagihan = {{ $totalSisaTagihan }};
 
@@ -180,11 +222,8 @@
                             totalSisaTagihan -= nominalItem;
                             $('#textTotalSisa').text(formatRupiah(totalSisaTagihan));
 
-                            let currentRawValue = parseFloat(nominalCleave.getRawValue()) || 0;
-
-                            if (currentRawValue < totalSisaTagihan || currentRawValue == (totalSisaTagihan + nominalItem)) {
-                                nominalCleave.setRawValue(totalSisaTagihan);
-                            }
+                            // PERUBAHAN: Paksa nilai nominal untuk selalu mengikuti totalSisaTagihan yang baru
+                            nominalCleave.setRawValue(totalSisaTagihan);
 
                             $(`#row-cart-${invoiceId}`).fadeOut(400, function() {
                                 $(this).remove();
@@ -209,11 +248,11 @@
             let inputNominalRaw = parseFloat(nominalCleave.getRawValue()) || 0;
 
             // 1. Validasi Client-side: Cek apakah nominal kurang dari total tagihan
-            if (inputNominalRaw < totalSisaTagihan) {
+            if (inputNominalRaw !== totalSisaTagihan) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Nominal Kurang!',
-                    text: 'Nominal janji bayar yang diinput tidak boleh lebih kecil dari total sisa tagihan (' + formatRupiah(totalSisaTagihan) + ').',
+                    title: 'Nominal Tidak Sesuai!',
+                    text: 'Nominal janji bayar wajib sama persis dengan total sisa tagihan (' + formatRupiah(totalSisaTagihan) + ').',
                     confirmButtonColor: '#3085d6'
                 });
                 return false;

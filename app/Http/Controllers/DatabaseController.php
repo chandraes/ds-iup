@@ -24,6 +24,7 @@ use App\Models\db\Pajak;
 use App\Models\db\SalesArea;
 use App\Models\db\Satuan;
 use App\Models\db\Supplier;
+use App\Models\MetodeBayar;
 use App\Models\Pengelola;
 use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
@@ -1543,6 +1544,36 @@ class DatabaseController extends Controller
         });
 
         exit;
+    }
+
+    public function metode_bayar()
+    {
+        // Proteksi Role Admin / Super User
+        if (!in_array(Auth::user()->role, ['admin', 'su'])) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        $metodeBayars = MetodeBayar::all();
+        return view('db.metode-bayar.index', compact('metodeBayars'));
+    }
+
+    public function metode_bayar_update(Request $request, MetodeBayar $metodeBayar)
+    {
+        // Proteksi Role Admin / Super User
+        if (!in_array(Auth::user()->role, ['admin', 'su'])) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $data = $request->validate([
+            'max_hari' => 'required|integer|min:0'
+        ]);
+
+        $metodeBayar->update($data);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Batas jatuh tempo untuk ' . $metodeBayar->nama . ' berhasil diubah menjadi ' . $request->max_hari . ' hari.'
+        ]);
     }
 
 

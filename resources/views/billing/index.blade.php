@@ -327,6 +327,9 @@
             <a href="{{route('billing.invoice-janji-bayar')}}" class="text-decoration-none">
                 <img src="{{asset('images/janji-bayar.svg')}}" alt="" width="70">
                 <h5 class="mt-3">INVOICE JANJI BAYAR
+                    @if ($jb > 0)
+                    <span class="text-danger">({{$jb}})</span>
+                    @endif
 
                 </h5>
             </a>

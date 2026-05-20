@@ -300,6 +300,7 @@
             deferRender: true,
             scrollY: "55vh",
             scrollCollapse: true,
+            saveState: true,
             scroller: {
                 loadingIndicator: true,
                 displayBuffer: 10

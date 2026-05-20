@@ -4,7 +4,7 @@
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3 mb-0 text-gray-800"><i class="fa fa-file-text text-primary"></i> Daftar Dokumen Janji Bayar</h1>
+            <h1 class="h3 mb-0 text-gray-800"><i class="fa fa-file-text text-primary"></i> Invoice Janji Bayar</h1>
             <p class="text-muted small mb-0">Memuat riwayat komitmen janji bayar yang berstatus <strong class="text-warning">Pending</strong>.</p>
         </div>
         <div>
@@ -105,6 +105,51 @@
                         },
                         error: function(xhr) {
                             $('#spinner').hide();
+                            let msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan sistem.';
+                            Swal.fire('Oops...', msg, 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        $('#janjiBayarTable').on('click', '.btn-complete-document', function(e) {
+            e.preventDefault();
+            let id = $(this).data('id');
+            let kode = $(this).data('kode');
+            let urlComplete = "{{ route('billing.invoice-janji-bayar.complete', ':id') }}".replace(':id', id);
+
+            Swal.fire({
+                title: 'Selesaikan Dokumen?',
+                text: "Apakah Anda yakin ingin menyelesaikan dokumen Janji Bayar (" + kode + ") ini?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754', // Warna hijau sukses
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Selesai!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if($('#spinner').length) { $('#spinner').show(); } // Tampilkan global loading jika ada
+
+                    $.ajax({
+                        url: urlComplete,
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if($('#spinner').length) { $('#spinner').hide(); }
+
+                            if(response.status === 'success') {
+                                Swal.fire('Berhasil!', response.message, 'success');
+                                table.ajax.reload(null, false); // Reload data table secara asinkron
+                            } else {
+                                Swal.fire('Gagal!', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            if($('#spinner').length) { $('#spinner').hide(); }
                             let msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan sistem.';
                             Swal.fire('Oops...', msg, 'error');
                         }

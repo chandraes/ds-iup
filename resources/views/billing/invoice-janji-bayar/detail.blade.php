@@ -48,13 +48,7 @@
                         <tr>
                             <td class="text-muted">Status Saat Ini</td>
                             <td>:
-                                @if($janjiBayar->status == 'pending')
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                @elseif($janjiBayar->status == 'success' || $janjiBayar->status == 'lunas')
-                                    <span class="badge bg-success">Selesai</span>
-                                @else
-                                    <span class="badge bg-danger">{{ ucfirst($janjiBayar->status) }}</span>
-                                @endif
+                                {!! $janjiBayar->status_label !!}
                             </td>
                         </tr>
                     </table>

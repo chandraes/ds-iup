@@ -226,6 +226,12 @@
                 <h5 class="mt-3">INVOICE KONSUMEN NON PPN</h5>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.janji-bayar')}}" class="text-decoration-none">
+                <img src="{{asset('images/janji-bayar.svg')}}" alt="" width="70">
+                <h5 class="mt-3">INVOICE JANJI BAYAR</h5>
+            </a>
+        </div>
 
     </div>
     <hr>

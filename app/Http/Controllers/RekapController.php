@@ -23,6 +23,7 @@ use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\transaksi\JanjiBayar;
 use App\Models\UangGantung;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -953,5 +954,45 @@ class RekapController extends Controller
                 ->rawColumns(['status_kas', 'status'])
                 ->make(true);
         }
+    }
+
+    public function janji_bayar(Request $request)
+    {
+        // 1. Tentukan default filter jika user baru pertama kali membuka halaman
+        $selectedBulan = $request->input('bulan', Carbon::now()->format('m'));
+        $selectedTahun = $request->input('tahun', Carbon::now()->format('Y'));
+        $selectedStatus = $request->input('status', 'all'); // 'all', '1', atau '99'
+
+        // 2. Query dasar: Hanya mengambil status selain 0 (Pending)
+        // Gunakan eager loading 'konsumen' untuk menghindari N+1 Query saat menampilkan nama toko
+        $query = JanjiBayar::with('konsumen')
+            ->where('status', '!=', 0)
+            ->whereMonth('updated_at', $selectedBulan) // Menggunakan updated_at karena status berubah di kolom ini
+            ->whereYear('updated_at', $selectedTahun);
+
+        // 3. Tambahkan filter status spesifik jika dipilih (bukan 'all')
+        if ($selectedStatus !== 'all') {
+            $query->where('status', $selectedStatus);
+        }
+
+        // 4. Ambil data dengan urutan tanggal selesai terbaru di atas
+        $rekapData = $query->orderBy('updated_at', 'desc')->get();
+
+        // 5. Hitung total akumulasi nominal untuk ringkasan di atas tabel (Dashboard Kecil)
+        $totalSelesai = $rekapData->where('status', 1)->sum('nominal');
+        $totalVoid = $rekapData->where('status', 99)->sum('nominal');
+
+        // 6. Buat daftar pilihan tahun untuk dropdown filter (misal: 5 tahun ke belakang)
+        $daftarTahun = range(Carbon::now()->format('Y'), Carbon::now()->subYears(5)->format('Y'));
+
+        return view('rekap.janji-bayar.index', compact(
+            'rekapData',
+            'selectedBulan',
+            'selectedTahun',
+            'selectedStatus',
+            'totalSelesai',
+            'totalVoid',
+            'daftarTahun'
+        ));
     }
 }
