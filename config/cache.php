@@ -97,6 +97,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cache Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | This option defines the list of classes that are permitted to be
+    | unserialized from cache. Keeping this option disabled will prevent
+    | arbitrary object deserialization from your cache store.
+    |
+    */
+    'serializable_classes' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Key Prefix
     |--------------------------------------------------------------------------
     |

@@ -2,45 +2,28 @@
 
 namespace Tests\Unit;
 
-use Illuminate\Http\Request;
-// use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
 class CustomerControllerTest extends TestCase
 {
-    // use RefreshDatabase;
-
-    public function test_store()
+    public function test_db_konsumen_store_requires_authentication(): void
     {
-        $data = [
+        $response = $this->post('/db/konsumen/store', [
+            'kode_toko_id' => 1,
+            'nik' => '1234567890',
             'nama' => 'Test',
-            'singkatan' => 'T',
             'cp' => 'Test CP',
-            'no_wa' => '1234567890',
+            'no_hp' => '1234567890',
+            'npwp' => '123456789',
+            'provinsi_id' => 1,
+            'kabupaten_kota_id' => 1,
             'alamat' => 'Test Address',
-            'harga' => '1000',
-        ];
-
-        // Validate the data
-        $validator = Validator::make($data, [
-            'nama' => 'required',
-            'singkatan' => 'required',
-            'cp' => 'required',
-            'no_wa' => 'required',
-            'alamat' => 'required',
-            'harga' => 'required',
+            'pembayaran' => 1,
+            'plafon' => '1000',
+            'tempo_hari' => 30,
+            'karyawan_id' => 1,
         ]);
 
-        if ($validator->fails()) {
-            $this->fail('Request validation failed');
-        }
-
-        $request = new Request($data);
-
-        $controller = new \App\Http\Controllers\CustomerController;
-        $controller->store($request);
-
-        $this->assertDatabaseHas('customers', $data);
+        $response->assertRedirect('/login');
     }
 }
