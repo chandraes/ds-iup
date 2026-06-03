@@ -43,7 +43,10 @@
                         <div class="card-body">
                             <p class="card-text mb-1">
                                 <span class="badge bg-info text-dark me-1">{{ $d->sistem_pembayaran_text }}</span>
-                                <span class="badge bg-secondary">{{ $d->kas_ppn_text }}</span>
+                                <span class="badge bg-secondary me-1">{{ $d->kas_ppn_text }}</span>
+                                @if ($d->kas_ppn == 1)
+                                    <span class="badge bg-warning text-dark">{{ $d->ppn_disetor_text }}</span>
+                                @endif
                             </p>
                              <p class="card-text mb-1">
                                 @php
@@ -87,7 +90,7 @@
                     <form action="{{ route('billing.form-beli.store') }}" method="POST">
                         @csrf
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="sistem_pembayaran" class="form-label fw-bold">
                                     <i class="fa fa-money-check-alt me-1"></i> Sistem Pembayaran
                                 </label>
@@ -98,7 +101,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="kas_ppn" class="form-label fw-bold">
                                     Jenis Kas
                                 </label>
@@ -109,7 +112,19 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-3 d-none" id="ppn_disetor_group">
+                                <label for="ppn_disetor" class="form-label fw-bold">
+                                    PPN Disetor
+                                </label>
+                                <select class="form-select" name="ppn_disetor" id="ppn_disetor" required>
+                                    <option value="">Pilih Opsi PPN</option>
+                                    <option value="1">Disetor Sendiri</option>
+                                    <option value="0">Disetor Supplier</option>
+                                </select>
+                                <div class="form-text">Tentukan siapa yang akan menyetor PPN.</div>
+                            </div>
+
+                            <div class="col-md-3">
                                 <label for="barang_unit_id" class="form-label fw-bold">
                                     <i class="fa fa-truck me-1"></i> Supplier
                                 </label>
@@ -158,6 +173,23 @@
             width: '100%',
             allowClear: true
         });
+
+        const togglePpnDisetor = function() {
+            const kasPpnValue = $('#kas_ppn').val();
+            const ppnGroup = $('#ppn_disetor_group');
+            const ppnSelect = $('#ppn_disetor');
+
+            if (kasPpnValue === '1') {
+                ppnGroup.removeClass('d-none');
+                ppnSelect.prop('disabled', false).prop('required', true);
+            } else {
+                ppnGroup.addClass('d-none');
+                ppnSelect.prop('disabled', true).prop('required', false).val('');
+            }
+        };
+
+        $('#kas_ppn').on('change', togglePpnDisetor);
+        togglePpnDisetor();
 
         // --------------------------------------------------------
         // SWEETALERT CONFIRMATION FOR DELETE BUTTONS

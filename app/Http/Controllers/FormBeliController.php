@@ -34,8 +34,13 @@ class FormBeliController extends Controller
         $data = $request->validate([
             'sistem_pembayaran' => 'required|in:1,2',
             'kas_ppn' => 'required|boolean',
+            'ppn_disetor' => 'nullable|required_if:kas_ppn,1|in:0,1',
             'barang_unit_id' => 'required|exists:barang_units,id'
         ]);
+
+        if ($data['kas_ppn'] == 0) {
+            $data['ppn_disetor'] = 0;
+        }
 
         $data['user_id'] = Auth::user()->id;
 
@@ -256,7 +261,6 @@ class FormBeliController extends Controller
             'uraian' => 'required',
             'diskon' => 'required',
             'add_fee' => 'required',
-            'uraian' => 'required',
             'dp' => 'nullable',
             'dp_ppn' => 'nullable',
             'jatuh_tempo' => 'nullable',

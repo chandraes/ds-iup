@@ -23,7 +23,7 @@ class KeranjangBeli extends Model
 {
     protected $guarded = ['id'];
 
-    protected $appends = ['kas_ppn_text', 'sistem_pembayaran_text'];
+    protected $appends = ['kas_ppn_text', 'sistem_pembayaran_text', 'ppn_disetor_text'];
 
     public function details()
     {
@@ -48,6 +48,11 @@ class KeranjangBeli extends Model
     public function getSistemPembayaranTextAttribute()
     {
         return $this->sistem_pembayaran == 1 ? 'Cash' : 'Tempo';
+    }
+
+    public function getPpnDisetorTextAttribute()
+    {
+        return $this->ppn_disetor === 1 ? 'Disetor Sendiri' : 'Disetor Supplier';
     }
 
      public function checkout($data)
@@ -78,6 +83,8 @@ class KeranjangBeli extends Model
         $data['sisa_ppn'] = $data['dp_ppn'] > 0 ? $data['ppn'] - $data['dp_ppn'] : 0;
 
         $data['sisa'] = $data['tempo'] == 1 ? $data['total'] - $data['dp'] - $data['dp_ppn'] : 0;
+
+        $data['ppn_disetor'] = $first->ppn_disetor;
 
         if ($data['tempo'] == 1 && $data['jatuh_tempo']) {
             $data['jatuh_tempo'] = Carbon::parse($data['jatuh_tempo'])->format('Y-m-d');
@@ -319,6 +326,7 @@ class KeranjangBeli extends Model
             'bank' => $supplier->bank,
             'supplier_id' => $data['supplier_id'],
             'jatuh_tempo' => $data['jatuh_tempo'],
+            'ppn_disetor' => $data['ppn_disetor'],
         ];
 
         $store = $db->create($invoice);
@@ -423,6 +431,8 @@ class KeranjangBeli extends Model
                 'nominal' => $nominal,
                 'saldo' => $ppn->saldoTerakhir() + $nominal,
                 'uraian' => $uraian,
+                'ppn_disetor' => $store->ppn_disetor,
+                'is_finish' => $store->ppn_disetor === 1 ? 0 : 1
             ]);
         }
 

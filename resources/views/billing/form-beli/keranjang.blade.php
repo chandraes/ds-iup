@@ -70,6 +70,12 @@
                                 <p class="mb-0"><span class="badge bg-secondary">{{$supplier->bank}}</span></p>
                                 <input type="hidden" name="bank" value="{{$supplier->bank}}">
                             </div>
+                            @if ($b->kas_ppn == 1)
+                                <div class="col-md-4">
+                                    <label class="small text-muted text-uppercase fw-bold">PPN Disetor</label>
+                                    <p class="mb-0"><span class="badge bg-warning text-dark">{{ $b->ppn_disetor_text }}</span></p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
