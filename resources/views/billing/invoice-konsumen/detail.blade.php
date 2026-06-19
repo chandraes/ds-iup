@@ -13,7 +13,7 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                                <td><a href="{{route('billing.invoice-konsumen.edit', ['invoice' => $data->id])}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30">
+                                <td><a href="{{route('billing.invoice-konsumen.edit', ['invoice' => $data->id])}}"><img src="{{asset('images/edit.svg')}}" alt="dokumen" width="30">
                         Edit</a></td>
                     <td><a href="{{url()->previous()}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30">
                         KEMBALI</a></td>
