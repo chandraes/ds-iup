@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
+use App\Models\PpnKeluaran;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
+use App\Models\KasKonsumen;
 use App\Models\Wilayah;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -176,7 +180,7 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen_detail(InvoiceJual $invoice)
     {
-        $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
+        $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama', 'invoice_jual_cicil', 'invoice_detail.barang.satuan', 'invoice_detail.satuan_grosir']);
         $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
         $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
 
@@ -270,5 +274,199 @@ class InvoiceController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Invoice-Konsumen-Tempo.pdf');
+    }
+
+    public function invoice_konsumen_edit(InvoiceJual $invoice)
+    {
+        // Mengambil data beserta relasinya
+        $data = $invoice->load([
+            'konsumen',
+            'invoice_detail.stok.type',
+            'invoice_detail.barang.satuan',
+            'invoice_detail.barang',
+            'invoice_detail.stok.barang',
+            'invoice_detail.stok.unit',
+            'invoice_detail.stok.kategori',
+            'invoice_detail.stok.barang_nama',
+            'invoice_jual_cicil',
+
+        ]);
+
+        $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
+        $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
+
+        return view('billing.invoice-konsumen.edit', [
+            'data' => $data,
+            'jam' => $jam,
+            'tanggal' => $tanggal,
+        ]);
+    }
+
+    public function invoice_konsumen_update(Request $request, InvoiceJual $invoice)
+    {
+        $request->validate([
+            'detail_id' => 'required|array',
+            'qty' => 'required|array',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // 1. TANGKAP TOTAL TAGIHAN LAMA SEBELUM ADA PERUBAHAN
+            $totalTagihanLama = $invoice->grand_total; // Atau $invoice->total (pastikan sesuai dengan field acuan Anda)
+
+            $submittedDetailIds = $request->detail_id;
+            $submittedQty = $request->qty;
+            $detailsLama = $invoice->invoice_detail;
+
+            $totalHargaBaru = 0;
+            $totalPpnBaru = 0;
+
+            foreach ($detailsLama as $detail) {
+
+                // Cari data record stok TERBARU di gudang untuk barang_id ini
+                $stokTerbaru = BarangStokHarga::where('barang_id', $detail->barang_id)
+                                            ->where('hide', 0)
+                                            ->latest('id')
+                                            ->lockForUpdate()
+                                            ->first();
+
+                // -------------------------------------------------------------
+                // KONDISI A: BARANG DIHAPUS TOTAL OLEH USER
+                // -------------------------------------------------------------
+                if (!in_array($detail->id, $submittedDetailIds)) {
+                    if ($stokTerbaru) {
+                        // Semua barang dikembalikan ke record stok TERBARU
+                        $stokTerbaru->stok += $detail->jumlah;
+                        $stokTerbaru->save();
+                    }
+
+                    $detail->delete();
+                    continue;
+                }
+
+                // -------------------------------------------------------------
+                // KONDISI B: BARANG TETAP ADA, CEK PENGURANGAN QUANTITY
+                // -------------------------------------------------------------
+                $qtyBaru = (int) $submittedQty[$detail->id];
+                $qtyLama = (int) $detail->jumlah;
+                $selisihQty = $qtyBaru - $qtyLama;
+
+                // Proteksi Back-end
+                if ($selisihQty > 0) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Gagal update! Anda tidak diperbolehkan menambah jumlah barang pada mode edit ini.');
+                }
+
+                if ($selisihQty < 0) {
+                    // Kembalikan nilai absolut selisih ke stok TERBARU
+                    if ($stokTerbaru) {
+                        $stokTerbaru->stok += abs($selisihQty);
+                        $stokTerbaru->save();
+                    }
+                }
+
+                // -------------------------------------------------------------
+                // RE-KALKULASI NOMINAL DETAIL BARANG YANG TERSISA
+                // -------------------------------------------------------------
+                $hargaSatuanFinal = $detail->harga_satuan - $detail->diskon + $detail->ppn;
+
+                $detail->jumlah = $qtyBaru;
+                $detail->total = $qtyBaru * $hargaSatuanFinal;
+                $detail->save();
+
+                $totalHargaBaru += $detail->total;
+                $totalPpnBaru += ($detail->ppn * $qtyBaru);
+            }
+
+            // -------------------------------------------------------------
+            // RE-KALKULASI MASTER DATA INVOICE
+            // -------------------------------------------------------------
+            $invoice->total = $totalHargaBaru;
+            $invoice->grand_total = $totalHargaBaru;
+
+            $invoice->ppn = $totalPpnBaru;
+
+            if (isset($invoice->dp_ppn) && $invoice->dp_ppn > 0) {
+                $invoice->sisa_ppn = $totalPpnBaru - $invoice->dp_ppn;
+            } else {
+                $invoice->sisa_ppn = $totalPpnBaru;
+            }
+
+            if ($invoice->sisa_ppn < 0) {
+                $invoice->sisa_ppn = 0;
+            }
+
+            $totalDP = isset($invoice->dp) ? $invoice->dp : 0;
+
+            $totalCicilan = 0;
+            if ($invoice->invoice_jual_cicil) {
+                $sumNominalCicil = $invoice->invoice_jual_cicil->sum('nominal');
+                $sumPpnCicil = $invoice->invoice_jual_cicil->sum('ppn');
+                $totalCicilan = $sumNominalCicil + $sumPpnCicil;
+            }
+
+            $invoice->sisa_tagihan = $totalHargaBaru - $totalDP - $totalCicilan;
+
+            if ($invoice->sisa_tagihan <= 0) {
+                $invoice->sisa_tagihan = 0;
+                $invoice->lunas = 1;
+            } else {
+                $invoice->lunas = 0;
+            }
+
+            $invoice->save();
+
+            // -------------------------------------------------------------
+            // AREA CUSTOM KAS KONSUMEN / PLAFON HUTANG
+            // -------------------------------------------------------------
+            // 2. HITUNG SELISIH (PENGURANGAN) TAGIHAN
+            $selisihTagihan = $totalTagihanLama - $totalHargaBaru;
+
+            // Jika ada selisih (berarti ada barang yang dikurangi/dihapus)
+            if ($selisihTagihan > 0) {
+
+                // SILAKAN TULIS LOGIKA UPDATE KAS KONSUMEN ANDA DI SINI
+                // Nominal yang harus Anda kurangkan/kembalikan ke plafon ada pada variabel:
+                // $selisihTagihan
+
+                $dbKas = new KasKonsumen;
+                $konsumenId = $invoice->konsumen_id;
+
+                $sisaTerakhir = $dbKas->sisaTerakhir($konsumenId);
+                $penguranganSisa = $sisaTerakhir - $selisihTagihan;
+
+                if($penguranganSisa < 0) {
+                    $penguranganSisa = 0; // Pastikan tidak menjadi negatif
+                }
+
+                $dbKas->create([
+                    'konsumen_id' => $konsumenId,
+                    'invoice_jual_id' => $invoice->id,
+                    'uraian' => 'Update Invoice - ' . $invoice->full_kode,
+                    'bayar' => $selisihTagihan,
+                    'sisa' => $penguranganSisa,
+                ]);
+
+
+            }
+            // -------------------------------------------------------------
+
+            // $ppnKeluaran = PpnKeluaran::where('invoice_jual_id', $invoice->id)->first();
+
+            // if ($ppnKeluaran) {
+            //     $ppnKeluaran->nominal = $totalPpnBaru;
+            //     $ppnKeluaran->save();
+            // }
+
+            DB::commit();
+
+            return redirect()->route('billing.invoice-konsumen.detail', $invoice->id)
+                            ->with('success', 'Isi Invoice Berhasil Dikurangi & Stok Gudang Terbaru Telah Diperbarui!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $e->getMessage());
+        }
     }
 }

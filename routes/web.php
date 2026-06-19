@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FormBeliController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\PerusahaanController;
+use App\Http\Controllers\InvoiceController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -227,6 +228,16 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['role:su,admin']], function () {
+
+        // Tambahkan di dalam group route yang sesuai
+        Route::prefix('billing/invoice-konsumen/')->group(function(){
+             Route::get('{invoice}/edit', [InvoiceController::class, 'invoice_konsumen_edit'])->name('billing.invoice-konsumen.edit');
+
+            // Siapkan route untuk proses updatenya nanti (Langkah 3)
+            Route::post('{invoice}/update', [InvoiceController::class, 'invoice_konsumen_update'])->name('billing.invoice-konsumen.update');
+        });
+
+
         // ROUTE PENGATURAN
         // Route::view('pengaturan', 'pengaturan.index')->name('pengaturan');
         Route::prefix('pengaturan')->group(function () {

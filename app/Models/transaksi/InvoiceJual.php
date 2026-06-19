@@ -29,12 +29,22 @@ class InvoiceJual extends Model
 
     protected $appends = ['tanggal', 'tanggal_lunas','id_jatuh_tempo', 'dpp', 'nf_ppn',
         'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'nf_sisa_ppn',
-        'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word', 'tanggal_en',
+        'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word', 'tanggal_en', 'total_cicilan'
     ];
 
     public function invoice_jual_cicil()
     {
         return $this->hasMany(InvoiceJualCicil::class);
+    }
+
+    public function getTotalCicilanAttribute()
+    {
+        return $this->invoice_jual_cicil ?  number_format($this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn'), 0, ',', '.') : 0;
+    }
+
+     public function getRawTotalCicilanAttribute()
+    {
+        return $this->invoice_jual_cicil ?  $this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn') : 0;
     }
 
     public function dataTahun()

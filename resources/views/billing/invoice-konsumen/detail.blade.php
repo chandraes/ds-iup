@@ -13,6 +13,8 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                                <td><a href="{{route('billing.invoice-konsumen.edit', ['invoice' => $data->id])}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30">
+                        Edit</a></td>
                     <td><a href="{{url()->previous()}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30">
                         KEMBALI</a></td>
                 </tr>
@@ -38,7 +40,7 @@
                                 <td class="text-start align-middle">Sistem Pembayaran</td>
                                 <td class="text-start align-middle" style="width: 10%">:</td>
                                 <td class="text-start align-middle">
-                                    {{$data->konsumen ? $data->konsumen->sistem_pembayaran : 'Cash'}}
+                                    {{$data->sistem_pembayaran_word }}
                                 </td>
                             </tr>
                             <tr>
@@ -139,8 +141,8 @@
                         {{$loop->iteration}}
                     </td>
                     <td class="text-center align-middle">
-                         {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}},
-                        {{$d->stok->barang->merk}}
+                         {{$d->stok->barang_nama->nama}}, {{$d->barang->kode}},
+                        {{$d->barang->merk}}
                     </td>
                      <td class="text-center align-middle">
                         {{$d->nf_jumlah}}
@@ -215,6 +217,10 @@
                     <th style="text-align: right">{{$data->nf_sisa_ppn}}</th>
                 </tr>
                 @endif
+                <tr>
+                    <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">Cicilan : </th>
+                    <th style="text-align: right">{{$data->total_cicilan}}</th>
+                </tr>
                 <tr>
                     <th style="text-align: right" colspan="{{$data->kas_ppn ? '8' : '7'}}">Sisa Tagihan : </th>
                     <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
