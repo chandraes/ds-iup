@@ -61,7 +61,7 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <table class="table table-striped table-hover align-middle" id="invoice-table">
-                <thead class="table-light text-center">
+                <thead class="table-success text-center">
                     <tr>
                         <th width="5%">No</th>
                         <th width="15%">Nomor Invoice</th>
