@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Config;
+use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
+use App\Models\db\Barang\BarangStokHarga;
 use App\Models\db\Barang\BarangUnit;
 use App\Models\GroupWa;
 use App\Models\ReturSupplier;
 use App\Models\ReturSupplierDetail;
+use App\Models\ReturSupplierReceipt;
+use App\Models\ReturSupplierReceiptDetail;
 use App\Models\StokRetur;
 use App\Models\StokReturCart;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -296,16 +300,70 @@ class ReturController extends Controller
 
    public function invoiceShow($id)
     {
-        // [UBAH DISINI] Load relasi 'barang_unit'
-        $invoice = ReturSupplier::with(['barang_unit', 'user', 'details.barang.barang_nama', 'details.barang.satuan'])->findOrFail($id);
-        return view('billing.barang-retur-kirim.partials.invoice-detail', compact('invoice'));
+        // Load invoice beserta details dan receipts
+        $invoice = ReturSupplier::with([
+            'barang_unit',
+            'user',
+            'details.barang.barang_nama',
+            'details.barang.satuan',
+            'receipts.details' // Tarik detail riwayat penerimaan
+        ])->findOrFail($id);
+
+        // Kumpulkan semua item yang pernah diproses di riwayat penerimaan (termasuk barang pengganti baru)
+        $processedItems = collect();
+
+        // 1. Masukkan barang asli dari invoice detail terlebih dahulu
+        foreach ($invoice->details as $detail) {
+            $processedItems->put($detail->barang_id, [
+                'barang' => $detail->barang,
+                'qty_awal' => $detail->qty,
+                'diterima' => 0,
+                'batal' => 0,
+                'catatan' => []
+            ]);
+        }
+
+        // 2. Kalkulasi akumulasi dari riwayat penerimaan (Receipts)
+        foreach ($invoice->receipts as $receipt) {
+            foreach ($receipt->details as $rd) {
+                // Jika ada barang pengganti baru (tidak ada di invoice awal), buat baris baru
+                if (!$processedItems->has($rd->barang_id)) {
+                    $processedItems->put($rd->barang_id, [
+                        'barang' => $rd->barang,
+                        'qty_awal' => 0, // Barang pengganti tidak ada qty awal di invoice retur
+                        'diterima' => 0,
+                        'batal' => 0,
+                        'catatan' => []
+                    ]);
+                }
+
+                // Ambil data itemnya
+                $item = $processedItems->get($rd->barang_id);
+
+                // Akumulasikan nilainya
+                if ($rd->status_proses == 'terima') {
+                    $item['diterima'] += $rd->qty_terima;
+                } elseif ($rd->status_proses == 'hapus') {
+                    $item['batal'] += $rd->qty_terima;
+                }
+
+                // Simpan catatan jika ada
+                if ($rd->catatan_item) {
+                    $item['catatan'][] = $rd->catatan_item;
+                }
+
+                $processedItems->put($rd->barang_id, $item);
+            }
+        }
+
+        return view('billing.barang-retur-kirim.partials.invoice-detail', compact('invoice', 'processedItems'));
     }
 
     public function invoiceData(Request $request)
     {
         if ($request->ajax()) {
-            // [UBAH DISINI] Ganti 'unit' menjadi 'barang_unit'
-            $query = ReturSupplier::with(['barang_unit', 'user'])
+            // Load relasi terbaru
+            $query = ReturSupplier::with(['barang_unit', 'user', 'details', 'receipts.details'])
                     ->withCount('details');
 
             if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -327,72 +385,84 @@ class ReturController extends Controller
                 ->editColumn('created_at', function($row){
                     return $row->created_at->format('Y-m-d');
                 })
-                // [UBAH DISINI] Akses relasi 'barang_unit'
                 ->addColumn('supplier', function($row){
                     return $row->barang_unit->nama ?? '-';
                 })
-               // --- LOGIKA KOLOM 1: TAHAP PROSES (Packing) ---
-                ->addColumn('status_proses', function($row){
-                    // Jika 0: Masih disini (Kuning)
-                    // Jika > 0: Sudah lewat (Centang Hijau)
-                    if ($row->tipe == 0) {
-                        return '<span class="badge bg-warning text-dark"><i class="bi bi-box-seam"></i> Diproses</span>';
-                    } elseif ($row->tipe > 0 && $row->tipe != 99) {
-                        return '<span class="text-success"><i class="bi bi-check-circle-fill fs-5"></i></span>';
-                    } else {
-                        return '<span class="text-muted">-</span>'; // Void
-                    }
-                })
-
-                // --- LOGIKA KOLOM 2: TAHAP PENGIRIMAN ---
+                // --- STATUS KIRIM ---
                 ->addColumn('status_kirim', function($row){
-                    // Jika 0: Belum sampai sini (Abu-abu)
-                    // Jika 1: Sedang disini (Biru)
-                    // Jika 2: Selesai (Centang Hijau)
                     if ($row->tipe == 0) {
                         return '<span class="text-muted opacity-25"><i class="bi bi-dash-lg"></i></span>';
                     } elseif ($row->tipe == 1) {
-                        return '<span class="badge bg-info text-dark"><i class="bi bi-truck"></i> Jalan</span>';
+                        return '<span class="badge bg-primary"><i class="bi bi-truck"></i> Dikirim</span>';
                     } elseif ($row->tipe == 2) {
-                        return '<span class="badge bg-success"><i class="bi bi-check-all"></i> Diterima</span>';
+                        return '<span class="badge bg-info text-dark border border-info"><i class="bi bi-arrow-repeat"></i> Parsial</span>';
+                    } elseif ($row->tipe == 3) {
+                        return '<span class="badge bg-success"><i class="bi bi-check-all"></i> Selesai</span>';
                     } else {
                         return '<span class="badge bg-danger">Void</span>';
                     }
                 })
-                ->addColumn('total_item', function($row){
-                    return '<span class="badge bg-light text-dark border">' . $row->details_count . ' Item</span>';
+                // --- PROGRESS INFO ---
+                ->addColumn('progress_info', function($row){
+                    $totalAwal = $row->details->sum('qty');
+                    $totalDiterima = 0;
+                    $totalBatal = 0;
+
+                    foreach ($row->receipts as $receipt) {
+                        foreach ($receipt->details as $rd) {
+                            if ($rd->status_proses == 'terima') $totalDiterima += $rd->qty_terima;
+                            if ($rd->status_proses == 'hapus') $totalBatal += $rd->qty_terima;
+                        }
+                    }
+
+                    $sisa = $totalAwal - ($totalDiterima + $totalBatal);
+
+                    $html = '<div class="d-flex flex-column" style="font-size: 0.85em;">';
+                    $html .= '<span class="fw-bold text-dark mb-1">Total: '.$totalAwal.' Item</span>';
+
+                    if ($row->tipe > 0 && $row->tipe != 99) {
+                        $html .= '<span class="text-success"><i class="bi bi-check-circle"></i> Masuk Stok: <b>'.$totalDiterima.'</b></span>';
+                        $html .= '<span class="text-danger"><i class="bi bi-x-circle"></i> Batal Retur: <b>'.$totalBatal.'</b></span>';
+                        if ($sisa > 0) {
+                            $html .= '<span class="text-warning text-dark"><i class="bi bi-hourglass-split"></i> Menunggu: <b>'.$sisa.'</b></span>';
+                        }
+                    } else {
+                        $html .= '<span class="text-muted fst-italic">Belum ada proses</span>';
+                    }
+                    $html .= '</div>';
+
+                    return $html;
                 })
+                // --- KOLOM AKSI KEMBALI DIMASUKKAN ---
                 ->addColumn('aksi', function($row){
                     $btn = '<div class="btn-group" role="group">';
 
                     // Tombol Detail
                     $btn .= '<button class="btn btn-sm btn-outline-secondary btn-detail" data-id="'.$row->id.'" title="Lihat Detail"><i class="bi bi-eye"></i></button>';
 
-                    // Tombol Kirim/Cetak (Hanya jika status aktif)
                     if ($row->tipe != 99) {
-                        $url = route('billing.penyelesaian-retur.print', $row->id);
+                        $urlPrint = route('billing.penyelesaian-retur.print', $row->id);
 
                         if ($row->tipe == 0) {
-                            // STATUS DIPROSES (0) -> Butuh Konfirmasi
-                            // Tambahkan class 'btn-kirim-confirm'
-                            $btn .= '<a href="'.$url.'" class="btn btn-sm btn-primary btn-kirim-confirm" title="Kirim & Cetak">
-                                        <i class="bi bi-send-fill"></i> Kirim
-                                    </a>';
+                            $btn .= '<a href="'.$urlPrint.'" class="btn btn-sm btn-primary btn-kirim-confirm" title="Kirim & Cetak"><i class="bi bi-send-fill"></i> Kirim</a>';
                         } else {
-                            // STATUS DIKIRIM/SELESAI -> Cetak Ulang (Langsung buka)
-                            $btn .= '<a href="'.$url.'" target="_blank" class="btn btn-sm btn-secondary" title="Cetak Ulang">
-                                        <i class="bi bi-printer"></i> Cetak
-                                    </a>';
+                            // Munculkan tombol terima hanya jika status Dikirim (1) atau Parsial (2)
+                            if (in_array($row->tipe, [1, 2])) {
+                                $urlVerify = route('billing.penyelesaian-retur.verify', $row->id);
+                                $btn .= '<a href="'.$urlVerify.'" class="btn btn-sm btn-success" title="Terima Barang Retur"><i class="bi bi-box-arrow-in-down"></i> Terima</a>';
+                            }
+                            // Tombol Cetak
+                            $btn .= '<a href="'.$urlPrint.'" target="_blank" class="btn btn-sm btn-secondary" title="Cetak Ulang"><i class="bi bi-printer"></i> Cetak</a>';
                         }
                     }
 
                     $btn .= '</div>';
                     return $btn;
                 })
-                ->rawColumns(['nomor_display', 'status_proses', 'status_kirim', 'total_item', 'aksi'])
+                // Pastikan 'aksi' terdaftar di rawColumns
+                ->rawColumns(['nomor_display', 'status_kirim', 'progress_info', 'aksi'])
                 ->make(true);
         }
-
     }
 
     public function printPdf($id)
@@ -439,5 +509,167 @@ class ReturController extends Controller
 
         // Stream (Buka di tab baru) dengan nama file custom
         return $pdf->stream('Surat_Jalan_Retur_'.$invoice->nomor_invoice.'.pdf');
+    }
+
+    public function verifyShow($id)
+    {
+        $invoice = ReturSupplier::with([
+            'barang_unit',
+            'user',
+            'details.barang.barang_nama',
+            'details.barang.satuan'
+        ])->findOrFail($id);
+
+        if (!in_array($invoice->tipe, [1, 2])) {
+            return redirect()->route('billing.penyelesaian-retur.index')
+                            ->with('error', 'Status transaksi tidak valid untuk penerimaan.');
+        }
+
+        $barangPengganti = Barang::with(['barang_nama', 'satuan'])
+                            ->where('barang_unit_id', $invoice->barang_unit_id)
+                            ->get();
+
+        // --- LOGIKA BARU: Menghitung Sisa Qty ---
+        $detailsDenganSisa = collect();
+
+        foreach ($invoice->details as $detail) {
+            // Hitung total qty yang SUDAH DIPROSES untuk barang ini di invoice ini
+            // (Mencakup status 'terima' maupun 'hapus')
+            $totalDiproses = ReturSupplierReceiptDetail::whereHas('receipt', function($query) use ($id) {
+                $query->where('retur_supplier_id', $id);
+            })
+            ->where('barang_id', $detail->barang_id)
+            ->sum('qty_terima');
+
+            // Hitung sisa
+            $sisa = $detail->qty - $totalDiproses;
+
+            // Simpan sisa_qty ke dalam object detail agar bisa dibaca di Blade & JS
+            $detail->sisa_qty = $sisa;
+            $detailsDenganSisa->push($detail);
+        }
+
+        // Timpa relasi details dengan data yang sudah memiliki sisa_qty
+        $invoice->setRelation('details', $detailsDenganSisa);
+        // ----------------------------------------
+
+        return view('billing.barang-retur-kirim.verify', compact('invoice', 'barangPengganti'));
+    }
+
+   public function verifySubmit(Request $request, $id)
+    {
+        // 1. Validasi Input Minimal Harus Ada Barang
+        $request->validate([
+            'barang_id' => 'required|array',
+            'barang_id.*' => 'required|exists:barangs,id',
+            'qty_terima' => 'required|array',
+            'qty_terima.*' => 'required|integer|min:1',
+        ]);
+
+        // Sertakan relasi 'details' (item bawaan awal invoice) agar bisa dihitung sisanya nanti
+        $invoice = ReturSupplier::with('details')->findOrFail($id);
+
+        // Proteksi status keamanan ganda
+        if (!in_array($invoice->tipe, [1, 2])) {
+            return redirect()->route('billing.penyelesaian-retur.index')
+                            ->with('error', 'Transaksi gagal! Status invoice sudah berubah.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 2. Buat Header Log Penerimaan Retur
+            $receipt = new ReturSupplierReceipt();
+            $receipt->retur_supplier_id = $invoice->id;
+            $receipt->user_id = Auth::id() ?? 1; // Mengambil ID user login (fallback ke 1 jika test tanpa login)
+            $receipt->catatan = $request->catatan;
+            $receipt->save();
+
+            // 3. Looping Data Barang yang Diinput User untuk Ditambah ke Stok
+            foreach ($request->barang_id as $key => $barangId) {
+                $qtyTerima = $request->qty_terima[$key];
+                $statusProses = $request->status_proses[$key]; // 'terima' atau 'hapus'
+                $catatanItem = $request->catatan_item[$key] ?? null;
+
+                // Simpan detail riwayat tanda terima (history)
+                $receiptDetail = new ReturSupplierReceiptDetail();
+                $receiptDetail->receipt_id = $receipt->id; // Sesuai struktur database Anda
+                $receiptDetail->barang_id = $barangId;
+                $receiptDetail->qty_terima = $qtyTerima;
+                $receiptDetail->status_proses = $statusProses;
+                $receiptDetail->catatan_item = $catatanItem;
+                $receiptDetail->save();
+
+                // 4. LOGIKA UTAMA: Masuk Stok ATAU Buang
+                if ($statusProses == 'terima') {
+                    // JIKA DITERIMA: Tambah ke stok
+                    $stokHargaTerakhir = BarangStokHarga::where('barang_id', $barangId)
+                                                        ->orderBy('id', 'desc')
+                                                        ->lockForUpdate()
+                                                        ->first();
+
+                    if (!$stokHargaTerakhir) {
+                        throw new \Exception("Barang (ID: {$barangId}) belum memiliki riwayat harga/stok awal di sistem.");
+                    }
+                    $stokHargaTerakhir->increment('stok', $qtyTerima);
+                }
+                else if ($statusProses == 'hapus') {
+                    // JIKA DIHAPUS (Batal Retur):
+                    // Kita TIDAK menambah stok. History sudah tersimpan di $receiptDetail di atas.
+                }
+            }
+
+            // =====================================================================
+            // 5. LOGIKA BARU: EVALUASI AUTOMATIC COMPLETION (ANTI-BARANG PENGGANTI BEDA QTY)
+            // =====================================================================
+
+            // Ambil semua riwayat detail penerimaan untuk invoice ini (termasuk yang baru disimpan di atas)
+            $semuaRiwayat = ReturSupplierReceiptDetail::whereHas('receipt', function($query) use ($id) {
+                $query->where('retur_supplier_id', $id);
+            })->get();
+
+            $semuaBarangAsliSelesai = true;
+
+            // Periksa sisa antrean khusus untuk barang-barang bawaan asli invoice
+            foreach ($invoice->details as $detail) {
+                // Hitung total akumulasi qty (terima + hapus) khusus untuk barang asli ini
+                $diprosesUntukItemIni = $semuaRiwayat->where('barang_id', $detail->barang_id)->sum('qty_terima');
+
+                // Hitung sisa target barang asli
+                $sisaItemAsli = $detail->qty - $diprosesUntukItemIni;
+
+                // Jika masih ada barang asli yang memiliki sisa antrean (> 0), gagalkan otomatisasi "Selesai"
+                if ($sisaItemAsli > 0) {
+                    $semuaBarangAsliSelesai = false;
+                    break; // Keluar dari loop item asli karena transaksi fungsionalnya belum selesai penuh
+                }
+            }
+
+            // Tentukan status tipe akhir invoice:
+            // Jika user mencentang manual "Tandai Selesai" ATAU semua item asli sudah tuntas diproses
+            if (($request->has('status_selesai') && $request->status_selesai == '1') || $semuaBarangAsliSelesai) {
+                $invoice->tipe = 3; // Selesai Penuh
+            } else {
+                $invoice->tipe = 2; // Diterima Sebagian / Parsial
+            }
+
+            $invoice->save();
+            // =====================================================================
+
+            DB::commit();
+
+            $pesanSukses = $invoice->tipe == 3
+                ? 'Stok berhasil diverifikasi. Seluruh item invoice asli telah terpenuhi (Status: SELESAI).'
+                : 'Stok berhasil diverifikasi dan dimasukkan ke dalam sistem (Status: PARSIAL).';
+
+            return redirect()->route('billing.penyelesaian-retur.index')
+                            ->with('success', $pesanSukses);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'Terjadi Kesalahan: ' . $e->getMessage());
+        }
     }
 }

@@ -1,104 +1,124 @@
 <div class="p-4">
-    {{-- Header Invoice di Modal --}}
+    {{-- Header Informasi Utama --}}
     <div class="row mb-4 border-bottom pb-3 align-items-center">
         <div class="col-md-6">
             <h6 class="text-uppercase text-muted fw-bold small">Nomor Invoice</h6>
             <div class="d-flex align-items-center gap-2">
                 <h4 class="fw-bold text-primary mb-0">#{{ sprintf('%04d', $invoice->nomor) }}</h4>
-
-                {{-- Logic Badge Status --}}
                @switch($invoice->tipe)
-                    @case(0)
-                        {{-- UBAH LABEL JADI: DIPROSES --}}
-                        <span class="badge rounded-pill bg-warning text-dark border border-warning">
-                            <i class="bi bi-gear-fill"></i> Diproses
-                        </span>
-                        @break
-                    @case(1)
-                        <span class="badge rounded-pill bg-info text-dark border border-info">
-                            <i class="bi bi-truck"></i> Dikirim
-                        </span>
-                        @break
-                    @case(2)
-                        <span class="badge rounded-pill bg-success border border-success">
-                            <i class="bi bi-check-circle-fill"></i> Selesai
-                        </span>
-                        @break
-                    @case(99)
-                        <span class="badge rounded-pill bg-danger border border-danger">
-                            <i class="bi bi-x-circle"></i> Void
-                        </span>
-                        @break
-                    @default
-                        <span class="badge rounded-pill bg-secondary">Unknown</span>
+                    @case(0) <span class="badge rounded-pill bg-warning text-dark">Diproses</span> @break
+                    @case(1) <span class="badge rounded-pill bg-primary">Dikirim</span> @break
+                    @case(2) <span class="badge rounded-pill bg-info text-dark">Parsial</span> @break
+                    @case(3) <span class="badge rounded-pill bg-success">Selesai</span> @break
+                    @case(99) <span class="badge rounded-pill bg-danger">Void</span> @break
                 @endswitch
             </div>
+            <div class="text-muted small mt-1">Tanggal Kirim: {{ $invoice->created_at->format('d/m/Y H:i') }}</div>
         </div>
-
-        <div class="col-md-6 text-md-end">
-            <h6 class="text-uppercase text-muted fw-bold small">Tanggal Dibuat</h6>
-            <p class="fw-bold fs-5 mb-0">
-                {{ \Carbon\Carbon::parse($invoice->created_at)->translatedFormat('d F Y') }}
-            </p>
-
+        <div class="col-md-6 text-end">
+            <h6 class="text-uppercase text-muted fw-bold small">Tujuan Supplier</h6>
+            <h5 class="fw-bold mb-0">{{ $invoice->barang_unit->nama ?? 'Tanpa Unit' }}</h5>
+            <div class="text-muted small font-monospace" style="font-size: 0.85em;">Operator: {{ $invoice->user->name ?? 'Sistem' }}</div>
         </div>
     </div>
 
-    {{-- Info Supplier --}}
-    <div class="alert alert-light border shadow-sm mb-4">
-        <div class="d-flex align-items-center">
-            <div class="bg-primary text-white rounded-circle p-2 me-3 d-flex justify-content-center align-items-center" style="width: 48px; height: 48px;">
-                <i class="bi bi-building fs-4"></i>
-            </div>
-            <div>
-                <small class="text-muted text-uppercase fw-bold">Supplier</small>
-                <div class="fw-bold fs-5 text-dark">
-                    {{ $invoice->barang_unit->nama ?? 'Tanpa Nama Unit' }}
-                </div>
-            </div>
+    {{-- Catatan Retur Jika Ada --}}
+    @if($invoice->keterangan)
+        <div class="alert alert-light border border-start border-3 border-primary p-2 mb-4" style="font-size: 0.9rem;">
+            <strong><i class="bi bi-journal-text"></i> Catatan Awal Retur:</strong> {{ $invoice->keterangan }}
         </div>
-    </div>
+    @endif
 
-    {{-- Tabel Rincian Barang --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="fw-bold mb-0"><i class="bi bi-box-seam"></i> Rincian Barang</h6>
-        <span class="badge bg-light text-dark border">{{ $invoice->details->count() }} Item</span>
-    </div>
-
-    <div class="table-responsive rounded border">
-        <table class="table table-striped table-hover mb-0 align-middle">
-            <thead class="table-light">
-                <tr class="text-center small text-uppercase text-muted">
-                    <th width="5%">No</th>
-                    <th class="text-start">Nama Barang</th>
-                    <th width="15%">Kode</th>
-                    <th width="15%">Jumlah</th>
-                    <th width="10%">Satuan</th>
+    {{-- TABEL TUNGGAL KONSOLIDASI PROGRESS BARANG --}}
+    <div class="table-responsive border rounded shadow-sm">
+        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.9rem;">
+            <thead class="table-light border-bottom text-center align-middle">
+                <tr>
+                    <th rowspan="2" width="5%" class="border-end">No</th>
+                    <th rowspan="2" class="text-start border-end">Barang Retur</th>
+                    <th rowspan="2" width="12%" class="border-end bg-light">Qty Awal<br><small class="text-muted">(Target)</small></th>
+                    <th colspan="2" width="24%" class="border-end bg-success-subtle text-success fw-bold py-1">Hasil Penerimaan Gudang</th>
+                    <th rowspan="2" width="12%" class="border-end bg-warning-subtle text-warning-focus">Sisa<br><small class="text-muted">(Sisa Antrean)</small></th>
+                    <th rowspan="2" width="22%">Catatan / Info Item</th>
+                </tr>
+                <tr class="small border-top">
+                    <th class="bg-success-subtle text-success border-end py-1">Masuk Stok</th>
+                    <th class="bg-danger-subtle text-danger py-1">Batal Retur</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($invoice->details as $index => $item)
-                <tr>
-                    <td class="text-center text-muted">{{ $index + 1 }}</td>
-                    <td>
-                        <span class="fw-bold text-dark">{{ $item->barang->barang_nama->nama }}</span><br>
-                        <small class="text-muted">{{ $item->barang->merk }}</small>
-                    </td>
-                    <td class="text-center font-monospace small">{{ $item->barang->kode }}</td>
-                    <td class="text-center fw-bold fs-6">
-                        {{ number_format($item->qty, 0, ',', '.') }}
-                    </td>
-                    <td class="text-center text-muted small">
-                        {{ $item->barang->satuan->nama ?? '-' }}
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-muted fst-italic">
-                        Tidak ada detail barang.
-                    </td>
-                </tr>
-                @endforelse
+                @php $no = 1; @endphp
+                @foreach($processedItems as $barangId => $item)
+                    @php
+                        $satuan = $item['barang']->satuan->nama ?? 'pcs';
+                        $sisa = $item['qty_awal'] - ($item['diterima'] + $item['batal']);
+
+                        // Deteksi jika ini barang pengganti murni murni murni (tidak ada di invoice awal)
+                        $isBarangPenggantiMurni = ($item['qty_awal'] == 0);
+                    @endphp
+                    <tr class="{{ $isBarangPenggantiMurni ? 'table-info-subtle' : '' }}">
+                        {{-- 1. Nomor --}}
+                        <td class="text-center text-muted fw-bold border-end">{{ $no++ }}</td>
+
+                        {{-- 2. Detail Barang --}}
+                        <td class="border-end">
+                            <div class="fw-bold text-dark">{{ $item['barang']->barang_nama->nama }}</div>
+                            <small class="text-muted d-block font-monospace" style="font-size: 0.8em;">
+                                {{ $item['barang']->kode }} | {{ $item['barang']->merk }}
+                                @if($isBarangPenggantiMurni)
+                                    <span class="badge bg-info text-dark ms-1" style="font-size: 0.85em;"><i class="bi bi-box-seam"></i> Barang Pengganti</span>
+                                @endif
+                            </small>
+                        </td>
+
+                        {{-- 3. Qty Awal Invoice --}}
+                        <td class="text-center fw-bold border-end bg-light">
+                            {{ $isBarangPenggantiMurni ? '-' : $item['qty_awal'].' '.$satuan }}
+                        </td>
+
+                        {{-- 4. Sub Kolom Masuk Stok --}}
+                        <td class="text-center text-success fw-bold border-end">
+                            @if($item['diterima'] > 0)
+                                <i class="bi bi-box-arrow-in-down"></i> {{ $item['diterima'] }} {{ $satuan }}
+                            @else
+                                <span class="text-muted opacity-50">-</span>
+                            @endif
+                        </td>
+
+                        {{-- 5. Sub Kolom Batal Retur --}}
+                        <td class="text-center text-danger fw-bold border-end">
+                            @if($item['batal'] > 0)
+                                <i class="bi bi-x-circle"></i> {{ $item['batal'] }} {{ $satuan }}
+                            @else
+                                <span class="text-muted opacity-50">-</span>
+                            @endif
+                        </td>
+
+                        {{-- 6. Sisa Tungguan --}}
+                        <td class="text-center border-end fw-bold">
+                            @if($isBarangPenggantiMurni)
+                                <span class="text-muted small fst-italic">-</span>
+                            @elseif($sisa > 0)
+                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> {{ $sisa }} {{ $satuan }}</span>
+                            @else
+                                <span class="badge bg-success text-white px-2"><i class="bi bi-check2-all"></i> Beres</span>
+                            @endif
+                        </td>
+
+                        {{-- 7. Log Catatan Item --}}
+                        <td class="small text-muted">
+                            @if(!empty($item['catatan']))
+                                <ul class="list-unstyled mb-0 ps-0" style="font-size: 0.85em; line-height: 1.2;">
+                                    @foreach($item['catatan'] as $catatan)
+                                        <li class="mb-1"><i class="bi bi-dot text-secondary"></i> {{ $catatan }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <span class="text-muted opacity-50 fst-italic">Tidak ada catatan</span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>

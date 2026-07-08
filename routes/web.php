@@ -892,6 +892,12 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/detail/{id}', [ReturController::class, 'invoiceShow'])->name('billing.penyelesaian-retur.detail');
 
                 Route::get('/print/{id}', [ReturController::class, 'printPdf'])->name('billing.penyelesaian-retur.print');
+
+                // Halaman UI Verifikasi
+                Route::get('/{id}/verify', [ReturController::class, 'verifyShow'])->name('billing.penyelesaian-retur.verify');
+
+                // Untuk proses submitnya (nanti kita buat di Step 4)
+                Route::post('/{id}/verify', [ReturController::class, 'verifySubmit'])->name('billing.penyelesaian-retur.verify.submit');
             });
 
             // Routing Sales Order

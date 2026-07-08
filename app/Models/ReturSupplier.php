@@ -25,4 +25,9 @@ class ReturSupplier extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function receipts()
+    {
+        return $this->hasMany(ReturSupplierReceipt::class, 'retur_supplier_id');
+    }
 }

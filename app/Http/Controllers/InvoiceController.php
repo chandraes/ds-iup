@@ -7,7 +7,6 @@ use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
-use App\Models\PpnKeluaran;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\KasKonsumen;
@@ -425,10 +424,6 @@ class InvoiceController extends Controller
 
             // Jika ada selisih (berarti ada barang yang dikurangi/dihapus)
             if ($selisihTagihan > 0) {
-
-                // SILAKAN TULIS LOGIKA UPDATE KAS KONSUMEN ANDA DI SINI
-                // Nominal yang harus Anda kurangkan/kembalikan ke plafon ada pada variabel:
-                // $selisihTagihan
 
                 $dbKas = new KasKonsumen;
                 $konsumenId = $invoice->konsumen_id;

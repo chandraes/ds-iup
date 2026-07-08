@@ -60,20 +60,21 @@
     {{-- Table Section --}}
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
-            <table class="table table-hover table-striped align-middle w-100" id="invoice-table">
-                <thead class="table-success">
+            <table class="table table-striped table-hover align-middle" id="invoice-table">
+                <thead class="table-light text-center">
                     <tr>
-                        <th width="5%" class="text-center">No</th>
-                        <th width="15%" class="text-center">No. Invoice</th>
-                        <th width="15%" class="text-center">Tanggal</th>
-                        <th class="text-center">Supplier</th>
-                        <th width="10%" class="text-center ">Packing</th>
-                        <th width="10%" class="text-center">Pengiriman</th>
-                        <th width="10%" class="text-center">Total</th>
-                        <th width="10%" class="text-center">Aksi</th>
+                        <th width="5%">No</th>
+                        <th width="15%">Nomor Invoice</th>
+                        <th width="15%">Tanggal</th>
+                        <th width="20%">Supplier / Unit</th>
+                        <th width="15%">Status Transaksi</th> {{-- Menggantikan Status Kirim --}}
+                        <th width="20%">Progress Retur</th>   {{-- Menggantikan Status Proses & Total Item --}}
+                        <th width="10%">Aksi</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    {{-- Data otomatis dari Yajra --}}
+                </tbody>
             </table>
         </div>
     </div>
@@ -81,7 +82,7 @@
 
 {{-- MODAL DETAIL --}}
 <div class="modal fade" id="modalDetail" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-white border-bottom-0">
                 <h5 class="modal-title fw-bold"><i class="bi bi-receipt"></i> Detail Invoice Retur</h5>
@@ -129,14 +130,13 @@
             }
         },
         columns: [
-            {data: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
-            {data: 'nomor_display', name: 'nomor'},
-            {data: 'created_at', name: 'created_at'},
-            {data: 'supplier', name: 'barang_unit.nama'}, // Relasi barang_unit
-            {data: 'status_proses', name: 'tipe', className: 'text-center border-start'},
-            {data: 'status_kirim', name: 'tipe', className: 'text-center border-end'},
-            {data: 'total_item', name: 'details_count', className: 'text-center'},
-            {data: 'aksi', orderable: false, searchable: false, className: 'text-center'}
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center' },
+            { data: 'nomor_display', name: 'nomor', className: 'text-center' },
+            { data: 'created_at', name: 'created_at', className: 'text-center' },
+            { data: 'supplier', name: 'barang_unit.nama' },
+            { data: 'status_kirim', name: 'tipe', className: 'text-center' },
+            { data: 'progress_info', name: 'progress_info', orderable: false, searchable: false },
+            { data: 'aksi', name: 'aksi', orderable: false, searchable: false, className: 'text-center' }
         ],
         order: [[2, 'desc']], // Urutkan berdasarkan created_at (kolom index 2)
         dom: 'rtip'
