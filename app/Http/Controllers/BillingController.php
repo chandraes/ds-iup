@@ -147,7 +147,7 @@ class BillingController extends Controller
 
         $br = BarangRetur::whereIn('status', [1,2])->count();
         $sr = StokRetur::where('status', 0)->count();
-        $ps = ReturSupplier::whereNot('tipe', 99)->count();
+        $ps = ReturSupplier::where('tipe', '<', 3)->count();
         $ug = UangGantung::where('lunas', 0)->where('void', 0)->count();
         $jb = JanjiBayar::where('status', 0)->count();
 

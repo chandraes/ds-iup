@@ -21,6 +21,7 @@ use App\Models\KasKonsumen;
 use App\Models\PesanWa;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
+use App\Models\ReturSupplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\JanjiBayar;
@@ -994,5 +995,80 @@ class RekapController extends Controller
             'totalVoid',
             'daftarTahun'
         ));
+    }
+
+    public function retur()
+    {
+        $units = BarangUnit::orderBy('nama', 'asc')->get();
+        return view('rekap.retur.index', compact('units'));
+    }
+
+    public function retur_data(Request $request)
+    {
+        if ($request->ajax()) {
+            // PENTING: Filter ->where('tipe', 3) agar hanya memunculkan yang sudah Selesai
+            $query = ReturSupplier::with(['barang_unit', 'user', 'details', 'receipts.details'])
+                    ->where('tipe', '>',2);
+
+            // Filter Tanggal jika diisi oleh user
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
+            }
+
+            // Filter Unit/Supplier jika dipilih
+            if ($request->filled('unit_filter')) {
+                $query->where('barang_unit_id', $request->unit_filter);
+            }
+
+            return datatables()->of($query)
+                ->addIndexColumn()
+                ->addColumn('nomor_display', function($row){
+                    return '<span class="fw-bold font-monospace text-success">RS-' . sprintf('%04d', $row->nomor) . '</span>';
+                })
+                ->editColumn('created_at', function($row){
+                    return $row->created_at->format('Y-m-d');
+                })
+                ->addColumn('supplier', function($row){
+                    return $row->barang_unit->nama ?? '-';
+                })
+                ->addColumn('ringkasan_barang', function($row){
+                    // Menghitung total item awal vs yang masuk stok
+                    $totalAwal = $row->details->sum('qty');
+                    $totalDiterima = 0;
+                    $totalBatal = 0;
+
+                    foreach ($row->receipts as $receipt) {
+                        foreach ($receipt->details as $rd) {
+                            if ($rd->status_proses == 'terima') $totalDiterima += $rd->qty_terima;
+                            if ($rd->status_proses == 'hapus') $totalBatal += $rd->qty_terima;
+                        }
+                    }
+
+                    $html = '<div style="font-size: 0.85em;">';
+                    $html .= '<div>Target: <b class="text-dark">'.$totalAwal.'</b> | Masuk: <b class="text-success">'.$totalDiterima.'</b></div>';
+                    if ($totalBatal > 0) {
+                        $html .= '<div class="text-danger small"><i class="bi bi-x-circle"></i> Batal/Hilang: '.$totalBatal.'</div>';
+                    }
+                    $html .= '</div>';
+                    return $html;
+                })
+                ->addColumn('aksi', function($row){
+                    $btn = '<div class="btn-group" role="group">';
+                    // Gunakan kembali route detail lama yang sudah kita buat/rapikan sebelumnya!
+                    $btn .= '<button class="btn btn-sm btn-outline-success btn-detail" data-id="'.$row->id.'" title="Lihat Rekap Beres"><i class="bi bi-journal-check"></i> Detail</button>';
+
+                    // Tombol cetak dokumen final untuk arsip fisik
+                    $urlPrint = route('billing.penyelesaian-retur.print', $row->id);
+                    $btn .= '<a href="'.$urlPrint.'" target="_blank" class="btn btn-sm btn-secondary" title="Cetak Arsip"><i class="bi bi-printer"></i></a>';
+
+                    $btn .= '</div>';
+                    return $btn;
+                })
+                ->rawColumns(['nomor_display', 'ringkasan_barang', 'aksi'])
+                ->make(true);
+        }
     }
 }

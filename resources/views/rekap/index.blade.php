@@ -189,11 +189,18 @@
                 <h5 class="mt-3">JUAL</h5>
             </a>
         </div>
-          <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.barang-retur')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-retur.svg')}}" alt="" width="70">
                 <h5 class="mt-3">BARANG RETUR
 
+                </h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.retur')}}" class="text-decoration-none">
+                <img src="{{asset('images/retur-done.svg')}}" alt="" width="70">
+                <h5 class="mt-3">PENYELESAIAN RETUR SUPPLIER
                 </h5>
             </a>
         </div>

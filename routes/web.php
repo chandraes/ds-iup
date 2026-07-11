@@ -523,6 +523,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
 
+            Route::prefix('retur')->group(function() {
+                Route::get('/', [RekapController::class, 'retur'])->name('rekap.retur');
+                Route::get('/data', [RekapController::class, 'retur_data'])->name('rekap.retur.data');
+            });
+
             Route::prefix('janji-bayar')->group(function(){
                 Route::get('/', [RekapController::class, 'janji_bayar'])->name('rekap.janji-bayar');
             });

@@ -364,6 +364,7 @@ class ReturController extends Controller
         if ($request->ajax()) {
             // Load relasi terbaru
             $query = ReturSupplier::with(['barang_unit', 'user', 'details', 'receipts.details'])
+                    ->where('tipe', '<', 3)
                     ->withCount('details');
 
             if ($request->filled('start_date') && $request->filled('end_date')) {
