@@ -3,8 +3,15 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>FORM BARANG RETUR<br>PILIH BARANG<br>{{$b->karyawan->nama}}
-            <br>{{$b->konsumen ? $b->konsumen->kode_toko->kode.' '.$b->konsumen->nama : ''}}</u></h1>
+            <h1><u>FORM BARANG RETUR<br>PILIH BARANG
+                @if ($b->tipe == 2)
+                <br>{{$b->karyawan->nama}}
+                <br>{{$b->konsumen ? $b->konsumen->kode_toko->kode.' '.$b->konsumen->nama : ''}}
+                @else
+                <br>{{$b->barang_unit ? $b->barang_unit->nama : ''}}
+                @endif
+                </u>
+            </h1>
         </div>
     </div>
     @include('swal')

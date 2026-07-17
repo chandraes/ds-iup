@@ -43,6 +43,16 @@
                                                     disabled>
                                             </td>
                                         </tr>
+                                        @else
+                                        <tr style="height:50px">
+                                            <td class="text-start align-middle">Supplier</td>
+                                            <td class="text-start align-middle" style="width: 10%">:</td>
+                                            <td class="text-start align-middle">
+                                                <input type="text" name="supplier" id="supplier" class="form-control"
+                                                    value="{{ $data->barang_unit?->nama ?? '' }}"
+                                                    disabled>
+                                            </td>
+                                        </tr>
                                         @endif
 
                                         <tr id="namaTr" hidden style="height:50px">

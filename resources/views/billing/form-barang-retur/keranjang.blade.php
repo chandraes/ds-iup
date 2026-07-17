@@ -2,7 +2,8 @@
 
 @section('content')
 <div class="container">
-    <div class="row justify-content-center mb-4"> <div class="col-md-12 text-center">
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-12 text-center">
             <h1 class="display-6 fw-bold">Keranjang Form Retur</h1>
             <p class="lead text-muted">Periksa kembali barang retur Anda sebelum melanjutkan.</p>
         </div>
@@ -21,7 +22,9 @@
             @csrf
             <input type="hidden" name="barang_retur_id" value="{{ $b->id }}">
 
-            <div class="card shadow-sm border-0"> <div class="card-body bg-white p-4"> <div class="row mt-3 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body bg-white p-4">
+                    <div class="row mt-3 mb-3">
                         <div class="col-md-12 my-3">
                             <div class="row" id="konsumenRow">
                                 <div class="col-md-7">
@@ -32,11 +35,18 @@
                                             value="{{ $konsumen->kode_toko->kode .' '. $konsumen->nama ?? '' }}"
                                             disabled style="background-color: #e9ecef; opacity: 1;">
                                     </div>
-                                      <div class="mb-3">
+                                    <div class="mb-3">
                                         <label for="konsumen" class="form-label fw-bold">Sales</label>
                                         <input type="text" id="konsumen" class="form-control"
-                                            value="{{ $b->karyawan->nama }}"
-                                            disabled style="background-color: #e9ecef; opacity: 1;">
+                                            value="{{ $b->karyawan->nama }}" disabled
+                                            style="background-color: #e9ecef; opacity: 1;">
+                                    </div>
+                                    @else
+                                    <div class="mb-3">
+                                        <label for="supplier" class="form-label fw-bold">Supplier</label>
+                                        <input type="text" id="supplier" class="form-control"
+                                            value="{{  $supplier->nama ?? '' }}" disabled
+                                            style="background-color: #e9ecef; opacity: 1;">
                                     </div>
                                     @endif
                                     <div class="mb-3" id="namaTr" hidden>
@@ -45,17 +55,20 @@
                                     </div>
                                 </div>
                                 <div class="col-md-5">
-                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <hr class="my-4"> <div class="table-responsive">
+                    <hr class="my-4">
+                    <div class="table-responsive">
                         <table class="table table-bordered table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
                                     <th class="text-center">No</th>
-                                    <th class="text-start" style="min-width: 250px;">Nama Barang</th> <th class="text-start">Merek</th> <th class="text-center">Qty</th>
+                                    <th class="text-start" style="min-width: 250px;">Nama Barang</th>
+                                    <th class="text-start">Merek</th>
+                                    <th class="text-center">Qty</th>
                                     <th class="text-center">Sat</th>
                                     <th class="text-center">PPN</th>
                                     <th class="text-center">Non<br>PPN</th>
@@ -101,7 +114,8 @@
                         </table>
                     </div>
 
-                    <div class="row mt-4"> <div class="col-md-6"></div>
+                    <div class="row mt-4">
+                        <div class="col-md-6"></div>
                         <div class="col-md-6 text-end">
                             <button type="submit" class="btn btn-success btn-lg">
                                 <i class="fa fa-arrow-right me-2"></i>

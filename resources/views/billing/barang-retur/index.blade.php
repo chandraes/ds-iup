@@ -333,7 +333,10 @@
                                 title: 'Berhasil',
                                 text: data.message,
                             }).then(() => {
-                                window.open(data.preview_url, '_blank');
+                                // check terlebih dahulu apakah pdata.preview_url ada
+                                if (data.preview_url) {
+                                    window.open(data.preview_url, '_blank');
+                                }
                                 $('#rekapTable').DataTable().draw(false);
                             });
                         } else {

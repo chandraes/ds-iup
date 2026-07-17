@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>FORM BARANG RETUR</u></h1>
+            <h1><u>FORM BARANG RETUR <br>{{$tipe == 1 ? "DARI SUPPLIER" : "DARI KONSUMEN"}}</u></h1>
         </div>
     </div>
     @include('swal')
@@ -31,7 +31,11 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <strong>
+                        @if ($d->tipe == 1)
+                        {{ $d->barang_unit?->nama }}
+                        @else
                         {{ $d->karyawan?->nama }} ({{$d->konsumen?->kode_toko->kode}} {{$d->konsumen?->nama}})
+                        @endif
                         <span class="badge bg-secondary">{{ $d->tipe == 1 ? 'Dari Supplier' : 'Dari Konsumen' }}</span>
                     </strong>
                 </div>
@@ -59,6 +63,7 @@
             @csrf
             <input type="hidden" name="tipe" value="{{ $tipe }}">
             <div class="row">
+                @if ($tipe == 2)
                 <div class="col-md-4 mb-3" id="sales_div">
                     <label for="karyawan_id" class="form-label">Sales</label>
                     <select class="form-select" name="karyawan_id" id="karyawan_id">
@@ -68,18 +73,26 @@
                         @endforeach
                     </select>
                 </div>
-                @if ($tipe == 2)
                 <div class="col-md-4 mb-3">
                     <label for="konsumen_id" class="form-label">Konsumen</label>
                     <select name="konsumen_id" id="konsumen_id" class="form-select select2">
                         <option value="">Pilih Konsumen</option>
-                        @foreach ($konsumen as $k)
-                        <option value="{{ $k->id }}" data-karyawan-id="{{ $k->karyawan_id }}">{{ $k->kode_toko->kode }}
-                            {{ $k->nama }}</option>
+                        @foreach ($konsumen as $kon)
+                        <option value="{{ $kon->id }}" data-karyawan-id="{{ $kon->karyawan_id }}">{{ $kon->kode_toko->kode }}
+                            {{ $kon->nama }}</option>
                         @endforeach
                     </select>
                 </div>
-
+                @else
+                <div class="col-md-4 mb-3">
+                    <label for="barang_unit_id" class="form-label">Supplier</label>
+                    <select class="form-select" name="barang_unit_id" id="barang_unit_id">
+                        <option value="">Pilih Supplier</option>
+                        @foreach ($supplier as $sup)
+                        <option value="{{ $sup->id }}">{{ $sup->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 @endif
                 <div class="col-md-12">
                     <button type="submit" class="btn btn-primary">Lanjutkan</button>
@@ -110,6 +123,12 @@
         });
 
         $('#karyawan_id').select2({
+            placeholder: 'Pilih Sales',
+            theme: 'bootstrap-5',
+            allowClear: true
+        });
+
+         $('#barang_unit_id').select2({
             placeholder: 'Pilih Sales',
             theme: 'bootstrap-5',
             allowClear: true

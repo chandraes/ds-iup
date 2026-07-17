@@ -675,13 +675,13 @@ class BillingController extends Controller
             'tipe' => 'required|in:1,2',
         ]);
 
-        if ($d['tipe'] == 1) {
-            return redirect()->back()->with('error', 'Fitur ini masih dalam tahap pengembangan!!');
-        }
+        // if ($d['tipe'] == 1) {
+        //     return redirect()->back()->with('error', 'Fitur ini masih dalam tahap pengembangan!!');
+        // }
 
         $data = BarangRetur::with(['karyawan', 'konsumen.kode_toko'])->where('status', 0)->where('tipe', $d['tipe'])->get();
         $supplier = BarangUnit::select('id', 'nama')->get();
-         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
                     $query->where('is_sales', 1);
                 })->select('id', 'nama')->get();
         $konsumen = $d['tipe'] == 1 ? null : Konsumen::where('active', 1)
@@ -702,8 +702,21 @@ class BillingController extends Controller
         $data = $request->validate([
             'tipe' => 'required|in:1,2',
             'barang_unit_id' => 'required_if:tipe,1|exists:barang_units,id',
-            'karyawan_id' => 'required|exists:karyawans,id',
+            'karyawan_id' => 'required_if:tipe,2|exists:karyawans,id',
             'konsumen_id' => 'required_if:tipe,2|exists:konsumens,id',
+        ],[
+            // 2. Definisikan Kustom Pesan Error di Sini
+            'tipe.required' => 'Pilihan tipe wajib diisi.',
+            'tipe.in' => 'Tipe yang dipilih tidak valid (harus dari supplier atau dari konsumen).',
+
+            'barang_unit_id.required_if' => 'Supplier wajib diisi jika tipe yang dipilih adalah 1.',
+            'barang_unit_id.exists' => 'Supplier yang Anda pilih tidak terdaftar.',
+
+            'karyawan_id.required_if' => 'Sales wajib diisi jika tipe retur yang dipilih adalah dari konsumen.',
+            'karyawan_id.exists' => 'Data sales tidak ditemukan.',
+
+            'konsumen_id.required_if' => 'Konsumen wajib diisi jika tipe retur yang dipilih adalah dari konsumen.',
+            'konsumen_id.exists' => 'Data konsumen tidak ditemukan.',
         ]);
 
         try {
@@ -755,7 +768,9 @@ class BillingController extends Controller
                 $q->where('stok', '>', 0);
             }], 'stok');
 
-
+        if($retur->tipe == 1) {
+            $query->where('barang_unit_id', $retur->barang_unit_id);
+        }
 
         if ($request->filled('kategori')) {
             $query->where('barang_kategori_id', $request->input('kategori'));
@@ -817,7 +832,7 @@ class BillingController extends Controller
     public function form_barang_retur_detail(BarangRetur $retur, Request $request)
     {
 
-        $keranjang = $retur->load('karyawan')->details;
+        $keranjang = $retur->load(['karyawan', 'barang_unit'])->details;
 
         $selectKategori = BarangKategori::all();
         $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
@@ -886,11 +901,13 @@ class BillingController extends Controller
     {
         $keranjang = $retur->details->load(['barang.barang_nama', 'barang.satuan']);
         $konsumen = $retur->konsumen_id ? $retur->konsumen->load('kode_toko') : null;
+        $supplier = $retur->barang_unit_id ? $retur->barang_unit : null;
 
         return view('billing.form-barang-retur.keranjang', [
             'b' => $retur,
             'keranjang' => $keranjang,
             'konsumen' => $konsumen,
+            'supplier' => $supplier,
         ]);
     }
 
@@ -1035,9 +1052,14 @@ class BillingController extends Controller
     {
         // return ['status' => 'error', 'message' => 'fitur dalam perbaikan'];
         // Panggil fungsi model yang sudah diubah namanya menjadi 'proses_retur'
-        $res = $retur->proses_retur($retur->id);
 
-        if ($res['status'] == 'success') {
+        if($retur->tipe == 2) {
+            $res = $retur->proses_retur($retur->id);
+        } else {
+            $res = $retur->proses_retur_supplier($retur->id);
+        }
+
+        if ($res['status'] == 'success' && $retur->tipe == 2) {
             // Berhasil, siapkan URL untuk PDF LAMA (sesuai permintaan)
             $res['preview_url'] = route('billing.barang-retur.cetak', $retur->id);
         }

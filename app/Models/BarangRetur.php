@@ -9,6 +9,7 @@ use App\Models\db\Konsumen;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BarangRetur extends Model
@@ -90,18 +91,21 @@ class BarangRetur extends Model
         // }
 
         // Tombol cetak bisa untuk semua status yang sudah diajukan
-        if ($this->status >= 3 && $this->status != 99) {
-             $actions .= ' <a href="'.route('billing.barang-retur.cetak', $this->id).'" target="_blank" class="btn btn-secondary btn-sm" data-bs-toggle="tooltip" title="Cetak PDF Retur">
-                            <i class="fa fa-print"></i>
-                          </a>';
+        if ($this->tipe == 2) {
+            if ($this->status >= 3 && $this->status != 99) {
+                $actions .= ' <a href="'.route('billing.barang-retur.cetak', $this->id).'" target="_blank" class="btn btn-secondary btn-sm" data-bs-toggle="tooltip" title="Cetak PDF Retur">
+                                <i class="fa fa-print"></i>
+                            </a>';
+            }
+
+            // Tombol cetak PDF Diterima (jika sudah diterima atau lebih)
+            if ($this->status >= 2 && $this->status != 99) {
+                $actions .= ' <a href="'.route('billing.barang-retur.cetak_diterima', $this->id).'" target="_blank" class="btn btn-info btn-sm me-2" data-bs-toggle="tooltip" title="Cetak Bukti Diterima">
+                                <i class="fa fa-download"></i>
+                            </a>';
+            }
         }
 
-        // Tombol cetak PDF Diterima (jika sudah diterima atau lebih)
-        if ($this->status >= 2 && $this->status != 99) {
-             $actions .= ' <a href="'.route('billing.barang-retur.cetak_diterima', $this->id).'" target="_blank" class="btn btn-info btn-sm me-2" data-bs-toggle="tooltip" title="Cetak Bukti Diterima">
-                            <i class="fa fa-download"></i>
-                          </a>';
-        }
 
         if ($this->status < 3) {
             $actions .= '<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Void" onclick="voidOrder('.$this->id.')">
@@ -196,6 +200,78 @@ class BarangRetur extends Model
                     'barang_stok_harga_id'   => $stok_batch->id, // <--- Disimpan di sini
                     'qty_diterima'           => $qty_potong,
                 ]);
+
+                // Kurangi sisa yang harus dicari
+                $sisa_qty_butuh_ganti -= $qty_potong;
+            }
+        }
+
+        return ['status' => true];
+    }
+
+    private function update_stok_supplier($details)
+    {
+        // Loop setiap item dalam retur
+        foreach ($details as $detail) {
+            $sisa_qty_butuh_ganti = $detail->qty;
+
+            // ---------------------------------------------------------
+            // LANGKAH 1: Cari Stok Pengganti (Good Stock) - Metode FILO
+            // ---------------------------------------------------------
+            // Kita ambil dari barang_stok_hargas dimana stok > 0
+            // Order by ID DESC (ID terbesar = Barang paling baru masuk = First Out)
+            $list_stok_gudang = BarangStokHarga::where('barang_id', $detail->barang_id)
+                ->where('stok', '>', 0)
+                ->orderBy('id', 'asc')
+                ->lockForUpdate() // Kunci baris agar tidak diambil transaksi lain saat proses
+                ->get();
+
+            // ---------------------------------------------------------
+            // LANGKAH 2: Validasi Kecukupan Stok
+            // ---------------------------------------------------------
+            if ($list_stok_gudang->sum('stok') < $sisa_qty_butuh_ganti) {
+                // Jika total stok di semua batch tidak cukup, batalkan & beri tahu ID detailnya
+                return [
+                    'status' => false,
+                    'id' => $detail->id,
+                    'message' => 'Stok pengganti tidak mencukupi untuk barang ID: ' . $detail->barang_id
+                ];
+            }
+
+            // ---------------------------------------------------------
+            // LANGKAH 3: Eksekusi Pemotongan (Split Stock Logic)
+            // ---------------------------------------------------------
+            foreach ($list_stok_gudang as $stok_batch) {
+                if ($sisa_qty_butuh_ganti <= 0) break;
+
+                // Ambil qty sebanyak yang dibutuhkan atau sebanyak yang tersedia di batch ini
+                $qty_potong = min($sisa_qty_butuh_ganti, $stok_batch->stok);
+
+                // A. Kurangi Stok Bagus (Good Stock)
+                $stok_batch->decrement('stok', $qty_potong);
+
+                // B. Update/Buat Gudang Karantina (Bad Stock Agregat)
+                // Karena struktur baru Unique hanya per barang_id, ini akan menyatukan stok.
+                // $bad_stok = StokRetur::firstOrCreate(
+                //     ['barang_id' => $detail->barang_id],
+                //     [
+                //         'total_qty_karantina' => 0,
+                //         'total_qty_diproses' => 0,
+                //         'status' => 0
+                //     ]
+                // );
+                // Tambah stok ke gudang karantina
+                // $bad_stok->increment('total_qty_karantina', $qty_potong);
+
+                // C. Simpan Jejak Asal (Traceability)
+                // Disini kita simpan barang_stok_harga_id agar tau bad stock ini
+                // "menggantikan" atau "berasal" dari batch yang mana.
+                // StokReturSource::create([
+                //     'stok_retur_id'          => $bad_stok->id,
+                //     'barang_retur_detail_id' => $detail->id,
+                //     'barang_stok_harga_id'   => $stok_batch->id, // <--- Disimpan di sini
+                //     'qty_diterima'           => $qty_potong,
+                // ]);
 
                 // Kurangi sisa yang harus dicari
                 $sisa_qty_butuh_ganti -= $qty_potong;
@@ -309,6 +385,111 @@ class BarangRetur extends Model
         return ['status' => 'success', 'message' => 'Barang Berhasil Diproses. Silahkan Cetak Bukti Kirim!'];
     }
 
+    public function proses_retur_supplier($id)
+    {
+        $stok_update = null;
+        $data = $this->where('id', $id)->with(['details.stok', 'barang_unit', 'konsumen'])->first();
+
+        if ($data->status > 3) {
+            return ['status' => 'error', 'message' => 'Retur sudah diproses/selesai'];
+        }
+
+        if ($data->status != 2) {
+            return ['status' => 'error', 'message' => 'Hanya retur yang "Diterima" yang bisa diproses.'];
+        }
+        try {
+            DB::beginTransaction();
+
+            $calculate_stok = $this->update_stok_supplier($data->details);
+
+            if (isset($calculate_stok['status']) && $calculate_stok['status'] == false) {
+                $stok_update = $calculate_stok;
+                throw new \Exception('Terdapat stok yang kurang dari barang yang akan diproses. Silahkan lihat di detail barang.');
+            }
+
+            $lastNomor = ReturSupplier::max('nomor');
+            $nomorBaru = $lastNomor ? ($lastNomor + 1) : 1;
+
+            // 1. Buat Header Invoice
+            $returSupplier = ReturSupplier::create([
+                'nomor'          => $nomorBaru,        // <-- Kolom 'nomor' (Integer)
+                'tanggal'        => Carbon::now(),
+                'barang_unit_id' => $data->barang_unit_id,
+                'user_id'        => Auth::id(),
+            ]);
+
+            foreach ($data->details as $cart) {
+                 ReturSupplierDetail::create([
+                    'retur_supplier_id' => $returSupplier->id,
+                    'barang_id'         => $cart->barang_id,
+                    'qty'               => $cart->qty
+                ]);
+            }
+
+            $data->update(['status' => 3,
+                            'waktu_diproses' => now()]); // 3 = Diproses
+
+
+            DB::commit();
+
+            // $dbWa = new GroupWa;
+            // $pesan = '';
+            // $tanggal = Carbon::now()->translatedFormat('d F Y');
+
+            // // $pesan = "*".$data->barang_unit->nama."*\n";
+            // $pesan .= "🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹"."\n"."*KIRIM BARANG RETUR*\n"."🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹\n\n";
+
+            // if ($data['tipe'] == 2) {
+            //     $kota = $data->konsumen->kabupaten_kota ? $data->konsumen->kabupaten_kota->nama_wilayah : '';
+
+            //     $pesan .= "*".$data->konsumen->kode_toko->kode. ' '.$data->konsumen->nama."*\n".
+            //         $data->konsumen->alamat."\n".
+            //         $kota."\n\n";
+            // } else {
+            //     $pesan .= "\n";
+            // }
+
+            // $pesan .= "*Tanggal* : ".$tanggal."\n\n";
+
+            // //  $pesan = "Barang A: \n";
+
+            // $n = 1;
+            // foreach ($data->load(['details.barang.satuan'])->details as $d) {
+            //     $pesan .= $n++.'. '.$d->barang->barang_nama->nama." ".$d->barang->kode.""."\n".$d->barang->merk." "."....... ". $d->qty.' ('.$d->barang->satuan->nama.")";
+            //     $pesan .= "\n\n";
+            // }
+
+            // $pesan .= "=======================\n".
+            //             "•⁠ Sales : ".$data->karyawan->nama."\n".
+            //             "⁠•⁠ CP : ".$data->karyawan->no_hp."\n\n";
+
+            // $pesan .= "No Kantor: *0853-3939-3918* \n";
+
+            // $tujuan = $dbWa->where('untuk', 'kirim-barang-retur')->first()->nama_group;
+
+            // $dbWa->sendWa($tujuan, $pesan);
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            if (isset($stok_update['status']) && $stok_update['status'] == false) {
+                BarangReturDetail::where('id', $stok_update['id'])->update([
+                    'stok_kurang' => 1,
+                ]);
+            }
+
+            return [
+                'status' => 'error',
+                'message' => $th->getMessage(),
+            ];
+        }
+
+        $message = $data->tipe == 2 ? 'Barang Berhasil Diproses. Silahkan Cetak Bukti Kirim!' : 'Retur Supplier Berhasil Diproses. Silahkan Lanjutkan ke menu Penyelesaian Retur!';
+
+        return ['status' => 'success', 'message' => $message];
+    }
+
     public function checkout_retur($id)
     {
         $stok_update = null;
@@ -326,8 +507,9 @@ class BarangRetur extends Model
         try {
              DB::beginTransaction();
 
+
             $data->update([
-                'status' => 1,
+                'status' => $data['tipe'] == 2 ? 1 : 2,
             ]);
 
             DB::commit();
@@ -337,7 +519,11 @@ class BarangRetur extends Model
             $tanggal = Carbon::now()->translatedFormat('d F Y');
 
             // $pesan = "*".$data->barang_unit->nama."*\n";
-            $pesan .= "🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸"."\n"."*TERIMA BARANG RETUR*\n"."🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸\n\n";
+            if ($data['tipe'] == 2) {
+                $pesan .= "🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸"."\n"."*TERIMA BARANG RETUR*\n"."🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸\n\n";
+            } else {
+                $pesan .= "🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸"."\n"."*BARANG RETUR SUPPLIER*\n"."🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸\n\n";
+            }
 
             if ($data['tipe'] == 2) {
                 $kota = $data->konsumen->kabupaten_kota ? $data->konsumen->kabupaten_kota->nama_wilayah : '';
@@ -346,7 +532,9 @@ class BarangRetur extends Model
                     $data->konsumen->alamat."\n".
                     $kota."\n\n";
             } else {
-                $pesan .= "\n";
+                $supplier = $data->barang_unit ? $data->barang_unit->nama : '';
+                $pesan .= "*".$supplier."*\n";
+                // $pesan .= "*\n";
             }
 
             $pesan .= "*Tanggal* : ".$tanggal."\n\n";
@@ -359,22 +547,29 @@ class BarangRetur extends Model
                 $pesan .= "\n\n";
             }
 
-            $pesan .= "=======================\n".
-                        "•⁠ Sales : ".$data->karyawan->nama."\n".
-                        "⁠•⁠ CP : ".$data->karyawan->no_hp."\n\n";
+            if ($data['tipe'] == 2) {
 
-            $pesan .= "No Kantor: *0853-3939-3918* \n";
+                $pesan .= "=======================\n".
+                            "•⁠ Sales : ".$data->karyawan->nama."\n".
+                            "⁠•⁠ CP : ".$data->karyawan->no_hp."\n\n";
 
-            $tujuan = $dbWa->where('untuk', 'terima-barang-retur')->first()->nama_group;
+                $pesan .= "No Kantor: *0853-3939-3918* \n";
+            }
+
+
+            $tujuan = $dbWa->where('untuk', $data['tipe'] == 2 ? 'terima-barang-retur' : 'kirim-retur-supplier')->first()->nama_group;
 
             $dbWa->sendWa($tujuan, $pesan);
 
-            $no_konsumen = $data->konsumen->no_hp;
-            $no_konsumen = str_replace('-', '', $no_konsumen);
+            if ($data['tipe'] == 2) {
+                $no_konsumen = $data->konsumen->no_hp;
+                $no_konsumen = str_replace('-', '', $no_konsumen);
 
-            // check length no hp
-            if (strlen($no_konsumen) > 10 && $data->konsumen->wa_notif == 1) {
-                $dbWa->sendWa($no_konsumen, $pesan);
+                // check length no hp
+                if (strlen($no_konsumen) > 10 && $data->konsumen->wa_notif == 1) {
+                    $dbWa->sendWa($no_konsumen, $pesan);
+                }
+
             }
 
         } catch (\Throwable $th) {
