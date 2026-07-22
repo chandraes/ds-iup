@@ -866,6 +866,14 @@ class BillingController extends Controller
             return redirect()->back()->with('error', 'Jumlah Tidak Boleh dibawah 0!');
         }
 
+        if ($retur->tipe == 1) {
+            $stok = BarangStokHarga::where('barang_id', $data['barang_id'])->where('stok', '>', 0)->sum('stok');
+
+            if ($data['jumlah'] > $stok) {
+                return redirect()->back()->with('error', 'Jumlah retur melebihi stok yang tersedia (Stok: '.$stok.')');
+            }
+        }
+
         $db = new BarangReturDetail;
 
         // $stok = BarangStokHarga::find($data['barang_stok_harga_id'])->stok;

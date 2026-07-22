@@ -71,49 +71,63 @@
                 id="form-verify">
                 @csrf
                 <div class="card shadow-sm border-0 h-100">
-                    <div
-                        class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-bold text-success"><i class="bi bi-check2-square"></i> Form Barang Diterima
-                        </h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                            data-bs-target="#modalTambahBarang">
-                            <i class="bi bi-plus-circle"></i> Tambah Barang
+                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold text-success"><i class="bi bi-check2-square"></i> Form Barang Diterima</h6>
+                        {{-- Tambahkan ID btn-tambah-barang dan disable secara default --}}
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-tambah-barang" data-bs-toggle="modal" data-bs-target="#modalTambahBarang" disabled>
+                            <i class="bi bi-plus-circle"></i> Tambah Barang Pengganti
                         </button>
                     </div>
                     <div class="card-body p-3 table-responsive">
+
+                        {{-- TABEL 1: BARANG PENGGANTI (Disembunyikan default) --}}
+                        <div id="container-pengganti" style="display: none;" class="mb-4">
+                            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-arrow-repeat"></i> List Barang Pengganti</h6>
+                            <table class="table table-bordered table-sm align-middle" id="table-pengganti">
+                                <thead class="table-primary text-center">
+                                    <tr>
+                                        <th width="5%">No</th>
+                                        <th width="35%">Nama Barang Pengganti</th>
+                                        <th width="15%">Qty</th>
+                                        <th width="35%">Catatan Item</th>
+                                        <th width="10%">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-pengganti">
+                                    {{-- Baris barang pengganti masuk ke sini --}}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- TABEL 2: BARANG ASLI BAWAAN RETUR --}}
+                        <h6 class="fw-bold text-success mb-2"><i class="bi bi-box-seam"></i> List Barang Asli Retur</h6>
                         <table class="table table-bordered table-sm align-middle" id="table-penerimaan">
                             <thead class="table-light text-center">
                                 <tr>
                                     <th width="5%">
                                         <input class="form-check-input border-secondary" type="checkbox" id="checkAll">
                                     </th>
-                                    <th width="5%">No</th> {{-- KOLOM NOMOR BARU DI TABEL KANAN --}}
-                                    <th width="30%">Barang (Asli/Pengganti)</th>
+                                    <th width="5%">No</th>
+                                    <th width="30%">Barang Asli</th>
                                     <th width="15%">Qty Proses</th>
                                     <th width="20%">Tindakan</th>
                                     <th width="20%">Catatan Per Item</th>
-                                    <th width="5%">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-penerimaan">
-                                {{-- Baris dinamis masuk ke sini --}}
+                                {{-- Baris barang asli masuk ke sini --}}
                             </tbody>
                         </table>
 
                         <div class="mb-3 mt-4">
-                            <label class="form-label fw-bold">Catatan Penerimaan (Opsional)</label>
+                            <label class="form-label fw-bold">Catatan Penerimaan Umum (Opsional)</label>
                             <textarea name="catatan" class="form-control" rows="2"
-                                placeholder="Contoh: Barang A dicicil penerimaannya, sisanya menyusul..."></textarea>
+                                placeholder="Contoh: Dokumen SJ diserahkan ke admin..."></textarea>
                         </div>
                     </div>
+
+                    {{-- Footer: Checkbox Selesai Dihapus --}}
                     <div class="card-footer bg-light text-end py-3">
-                        <div class="form-check form-check-inline me-4 text-start">
-                            <input class="form-check-input" type="checkbox" id="checkSelesai" name="status_selesai"
-                                value="1">
-                            <label class="form-check-label fw-bold text-success" for="checkSelesai">
-                                Tandai Selesai (Semua barang sudah beres)
-                            </label>
-                        </div>
                         <button type="submit" class="btn btn-success" id="btn-simpan-terima">
                             <i class="bi bi-save"></i> Simpan Penerimaan
                         </button>
@@ -138,10 +152,14 @@
                     <select id="modal-barang-id" class="form-select select2-modal">
                         <option value="">-- Cari & Pilih Barang --</option>
                         @foreach($barangPengganti as $b)
+                            @php
+                                $satuan = $b->satuan?->nama ?? 'pcs';
+                                $pajak = $b->jenis == 1 ? 'PPN' : 'Non-PPN'; // SESUAIKAN KOLOM INI JIKA ERROR
+                            @endphp
                             <option value="{{ $b->id }}"
-                                    data-satuan="{{ $b->satuan->nama ?? 'pcs' }}"
+                                    data-satuan="{{ $satuan }}"
                                     data-nama="{{ $b->barang_nama->nama }} ({{ $b->kode ?? '' }}) - {{ $b->merk ?? '' }}">
-                                {{ $b->barang_nama->nama }} ({{ $b->kode ?? '' }}) - {{ $b->merk ?? '' }}
+                                {{ $b->barang_nama->nama }} ({{ $b->kode ?? '' }}) - {{ $b->merk ?? '' }} | {{ $satuan }} | [{{ $pajak }}]
                             </option>
                         @endforeach
                     </select>
@@ -174,27 +192,58 @@
 $(document).ready(function() {
     const detailInvoice = @json($invoice->details);
 
-    // Fungsi Otomatis untuk memperbarui nomor urut di tabel kanan
+    // ==========================================
+    // 1. FUNGSI NOMOR URUT & VALIDASI TOMBOL
+    // ==========================================
     function updateRowNumbers() {
         $('#tbody-penerimaan tr').each(function(index) {
             $(this).find('.row-number').text(index + 1);
         });
     }
 
-    /**
-     * Fungsi untuk menambah baris ke tabel kanan
-     * @param {boolean} isManual - true jika barang berasal dari modal tambah barang
-     */
-    function tambahBaris(barangId, namaBarang, qty, satuan, maxQty = null, isManual = false) {
-        let maxAttr = maxQty ? `max="${maxQty}"` : '';
-        let infoMax = maxQty ? `<div class="text-muted mt-1" style="font-size: 0.7em;">Max: ${maxQty} (Sisa)</div>` : '';
+    function updateRowNumbersPengganti() {
+        $('#tbody-pengganti tr').each(function(index) {
+            $(this).find('.row-number-pengganti').text(index + 1);
+        });
 
-        // LOGIC UX: Jika barang bawaan asli (isManual = false), jangan beri tombol hapus baris.
-        // Jika barang baru dari modal (isManual = true), berikan tombol hapus baris.
-        let tombolAksi = isManual
-            ? `<button type="button" class="btn btn-sm btn-outline-danger btn-hapus-baris"><i class="bi bi-trash"></i></button>`
-            : `<span class="text-muted small fst-italic">-</span>`;
+        // Sembunyikan tabel jika kosong
+        if($('#tbody-pengganti tr').length === 0) {
+            $('#container-pengganti').hide();
+        }
+    }
 
+    // Fungsi untuk mengecek kapan tombol Tambah Barang aktif
+    function checkTambahBarangState() {
+        /*
+           BYPASS KONDISI:
+           Ubah nilai bypassRule menjadi true jika Anda ingin mengabaikan syarat
+           "harus mencentang Hapus (Batal Retur)" dan membiarkan tombol selalu bisa diklik.
+        */
+        let bypassRule = false;
+
+        if (bypassRule) {
+            $('#btn-tambah-barang').prop('disabled', false);
+            return;
+        }
+
+        let isAdaHapus = false;
+        $('.check-item:checked').each(function() {
+            let row = $(this).closest('tr');
+            if (row.find('.select-tindakan').val() === 'hapus') {
+                isAdaHapus = true;
+            }
+        });
+
+        $('#btn-tambah-barang').prop('disabled', !isAdaHapus);
+    }
+
+    // ==========================================
+    // 2. FUNGSI RENDER TABEL (ASLI & PENGGANTI)
+    // ==========================================
+
+    // A. Render Barang Asli (Tabel Bawah)
+    function tambahBarisAsli(barangId, namaBarang, qty, satuan) {
+        let maxAttr = `max="${qty}"`;
         let htmlRow = `
             <tr>
                 <td class="text-center">
@@ -202,7 +251,7 @@ $(document).ready(function() {
                 </td>
                 <td class="text-center fw-bold text-muted row-number"></td>
                 <td>
-                    <span class="fw-bold fs-6">${namaBarang}</span>
+                    <span class="fw-bold fs-6 nama-item-asli">${namaBarang}</span>
                     <input type="hidden" name="barang_id[]" class="input-row" value="${barangId}" disabled>
                 </td>
                 <td class="text-center">
@@ -210,7 +259,7 @@ $(document).ready(function() {
                         <input type="number" name="qty_terima[]" class="form-control text-center input-row input-qty" min="1" value="${qty}" ${maxAttr} disabled required>
                         <span class="input-group-text">${satuan}</span>
                     </div>
-                    ${infoMax}
+                    <div class="text-muted mt-1" style="font-size: 0.7em;">Max: ${qty} (Sisa)</div>
                 </td>
                 <td>
                     <select name="status_proses[]" class="form-select form-select-sm input-row select-tindakan" disabled>
@@ -221,62 +270,135 @@ $(document).ready(function() {
                 <td>
                     <input type="text" name="catatan_item[]" class="form-control form-control-sm input-row input-catatan" placeholder="Opsional..." disabled>
                 </td>
-                <td class="text-center">
-                    ${tombolAksi}
-                </td>
             </tr>
         `;
         $('#tbody-penerimaan').append(htmlRow);
         updateRowNumbers();
     }
 
-    // 1. Load barang bawaan invoice secara otomatis (isManual = false)
+    // B. Render Barang Pengganti (Tabel Atas - Tanpa Checkbox, Otomatis Dieksekusi)
+    function tambahBarisPengganti(barangId, namaBarang, qty, satuan) {
+        $('#container-pengganti').show(); // Munculkan tabel
+        let htmlRow = `
+            <tr class="table-info">
+                <td class="text-center fw-bold text-muted row-number-pengganti"></td>
+                <td>
+                    <span class="fw-bold fs-6 nama-item-pengganti">${namaBarang}</span>
+                    {{-- Input hidden agar langsung terbaca form submit --}}
+                    <input type="hidden" name="barang_id[]" value="${barangId}">
+                    <input type="hidden" name="status_proses[]" value="terima">
+                </td>
+                <td class="text-center">
+                    <div class="input-group input-group-sm">
+                        <input type="number" name="qty_terima[]" class="form-control text-center input-qty-pengganti" min="1" value="${qty}" readonly>
+                        <span class="input-group-text">${satuan}</span>
+                    </div>
+                </td>
+                <td>
+                    <input type="text" name="catatan_item[]" class="form-control form-control-sm" placeholder="Catatan opsional...">
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-pengganti" title="Batal Tambah"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `;
+        $('#tbody-pengganti').append(htmlRow);
+        updateRowNumbersPengganti();
+    }
+
+    // ==========================================
+    // 3. INISIALISASI DATA AWAL & EVENT LISTENER
+    // ==========================================
+
+    // Load data bawaan saat halaman dimuat
     if(detailInvoice.length > 0) {
         detailInvoice.forEach(function(detail) {
-
-            // HANYA BUAT BARIS JIKA BARANG MASIH MEMILIKI SISA > 0
             if (detail.sisa_qty > 0) {
                 let nama = `${detail.barang.barang_nama.nama} (${detail.barang.kode ?? ''}) - ${detail.barang.merk ?? ''}`;
                 let satuan = detail.barang.satuan ? detail.barang.satuan.nama : 'pcs';
-
-                // PERHATIKAN: Parameter qty dan maxQty sekarang menggunakan 'detail.sisa_qty'
-                tambahBaris(detail.barang_id, nama, detail.sisa_qty, satuan, detail.sisa_qty, false);
+                tambahBarisAsli(detail.barang_id, nama, detail.sisa_qty, satuan);
             }
-
         });
     }
 
-    // 2. Eksekusi Modal Tambah Barang Pengganti (isManual = true)
-    $('#btn-simpan-modal').on('click', function() {
-        let select = $('#modal-barang-id');
-        let barangId = select.val();
-        let qty = $('#modal-qty').val();
+    checkTambahBarangState();
 
-        if(!barangId) {
-            Swal.fire('Oops!', 'Pilih barang terlebih dahulu.', 'warning');
-            return;
+    // Event Checkbox Item Asli
+    $('#tbody-penerimaan').on('change', '.check-item', function() {
+        let isChecked = $(this).is(':checked');
+        let row = $(this).closest('tr');
+
+        row.find('.input-row').prop('disabled', !isChecked);
+
+        if(isChecked) {
+            row.addClass(row.find('.select-tindakan').val() === 'hapus' ? 'table-danger' : 'table-active');
+        } else {
+            row.removeClass('table-active table-danger');
         }
-        if(qty <= 0) {
-            Swal.fire('Oops!', 'Qty harus lebih dari 0.', 'warning');
-            return;
-        }
 
-        let nama = select.find(':selected').data('nama');
-        let satuan = select.find(':selected').data('satuan');
-
-        // Parameter terakhir dikirim true karena ini input manual dari modal
-        tambahBaris(barangId, nama, qty, satuan, null, true);
-
-        $('#modalTambahBarang').modal('hide');
+        if (!isChecked) $('#checkAll').prop('checked', false);
+        checkTambahBarangState(); // Cek status tombol
     });
 
-    // 3. Hapus Baris Manual dari Tabel (hanya akan merespon baris yang memiliki tombol .btn-hapus-baris)
-    $('#tbody-penerimaan').on('click', '.btn-hapus-baris', function() {
+    // Event Ganti Tindakan Item Asli
+    $('#tbody-penerimaan').on('change', '.select-tindakan', function() {
+        let val = $(this).val();
+        let row = $(this).closest('tr');
+        let isChecked = row.find('.check-item').is(':checked');
+
+        if(val === 'hapus') {
+            if(isChecked) row.addClass('table-danger').removeClass('table-active');
+            row.find('.input-catatan').prop('required', true).attr('placeholder', 'Wajib diisi alasannya...');
+        } else {
+            if(isChecked) row.removeClass('table-danger').addClass('table-active');
+            row.find('.input-catatan').prop('required', false).attr('placeholder', 'Opsional...');
+        }
+        checkTambahBarangState(); // Cek status tombol
+    });
+
+    // Event Hapus Baris Pengganti
+    $('#tbody-pengganti').on('click', '.btn-hapus-pengganti', function() {
         $(this).closest('tr').remove();
-        updateRowNumbers();
+        updateRowNumbersPengganti();
     });
 
-    // Inisialisasi Select2 pada Modal
+    $('#checkAll').on('change', function() {
+        $('.check-item').prop('checked', $(this).is(':checked')).trigger('change');
+    });
+
+    // Validasi Qty Asli tidak boleh melebihi sisa
+    $('#tbody-penerimaan').on('input', '.input-qty', function() {
+        let max = parseInt($(this).attr('max'));
+        let val = parseInt($(this).val());
+        if (max && val > max) $(this).val(max);
+    });
+
+    // ==========================================
+    // 4. MODAL & SELECT2
+    // ==========================================
+    $('#modalTambahBarang').on('show.bs.modal', function () {
+        // 1. Reset: Kembalikan semua pilihan agar bisa dipilih (enable)
+        $('#modal-barang-id option').prop('disabled', false);
+
+        // 2. Pengecekan: Cari barang asli yang statusnya "hapus"
+        $('.check-item:checked').each(function() {
+            let row = $(this).closest('tr');
+            let tindakan = row.find('.select-tindakan').val();
+            let idBarangAsli = row.find('input[name="barang_id[]"]').val();
+
+            if (tindakan === 'hapus') {
+                // Matikan opsi (disable) di dropdown berdasarkan ID yang cocok
+                $(`#modal-barang-id option[value="${idBarangAsli}"]`).prop('disabled', true);
+            }
+        });
+
+        // 3. Segarkan tampilan Select2 jika sudah pernah diinisialisasi sebelumnya
+        if ($('#modal-barang-id').hasClass("select2-hidden-accessible")) {
+            $('#modal-barang-id').trigger('change.select2');
+        }
+    });
+
+    // Event ini berjalan SETELAH modal terbuka penuh
     $('#modalTambahBarang').on('shown.bs.modal', function () {
         $('.select2-modal').select2({
             theme: 'bootstrap-5',
@@ -296,59 +418,116 @@ $(document).ready(function() {
         $('#modal-satuan').text(selected.val() ? selected.data('satuan') : 'pcs');
     });
 
-    $('#tbody-penerimaan').on('change', '.check-item', function() {
-        let isChecked = $(this).is(':checked');
-        let row = $(this).closest('tr');
-        row.find('.input-row').prop('disabled', !isChecked);
-        if(isChecked) {
-            row.addClass(row.find('.select-tindakan').val() === 'hapus' ? 'table-danger' : 'table-active');
-        } else {
-            row.removeClass('table-active table-danger');
-        }
-        if (!isChecked) $('#checkAll').prop('checked', false);
-    });
+    $('#btn-simpan-modal').on('click', function() {
+        let select = $('#modal-barang-id');
+        let barangId = select.val();
+        let qty = $('#modal-qty').val();
 
-    $('#tbody-penerimaan').on('change', '.select-tindakan', function() {
-        let val = $(this).val();
-        let row = $(this).closest('tr');
-        let inputCatatan = row.find('.input-catatan');
-        let isChecked = row.find('.check-item').is(':checked');
-
-        if(val === 'hapus') {
-            if(isChecked) row.addClass('table-danger').removeClass('table-active');
-            inputCatatan.prop('required', true).attr('placeholder', 'Wajib diisi alasannya...');
-        } else {
-            if(isChecked) row.removeClass('table-danger').addClass('table-active');
-            inputCatatan.prop('required', false).attr('placeholder', 'Opsional...');
-        }
-    });
-
-    $('#tbody-penerimaan').on('input', '.input-qty', function() {
-        let max = parseInt($(this).attr('max'));
-        let val = parseInt($(this).val());
-        if (max && val > max) $(this).val(max);
-    });
-
-    $('#checkAll').on('change', function() {
-        $('.check-item').prop('checked', $(this).is(':checked')).trigger('change');
-    });
-
-    $('#form-verify').on('submit', function(e) {
-        e.preventDefault();
-        if ($('.check-item:checked').length === 0) {
-            Swal.fire('Peringatan', 'Pilih (ceklis) minimal 1 barang yang akan diproses!', 'warning');
+        if(!barangId || qty <= 0) {
+            Swal.fire('Oops!', 'Pilih barang dan pastikan Qty > 0.', 'warning');
             return;
         }
+
+        let nama = select.find(':selected').data('nama');
+        let satuan = select.find(':selected').data('satuan');
+
+        tambahBarisPengganti(barangId, nama, qty, satuan);
+        $('#modalTambahBarang').modal('hide');
+    });
+
+    // ==========================================
+    // 5. SWEETALERT REKAP KONFIRMASI SUBMIT
+    // ==========================================
+    $('#form-verify').on('submit', function(e) {
+        e.preventDefault();
         let form = this;
+        let countProses = 0;
+
+        // Kita buat area scroll (max-height: 300px) dan mulai struktur tabel Bootstrap
+        let htmlRekap = `
+            <div class="mb-2 text-start" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-bordered align-middle" style="font-size: 0.85em;">
+                    <thead class="table-light position-sticky top-0 shadow-sm">
+                        <tr>
+                            <th width="25%" class="text-center">Tindakan</th>
+                            <th width="55%">Nama Barang</th>
+                            <th width="20%" class="text-center">Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        // A. Ambil Rekap Barang Asli
+        $('.check-item:checked').each(function() {
+            let row = $(this).closest('tr');
+            let nama = row.find('.nama-item-asli').text();
+            let qty = row.find('.input-qty').val();
+            let tindakan = row.find('.select-tindakan').val();
+
+            if(tindakan === 'terima') {
+                htmlRekap += `
+                    <tr>
+                        <td class="text-center"><span class="badge bg-success w-100">MASUK STOK</span></td>
+                        <td>${nama}</td>
+                        <td class="text-center fw-bold">${qty}</td>
+                    </tr>`;
+            } else {
+                htmlRekap += `
+                    <tr>
+                        <td class="text-center"><span class="badge bg-danger w-100">BATAL/HAPUS</span></td>
+                        <td><span class="text-danger">${nama}</span></td>
+                        <td class="text-center fw-bold text-danger">${qty}</td>
+                    </tr>`;
+            }
+            countProses++;
+        });
+
+        // B. Ambil Rekap Barang Pengganti
+        $('#tbody-pengganti tr').each(function() {
+            let nama = $(this).find('.nama-item-pengganti').text();
+            let qty = $(this).find('.input-qty-pengganti').val();
+
+            htmlRekap += `
+                <tr class="table-info">
+                    <td class="text-center"><span class="badge bg-primary w-100">PENGGANTI</span></td>
+                    <td class="text-primary fw-bold">${nama}</td>
+                    <td class="text-center fw-bold">${qty}</td>
+                </tr>`;
+            countProses++;
+        });
+
+        // Tutup tag tabel dan div
+        htmlRekap += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        if (countProses === 0) {
+            Swal.fire('Peringatan', 'Anda belum mencentang atau menambahkan barang apapun untuk dieksekusi!', 'warning');
+            return;
+        }
+
         Swal.fire({
-            title: 'Proses Item Terpilih?',
-            text: "Barang yang dicentang akan diproses sesuai tindakannya.",
+            title: '<span class="fs-5 fw-bold">Konfirmasi Penerimaan</span>',
+            html: htmlRekap + '<div class="text-center mt-3 text-dark">Data sudah benar dan ingin disimpan?</div>',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#198754',
-            confirmButtonText: 'Ya, Proses Sekarang!'
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="bi bi-check2-circle"></i> Ya, Simpan!',
+            cancelButtonText: 'Cek Kembali',
+            width: '600px' // Diperlebar sedikit agar tabel leluasa
         }).then((result) => {
-            if (result.isConfirmed) form.submit();
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Memproses...',
+                    text: 'Menyimpan data ke server',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+                form.submit();
+            }
         });
     });
 });
