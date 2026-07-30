@@ -30,4 +30,9 @@ class ReturSupplier extends Model
     {
         return $this->hasMany(ReturSupplierReceipt::class, 'retur_supplier_id');
     }
+
+    public function getTotalRefundAttribute()
+    {
+        return $this->receipts->sum('nominal_uang');
+    }
 }

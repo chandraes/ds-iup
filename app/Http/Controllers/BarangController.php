@@ -755,8 +755,8 @@ class BarangController extends Controller
     public function barang_delete(Barang $barang)
     {
         $errorMessage = null;
-        if ($barang->stok_harga && $barang->stok_harga->sum('stok') > 0) {
-            $errorMessage = 'Data tidak bisa dihapus karena masih memiliki stok!';
+        if ($barang->stok_harga) {
+            $errorMessage = 'Data tidak bisa dihapus karena sudah memiliki transaksi!';
         }
 
         if ($errorMessage) {

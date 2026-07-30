@@ -141,7 +141,7 @@
                         {{$loop->iteration}}
                     </td>
                     <td class="text-center align-middle">
-                         {{$d->stok->barang_nama->nama}}, {{$d->barang->kode}},
+                         {{$d->barang->barang_nama->nama}}, {{$d->barang->kode}},
                         {{$d->barang->merk}}
                     </td>
                      <td class="text-center align-middle">

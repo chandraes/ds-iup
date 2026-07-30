@@ -61,14 +61,15 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <table class="table table-striped table-hover align-middle" id="invoice-table">
-                <thead class="table-success text-center">
+               <thead class="table-success text-center">
                     <tr>
                         <th width="5%">No</th>
-                        <th width="15%">Nomor Invoice</th>
-                        <th width="15%">Tanggal</th>
-                        <th width="20%">Supplier / Unit</th>
-                        <th width="15%">Status Transaksi</th> {{-- Menggantikan Status Kirim --}}
-                        <th width="20%">Progress Retur</th>   {{-- Menggantikan Status Proses & Total Item --}}
+                        <th width="12%">Nomor Invoice</th>
+                        <th width="12%">Tanggal</th>
+                        <th width="18%">Supplier / Unit</th>
+                        <th width="13%">Status Transaksi</th>
+                        <th width="18%">Progress Retur</th>
+                        <th width="12%">Total Refund</th> {{-- KOLOM BARU --}}
                         <th width="10%">Aksi</th>
                     </tr>
                 </thead>
@@ -136,6 +137,7 @@
             { data: 'supplier', name: 'barang_unit.nama' },
             { data: 'status_kirim', name: 'tipe', className: 'text-center' },
             { data: 'progress_info', name: 'progress_info', orderable: false, searchable: false },
+            { data: 'total_refund_display', name: 'total_refund_display', className: 'text-end fw-bold text-success', orderable: false, searchable: false }, // KOLOM BARU
             { data: 'aksi', name: 'aksi', orderable: false, searchable: false, className: 'text-center' }
         ],
         order: [[2, 'desc']], // Urutkan berdasarkan created_at (kolom index 2)
