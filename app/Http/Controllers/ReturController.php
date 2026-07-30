@@ -494,7 +494,7 @@ class ReturController extends Controller
                     $btn .= '</div>';
                     return $btn;
                 })
-                ->rawColumns(['nomor_display', 'status_kirim', 'progress_info', 'aksi'])
+                ->rawColumns(['nomor_display', 'status_kirim', 'progress_info', 'aksi', 'total_refund_display'])
                 ->make(true);
         }
     }
