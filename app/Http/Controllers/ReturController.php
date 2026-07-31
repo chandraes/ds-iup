@@ -590,19 +590,24 @@ class ReturController extends Controller
         return view('billing.barang-retur-kirim.verify', compact('invoice', 'barangPengganti'));
     }
 
-   public function verifySubmit(Request $request, $id)
+    public function verifySubmit(Request $request, $id)
     {
+        // =====================================================================
+        // 0. PROTEKSI ROLE: Hanya 'su' dan 'admin' yang boleh Tukar Barang/Refund
+        // =====================================================================
+        $user = Auth::user();
+        // Sesuaikan 'role' dengan nama kolom/method di model User Anda (misal: $user->hasRole(['su', 'admin']))
+        $isAuthorized = $user && in_array($user->role ?? '', ['su', 'admin']);
 
+        // Sanitasi Nominal Cleave.js
         if ($request->filled('nominal_uang')) {
-            // Hapus semua karakter selain angka
             $nominalClean = preg_replace('/[^0-9]/', '', $request->nominal_uang);
-
-            // Timpa data request dengan nilai bersih
             $request->merge([
                 'nominal_uang' => $nominalClean ? (float) $nominalClean : 0
             ]);
         }
-        // 1. Validasi Input Minimal Harus Ada Barang
+
+        // 1. Validasi Input Basic
         $request->validate([
             'barang_id' => 'required|array',
             'barang_id.*' => 'required|exists:barangs,id',
@@ -610,16 +615,26 @@ class ReturController extends Controller
             'qty_terima.*' => 'required|integer|min:1',
             'status_proses' => 'required|array',
             'status_proses.*' => 'required|in:terima,hapus,hapus_ganti_uang',
-            'nominal_uang' => 'nullable|numeric|min:1', // Inputan nominal tunggal
+            'nominal_uang' => 'nullable|numeric|min:1',
         ]);
 
-        $adaGantiUang = $request->nominal_uang > 0 && in_array('hapus_ganti_uang', $request->status_proses ?? []);
+        // PROTEKSI SERVER-SIDE KETAT:
+        // Jika BUKAN su/admin TETAPI mencoba mengirim tindakan 'hapus' atau 'hapus_ganti_uang'
+        if (!$isAuthorized) {
+            $tindakanKhusus = array_intersect(['hapus', 'hapus_ganti_uang'], $request->status_proses ?? []);
+            if (!empty($tindakanKhusus)) {
+                return redirect()->back()
+                                ->withInput()
+                                ->with('error', 'Akses Ditolak! Tindakan "Tukar Barang" atau "Refund Uang" hanya dapat diproses oleh SU dan Admin.');
+            }
+        }
+
+        $adaGantiUangState = in_array('hapus_ganti_uang', $request->status_proses ?? []);
         $nominalClean = $request->nominal_uang ?? 0;
         $message = "";
-        // Sertakan relasi 'details' (item bawaan awal invoice) agar bisa dihitung sisanya nanti
+
         $invoice = ReturSupplier::with('details')->findOrFail($id);
 
-        // Proteksi status keamanan ganda
         if (!in_array($invoice->tipe, [1, 2])) {
             return redirect()->route('billing.penyelesaian-retur.index')
                             ->with('error', 'Transaksi gagal! Status invoice sudah berubah.');
@@ -631,34 +646,27 @@ class ReturController extends Controller
             // 2. Buat Header Log Penerimaan Retur
             $receipt = new ReturSupplierReceipt();
             $receipt->retur_supplier_id = $invoice->id;
-            $receipt->user_id = Auth::id() ?? 1; // Mengambil ID user login (fallback ke 1 jika test tanpa login)
+            $receipt->user_id = Auth::id() ?? 1;
             $receipt->catatan = $request->catatan;
+            $receipt->nominal_uang = $adaGantiUangState ? $nominalClean : 0;
             $receipt->save();
 
-            // Simpan Nominal Uang Tunggal di Header jika ada tindakan 'hapus_ganti_uang'
-            $adaGantiUangState = in_array('hapus_ganti_uang', $request->status_proses ?? []);
-            $receipt->nominal_uang = $adaGantiUang ? ($request->nominal_uang ?? 0) : 0;
-
-            $receipt->save();
-
-            // 3. Looping Data Barang yang Diinput User untuk Ditambah ke Stok
-           foreach ($request->barang_id as $key => $barangId) {
+            // 3. Looping Data Barang
+            foreach ($request->barang_id as $key => $barangId) {
                 $qtyTerima = $request->qty_terima[$key];
                 $statusProses = $request->status_proses[$key];
                 $catatanItem = $request->catatan_item[$key] ?? null;
 
-                // Simpan detail riwayat
                 $receiptDetail = new ReturSupplierReceiptDetail();
                 $receiptDetail->receipt_id = $receipt->id;
                 $receiptDetail->barang_id = $barangId;
                 $receiptDetail->qty_terima = $qtyTerima;
-                $receiptDetail->status_proses = $statusProses; // 'terima', 'hapus', atau 'hapus_ganti_uang'
+                $receiptDetail->status_proses = $statusProses;
                 $receiptDetail->catatan_item = $catatanItem;
                 $receiptDetail->save();
 
-                // 4. LOGIKA UTAMA: Masuk Stok ATAU Buang
+                // LOGIKA STOK: Masuk Stok jika Diterima
                 if ($statusProses == 'terima') {
-                    // JIKA DITERIMA: Tambah ke stok
                     $stokHargaTerakhir = BarangStokHarga::where('barang_id', $barangId)
                                                         ->orderBy('id', 'desc')
                                                         ->lockForUpdate()
@@ -669,42 +677,35 @@ class ReturController extends Controller
                     }
                     $stokHargaTerakhir->increment('stok', $qtyTerima);
                 }
-                else if (in_array($statusProses, ['hapus', 'hapus_ganti_uang'])) {
-                    // JIKA DIHAPUS (Batal Retur):
-                    // Kita TIDAK menambah stok. History sudah tersimpan di $receiptDetail di atas.
-                    if ($adaGantiUangState) {
-                        $dbKas = new KasBesar();
+            }
 
-                        $rek = Rekening::where('untuk', 'kas-besar-ppn')->first();
+            // 4. LOGIKA KAS BESAR (Di luar loop agar tidak duplikat)
+            if ($adaGantiUangState && $nominalClean > 0) {
+                $dbKas = new KasBesar();
+                $rek = Rekening::where('untuk', 'kas-besar-ppn')->first();
 
-                        $dbKas = $dbKas->create([
-                            'uraian' => "Retur Supplier Refund (Ganti Uang) - Invoice RS-".sprintf('%04d', $invoice->nomor),
-                            'nominal' => $nominalClean,
-                            'ppn_kas' => 1,
-                            'jenis' => 1,
-                            'no_rek' => $rek->no_rek,
-                            'bank' => $rek->bank,
-                            'nama_rek' => $rek->nama_rek,
-                            'saldo' => $dbKas->saldoTerakhir(1) + $nominalClean,
-                            'modal_investor_terakhir' => $dbKas->modalInvestorTerakhir(1),
-                        ]);
-                    }
-
+                if ($rek) {
+                    $dbKas->create([
+                        'uraian' => "Retur Supplier Refund (Ganti Uang) - Invoice RS-".sprintf('%04d', $invoice->nomor),
+                        'nominal' => $nominalClean,
+                        'ppn_kas' => 1,
+                        'jenis' => 1,
+                        'no_rek' => $rek->no_rek,
+                        'bank' => $rek->bank,
+                        'nama_rek' => $rek->nama_rek,
+                        'saldo' => $dbKas->saldoTerakhir(1) + $nominalClean,
+                        'modal_investor_terakhir' => $dbKas->modalInvestorTerakhir(1),
+                    ]);
                 }
             }
 
-            // =====================================================================
-            // 5. LOGIKA BARU: EVALUASI AUTOMATIC COMPLETION (ANTI-BARANG PENGGANTI BEDA QTY)
-            // =====================================================================
-
-            // Ambil semua riwayat detail penerimaan untuk invoice ini (termasuk yang baru disimpan di atas)
+            // 5. EVALUASI AUTOMATIC COMPLETION
             $semuaRiwayat = ReturSupplierReceiptDetail::whereHas('receipt', function($query) use ($id) {
                 $query->where('retur_supplier_id', $id);
             })->get();
 
             $semuaBarangAsliSelesai = true;
 
-            // Periksa sisa antrean khusus untuk barang-barang bawaan asli invoice
             foreach ($invoice->details as $detail) {
                 $diprosesUntukItemIni = $semuaRiwayat->where('barang_id', $detail->barang_id)->sum('qty_terima');
                 $sisaItemAsli = $detail->qty - $diprosesUntukItemIni;
@@ -717,10 +718,8 @@ class ReturController extends Controller
 
             $invoice->tipe = $semuaBarangAsliSelesai ? 3 : 2;
             $invoice->save();
-            // =====================================================================
 
             DB::commit();
-
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -729,28 +728,31 @@ class ReturController extends Controller
                             ->with('error', 'Terjadi Kesalahan: ' . $e->getMessage());
         }
 
-         if ($adaGantiUangState && $nominalClean > 0) {
+        // 6. NOTIFIKASI WA (Fail Safe)
+        if ($adaGantiUangState && $nominalClean > 0) {
+            try {
                 $dbWa = new GroupWa();
-
                 $rekening = Rekening::where('untuk', 'kas-besar-ppn')->first();
 
-                // dd($rekening);
-
                 $message = $dbWa->generateMessage(
-                    1, "FORM RETUR BARANG GANTI UANG", 1, "RETUR REFUND", $nominalClean, $rekening, null,null
+                    1, "FORM RETUR BARANG GANTI UANG", 1, "RETUR REFUND", $nominalClean, $rekening, null, null
                 );
 
                 $group = $dbWa->where('untuk', 'kas-besar-ppn')->first();
 
-                $dbWa->sendWa($group->nama_group, $message);
-
+                if ($group) {
+                    $dbWa->sendWa($group->nama_group, $message);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Gagal mengirim WA Retur Refund: " . $e->getMessage());
             }
+        }
 
-            $pesanSukses = $invoice->tipe == 3
-                ? 'Stok berhasil diverifikasi. Seluruh item invoice asli telah terpenuhi (Status: SELESAI).'
-                : 'Stok berhasil diverifikasi dan dimasukkan ke dalam sistem (Status: PARSIAL).';
+        $pesanSukses = $invoice->tipe == 3
+            ? 'Stok berhasil diverifikasi. Seluruh item invoice asli telah terpenuhi (Status: SELESAI).'
+            : 'Stok berhasil diverifikasi dan dimasukkan ke dalam sistem (Status: PARSIAL).';
 
-            return redirect()->route('billing.penyelesaian-retur.index')
-                            ->with('success', $pesanSukses);
+        return redirect()->route('billing.penyelesaian-retur.index')
+                        ->with('success', $pesanSukses);
     }
 }

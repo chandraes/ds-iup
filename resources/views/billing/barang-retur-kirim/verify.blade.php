@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    // Cek Role User Login (Sesuaikan nama kolom 'role' jika berbeda)
+    $isAuthorized = in_array(auth()->user()->role ?? '', ['su', 'admin']);
+@endphp
+
 @section('content')
 <div class="container-fluid">
     {{-- Header --}}
@@ -63,7 +68,6 @@
                                         Awal: {{ $detail->qty }} {{ $detail->barang->satuan->nama ?? 'pcs' }}
                                     </span>
                                     <br>
-                                    {{-- Indikator Sisa --}}
                                     @if($detail->sisa_qty > 0)
                                         <span class="badge bg-success-subtle text-success border border-success fs-7">
                                             Sisa: {{ $detail->sisa_qty }}
@@ -82,7 +86,7 @@
             </div>
         </div>
 
-        {{-- Panel Kanan: Form Input Penerimaan (Dynamic Rows dengan Checkbox) --}}
+        {{-- Panel Kanan: Form Input Penerimaan --}}
         <div class="col-md-8 mb-4">
             <form action="{{ route('billing.penyelesaian-retur.verify.submit', $invoice->id) }}" method="POST"
                 id="form-verify">
@@ -90,14 +94,17 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 fw-bold text-success"><i class="bi bi-check2-square"></i> Form Barang Diterima</h6>
-                        {{-- Tambahkan ID btn-tambah-barang dan disable secara default --}}
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-tambah-barang" data-bs-toggle="modal" data-bs-target="#modalTambahBarang" disabled>
-                            <i class="bi bi-plus-circle"></i> Tambah Barang Pengganti
-                        </button>
+
+                        {{-- Tombol Tambah Barang Pengganti HANYA MUNCUL untuk SU / Admin --}}
+                        @if($isAuthorized)
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-tambah-barang" data-bs-toggle="modal" data-bs-target="#modalTambahBarang" disabled>
+                                <i class="bi bi-plus-circle"></i> Tambah Barang Pengganti
+                            </button>
+                        @endif
                     </div>
                     <div class="card-body p-3 table-responsive">
 
-                        {{-- TABEL 1: BARANG PENGGANTI (Disembunyikan default) --}}
+                        {{-- TABEL 1: BARANG PENGGANTI --}}
                         <div id="container-pengganti" style="display: none;" class="mb-4">
                             <h6 class="fw-bold text-primary mb-2"><i class="bi bi-arrow-repeat"></i> List Barang Pengganti</h6>
                             <table class="table table-bordered table-sm align-middle" id="table-pengganti">
@@ -111,7 +118,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-pengganti">
-                                    {{-- Baris barang pengganti masuk ke sini --}}
                                 </tbody>
                             </table>
                         </div>
@@ -132,11 +138,10 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody-penerimaan">
-                                {{-- Baris barang asli masuk ke sini --}}
                             </tbody>
                         </table>
 
-                        {{-- CONTAINER INPUT NOMINAL GANTI UANG (GLOBAL - DENGAN DISPLAY HIDDEN DEFAULT) --}}
+                        {{-- CONTAINER INPUT NOMINAL GANTI UANG --}}
                         <div id="container-nominal-global" class="card border-warning mb-3" style="display: none;">
                             <div class="card-body bg-warning-subtle py-2 px-3 rounded">
                                 <div class="row align-items-center">
@@ -151,7 +156,6 @@
                                     <div class="col-md-6">
                                         <div class="input-group">
                                             <span class="input-group-text fw-bold border-warning bg-white">Rp</span>
-                                            {{-- DIUBAH MENJADI TYPE TEXT UNTUK CLEAVE.JS --}}
                                             <input type="text" name="nominal_uang" id="input-nominal-global"
                                                 class="form-control border-warning fw-bold text-dark fs-6"
                                                 placeholder="0" disabled>
@@ -168,7 +172,6 @@
                         </div>
                     </div>
 
-                    {{-- Footer: Submit --}}
                     <div class="card-footer bg-light text-end py-3">
                         <button type="submit" class="btn btn-success" id="btn-simpan-terima">
                             <i class="bi bi-save"></i> Simpan Penerimaan
@@ -181,6 +184,7 @@
 </div>
 
 {{-- MODAL TAMBAH BARANG --}}
+@if($isAuthorized)
 <div class="modal fade" id="modalTambahBarang" tabindex="-1" aria-labelledby="modalTambahBarangLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -223,6 +227,7 @@
         </div>
     </div>
 </div>
+@endif
 @endsection
 
 @push('css')
@@ -232,16 +237,15 @@
 
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-{{-- CLEAVE JS LIBRARY --}}
 <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
 
 <script>
 $(document).ready(function() {
     const detailInvoice = @json($invoice->details);
 
-    // ==========================================
-    // INISIALISASI CLEAVE JS NOMINAL
-    // ==========================================
+    // VARIABEL OTORISASI DARI LARAVEL BLADE
+    const isAuthorized = @json($isAuthorized);
+
     let cleaveNominal = new Cleave('#input-nominal-global', {
         numeral: true,
         numeralThousandsGroupStyle: 'thousand',
@@ -253,7 +257,6 @@ $(document).ready(function() {
     function checkNominalUangState() {
         let adaGantiUang = false;
 
-        // Cek semua item asli yang dicentang
         $('.check-item:checked').each(function() {
             let row = $(this).closest('tr');
             if (row.find('.select-tindakan').val() === 'hapus_ganti_uang') {
@@ -261,7 +264,6 @@ $(document).ready(function() {
             }
         });
 
-        // Tampilkan/Sembunyikan Box Input Global
         if (adaGantiUang) {
             $('#container-nominal-global').slideDown();
             $('#input-nominal-global').prop('disabled', false).prop('required', true);
@@ -272,9 +274,6 @@ $(document).ready(function() {
         }
     }
 
-    // ==========================================
-    // 1. FUNGSI NOMOR URUT & VALIDASI TOMBOL
-    // ==========================================
     function updateRowNumbers() {
         $('#tbody-penerimaan tr').each(function(index) {
             $(this).find('.row-number').text(index + 1);
@@ -292,10 +291,9 @@ $(document).ready(function() {
     }
 
     function checkTambahBarangState() {
-        let bypassRule = false;
-
-        if (bypassRule) {
-            $('#btn-tambah-barang').prop('disabled', false);
+        // Jika bukan su/admin, tombol tambah barang tidak akan pernah diaktifkan
+        if (!isAuthorized) {
+            $('#btn-tambah-barang').prop('disabled', true);
             return;
         }
 
@@ -311,11 +309,20 @@ $(document).ready(function() {
     }
 
     // ==========================================
-    // 2. FUNGSI RENDER TABEL (ASLI & PENGGANTI)
+    // RENDER BARIS BARANG ASLI
     // ==========================================
-
     function tambahBarisAsli(barangId, namaBarang, qty, satuan) {
         let maxAttr = `max="${qty}"`;
+
+        // FILTER DROPDOWN AKSES BERDASARKAN OTORISASI ROLE
+        let optionsTindakan = `<option value="terima">Terima (Masuk Stok)</option>`;
+        if (isAuthorized) {
+            optionsTindakan += `
+                <option value="hapus">Hapus (Batal Retur - Tukar Barang)</option>
+                <option value="hapus_ganti_uang">Hapus (Batal Retur - Ganti Uang)</option>
+            `;
+        }
+
         let htmlRow = `
             <tr>
                 <td class="text-center align-middle">
@@ -335,9 +342,7 @@ $(document).ready(function() {
                 </td>
                 <td class="align-middle">
                     <select name="status_proses[]" class="form-select form-select-sm input-row select-tindakan" disabled>
-                        <option value="terima">Terima (Masuk Stok)</option>
-                        <option value="hapus">Hapus (Batal Retur - Tukar Barang)</option>
-                        <option value="hapus_ganti_uang">Hapus (Batal Retur - Ganti Uang)</option>
+                        ${optionsTindakan}
                     </select>
                 </td>
                 <td class="align-middle">
@@ -377,10 +382,7 @@ $(document).ready(function() {
         updateRowNumbersPengganti();
     }
 
-    // ==========================================
-    // 3. INISIALISASI DATA AWAL & EVENT LISTENER
-    // ==========================================
-
+    // Load Data
     if(detailInvoice.length > 0) {
         detailInvoice.forEach(function(detail) {
             if (detail.sisa_qty > 0) {
@@ -448,66 +450,64 @@ $(document).ready(function() {
         if (max && val > max) $(this).val(max);
     });
 
-    // ==========================================
-    // 4. MODAL & SELECT2
-    // ==========================================
-    $('#modalTambahBarang').on('show.bs.modal', function () {
-        $('#modal-barang-id option').prop('disabled', false);
+    // Modal Events
+    if (isAuthorized) {
+        $('#modalTambahBarang').on('show.bs.modal', function () {
+            $('#modal-barang-id option').prop('disabled', false);
 
-        $('.check-item:checked').each(function() {
-            let row = $(this).closest('tr');
-            let tindakan = row.find('.select-tindakan').val();
-            let idBarangAsli = row.find('input[name="barang_id[]"]').val();
+            $('.check-item:checked').each(function() {
+                let row = $(this).closest('tr');
+                let tindakan = row.find('.select-tindakan').val();
+                let idBarangAsli = row.find('input[name="barang_id[]"]').val();
 
-            if (tindakan === 'hapus') {
-                $(`#modal-barang-id option[value="${idBarangAsli}"]`).prop('disabled', true);
+                if (tindakan === 'hapus') {
+                    $(`#modal-barang-id option[value="${idBarangAsli}"]`).prop('disabled', true);
+                }
+            });
+
+            if ($('#modal-barang-id').hasClass("select2-hidden-accessible")) {
+                $('#modal-barang-id').trigger('change.select2');
             }
         });
 
-        if ($('#modal-barang-id').hasClass("select2-hidden-accessible")) {
-            $('#modal-barang-id').trigger('change.select2');
-        }
-    });
-
-    $('#modalTambahBarang').on('shown.bs.modal', function () {
-        $('.select2-modal').select2({
-            theme: 'bootstrap-5',
-            dropdownParent: $('#modalTambahBarang'),
-            placeholder: '-- Cari & Pilih Barang --',
-            allowClear: true
+        $('#modalTambahBarang').on('shown.bs.modal', function () {
+            $('.select2-modal').select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $('#modalTambahBarang'),
+                placeholder: '-- Cari & Pilih Barang --',
+                allowClear: true
+            });
         });
-    });
 
-    $('#modalTambahBarang').on('hidden.bs.modal', function () {
-        $('#modal-barang-id').val('').trigger('change');
-        $('#modal-qty').val(1);
-    });
+        $('#modalTambahBarang').on('hidden.bs.modal', function () {
+            $('#modal-barang-id').val('').trigger('change');
+            $('#modal-qty').val(1);
+        });
 
-    $('#modal-barang-id').on('change', function() {
-        let selected = $(this).find(':selected');
-        $('#modal-satuan').text(selected.val() ? selected.data('satuan') : 'pcs');
-    });
+        $('#modal-barang-id').on('change', function() {
+            let selected = $(this).find(':selected');
+            $('#modal-satuan').text(selected.val() ? selected.data('satuan') : 'pcs');
+        });
 
-    $('#btn-simpan-modal').on('click', function() {
-        let select = $('#modal-barang-id');
-        let barangId = select.val();
-        let qty = $('#modal-qty').val();
+        $('#btn-simpan-modal').on('click', function() {
+            let select = $('#modal-barang-id');
+            let barangId = select.val();
+            let qty = $('#modal-qty').val();
 
-        if(!barangId || qty <= 0) {
-            Swal.fire('Oops!', 'Pilih barang dan pastikan Qty > 0.', 'warning');
-            return;
-        }
+            if(!barangId || qty <= 0) {
+                Swal.fire('Oops!', 'Pilih barang dan pastikan Qty > 0.', 'warning');
+                return;
+            }
 
-        let nama = select.find(':selected').data('nama');
-        let satuan = select.find(':selected').data('satuan');
+            let nama = select.find(':selected').data('nama');
+            let satuan = select.find(':selected').data('satuan');
 
-        tambahBarisPengganti(barangId, nama, qty, satuan);
-        $('#modalTambahBarang').modal('hide');
-    });
+            tambahBarisPengganti(barangId, nama, qty, satuan);
+            $('#modalTambahBarang').modal('hide');
+        });
+    }
 
-    // ==========================================
-    // 5. SWEETALERT REKAP KONFIRMASI SUBMIT
-    // ==========================================
+    // Submit Handler
     $('#form-verify').on('submit', function(e) {
         e.preventDefault();
         let form = this;
@@ -577,7 +577,6 @@ $(document).ready(function() {
 
         htmlRekap += `</tbody></table></div>`;
 
-        // Validasi
         if (countProses === 0) {
             Swal.fire('Peringatan', 'Anda belum mencentang item apapun!', 'warning');
             return;
@@ -588,7 +587,6 @@ $(document).ready(function() {
             return;
         }
 
-        // AMBIL NILAI UNFORMATTED DARI CLEAVE JS
         let rawNominalVal = $('#input-nominal-global').val().replace(/\./g, '');
         let nominalUangVal = parseFloat(rawNominalVal) || 0;
 
@@ -597,7 +595,6 @@ $(document).ready(function() {
             return;
         }
 
-        // Tampilkan Banner Nominal Refund di atas Konfirmasi SweetAlert jika ada
         if (isGantiUangSelected) {
             let rpFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(nominalUangVal);
             htmlRekap += `
@@ -618,7 +615,6 @@ $(document).ready(function() {
             width: '600px'
         }).then((result) => {
             if (result.isConfirmed) {
-                // UNFORMAT NOMINAL SEBELUM SUBMIT AGAR DITERIMA DENGAN FORMAT NOMINAL MURNI DI CONTROLLER
                 if (isGantiUangSelected && cleaveNominal) {
                     $('#input-nominal-global').val(cleaveNominal.getRawValue());
                 }
