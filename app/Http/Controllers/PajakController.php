@@ -106,9 +106,7 @@ class PajakController extends Controller
     {
         $db = new PpnKeluaran;
 
-        $data = $db->with('invoiceJual.konsumen.kode_toko', 'invoiceJual.konsumen_temp')->where('is_keranjang', 0)->where('is_expired', 0)->where('is_finish', 0)
-                    ->where('created_at', '>=', Carbon::now()->subDays(60))
-                    ->limit(100)->get();
+        $data = $db->with('invoiceJual.konsumen.kode_toko', 'invoiceJual.konsumen_temp')->where('is_keranjang', 0)->where('is_expired', 0)->where('is_finish', 0)->get();
         $keranjang = $db->with('invoiceJual.konsumen.kode_toko', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->count();
         $keranjangData = $db->with('invoiceJual.konsumen.kode_toko', 'invoiceJual.konsumen_temp')->where('is_keranjang', 1)->where('is_finish', 0)->get();
 
