@@ -185,6 +185,16 @@ class PajakController extends Controller
                     }
                     return '0';
                 })
+                ->addColumn('tanggal', function($d) {
+                    if ($d->tanggal) {
+                        // Mengubah string datetime menjadi format tanggal saja (contoh: 11-08-2026)
+                        return \Carbon\Carbon::parse($d->tanggal)->format('Y-m-d');
+
+                        // Catatan: Jika Anda lebih suka format Tahun-Bulan-Hari,
+                        // gunakan format('Y-m-d')
+                    }
+                    return '-';
+                })
                 ->addColumn('action', function($d) {
                     $html = '';
                     $npwpRaw = $d->konsumen_npwp ?? $d->temp_npwp;
