@@ -110,76 +110,86 @@ class PajakController extends Controller
 
         // Jika request dari DataTables (AJAX)
         if ($request->ajax()) {
-            $data = $db->with(['invoiceJual.konsumen.kode_toko', 'invoiceJual.konsumen_temp'])
-                        ->where('is_keranjang', 0)
-                        ->where('is_expired', 0)
-                        ->where('is_finish', 0);
+            $data = DB::table('ppn_keluarans')
+                    ->leftJoin('invoice_juals', 'ppn_keluarans.invoice_jual_id', '=', 'invoice_juals.id')
+                    ->leftJoin('konsumens', 'invoice_juals.konsumen_id', '=', 'konsumens.id')
+                    ->leftJoin('kode_tokos', 'konsumens.kode_toko_id', '=', 'kode_tokos.id')
+                    ->leftJoin('konsumen_temps', 'invoice_juals.konsumen_temp_id', '=', 'konsumen_temps.id')
+                    ->where('ppn_keluarans.is_keranjang', 0)
+                    ->where('ppn_keluarans.is_expired', 0)
+                    ->where('ppn_keluarans.is_finish', 0)
+                    ->select(
+                        'ppn_keluarans.id',
+                        'ppn_keluarans.nominal',
+                        'ppn_keluarans.is_faktur',
+                        'ppn_keluarans.no_faktur',
+                        'ppn_keluarans.uraian',
+                        'invoice_juals.id as invoice_jual_id',
+                        'invoice_juals.kode as nota',
+                        'invoice_juals.updated_at as tanggal',
+                        'konsumens.nama as konsumen_nama',
+                        'konsumens.nik as konsumen_nik',
+                        'konsumens.npwp as konsumen_npwp',
+                        'kode_tokos.kode as kode_toko',
+                        'konsumen_temps.nama as temp_nama',
+                        'konsumen_temps.npwp as temp_npwp'
+                    );
 
-            return DataTables::of($data)
+           return DataTables::of($data)
                 ->addColumn('checkbox', function($d) {
                     $disabled = $d->is_faktur == 0 ? 'disabled' : '';
                     return '<input style="height: 25px; width:25px" type="checkbox" value="'.$d->id.'" data-tagihan="'.$d->nominal.'" onclick="check(this, '.$d->id.')" id="idSelect-'.$d->id.'" class="dt-checkbox" '.$disabled.'>';
                 })
                 ->addColumn('tanggal', function($d) {
-                    return $d->invoiceJual ? $d->invoiceJual->tanggal_lunas : '-';
+                    return $d->tanggal ?? '-';
                 })
                 ->addColumn('nota', function($d) {
-                    if ($d->invoiceJual) {
-                        return '<a href="'.route('billing.invoice-konsumen.detail', ['invoice' => $d->invoice_jual_id]).'">'.$d->invoiceJual->kode.'</a>';
+                    if ($d->nota) {
+                        return '<a href="'.route('billing.invoice-konsumen.detail', ['invoice' => $d->invoice_jual_id]).'">'.$d->nota.'</a>';
                     }
                     return '-';
                 })
                 ->addColumn('konsumen', function($d) {
-                    $konsumen = $d->invoiceJual->konsumen ?? null;
-                    $konsumenTemp = $d->invoiceJual->konsumen_temp ?? null;
-
-                    if ($konsumen) {
-                        $kodeToko = $konsumen->kode_toko ? $konsumen->kode_toko->kode . ' ' : '';
-                        return $kodeToko . $konsumen->nama;
+                    if ($d->konsumen_nama) {
+                        $kodeToko = $d->kode_toko ? $d->kode_toko . ' ' : '';
+                        return $kodeToko . $d->konsumen_nama;
                     }
-                    return $konsumenTemp ? $konsumenTemp->nama : '-';
+                    return $d->temp_nama ?? '-';
                 })
                 ->addColumn('nik_npwp', function($d) {
-                    $konsumen = $d->invoiceJual->konsumen ?? null;
-                    $konsumenTemp = $d->invoiceJual->konsumen_temp ?? null;
-
-                    $nik = $konsumen ? $konsumen->nik : '-';
-                    $npwp = $konsumen
-                            ? str_replace(['.', '-'], '', $konsumen->npwp)
-                            : ($konsumenTemp ? str_replace(['.', '-'], '', $konsumenTemp->npwp) : '-');
+                    $nik = $d->konsumen_nik ?? '-';
+                    $npwpRaw = $d->konsumen_npwp ?? $d->temp_npwp;
+                    $npwp = $npwpRaw ? str_replace(['.', '-'], '', $npwpRaw) : '-';
 
                     return "NIK : {$nik}<br>NPWP : {$npwp}";
                 })
                 ->addColumn('non_npwp', function($d) {
-                    $konsumen = $d->invoiceJual->konsumen ?? null;
-                    $konsumenTemp = $d->invoiceJual->konsumen_temp ?? null;
-                    $npwp = $konsumen ? $konsumen->npwp : ($konsumenTemp ? $konsumenTemp->npwp : '');
+                    $npwpRaw = $d->konsumen_npwp ?? $d->temp_npwp;
+                    $nf_nominal = number_format($d->nominal, 0, ',', '.');
 
-                    if ($d->is_faktur == 0 && strlen($npwp) < 10) return $d->nf_nominal;
+                    if ($d->is_faktur == 0 && strlen((string)$npwpRaw) < 10) return $nf_nominal;
                     return '0';
                 })
                 ->addColumn('npwp', function($d) {
-                    $konsumen = $d->invoiceJual->konsumen ?? null;
-                    $konsumenTemp = $d->invoiceJual->konsumen_temp ?? null;
-                    $npwp = $konsumen ? $konsumen->npwp : ($konsumenTemp ? $konsumenTemp->npwp : '');
+                    $npwpRaw = $d->konsumen_npwp ?? $d->temp_npwp;
+                    $nf_nominal = number_format($d->nominal, 0, ',', '.');
 
-                    if ($d->is_faktur == 0 && strlen($npwp) > 10) return $d->nf_nominal;
+                    if ($d->is_faktur == 0 && strlen((string)$npwpRaw) >= 10) return $nf_nominal;
                     return '0';
                 })
                 ->addColumn('faktur', function($d) {
                     if ($d->is_faktur == 1) {
+                        $nf_nominal = number_format($d->nominal, 0, ',', '.');
                         $noFaktur = $d->no_faktur ?? 'Faktur Belum Terisi';
-                        return '<a href="#" onclick="showFaktur(\''.$noFaktur.'\')" data-bs-toggle="modal" data-bs-target="#showModal">'.$d->nf_nominal.'</a>';
+                        return '<a href="#" onclick="showFaktur(\''.$noFaktur.'\')" data-bs-toggle="modal" data-bs-target="#showModal">'.$nf_nominal.'</a>';
                     }
                     return '0';
                 })
                 ->addColumn('action', function($d) {
                     $html = '';
-                    $konsumen = $d->invoiceJual->konsumen ?? null;
-                    $konsumenTemp = $d->invoiceJual->konsumen_temp ?? null;
-                    $npwp = $konsumen ? $konsumen->npwp : ($konsumenTemp ? $konsumenTemp->npwp : '');
+                    $npwpRaw = $d->konsumen_npwp ?? $d->temp_npwp;
 
-                    if ($d->is_faktur == 0 && strlen($npwp) < 10) {
+                    if ($d->is_faktur == 0 && strlen((string)$npwpRaw) < 10) {
                         $html .= '<form action="'.route('pajak.ppn-keluaran.expired', ['ppnKeluaran' => $d->id]).'" method="post" class="d-inline expired-form" id="expiredForm'.$d->id.'" data-id="'.$d->id.'">
                             '.csrf_field().'
                             <button type="submit" class="btn btn-danger btn-sm">Expired</button>
@@ -188,21 +198,43 @@ class PajakController extends Controller
 
                     $btnClass = $d->is_faktur == 1 ? 'warning' : 'primary';
                     $btnText = $d->is_faktur == 1 ? 'Ubah Faktur' : 'Faktur';
-                    $nota = $d->invoiceJual ? $d->invoiceJual->kode : 'Nota Belum Terisi';
+                    $nota = $d->nota ?? 'Nota Belum Terisi';
                     $noFaktur = $d->is_faktur == 1 ? $d->no_faktur : '';
+                    $nf_nominal = number_format($d->nominal, 0, ',', '.');
 
-                    $html .= '<button type="button" class="btn btn-'.$btnClass.' btn-sm" data-bs-toggle="modal" data-bs-target="#modalFaktur" onclick="faktur('.$d->id.', \''.$nota.'\', \''.$d->nf_nominal.'\', '.$d->is_faktur.', \''.$noFaktur.'\')">'.$btnText.'</button>';
+                    $html .= '<button type="button" class="btn btn-'.$btnClass.' btn-sm" data-bs-toggle="modal" data-bs-target="#modalFaktur" onclick="faktur('.$d->id.', \''.$nota.'\', \''.$nf_nominal.'\', '.$d->is_faktur.', \''.$noFaktur.'\')">'.$btnText.'</button>';
 
                     return $html;
                 })
-                // DEFINISI SORTING AGAR TIDAK ERROR
-                ->orderColumn('tanggal', function ($query, $order) { $query->orderBy('invoice_jual_id', $order); })
-                ->orderColumn('nota', function ($query, $order) { $query->orderBy('invoice_jual_id', $order); })
-                ->orderColumn('konsumen', function ($query, $order) { $query->orderBy('invoice_jual_id', $order); })
-                ->orderColumn('nik_npwp', function ($query, $order) { $query->orderBy('invoice_jual_id', $order); })
-                ->orderColumn('non_npwp', function ($query, $order) { $query->orderBy('nominal', $order); })
-                ->orderColumn('npwp', function ($query, $order) { $query->orderBy('nominal', $order); })
-                ->orderColumn('faktur', function ($query, $order) { $query->orderBy('nominal', $order); })
+
+                // 2. Sesuaikan urutan kolom (Sorting) menggunakan nama tabel yang di join
+                ->orderColumn('tanggal', function ($query, $order) { $query->orderBy('invoice_juals.updated_at', $order); })
+                ->orderColumn('nota', function ($query, $order) { $query->orderBy('invoice_juals.kode', $order); })
+                ->orderColumn('konsumen', function ($query, $order) { $query->orderBy('konsumens.nama', $order)->orderBy('konsumen_temps.nama', $order); })
+                ->orderColumn('nik_npwp', function ($query, $order) { $query->orderBy('konsumens.npwp', $order); })
+                ->orderColumn('non_npwp', function ($query, $order) { $query->orderBy('ppn_keluarans.nominal', $order); })
+                ->orderColumn('npwp', function ($query, $order) { $query->orderBy('ppn_keluarans.nominal', $order); })
+                ->orderColumn('faktur', function ($query, $order) { $query->orderBy('ppn_keluarans.nominal', $order); })
+                ->filterColumn('konsumen', function($query, $keyword) {
+                    $query->where(function($q) use ($keyword) {
+                        $q->where('konsumens.nama', 'like', "%{$keyword}%")
+                          ->orWhere('kode_tokos.kode', 'like', "%{$keyword}%")
+                          ->orWhere('konsumen_temps.nama', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('nik_npwp', function($query, $keyword) {
+                    $query->where(function($q) use ($keyword) {
+                        $q->where('konsumens.nik', 'like', "%{$keyword}%")
+                          ->orWhere('konsumens.npwp', 'like', "%{$keyword}%")
+                          ->orWhere('konsumen_temps.npwp', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('nota', function($query, $keyword) {
+                    $query->where('invoice_juals.kode', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('tanggal', function($query, $keyword) {
+                    $query->where('invoice_juals.updated_at', 'like', "%{$keyword}%");
+                })
                 ->rawColumns(['checkbox', 'nota', 'nik_npwp', 'faktur', 'action'])
                 ->make(true);
         }
