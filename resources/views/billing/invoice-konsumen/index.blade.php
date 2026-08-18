@@ -103,6 +103,7 @@
                     <td class="text-end align-middle">{{$d->nf_sisa_tagihan}}</td>
                     <td class="text-end align-middle">{{$d->jatuh_tempo}}</td>
                     <td class="text-end align-middle' text-nowrap">
+                         @if (in_array(auth()->user()->role, ['admin', 'su']))
                         <div class="row px-3">
                             @if (file_exists(public_path('storage/invoices/invoice-'.$d->id.'.pdf')))
                                 <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
@@ -110,7 +111,7 @@
                             <a href="{{route('billing.form-jual.invoice', ['invoice' => $d->id])}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
                             @endif
                         </div>
-
+                        @endif
                         <form action="{{route('billing.invoice-konsumen.bayar', ['invoice' => $d])}}" method="post" id="bayarForm{{ $d->id }}"
                             class="bayar-form" data-id="{{ $d->id }}" data-nominal="{{$d->nf_sisa_tagihan}}">
                             @csrf
