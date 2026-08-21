@@ -1,4 +1,25 @@
 @extends('layouts.doc')
+@push('head')
+<style>
+        /* CSS Watermark untuk Dompdf */
+        .watermark {
+            position: fixed;
+            top: 35%;
+            left: 5%;
+            width: 90%;
+            text-align: center;
+            font-size: 85px;
+            font-weight: bold;
+            color: #dc3545; /* Warna Merah */
+            opacity: 0.2;  /* Tingkat transparansi samar-samar */
+            transform: rotate(-30deg);
+            transform-origin: 50% 50%;
+            z-index: -1000; /* Berada di belakang teks invoice */
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+    </style>
+@endpush
 @push('header')
 @if ($pt->logo !== null && file_exists(public_path('uploads/logo/'.$pt->logo)))
 <img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
@@ -11,6 +32,11 @@
 <hr style="margin-bottom: 0;">
 @endpush
 @section('content')
+@if (!empty($isDuplicate) && $isDuplicate)
+    <div class="watermark">
+        DUPLIKAT
+    </div>
+@endif
 <div class="tujuan-div">
     <table style="font-size: 12px">
         <div class="row invoice-info">

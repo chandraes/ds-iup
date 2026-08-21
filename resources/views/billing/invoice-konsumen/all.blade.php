@@ -173,13 +173,11 @@
                     <td class="text-end align-middle' text-nowrap">
                         @if (in_array(auth()->user()->role, ['admin', 'su']))
                             <div class="row px-3">
-                                @if (file_exists(public_path('storage/invoices/invoice-'.$d->id.'.pdf')))
-                                <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank"
-                                    class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
-                                @else
-                                <a href="{{route('billing.form-jual.invoice', ['invoice' => $d->id])}}" target="_blank"
-                                    class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
-                                @endif
+                                {{-- Selalu panggil route controller dengan parameter reprint=1 untuk cetak duplikat --}}
+                                <a href="{{ route('billing.form-jual.invoice', ['invoice' => $d->id, 'reprint' => 1]) }}" target="_blank"
+                                    class="btn btn-primary btn-sm">
+                                    <i class="fa fa-file me-1"></i> Invoice
+                                </a>
                             </div>
                         @endif
 

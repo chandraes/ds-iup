@@ -268,177 +268,170 @@ class FormJualController extends Controller
         return redirect()->route('billing.lihat-stok')->with($res['status'], $res['message']);
     }
 
-    public function invoice(InvoiceJual $invoice)
+    public function invoice(Request $request, InvoiceJual $invoice)
     {
-        $pt = Config::where('untuk', $invoice->kas_ppn == 1 ? 'resmi' : 'non-resmi')->first();
-        Carbon::setLocale('id');
+        $isDuplicate = $request->has('reprint') || $invoice->send_wa == 1;
 
-        $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
-        $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
-
-        $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
-
-        $kas = $invoice->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
-        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
-
-        $rekening = Rekening::where('untuk', $kas)->first();
-
-        $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
-
-        $pdf = PDF::loadview('billing.stok.invoice-pdf', [
-            'data' => $invoice->loadMissing([
-                'konsumen',
-                'karyawan',
-                'invoice_detail.stok.type',
-                'invoice_detail.stok.barang',
-                'invoice_detail.stok.barang.satuan',
-                'invoice_detail.stok.unit',
-                'invoice_detail.stok.kategori',
-                'invoice_detail.stok.barang_nama',
-            ]),
-            'ppn' => $ppn,
-            'pt' => $pt,
-            'tanggal_tempo' => $tanggal_tempo,
-            'tanggal' => $tanggal,
-            'terbilang' => $terbilang,
-            'rekening' => $rekening,
-        ])->setPaper('a4', 'portrait');
-
+        // 1. Tentukan direktori dan nama file berdasarkan status duplikat
         $directory = storage_path('app/public/invoices');
-        $pdfPath = $directory.'/invoice-'.$invoice->id.'.pdf';
-
-        // Check if the directory exists, if not, create it
-        if (! file_exists($directory)) {
+        if (!file_exists($directory)) {
             mkdir($directory, 0755, true);
         }
 
-        // Check if the PDF file already exists
-        if (file_exists($pdfPath)) {
-            // Delete the existing file
-            unlink($pdfPath);
-        }
+        $fileName = $isDuplicate ? 'invoice-'.$invoice->id.'-duplicate.pdf' : 'invoice-'.$invoice->id.'.pdf';
+        $pdfPath = $directory . '/' . $fileName;
+        $pdfUrl = asset('storage/invoices/' . $fileName);
 
-        // Save the new PDF, overriding the existing one if it exists
-        $pdf->save($pdfPath);
+        $pdfPassword = 1234;
 
-        // Generate the URL for the PDF
-        $pdfUrl = asset('storage/invoices/invoice-'.$invoice->id.'.pdf');
+        // 2. Buat PDF BARU HANYA JIKA file belum ada di storage
+        if (!file_exists($pdfPath)) {
+            $pt = Config::where('untuk', $invoice->kas_ppn == 1 ? 'resmi' : 'non-resmi')->first();
+            Carbon::setLocale('id');
 
-        // convert it to be image
-        // $pdf = new Pdf($pdfPath);
+            $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
+            $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
+            $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
 
-        $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
+            $kas = $invoice->kas_ppn == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
+            $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+            $rekening = Rekening::where('untuk', $kas)->first();
+            $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
 
-        if ($invoice->konsumen_id) {
-            if ($konsumen->pembayaran == 1 || $invoice->lunas == 1) {
-                $uraian = '*Cash*';
-                $pembayaran = 'Lunas';
-            } elseif ($konsumen->pembayaran == 2 && $invoice->titipan == 1) {
-                $uraian = '*Titipan*';
-                $pembayaran = 'Titipan';
-            } else {
-                if ($konsumen->pembayaran == 2 && $invoice->dp > 0) {
-                    $uraian = '*DP*';
-                } else {
-                    $uraian = '*Tanpa DP*';
+            $pdf = PDF::loadview('billing.stok.invoice-pdf', [
+                'data' => $invoice->loadMissing([
+                    'konsumen',
+                    'karyawan',
+                    'invoice_detail.stok.type',
+                    'invoice_detail.stok.barang',
+                    'invoice_detail.stok.barang.satuan',
+                    'invoice_detail.stok.unit',
+                    'invoice_detail.stok.kategori',
+                    'invoice_detail.stok.barang_nama',
+                ]),
+                'ppn' => $ppn,
+                'pt' => $pt,
+                'tanggal_tempo' => $tanggal_tempo,
+                'tanggal' => $tanggal,
+                'terbilang' => $terbilang,
+                'rekening' => $rekening,
+                'isDuplicate' => $isDuplicate,
+            ])->setPaper('a4', 'portrait');
+
+            $dompdf = $pdf->getDomPDF();
+            $dompdf->render(); // Render struktur HTML ke PDF
+
+            $canvas = $dompdf->getCanvas();
+
+            if (method_exists($canvas, 'get_cpdf')) {
+                $cpdf = $canvas->get_cpdf();
+                if ($cpdf) {
+                    // setEncryption(password_user, password_owner, hak_akses)
+                    // 'print' = hanya mengizinkan dokumen untuk dicetak
+                    $cpdf->setEncryption($pdfPassword, config('app.key'), ['print']);
                 }
-                $pembayaran = $konsumen->sistem_pembayaran.' '.$konsumen->tempo_hari.' Hari';
             }
-        } else {
-            $uraian = '*Cash*';
-            $pembayaran = 'Lunas';
+
+            // Simpan file PDF yang sudah terenkripsi ke storage
+            file_put_contents($pdfPath, $dompdf->output());
         }
 
-        if ($konsumen && $konsumen->no_hp && $invoice->send_wa == 0 && $konsumen->wa_notif == 1) {
-            $tujuan = str_replace('-', '', $konsumen->no_hp);
-            $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
-                    "*Invoice Pembelian*\n".
-                    "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
-                    $pt->nama."\n\n".
-                    "No Invoice:\n".
-                    '*'.$invoice->kode."*\n\n".
-                    'Tanggal : '.$tanggal."\n".
-                    'Jam       : '.$jam."\n\n".
-                    'Uraian : '.$uraian."\n".
-                    'Pembayaran : '.$pembayaran."\n";
+        // 3. Logika Notifikasi WhatsApp (Hanya berjalan jika belum pernah dikirim)
+        if ($invoice->send_wa == 0) {
+            $pt = $pt ?? Config::where('untuk', $invoice->kas_ppn == 1 ? 'resmi' : 'non-resmi')->first();
+            Carbon::setLocale('id');
 
-            if ($invoice->konsumen_id && $invoice->lunas == 0 && $invoice->titipan == 0) {
-                $jatuhTempo = Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d-m-Y');
-                $pesan .= 'Tgl Jatuh Tempo : '.$jatuhTempo."\n\n";
+            $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
+            $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
 
-            }
-
-            $nama_konsumen = $invoice->konsumen_id ? $konsumen->kode_toko->kode." ".$konsumen->nama : $konsumen->nama;
-
-            $pesan .= 'Konsumen : *'.$nama_konsumen."*\n\n";
-                    // 'Nilai DPP    : Rp '.number_format($invoice->total, 0, ',', '.')."\n";
-            $pesan .= 'Total Tagihan : Rp '.number_format($invoice->grand_total, 0, ',', '.')."\n\n";
-
-            // if ($invoice->kas_ppn == 1) {
-            //     $pesan .= 'PPN         : Rp '.number_format($invoice->ppn, 0, ',', '.')."\n";
-            // } else {
-            //     $pesan .= "\n";
-            // }
-
-            // if ($invoice->lunas == 1) {
-
-            // } else {
-            if ($invoice->dp > 0) {
-                $pesan .= 'DP      : Rp '.number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.')."\n\n".
-                        'Sisa Tagihan : *Rp '.number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.')."*\n\n";
-            }
-                // else {
-                //     $pesan .= 'Sisa Tagihan : *Rp '.number_format($invoice->grand_total, 0, ',', '.')."*\n\n";
-                // }
-            // }
-
-            $pesan .= "==========================\n";
+            $konsumen = $invoice->konsumen_id ? Konsumen::find($invoice->konsumen_id) : KonsumenTemp::find($invoice->konsumen_temp_id);
 
             if ($invoice->konsumen_id) {
-                $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
-                $pesan .= "Grand Total Tagihan Konsumen: \n".
-                'Rp. '.number_format($sisaTerakhir, 0, ',', '.')."\n\n";
+                if ($konsumen->pembayaran == 1 || $invoice->lunas == 1) {
+                    $uraian = '*Cash*';
+                    $pembayaran = 'Lunas';
+                } elseif ($konsumen->pembayaran == 2 && $invoice->titipan == 1) {
+                    $uraian = '*Titipan*';
+                    $pembayaran = 'Titipan';
+                } else {
+                    $uraian = ($konsumen->pembayaran == 2 && $invoice->dp > 0) ? '*DP*' : '*Tanpa DP*';
+                    $pembayaran = $konsumen->sistem_pembayaran.' '.$konsumen->tempo_hari.' Hari';
+                }
+            } else {
+                $uraian = '*Cash*';
+                $pembayaran = 'Lunas';
+            }
+
+            if ($konsumen && $konsumen->no_hp && $konsumen->wa_notif == 1) {
+                $tujuan = str_replace('-', '', $konsumen->no_hp);
+                $pesan = "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n".
+                        "*Invoice Pembelian*\n".
+                        "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n\n".
+                        $pt->nama."\n\n".
+                        "No Invoice:\n".
+                        '*'.$invoice->kode."*\n\n".
+                        'Tanggal : '.$tanggal."\n".
+                        'Jam       : '.$jam."\n\n".
+                        'Uraian : '.$uraian."\n".
+                        'Pembayaran : '.$pembayaran."\n";
+
+                if ($invoice->konsumen_id && $invoice->lunas == 0 && $invoice->titipan == 0) {
+                    $jatuhTempo = Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d-m-Y');
+                    $pesan .= 'Tgl Jatuh Tempo : '.$jatuhTempo."\n\n";
+                }
+
+                $nama_konsumen = $invoice->konsumen_id ? $konsumen->kode_toko->kode." ".$konsumen->nama : $konsumen->nama;
+                $pesan .= 'Konsumen : *'.$nama_konsumen."*\n\n";
+                $pesan .= 'Total Tagihan : Rp '.number_format($invoice->grand_total, 0, ',', '.')."\n\n";
+
+                if ($invoice->dp > 0) {
+                    $pesan .= 'DP      : Rp '.number_format($invoice->dp + $invoice->dp_ppn, 0, ',', '.')."\n\n".
+                            'Sisa Tagihan : *Rp '.number_format($invoice->grand_total - $invoice->dp - $invoice->dp_ppn, 0, ',', '.')."*\n\n";
+                }
 
                 $pesan .= "==========================\n";
 
-                $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
-                    ->where('titipan', 0)
-                    ->where('lunas', 0)
-                    ->where('void', 0)
-                    ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
-                    ->get();
+                if ($invoice->konsumen_id) {
+                    $sisaTerakhir = KasKonsumen::where('konsumen_id', $konsumen->id)->orderBy('id', 'desc')->first()->sisa ?? 0;
+                    $pesan .= "Grand Total Tagihan Konsumen: \n".
+                    'Rp. '.number_format($sisaTerakhir, 0, ',', '.')."\n\n";
 
-                if ($checkInvoice->count() > 0) {
-                    $pesan .= "Tagihan jatuh tempo :\n\n";
-                    foreach ($checkInvoice as $key => $value) {
-                        $pesan .= 'No Invoice : '.$value->kode."\n".
-                                    'Tgl jatuh tempo : '.Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y')."\n".
-                                    'Nilai Tagihan  :  Rp '.number_format($value->grand_total - $value->dp - $value->dp_ppn, 0, ',', '.')."\n\n";
+                    $pesan .= "==========================\n";
+
+                    $checkInvoice = InvoiceJual::where('konsumen_id', $konsumen->id)
+                        ->where('titipan', 0)
+                        ->where('lunas', 0)
+                        ->where('void', 0)
+                        ->whereBetween('jatuh_tempo', [Carbon::now(), Carbon::now()->addDays(7)])
+                        ->get();
+
+                    if ($checkInvoice->count() > 0) {
+                        $pesan .= "Tagihan jatuh tempo :\n\n";
+                        foreach ($checkInvoice as $value) {
+                            $pesan .= 'No Invoice : '.$value->kode."\n".
+                                        'Tgl jatuh tempo : '.Carbon::parse($value->jatuh_tempo)->translatedFormat('d-m-Y')."\n".
+                                        'Nilai Tagihan  :  Rp '.number_format($value->grand_total - $value->dp - $value->dp_ppn, 0, ',', '.')."\n\n";
+                        }
                     }
                 }
 
+                $pesan .= 'Terima kasih 🙏🙏🙏';
+
+                $dbWa = new GroupWa;
+                if (strlen($tujuan) > 10) {
+                    $dbWa->sendWa($tujuan, $pesan);
+                }
+
+                $invoice->update([
+                    'send_wa' => 1,
+                ]);
             }
-
-            // tambahkan warning jika ada tagihan sudah 7 hari sebelum jatuh tempo ( Nomor invoice, tanggal jatuh tempo, dan nilai tagihan)
-            $pesan .= 'Terima kasih 🙏🙏🙏';
-
-            $dbWa = new GroupWa;
-
-            // $file = $pdfUrl;
-            if (strlen($tujuan) > 10) {
-                $dbWa->sendWa($tujuan, $pesan);
-            }
-
-
-            $invoice->update([
-                'send_wa' => 1,
-            ]);
         }
 
-        return view('billing.stok.invoice',
-            [
-                'pdfUrl' => $pdfUrl,
-            ]);
+        return view('billing.stok.invoice', [
+            'pdfUrl' => $pdfUrl,
+            'pdfPassword' => $pdfPassword,
+        ]);
     }
 
     public function invoice_image(InvoiceJual $invoice)
