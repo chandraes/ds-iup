@@ -117,9 +117,15 @@
                     <td class="text-end align-middle">{{$d->nf_add_fee}}</td>
                     <td class="text-end align-middle">{{$d->nf_grand_total}}</td>
                     <td class="text-center align-middle text-nowrap">
-                        <div class="row px-3 pb-2">
-                            <a href="{{asset('storage/invoices/invoice-'.$d->id.'.pdf')}}" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-file me-1"></i> Invoice</a>
-                        </div>
+                        @if (in_array(auth()->user()->role, ['admin', 'su']))
+                            <div class="row px-3">
+                                {{-- Selalu panggil route controller dengan parameter reprint=1 untuk cetak duplikat --}}
+                                <a href="{{ route('billing.form-jual.invoice', ['invoice' => $d->id, 'reprint' => 1]) }}" target="_blank"
+                                    class="btn btn-primary btn-sm">
+                                    <i class="fa fa-file me-1"></i> Invoice
+                                </a>
+                            </div>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
