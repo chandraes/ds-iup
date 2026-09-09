@@ -26,7 +26,6 @@
             position: absolute;
             left: 0;
             top: 0;
-            /* height: 80px; */
             width: 130px
         }
         .header h1, .header p {
@@ -60,13 +59,7 @@
             padding-left: 0.5rem;
             padding-right: 0.5rem;
         }
-        /* table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        } */
+
         .total {
             text-align: right;
         }
@@ -76,36 +69,35 @@
 
         .center-container {
             display: flex;
-            justify-content: center; /* Center horizontally */
-            align-items: center; /* Center vertically */
-            text-align: center; /* Ensure text elements inside .sub-title are centered as well */
-            height: 100vh; /* Make the container take up the full viewport height */
-            width: 100vw; /* Optional: Make the container take up the full viewport width */
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+            width: 100vw;
             margin-bottom: 0;
             margin-top: 0;
         }
 
         .center-container h3 {
             margin-top:0;
-            margin-bottom: 0; /* Removes space below the h3 */
+            margin-bottom: 0;
         }
 
         .center-container p {
-            margin-top: 0; /* Removes space above the p */
+            margin-top: 0;
         }
-
     </style>
 </head>
 <body>
+    {{-- Slot watermark wajib diletakkan langsung di bawah body --}}
+    @stack('watermark')
+
     <div class="header">
         @stack('header')
     </div>
 
     <div class="content">
         @yield('content')
-
     </div>
-
-
 </body>
 </html>

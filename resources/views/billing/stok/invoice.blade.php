@@ -43,9 +43,9 @@
                 <p class="mt-2 text-muted">Memuat tampilan invoice...</p>
             </div>
 
-            {{-- Tempat PDF dirender sebagai Canvas (Bukan PDF viewer biasa) --}}
+            {{-- Container dinamis untuk menampung seluruh halaman canvas --}}
             <div id="pdf-wrapper" style="overflow-x: auto; background-color: #e9ecef; padding: 20px; border-radius: 8px;">
-                <canvas id="pdf-canvas" class="shadow-sm" style="background-color: white; border: 1px solid #ccc;"></canvas>
+                <div id="pdf-container" class="d-flex flex-column align-items-center"></div>
             </div>
 
         </div>
@@ -57,7 +57,6 @@
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 
-{{-- Style khusus saat pencetakan CTRL+P / Tombol Print --}}
 <style>
     /* Mencegah klik kanan dan seleksi teks pada area canvas invoice */
     #pdf-wrapper {
@@ -65,20 +64,81 @@
         -webkit-user-select: none;
     }
 
-    /* Pengaturan CSS Media Print: Hanya cetak bagian Canvas Invoice saja */
+    /* Styling canvas di layar monitor */
+    .pdf-page-canvas {
+        background-color: white;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+
+    /* Pengaturan CSS Media Print untuk Eliminasi Halaman Kosong Extra */
     @media print {
+        @page {
+            margin: 0;
+            size: auto;
+        }
+
+        html, body {
+            background-color: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        /* Sembunyikan elemen antarmuka web dan indikator loading */
         body * {
-            visibility: hidden; /* Sembunyikan seluruh elemen halaman (navbar, tombol, dll) */
+            visibility: hidden !important;
         }
-        #pdf-canvas, #pdf-canvas * {
-            visibility: visible; /* Hanya tampilkan canvas PDF */
+
+        #loadingPdf {
+            display: none !important;
         }
-        #pdf-canvas {
+
+        /* Tampilkan hanya wadah penampung canvas */
+        #pdf-wrapper, #pdf-container {
+            background-color: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            /* Menghilangkan spasi teks tersembunyi */
+            font-size: 0 !important;
+            line-height: 0 !important;
+        }
+
+        #pdf-container, #pdf-container * {
+            visibility: visible !important;
+        }
+
+        #pdf-container {
             position: absolute;
             left: 0;
             top: 0;
             width: 100% !important;
+        }
+
+        /* Pengaturan canvas standar (halaman 1 hingga n-1) */
+        .pdf-page-canvas {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
             height: auto !important;
+            display: block !important;
+            vertical-align: bottom !important;
+            page-break-after: always !important;
+            break-after: page !important;
+        }
+
+        /* Pengaturan khusus canvas halaman terakhir */
+        .pdf-page-canvas:last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
     }
 </style>
@@ -92,31 +152,46 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const url = "{{ $pdfUrl }}";
-    const pdfPassword = "{{ $pdfPassword }}"; // Password yang dikirim dari controller
-    const canvas = document.getElementById('pdf-canvas');
-    const ctx = canvas.getContext('2d');
+    const pdfPassword = "{{ $pdfPassword }}";
+    const container = document.getElementById('pdf-container');
 
     // Memuat dokumen PDF dengan menyertakan opsi 'password'
     pdfjsLib.getDocument({
         url: url,
-        password: pdfPassword // PDF.js otomatis membuka kunci PDF untuk tampilan web
-    }).promise.then(function(pdf) {
-        pdf.getPage(1).then(function(page) {
+        password: pdfPassword
+    }).promise.then(async function(pdf) {
+        // Kosongkan container sebelum merender
+        container.innerHTML = '';
+
+        // Iterasi/Looping dari halaman 1 sampai halaman terakhir
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
             const scale = 1.8;
             const viewport = page.getViewport({ scale: scale });
+
+            // Buat elemen canvas baru untuk setiap halaman
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page-canvas';
+            const ctx = canvas.getContext('2d');
 
             canvas.height = viewport.height;
             canvas.width = viewport.width;
 
+            // Masukkan canvas ke dalam container
+            container.appendChild(canvas);
+
+            // Render halaman PDF ke canvas masing-masing
             const renderContext = {
                 canvasContext: ctx,
                 viewport: viewport
             };
 
-            page.render(renderContext).promise.then(function() {
-                document.getElementById('loadingPdf').style.display = 'none';
-            });
-        });
+            await page.render(renderContext).promise;
+        }
+
+        // Sembunyikan indikator loading setelah semua halaman selesai dirender
+        document.getElementById('loadingPdf').style.display = 'none';
+
     }).catch(function(error) {
         console.error('Gagal memuat PDF:', error);
         document.getElementById('loadingPdf').innerHTML = '<p class="text-danger">Gagal memuat dokumen invoice. (Password salah atau file rusak)</p>';

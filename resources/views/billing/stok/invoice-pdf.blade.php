@@ -1,25 +1,40 @@
 @extends('layouts.doc')
+
 @push('head')
 <style>
-        /* CSS Watermark untuk Dompdf */
-        .watermark {
-            position: fixed;
-            top: 35%;
-            left: 5%;
-            width: 90%;
-            text-align: center;
-            font-size: 85px;
-            font-weight: bold;
-            color: #dc3545; /* Warna Merah */
-            opacity: 0.2;  /* Tingkat transparansi samar-samar */
-            transform: rotate(-30deg);
-            transform-origin: 50% 50%;
-            z-index: -1000; /* Berada di belakang teks invoice */
-            text-transform: uppercase;
-            letter-spacing: 5px;
-        }
-    </style>
+    /* Kontainer watermark diposisikan fixed terhadap halaman PDF */
+    .watermark-container {
+        position: fixed;
+        top: 35%;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        z-index: -1000;
+    }
+
+    /* Styling teks watermark */
+    .watermark-text {
+        font-size: 75pt;
+        font-weight: bold;
+        color: #dc3545;
+        opacity: 0.15;
+        transform: rotate(-30deg);
+        transform-origin: 50% 50%;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+    }
+</style>
 @endpush
+
+{{-- Dikirim langsung ke stack watermark di luar div header/content --}}
+@push('watermark')
+@if (!empty($isDuplicate) && $isDuplicate)
+    <div class="watermark-container">
+        <div class="watermark-text">DUPLIKAT</div>
+    </div>
+@endif
+@endpush
+
 @push('header')
 @if ($pt->logo !== null && file_exists(public_path('uploads/logo/'.$pt->logo)))
 <img src="{{ public_path('uploads/logo/'.$pt->logo) }}" alt="Logo" style="width: 75px">
@@ -31,12 +46,8 @@
 </div>
 <hr style="margin-bottom: 0;">
 @endpush
+
 @section('content')
-@if (!empty($isDuplicate) && $isDuplicate)
-    <div class="watermark">
-        DUPLIKAT
-    </div>
-@endif
 <div class="tujuan-div">
     <table style="font-size: 12px">
         <div class="row invoice-info">
@@ -55,7 +66,6 @@
                         <td style="width: 20%">
                             <strong>{{$data->kode}}</strong>
                         </td>
-
                     </tr>
                     <tr>
                         <td>Sistem Pembayaran</td>
@@ -105,9 +115,10 @@
         </div>
     </table>
 </div>
+
 <div class="po-items">
     <table class="table-items" style="font-size: 12px">
-        <thead class=" table-success">
+        <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">NAMA BARANG/MEREK</th>
@@ -122,27 +133,19 @@
         <tbody>
             @foreach ($data->invoice_detail as $d)
             <tr>
-                <td style="text-align: center">
-                    {{$loop->iteration}}
-                </td>
-                <td style="text-align: left">
-                    {{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}}
-                </td>
-                <td style="text-align: left">
-                    {{$d->stok->barang->merk}}
-                </td>
+                <td style="text-align: center">{{$loop->iteration}}</td>
+                <td style="text-align: left">{{$d->stok->barang_nama->nama}}, {{$d->stok->barang->kode}}</td>
+                <td style="text-align: left">{{$d->stok->barang->merk}}</td>
                 <td style="text-align: center">
                     {{$d->nf_jumlah}}
                     @if ($d->is_grosir == 1)
-                    <br>
-                    ({{$d->nf_jumlah_grosir}})
+                    <br>({{$d->nf_jumlah_grosir}})
                     @endif
                 </td>
                 <td style="text-align: center">
                     {{$d->stok->barang->satuan ? $d->stok->barang->satuan->nama : '-'}}
                     @if ($d->is_grosir == 1)
-                    <br>
-                    ({{$d->satuan_grosir ? $d->satuan_grosir->nama : '-'}})
+                    <br>({{$d->satuan_grosir ? $d->satuan_grosir->nama : '-'}})
                     @endif
                 </td>
                 <td style="text-align: right; padding-left:0.5rem">
@@ -153,93 +156,15 @@
                     @endif
                 </td>
                 <td style="text-align: right;">{{number_format($d->harga_satuan - $d->diskon + $d->ppn, 0, ',','.')}}</td>
-                <td style="text-align: right; padding-left:0.5rem">
-                    {{$d->nf_total}}
-                </td>
+                <td style="text-align: right; padding-left:0.5rem">{{$d->nf_total}}</td>
             </tr>
             @endforeach
         </tbody>
-        {{-- <tfoot style="page-break-inside: avoid;">
-            <tr>
-                <th style="text-align: right">Total DPP : </th>
-                <th style="text-align: right; padding-left:0.5rem">{{$data->dpp}}</th>
-            </tr>
-            <tr>
-                <th style="text-align: right">Diskon : </th>
-                <th style="text-align: right">{{number_format($data->diskon, 0 ,',', '.')}}</th>
-            </tr>
-            <tr>
-                <th style="text-align: right">DPP Setelah Diskon : </th>
-                <th style="text-align: right">{{number_format($data->total-$data->diskon, 0 ,',', '.')}}</th>
-            </tr>
-            <tr>
-                <th style="text-align: right">Ppn : </th>
-                <th style="text-align: right">{{$data->nf_ppn}}</th>
-            </tr>
-            <tr>
-                <th style="text-align: right">Penyesuaian : </th>
-                <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
-            </tr>
-            <tr>
-                <th style="text-align: right">Grand Total : </th>
-                <th style="text-align: right">{{$data->nf_grand_total}}</th>
-            </tr>
-            @if ($data->konsumen && $data->konsumen->pembayaran == 2 && $data->lunas == 0)
-            <tr>
-                <th style="text-align: right">DP : </th>
-                <th style="text-align: right">{{$data->nf_dp}}</th>
-            </tr>
-            @if ($data->ppn > 0)
-            <tr>
-                <th style="text-align: right">DP PPn : </th>
-                <th style="text-align: right">{{$data->nf_dp_ppn}}</th>
-            </tr>
-            @endif
-            <tr>
-                <th style="text-align: right">Sisa Tagihan : </th>
-                <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
-            </tr>
-            <tr>
-                <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
-            </tr>
-            @else
-            <tr>
-                <th colspan="8"><strong># {{$terbilang}} Rupiah #</strong></th>
-            </tr>
-            @endif
-        </tfoot> --}}
     </table>
 
     <div style="page-break-inside: avoid; display: table; width: 100%; margin-top: 10px;">
         <div style="display: table-footer-group;">
             <table style="width: 100%; font-size: 10px; text-align: right;">
-                {{-- <tr>
-                    <th style="text-align: right; width:80%">Total DPP </th>
-                    <th style="text-align: right; width:5%">:</th>
-                    <th style="text-align: right; padding-left:0.5rem; width:12%">{{$data->dpp}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right">Diskon </th>
-                    <th style="text-align: right; padding-left:0.5rem">:</th>
-                    <th style="text-align: right">{{number_format($data->diskon, 0 ,',', '.')}}</th>
-                </tr>
-                <tr>
-                    <th style="text-align: right">DPP Setelah Diskon </th>
-                    <th style="text-align: right; padding-left:0.5rem">:</th>
-                    <th style="text-align: right">{{number_format($data->total-$data->diskon, 0 ,',', '.')}}</th>
-                </tr>
-                @if ($data->kas_ppn === 1)
-                <tr>
-                    <th style="text-align: right">Ppn</th>
-                    <th style="text-align: right; padding-left:0.5rem">:</th>
-                    <th style="text-align: right">{{$data->nf_ppn}}</th>
-                </tr>
-                @endif
-                <tr>
-                    <th style="text-align: right">Penyesuaian</th>
-                    <th style="text-align: right; padding-left:0.5rem">:</th>
-                    <th style="text-align: right">{{number_format($data->add_fee, 0 ,',', '.')}}</th>
-                </tr> --}}
                 <tr>
                     <th style="text-align: right; width:80%">Grand Total </th>
                     <th style="text-align: right; padding-left:0.5rem">:</th>
@@ -257,22 +182,23 @@
                     <th style="text-align: right">{{$data->nf_sisa_tagihan}}</th>
                 </tr>
                 <tr>
-                    <th colspan="3"
-                        style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem">
-                        <strong># {{$terbilang}} Rupiah #</strong></th>
+                    <th colspan="3" style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem">
+                        <strong># {{$terbilang}} Rupiah #</strong>
+                    </th>
                 </tr>
                 @else
                 <tr>
-                    <th colspan="3"
-                        style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem">
-                        <strong># {{$terbilang}} Rupiah #</strong></th>
+                    <th colspan="3" style="border-top: 1px solid black; border-bottom: 1px solid black; padding-top: 0.5rem; padding-bottom: 0.5rem">
+                        <strong># {{$terbilang}} Rupiah #</strong>
+                    </th>
                 </tr>
                 @endif
             </table>
         </div>
     </div>
 </div>
-<div style="font-size: 11px; margin-top: 10px; font-weight: bold; underline;">
+
+<div style="font-size: 11px; margin-top: 10px; font-weight: bold;">
     Transfer ke: {{$rekening->bank}} {{$rekening->no_rek}} a.n {{$rekening->nama_rek}}
 </div>
 <div>
