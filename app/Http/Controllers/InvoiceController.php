@@ -219,7 +219,7 @@ class InvoiceController extends Controller
         $db = new InvoiceJual;
 
         $data['invoice_jual_id'] = $invoice->id;
-
+        $data['apa_ppn'] = 0;
         $res = $db->cicil($data);
 
         return redirect()->back()->with($res['status'], $res['message']);

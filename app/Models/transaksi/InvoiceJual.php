@@ -505,7 +505,7 @@ class InvoiceJual extends Model
         try {
             DB::beginTransaction();
 
-            if ($kas_ppn == 1) {
+            if ($kas_ppn == 1 && $apa_ppn == 1) {
                 $this->store_ppn_cicil($inv->id, $inv->kode, $data['ppn'], $inv->ppn_dipungut);
             }
 

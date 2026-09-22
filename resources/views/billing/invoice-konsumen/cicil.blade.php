@@ -11,7 +11,7 @@
             <form action="" method="post" id="cicilForm">
                 @csrf
 
-                <input type="hidden" name="apa_ppn" id="edit_apa_ppn">
+                <input type="hidden" name="apa_ppn" id="edit_apa_ppn" value="0">
                 <input type="hidden" name="ppn_dipungut" id="edit_ppn_dipungut">
                 <div class="modal-body">
                     <div class="row">
@@ -116,13 +116,15 @@
     confirmAndSubmit('#cicilForm', "Apakah anda yakin?");
 
     function cekPpn() {
-        var ppn_dipungut = parseInt($('#edit_ppn_dipungut').val().replace(/\./g, '')) || 0;
 
-        if(ppn_dipungut == 1) {
+        var ppn_dipungut = parseInt($('#edit_ppn_dipungut').val().replace(/\./g, '')) || 0;
+        var apa_ppn = 0;
+        var nominal = parseInt($('#edit_nominal').val().replace(/\./g, '')) || 0;
+        console.log(ppn_dipungut, apa_ppn);
+        if(ppn_dipungut == 1 && apa_ppn == 1) {
             var sisaPpn = parseInt($('#edit_sisa_ppn').val().replace(/\./g, '')) || 0;
             var sisaDpp = parseInt($('#edit_sisa_dpp').val().replace(/\./g, '')) || 0;
             var sisaTagihan = parseInt($('#edit_sisa_tagihan').val().replace(/\./g, '')) || 0;
-            var nominal = parseInt($('#edit_nominal').val().replace(/\./g, '')) || 0;
 
             console.log(sisaPpn, sisaTagihan, nominal, sisaDpp);
 
@@ -139,6 +141,7 @@
             document.getElementById('edit_total').value = (nominal + ppnVal).toLocaleString('id-ID');
         } else {
             document.getElementById('edit_ppn').value = 0;
+            document.getElementById('edit_total').value = nominal.toLocaleString('id-ID');
         }
 
     }

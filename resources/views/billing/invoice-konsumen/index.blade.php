@@ -264,13 +264,13 @@
 
     function cicilan(data) {
 
-        console.log(data);
+
         document.getElementById('edit_konsumen_nama').value = data.konsumen.nama;
         document.getElementById('edit_sisa_dpp').value = (data.sisa_tagihan - data.sisa_ppn).toLocaleString('id-ID');
         document.getElementById('edit_nota').value = data.kode;
         document.getElementById('edit_sisa_tagihan').value = data.nf_sisa_tagihan;
         document.getElementById('edit_sisa_ppn').value = data.nf_sisa_ppn;
-        document.getElementById('edit_apa_ppn').value = 1;
+        document.getElementById('edit_apa_ppn').value = 0;
         document.getElementById('edit_ppn_dipungut').value = data.ppn_dipungut;
         document.getElementById('edit_nominal').value = '';
         document.getElementById('edit_ppn').value = '';
