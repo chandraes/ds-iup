@@ -1,15 +1,38 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BillingController;
-use App\Http\Controllers\RekapController;
+use App\Http\Controllers\AttendanceIntegrationController;
 use App\Http\Controllers\BarangController;
-use App\Http\Controllers\ReturController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\FormBeliController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DatabaseController;
-use App\Http\Controllers\PerusahaanController;
+use App\Http\Controllers\DokumenController;
+use App\Http\Controllers\FormBeliController;
+use App\Http\Controllers\FormDepositController;
+use App\Http\Controllers\FormInventaris;
+use App\Http\Controllers\FormJualController;
+use App\Http\Controllers\FormKasKecilController;
+use App\Http\Controllers\FormLainController;
+use App\Http\Controllers\HistoriController;
+use App\Http\Controllers\HoldingController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InventarisController;
+use App\Http\Controllers\InvestorController;
+use App\Http\Controllers\InvestorModalController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LegalitasController;
+use App\Http\Controllers\PajakController;
+use App\Http\Controllers\PengaturanController;
+use App\Http\Controllers\PerusahaanController;
+use App\Http\Controllers\PoController;
+use App\Http\Controllers\RekapController;
+use App\Http\Controllers\RekeningController;
+use App\Http\Controllers\ReturController;
+use App\Http\Controllers\SalesController;
+use App\Http\Controllers\StatistikController;
+use App\Http\Controllers\UniversalController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WaController;
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,7 +48,7 @@ Route::get('/', function () {
     return redirect('/login')->with('status', 'Please login to continue.');
 });
 
-Route::get('/katalog/download/{katalog}', [App\Http\Controllers\HomeController::class, 'katalog_download'])
+Route::get('/katalog/download/{katalog}', [HomeController::class, 'katalog_download'])
     ->name('katalog.download');
 
 Auth::routes([
@@ -33,117 +56,117 @@ Auth::routes([
 ]);
 
 Route::group(['middleware' => ['auth']], function () {
-    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::prefix('universal')->group(function () {
-        Route::get('/get-konsumen', [App\Http\Controllers\UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
-        Route::get('/get-unit', [App\Http\Controllers\UniversalController::class, 'getUnit'])->name('universal.get-unit');
-        Route::get('/get-kategori-by-unit', [App\Http\Controllers\UniversalController::class, 'getKategoriByUnit'])->name('universal.get-kategori-by-unit');
+        Route::get('/get-konsumen', [UniversalController::class, 'getKonsumen'])->name('universal.get-konsumen');
+        Route::get('/get-unit', [UniversalController::class, 'getUnit'])->name('universal.get-unit');
+        Route::get('/get-kategori-by-unit', [UniversalController::class, 'getKategoriByUnit'])->name('universal.get-kategori-by-unit');
 
-        Route::get('/search-kecamatan', [App\Http\Controllers\UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
-        Route::get('/status-wa', [App\Http\Controllers\UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
+        Route::get('/search-kecamatan', [UniversalController::class, 'searchKecamatan'])->name('universal.search-kecamatan');
+        Route::get('/status-wa', [UniversalController::class, 'getStatusWa'])->name('universal.get-status-wa');
 
-        Route::get('/search-konsumen', [App\Http\Controllers\UniversalController::class, 'searchKonsumen'])->name('universal.search-konsumen');
-        Route::get('/search-barang-nama', [App\Http\Controllers\UniversalController::class, 'searchBarangNama'])->name('universal.search-barang-nama');
-        Route::get('/search-barang-kategori', [App\Http\Controllers\UniversalController::class, 'searchBarangKategori'])->name('universal.search-barang-kategori');
-        Route::get('/search-barang-type', [App\Http\Controllers\UniversalController::class, 'searchBarangType'])->name('universal.search-barang-type');
+        Route::get('/search-konsumen', [UniversalController::class, 'searchKonsumen'])->name('universal.search-konsumen');
+        Route::get('/search-barang-nama', [UniversalController::class, 'searchBarangNama'])->name('universal.search-barang-nama');
+        Route::get('/search-barang-kategori', [UniversalController::class, 'searchBarangKategori'])->name('universal.search-barang-kategori');
+        Route::get('/search-barang-type', [UniversalController::class, 'searchBarangType'])->name('universal.search-barang-type');
 
-        Route::get('/konsumen-data', [App\Http\Controllers\UniversalController::class, 'konsumen_data'])->name('universal.konsumen-data');
+        Route::get('/konsumen-data', [UniversalController::class, 'konsumen_data'])->name('universal.konsumen-data');
 
-        Route::get('/get-kab-kota', [App\Http\Controllers\UniversalController::class, 'getKabKota'])->name('universal.get-kab-kota');
-        Route::get('/get-kecamatan', [App\Http\Controllers\UniversalController::class, 'getKecamatan'])->name('universal.get-kecamatan');
+        Route::get('/get-kab-kota', [UniversalController::class, 'getKabKota'])->name('universal.get-kab-kota');
+        Route::get('/get-kecamatan', [UniversalController::class, 'getKecamatan'])->name('universal.get-kecamatan');
     });
 
-     Route::group(['middleware' => ['role:user']], function(){
-        Route::prefix('user')->group(function(){
+    Route::group(['middleware' => ['role:user']], function () {
+        Route::prefix('user')->group(function () {
             Route::get('/stok-all', [UserController::class, 'stok_all'])->name('user.stok-all');
 
             Route::prefix('konsumen')->group(function () {
-                Route::get('/', [App\Http\Controllers\UserController::class, 'konsumen'])->name('user.konsumen');
-                Route::get('/data', [App\Http\Controllers\UserController::class, 'konsumen_data'])->name('user.konsumen.data');
+                Route::get('/', [UserController::class, 'konsumen'])->name('user.konsumen');
+                Route::get('/data', [UserController::class, 'konsumen_data'])->name('user.konsumen.data');
 
-                Route::get('/dokumen', [App\Http\Controllers\UserController::class, 'konsumen_dokumen'])->name('user.konsumen.dokumen');
-                Route::post('/dokumen/store', [App\Http\Controllers\UserController::class, 'konsumen_dokumen_store'])->name('user.konsumen.dokumen.store');
-                Route::delete('/dokumen/destroy/{dokumen}', [App\Http\Controllers\UserController::class, 'konsumen_dokumen_destroy'])->name('.konsumen.dokumen.destroy');
+                Route::get('/dokumen', [UserController::class, 'konsumen_dokumen'])->name('user.konsumen.dokumen');
+                Route::post('/dokumen/store', [UserController::class, 'konsumen_dokumen_store'])->name('user.konsumen.dokumen.store');
+                Route::delete('/dokumen/destroy/{dokumen}', [UserController::class, 'konsumen_dokumen_destroy'])->name('.konsumen.dokumen.destroy');
             });
 
         });
 
     });
 
-    Route::group(['middleware' => ['role:su,admin,user,sales']], function(){
-        Route::get('billing/invoice-konsumen/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
-        Route::get('sales/invoice-konsumen/detail/{invoice}', [App\Http\Controllers\SalesController::class, 'invoice_konsumen_detail'])->name('sales.invoice-konsumen.detail');
+    Route::group(['middleware' => ['role:su,admin,user,sales']], function () {
+        Route::get('billing/invoice-konsumen/detail/{invoice}', [InvoiceController::class, 'invoice_konsumen_detail'])->name('billing.invoice-konsumen.detail');
+        Route::get('sales/invoice-konsumen/detail/{invoice}', [SalesController::class, 'invoice_konsumen_detail'])->name('sales.invoice-konsumen.detail');
 
-     });
+    });
 
     // Routing statistik yang bisa di akses hampir seluruh role
-    Route::group(['middleware' => ['role:su,admin,user,sales,perusahaan']], function(){
-        Route::get('/checklist-sales', [App\Http\Controllers\HomeController::class, 'checklist_sales'])->name('checklist-sales');
-        Route::prefix('statistik')->group(function(){
-            Route::get('/omset-tahunan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
-            Route::get('/omset-tahunan-konsumen/detail/{konsumen}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_tahunan_page'])->name('statistik.omset.detail_tahunan_page');
-            Route::get('/omset-tahunan-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset_tahunan'])->name('statistik.omset.print_tahunan');
-            Route::get('/omset-tahunan-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_tahunan'])->name('statistik.omset.excel_tahunan');
+    Route::group(['middleware' => ['role:su,admin,user,sales,perusahaan']], function () {
+        Route::get('/checklist-sales', [HomeController::class, 'checklist_sales'])->name('checklist-sales');
+        Route::prefix('statistik')->group(function () {
+            Route::get('/omset-tahunan-konsumen', [StatistikController::class, 'omset_tahunan_konsumen'])->name('statistik.omset-tahunan-konsumen');
+            Route::get('/omset-tahunan-konsumen/detail/{konsumen}/{tahun}', [StatistikController::class, 'detail_omset_tahunan_page'])->name('statistik.omset.detail_tahunan_page');
+            Route::get('/omset-tahunan-konsumen/print', [StatistikController::class, 'print_omset_tahunan'])->name('statistik.omset.print_tahunan');
+            Route::get('/omset-tahunan-konsumen/excel', [StatistikController::class, 'export_excel_omset_tahunan'])->name('statistik.omset.excel_tahunan');
 
-            Route::prefix('omset-barang')->group(function(){
-                Route::prefix('bulanan')->group(function(){
-                    Route::get('/', [App\Http\Controllers\StatistikController::class, 'omset_bulanan_barang'])->name('statistik.omset-barang.bulanan');
-                    Route::get('/detail/{barang}/{bulan}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_barang_page'])->name('statistik.omset-barang.bulanan.detail_page');
-                    Route::get('statistik/omset-barang/bulanan/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_barang'])->name('statistik.omset-barang.bulanan.excel');
-                    Route::get('statistik/omset-barang/bulanan/print', [App\Http\Controllers\StatistikController::class, 'print_omset_barang'])->name('statistik.omset-barang.bulanan.print');
+            Route::prefix('omset-barang')->group(function () {
+                Route::prefix('bulanan')->group(function () {
+                    Route::get('/', [StatistikController::class, 'omset_bulanan_barang'])->name('statistik.omset-barang.bulanan');
+                    Route::get('/detail/{barang}/{bulan}/{tahun}', [StatistikController::class, 'detail_omset_barang_page'])->name('statistik.omset-barang.bulanan.detail_page');
+                    Route::get('statistik/omset-barang/bulanan/excel', [StatistikController::class, 'export_excel_omset_barang'])->name('statistik.omset-barang.bulanan.excel');
+                    Route::get('statistik/omset-barang/bulanan/print', [StatistikController::class, 'print_omset_barang'])->name('statistik.omset-barang.bulanan.print');
                 });
 
-                Route::prefix('tahunan')->group(function(){
-                    Route::get('/', [App\Http\Controllers\StatistikController::class, 'omset_tahunan_barang'])->name('statistik.omset-barang.tahunan');
-                    Route::get('/detail/{barang}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_barang_tahunan_page'])->name('statistik.omset-barang.tahunan.detail_page');
-                    Route::get('/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset_barang_tahunan'])->name('statistik.omset-barang.tahunan.excel');
-                    Route::get('/print', [App\Http\Controllers\StatistikController::class, 'print_omset_barang_tahunan'])->name('statistik.omset-barang.tahunan.print');
+                Route::prefix('tahunan')->group(function () {
+                    Route::get('/', [StatistikController::class, 'omset_tahunan_barang'])->name('statistik.omset-barang.tahunan');
+                    Route::get('/detail/{barang}/{tahun}', [StatistikController::class, 'detail_omset_barang_tahunan_page'])->name('statistik.omset-barang.tahunan.detail_page');
+                    Route::get('/excel', [StatistikController::class, 'export_excel_omset_barang_tahunan'])->name('statistik.omset-barang.tahunan.excel');
+                    Route::get('/print', [StatistikController::class, 'print_omset_barang_tahunan'])->name('statistik.omset-barang.tahunan.print');
                 });
             });
         });
 
     });
 
-    Route::group(['middleware' => ['role:perusahaan']], function(){
-        Route::prefix('perusahaan')->group(function(){
+    Route::group(['middleware' => ['role:perusahaan']], function () {
+        Route::prefix('perusahaan')->group(function () {
             Route::get('/konsumen', [PerusahaanController::class, 'konsumen'])->name('perusahaan.konsumen');
-            Route::get('/konsumen/data', [App\Http\Controllers\PerusahaanController::class, 'konsumen_data'])->name('perusahaan.konsumen.data');
-            Route::get('/konsumen/export', [App\Http\Controllers\PerusahaanController::class, 'exportKonsumen'])->name('perusahaan.konsumen.export');
+            Route::get('/konsumen/data', [PerusahaanController::class, 'konsumen_data'])->name('perusahaan.konsumen.data');
+            Route::get('/konsumen/export', [PerusahaanController::class, 'exportKonsumen'])->name('perusahaan.konsumen.export');
 
-            Route::get('/sales', [App\Http\Controllers\PerusahaanController::class, 'sales'])->name('perusahaan.sales');
+            Route::get('/sales', [PerusahaanController::class, 'sales'])->name('perusahaan.sales');
 
-            Route::get('/stok-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_ppn'])->name('perusahaan.stok-ppn');
-            Route::get('/stok-non-ppn', [App\Http\Controllers\PerusahaanController::class, 'stok_non_ppn'])->name('perusahaan.stok-non-ppn');
+            Route::get('/stok-ppn', [PerusahaanController::class, 'stok_ppn'])->name('perusahaan.stok-ppn');
+            Route::get('/stok-non-ppn', [PerusahaanController::class, 'stok_non_ppn'])->name('perusahaan.stok-non-ppn');
 
-             Route::get('/order', [App\Http\Controllers\PerusahaanController::class, 'order'])->name('perusahaan.order');
-            Route::get('/order/data', [App\Http\Controllers\PerusahaanController::class, 'order_data'])->name('perusahaan.order.data');
-            Route::get('/order/export-pdf', [App\Http\Controllers\PerusahaanController::class, 'order_export_pdf'])->name('perusahaan.order.export_pdf');
-            Route::get('/order/filter-options', [App\Http\Controllers\PerusahaanController::class, 'getFilterOptions'])->name('perusahaan.order.filter_options');
-            Route::get('/order/export-excel', [App\Http\Controllers\PerusahaanController::class, 'export_excel'])->name('perusahaan.order.export_excel');
+            Route::get('/order', [PerusahaanController::class, 'order'])->name('perusahaan.order');
+            Route::get('/order/data', [PerusahaanController::class, 'order_data'])->name('perusahaan.order.data');
+            Route::get('/order/export-pdf', [PerusahaanController::class, 'order_export_pdf'])->name('perusahaan.order.export_pdf');
+            Route::get('/order/filter-options', [PerusahaanController::class, 'getFilterOptions'])->name('perusahaan.order.filter_options');
+            Route::get('/order/export-excel', [PerusahaanController::class, 'export_excel'])->name('perusahaan.order.export_excel');
 
-            Route::prefix('stok-retur')->group(function() {
+            Route::prefix('stok-retur')->group(function () {
                 Route::get('/', [PerusahaanController::class, 'stok_retur'])->name('perusahaan.stok-retur');
                 Route::get('/data', [PerusahaanController::class, 'stok_retur_data'])->name('perusahaan.stok-retur.data');
                 Route::get('/history/{id}', [PerusahaanController::class, 'stok_retur_sumber'])->name('perusahaan.stok-retur.history');
 
             });
 
-            Route::prefix('penyelesaian-retur')->group(function(){
+            Route::prefix('penyelesaian-retur')->group(function () {
                 Route::get('/', [PerusahaanController::class, 'invoiceIndex'])->name('perusahaan.penyelesaian-retur.index');
                 Route::get('/data', [PerusahaanController::class, 'invoiceData'])->name('perusahaan.penyelesaian-retur.data');
                 Route::get('/detail/{id}', [PerusahaanController::class, 'invoiceShow'])->name('perusahaan.penyelesaian-retur.detail');
 
             });
 
-            Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\PerusahaanController::class, 'omset_tahunan_konsumen'])->name('perusahaan.omset-bulanan-konsumen');
-            Route::get('/omset-konsumen/excel', [App\Http\Controllers\PerusahaanController::class, 'export_excel_omset'])->name('perusahaan.omset.excel');
-            Route::get('/omset-konsumen/print', [App\Http\Controllers\PerusahaanController::class, 'print_omset'])->name('perusahaan.omset.print');
-            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\PerusahaanController::class, 'detail_omset_page'])
+            Route::get('/omset-bulanan-konsumen', [PerusahaanController::class, 'omset_tahunan_konsumen'])->name('perusahaan.omset-bulanan-konsumen');
+            Route::get('/omset-konsumen/excel', [PerusahaanController::class, 'export_excel_omset'])->name('perusahaan.omset.excel');
+            Route::get('/omset-konsumen/print', [PerusahaanController::class, 'print_omset'])->name('perusahaan.omset.print');
+            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [PerusahaanController::class, 'detail_omset_page'])
                 ->name('perusahaan.omset.detail_page');
 
             Route::prefix('selling-out')->group(function () {
-                Route::get('/', [App\Http\Controllers\PerusahaanController::class, 'selling_out'])->name('perusahaan.selling-out');
+                Route::get('/', [PerusahaanController::class, 'selling_out'])->name('perusahaan.selling-out');
             });
         });
 
@@ -152,77 +175,75 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
 
-            Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\SalesController::class, 'omset_tahunan_konsumen'])->name('sales.omset-bulanan-konsumen');
-            Route::get('/omset-konsumen/excel', [App\Http\Controllers\SalesController::class, 'export_excel_omset'])->name('sales.omset.excel');
-            Route::get('/omset-konsumen/print', [App\Http\Controllers\SalesController::class, 'print_omset'])->name('sales.omset.print');
-            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\SalesController::class, 'detail_omset_page'])
+            Route::get('/omset-bulanan-konsumen', [SalesController::class, 'omset_tahunan_konsumen'])->name('sales.omset-bulanan-konsumen');
+            Route::get('/omset-konsumen/excel', [SalesController::class, 'export_excel_omset'])->name('sales.omset.excel');
+            Route::get('/omset-konsumen/print', [SalesController::class, 'print_omset'])->name('sales.omset.print');
+            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [SalesController::class, 'detail_omset_page'])
                 ->name('sales.omset.detail_page');
 
-            Route::get('/konsumen/data', [App\Http\Controllers\SalesController::class, 'konsumen_data'])->name('sales.konsumen.data');
-            Route::get('/konsumen', [App\Http\Controllers\SalesController::class, 'konsumen'])->name('sales.konsumen');
+            Route::get('/konsumen/data', [SalesController::class, 'konsumen_data'])->name('sales.konsumen.data');
+            Route::get('/konsumen', [SalesController::class, 'konsumen'])->name('sales.konsumen');
 
-            Route::get('/stok', [App\Http\Controllers\SalesController::class, 'stok'])->name('sales.stok');
+            Route::get('/stok', [SalesController::class, 'stok'])->name('sales.stok');
 
-            Route::prefix('invoice-konsumen')->group(function() {
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'invoice_konsumen'])->name('sales.invoice-konsumen');
+            Route::prefix('invoice-konsumen')->group(function () {
+                Route::get('/', [SalesController::class, 'invoice_konsumen'])->name('sales.invoice-konsumen');
             });
 
             Route::prefix('jual')->group(function () {
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'jual'])->name('sales.jual');
-                Route::post('/store', [App\Http\Controllers\SalesController::class, 'jual_store'])->name('sales.jual.store');
+                Route::get('/', [SalesController::class, 'jual'])->name('sales.jual');
+                Route::post('/store', [SalesController::class, 'jual_store'])->name('sales.jual.store');
 
-                Route::get('/get-grosir', [App\Http\Controllers\SalesController::class, 'barang_get_grosir'])->name('sales.jual.get-grosir');
+                Route::get('/get-grosir', [SalesController::class, 'barang_get_grosir'])->name('sales.jual.get-grosir');
 
-                Route::get('/keranjang/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang'])->name('sales.jual.keranjang');
-                Route::post('/keranjang/empty/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang_empty'])->name('sales.jual.keranjang.empty');
-                Route::post('/keranjang/delete/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang_delete'])->name('sales.jual.keranjang.delete');
+                Route::get('/keranjang/{keranjang}', [SalesController::class, 'jual_keranjang'])->name('sales.jual.keranjang');
+                Route::post('/keranjang/empty/{keranjang}', [SalesController::class, 'jual_keranjang_empty'])->name('sales.jual.keranjang.empty');
+                Route::post('/keranjang/delete/{keranjang}', [SalesController::class, 'jual_keranjang_delete'])->name('sales.jual.keranjang.delete');
 
-                Route::get('/keranjang-review/{keranjang}', [App\Http\Controllers\SalesController::class, 'jual_keranjang_review'])->name('sales.jual.keranjang.review');
-                Route::post('/keranjang/grosir/store', [App\Http\Controllers\SalesController::class, 'jual_keranjang_grosir_store'])->name('sales.jual.keranjang.grosir.store');
+                Route::get('/keranjang-review/{keranjang}', [SalesController::class, 'jual_keranjang_review'])->name('sales.jual.keranjang.review');
+                Route::post('/keranjang/grosir/store', [SalesController::class, 'jual_keranjang_grosir_store'])->name('sales.jual.keranjang.grosir.store');
             });
 
-
-            Route::prefix('check-konsumen')->group(function(){
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'check_konsumen'])->name('sales.check-konsumen');
-                Route::post('/invoice', [App\Http\Controllers\SalesController::class, 'check_konsumen_invoice'])->name('sales.check-konsumen.invoice');
+            Route::prefix('check-konsumen')->group(function () {
+                Route::get('/', [SalesController::class, 'check_konsumen'])->name('sales.check-konsumen');
+                Route::post('/invoice', [SalesController::class, 'check_konsumen_invoice'])->name('sales.check-konsumen.invoice');
             });
 
             Route::prefix('keranjang')->group(function () {
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'keranjang'])->name('sales.stok.keranjang');
-                Route::post('/delete/{keranjang}', [App\Http\Controllers\SalesController::class, 'keranjang_delete'])->name('sales.stok.keranjang.delete');
-                Route::post('/store', [App\Http\Controllers\SalesController::class, 'keranjang_store'])->name('sales.stok.keranjang.store');
-                Route::post('/update', [App\Http\Controllers\SalesController::class, 'keranjang_update'])->name('sales.stok.keranjang.update');
-                Route::post('/set-jumlah', [App\Http\Controllers\SalesController::class, 'keranjang_set'])->name('sales.stok.keranjang.set-jumlah');
-                Route::post('/empty', [App\Http\Controllers\SalesController::class, 'keranjang_empty'])->name('sales.stok.keranjang.empty');
-                Route::post('/checkout', [App\Http\Controllers\SalesController::class, 'keranjang_checkout'])->name('sales.stok.keranjang.checkout');
+                Route::get('/', [SalesController::class, 'keranjang'])->name('sales.stok.keranjang');
+                Route::post('/delete/{keranjang}', [SalesController::class, 'keranjang_delete'])->name('sales.stok.keranjang.delete');
+                Route::post('/store', [SalesController::class, 'keranjang_store'])->name('sales.stok.keranjang.store');
+                Route::post('/update', [SalesController::class, 'keranjang_update'])->name('sales.stok.keranjang.update');
+                Route::post('/set-jumlah', [SalesController::class, 'keranjang_set'])->name('sales.stok.keranjang.set-jumlah');
+                Route::post('/empty', [SalesController::class, 'keranjang_empty'])->name('sales.stok.keranjang.empty');
+                Route::post('/checkout', [SalesController::class, 'keranjang_checkout'])->name('sales.stok.keranjang.checkout');
 
-                Route::post('/inden/store', [App\Http\Controllers\SalesController::class, 'keranjang_inden_store'])->name('sales.stok.keranjang.inden.store');
-                Route::post('/inden/delete/{keranjangInden}', [App\Http\Controllers\SalesController::class, 'keranjang_inden_delete'])->name('sales.stok.keranjang.inden.delete');
+                Route::post('/inden/store', [SalesController::class, 'keranjang_inden_store'])->name('sales.stok.keranjang.inden.store');
+                Route::post('/inden/delete/{keranjangInden}', [SalesController::class, 'keranjang_inden_delete'])->name('sales.stok.keranjang.inden.delete');
             });
 
-            Route::prefix('order')->group(function(){
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'order'])->name('sales.order');
-                Route::get('/{order}', [App\Http\Controllers\SalesController::class, 'order_detail'])->name('sales.order.detail');
-                Route::post('/void/{order}', [App\Http\Controllers\SalesController::class, 'order_void'])->name('sales.order.void');
+            Route::prefix('order')->group(function () {
+                Route::get('/', [SalesController::class, 'order'])->name('sales.order');
+                Route::get('/{order}', [SalesController::class, 'order_detail'])->name('sales.order.detail');
+                Route::post('/void/{order}', [SalesController::class, 'order_void'])->name('sales.order.void');
 
-                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\SalesController::class, 'order_detail_delete'])->name('sales.order.detail.delete');
-                Route::post('/detail/update/{order}', [App\Http\Controllers\SalesController::class, 'order_detail_update'])->name('sales.order.detail.update');
+                Route::post('/detail/delete/{orderDetail}', [SalesController::class, 'order_detail_delete'])->name('sales.order.detail.delete');
+                Route::post('/detail/update/{order}', [SalesController::class, 'order_detail_update'])->name('sales.order.detail.update');
             });
 
-            Route::prefix('pre-order')->group(function() {
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'preorder'])->name('sales.pre-order');
-                Route::get('/{preorder}', [App\Http\Controllers\SalesController::class, 'preorder_detail'])->name('sales.pre-order.detail');
-                Route::post('/update/{preorder}', [App\Http\Controllers\SalesController::class, 'preorder_detail_update'])->name('sales.pre-order.update');
-                Route::post('/void/{preorder}', [App\Http\Controllers\SalesController::class, 'preorder_void'])->name('sales.pre-order.void');
-                Route::post('/detail/delete/{orderDetail}', [App\Http\Controllers\SalesController::class, 'preorder_detail_delete'])->name('sales.pre-order.detail.delete');
+            Route::prefix('pre-order')->group(function () {
+                Route::get('/', [SalesController::class, 'preorder'])->name('sales.pre-order');
+                Route::get('/{preorder}', [SalesController::class, 'preorder_detail'])->name('sales.pre-order.detail');
+                Route::post('/update/{preorder}', [SalesController::class, 'preorder_detail_update'])->name('sales.pre-order.update');
+                Route::post('/void/{preorder}', [SalesController::class, 'preorder_void'])->name('sales.pre-order.void');
+                Route::post('/detail/delete/{orderDetail}', [SalesController::class, 'preorder_detail_delete'])->name('sales.pre-order.detail.delete');
             });
 
-            Route::prefix('omset-harian')->group(function() {
-                Route::get('/', [App\Http\Controllers\SalesController::class, 'omset_harian'])->name('sales.omset-harian');
-                Route::get('/detail', [App\Http\Controllers\SalesController::class, 'omset_harian_detail'])->name('sales.omset-harian.detail');
-                Route::get('/detail/invoice/{invoice}', [App\Http\Controllers\SalesController::class, 'omset_harian_detail_invoice'])->name('sales.omset-harian.detail.invoice');
+            Route::prefix('omset-harian')->group(function () {
+                Route::get('/', [SalesController::class, 'omset_harian'])->name('sales.omset-harian');
+                Route::get('/detail', [SalesController::class, 'omset_harian_detail'])->name('sales.omset-harian.detail');
+                Route::get('/detail/invoice/{invoice}', [SalesController::class, 'omset_harian_detail_invoice'])->name('sales.omset-harian.detail.invoice');
             });
-
 
         });
     });
@@ -230,49 +251,48 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:su,admin']], function () {
 
         // Tambahkan di dalam group route yang sesuai
-        Route::prefix('billing/invoice-konsumen/')->group(function(){
-             Route::get('{invoice}/edit', [InvoiceController::class, 'invoice_konsumen_edit'])->name('billing.invoice-konsumen.edit');
+        Route::prefix('billing/invoice-konsumen/')->group(function () {
+            Route::get('{invoice}/edit', [InvoiceController::class, 'invoice_konsumen_edit'])->name('billing.invoice-konsumen.edit');
 
             // Siapkan route untuk proses updatenya nanti (Langkah 3)
             Route::post('{invoice}/update', [InvoiceController::class, 'invoice_konsumen_update'])->name('billing.invoice-konsumen.update');
         });
-
 
         // ROUTE PENGATURAN
         // Route::view('pengaturan', 'pengaturan.index')->name('pengaturan');
         Route::prefix('pengaturan')->group(function () {
 
             Route::prefix('aplikasi')->group(function () {
-                Route::get('/', [App\Http\Controllers\PengaturanController::class, 'aplikasi'])->name('pengaturan.aplikasi');
-                Route::get('/edit/{config}', [App\Http\Controllers\PengaturanController::class, 'aplikasi_edit'])->name('pengaturan.aplikasi.edit');
-                Route::patch('/update/{config}', [App\Http\Controllers\PengaturanController::class, 'aplikasi_update'])->name('pengaturan.aplikasi.update');
+                Route::get('/', [PengaturanController::class, 'aplikasi'])->name('pengaturan.aplikasi');
+                Route::get('/edit/{config}', [PengaturanController::class, 'aplikasi_edit'])->name('pengaturan.aplikasi.edit');
+                Route::patch('/update/{config}', [PengaturanController::class, 'aplikasi_update'])->name('pengaturan.aplikasi.update');
             });
 
-            Route::get('/holding', [App\Http\Controllers\PengaturanController::class, 'holding'])->name('pengaturan.holding');
-            Route::post('/holding', [App\Http\Controllers\PengaturanController::class, 'holding_store'])->name('pengaturan.holding.store');
+            Route::get('/holding', [PengaturanController::class, 'holding'])->name('pengaturan.holding');
+            Route::post('/holding', [PengaturanController::class, 'holding_store'])->name('pengaturan.holding.store');
 
-            Route::get('/', [App\Http\Controllers\PengaturanController::class, 'index_view'])->name('pengaturan');
-            Route::get('/wa', [App\Http\Controllers\WaController::class, 'index'])->name('pengaturan.wa');
-            Route::get('/wa/get-wa-group', [App\Http\Controllers\WaController::class, 'get_group_wa'])->name('pengaturan.wa.get-group-wa');
-            Route::patch('/wa/{group_wa}/update', [App\Http\Controllers\WaController::class, 'update'])->name('pengaturan.wa.update');
+            Route::get('/', [PengaturanController::class, 'index_view'])->name('pengaturan');
+            Route::get('/wa', [WaController::class, 'index'])->name('pengaturan.wa');
+            Route::get('/wa/get-wa-group', [WaController::class, 'get_group_wa'])->name('pengaturan.wa.get-group-wa');
+            Route::patch('/wa/{group_wa}/update', [WaController::class, 'update'])->name('pengaturan.wa.update');
 
-            Route::get('/akun', [App\Http\Controllers\PengaturanController::class, 'index'])->name('pengaturan.akun');
-            Route::post('/akun/store', [App\Http\Controllers\PengaturanController::class, 'store'])->name('pengaturan.akun.store');
-            Route::patch('/akun/{akun}/update', [App\Http\Controllers\PengaturanController::class, 'update'])->name('pengaturan.akun.update');
-            Route::delete('/akun/{akun}/delete', [App\Http\Controllers\PengaturanController::class, 'destroy'])->name('pengaturan.akun.delete');
+            Route::get('/akun', [PengaturanController::class, 'index'])->name('pengaturan.akun');
+            Route::post('/akun/store', [PengaturanController::class, 'store'])->name('pengaturan.akun.store');
+            Route::patch('/akun/{akun}/update', [PengaturanController::class, 'update'])->name('pengaturan.akun.update');
+            Route::delete('/akun/{akun}/delete', [PengaturanController::class, 'destroy'])->name('pengaturan.akun.delete');
 
-            Route::post('/password-konfirmasi', [App\Http\Controllers\PengaturanController::class, 'password_konfirmasi'])->name('pengaturan.password-konfirmasi');
-            Route::post('/password-konfirmasi/cek', [App\Http\Controllers\PengaturanController::class, 'password_konfirmasi_cek'])->name('pengaturan.password-konfirmasi-cek');
+            Route::post('/password-konfirmasi', [PengaturanController::class, 'password_konfirmasi'])->name('pengaturan.password-konfirmasi');
+            Route::post('/password-konfirmasi/cek', [PengaturanController::class, 'password_konfirmasi_cek'])->name('pengaturan.password-konfirmasi-cek');
 
             Route::prefix('batasan')->group(function () {
-                Route::get('/', [App\Http\Controllers\PengaturanController::class, 'batasan'])->name('pengaturan.batasan');
-                Route::patch('/update/{batasan}', [App\Http\Controllers\PengaturanController::class, 'batasan_update'])->name('pengaturan.batasan.update');
+                Route::get('/', [PengaturanController::class, 'batasan'])->name('pengaturan.batasan');
+                Route::patch('/update/{batasan}', [PengaturanController::class, 'batasan_update'])->name('pengaturan.batasan.update');
             });
         });
 
-        Route::get('/histori-pesan', [App\Http\Controllers\HistoriController::class, 'index'])->name('histori-pesan');
-        Route::post('/histori-pesan/resend/{pesanWa}', [App\Http\Controllers\HistoriController::class, 'resend'])->name('histori.resend');
-        Route::delete('/histori-pesan/delete-sended', [App\Http\Controllers\HistoriController::class, 'delete_sended'])->name('histori.delete-sended');
+        Route::get('/histori-pesan', [HistoriController::class, 'index'])->name('histori-pesan');
+        Route::post('/histori-pesan/resend/{pesanWa}', [HistoriController::class, 'resend'])->name('histori.resend');
+        Route::delete('/histori-pesan/delete-sended', [HistoriController::class, 'delete_sended'])->name('histori.delete-sended');
         // END ROUTE PENGATURAN
     });
 
@@ -283,214 +303,217 @@ Route::group(['middleware' => ['auth']], function () {
         Route::group(['middleware' => ['role:su,admin']], function () {
             Route::post('/approval-ajuan-harga/{harga}', [BarangController::class, 'harga_ajuan_approve'])->name('db.harga-ajuan-approve');
 
-            Route::prefix('metode-bayar')->group(function(){
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'metode_bayar'])->name('db.metode-bayar');
-                Route::post('/update/{metodeBayar}', [App\Http\Controllers\DatabaseController::class, 'metode_bayar_update'])->name('db.metode-bayar.update');
+            Route::prefix('metode-bayar')->group(function () {
+                Route::get('/', [DatabaseController::class, 'metode_bayar'])->name('db.metode-bayar');
+                Route::post('/update/{metodeBayar}', [DatabaseController::class, 'metode_bayar_update'])->name('db.metode-bayar.update');
             });
 
             Route::prefix('subpg')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'subpg'])->name('db.subpg');
-                Route::post('/store', [App\Http\Controllers\BarangController::class, 'subpg_store'])->name('db.subpg.store');
-                Route::patch('/update/{subpg}', [App\Http\Controllers\BarangController::class, 'subpg_update'])->name('db.subpg.update');
-                Route::delete('/destroy/{subpg}', [App\Http\Controllers\BarangController::class, 'subpg_destroy'])->name('db.subpg.destroy');
+                Route::get('/', [BarangController::class, 'subpg'])->name('db.subpg');
+                Route::post('/store', [BarangController::class, 'subpg_store'])->name('db.subpg.store');
+                Route::patch('/update/{subpg}', [BarangController::class, 'subpg_update'])->name('db.subpg.update');
+                Route::delete('/destroy/{subpg}', [BarangController::class, 'subpg_destroy'])->name('db.subpg.destroy');
             });
 
             Route::prefix('kreditor')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kreditor'])->name('db.kreditor');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kreditor_store'])->name('db.kreditor.store');
-                Route::patch('/update/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_update'])->name('db.kreditor.update');
-                Route::delete('/destroy/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_destroy'])->name('db.kreditor.destroy');
+                Route::get('/', [DatabaseController::class, 'kreditor'])->name('db.kreditor');
+                Route::post('/store', [DatabaseController::class, 'kreditor_store'])->name('db.kreditor.store');
+                Route::patch('/update/{kreditor}', [DatabaseController::class, 'kreditor_update'])->name('db.kreditor.update');
+                Route::delete('/destroy/{kreditor}', [DatabaseController::class, 'kreditor_destroy'])->name('db.kreditor.destroy');
             });
 
             Route::prefix('kategori-inventaris')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kategori_inventaris'])->name('db.kategori-inventaris');
+                Route::get('/', [DatabaseController::class, 'kategori_inventaris'])->name('db.kategori-inventaris');
 
                 Route::prefix('kategori')->group(function () {
-                    Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kategori_inventaris_store'])->name('db.kategori-inventaris.store');
-                    Route::patch('/update/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_inventaris_update'])->name('db.kategori-inventaris.update');
-                    Route::delete('/delete/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_inventaris_delete'])->name('db.kategori-inventaris.delete');
+                    Route::post('/store', [DatabaseController::class, 'kategori_inventaris_store'])->name('db.kategori-inventaris.store');
+                    Route::patch('/update/{kategori}', [DatabaseController::class, 'kategori_inventaris_update'])->name('db.kategori-inventaris.update');
+                    Route::delete('/delete/{kategori}', [DatabaseController::class, 'kategori_inventaris_delete'])->name('db.kategori-inventaris.delete');
                 });
 
                 Route::prefix('jenis')->group(function () {
-                    Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'jenis_inventaris_store'])->name('db.jenis-inventaris.store');
-                    Route::patch('/update/{jenis}', [App\Http\Controllers\DatabaseController::class, 'jenis_inventaris_update'])->name('db.jenis-inventaris.update');
-                    Route::delete('/delete/{jenis}', [App\Http\Controllers\DatabaseController::class, 'jenis_inventaris_delete'])->name('db.jenis-inventaris.delete');
+                    Route::post('/store', [DatabaseController::class, 'jenis_inventaris_store'])->name('db.jenis-inventaris.store');
+                    Route::patch('/update/{jenis}', [DatabaseController::class, 'jenis_inventaris_update'])->name('db.jenis-inventaris.update');
+                    Route::delete('/delete/{jenis}', [DatabaseController::class, 'jenis_inventaris_delete'])->name('db.jenis-inventaris.delete');
                 });
             });
 
             Route::prefix('konsumen')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'konsumen'])->name('db.konsumen');
-                Route::get('/data', [App\Http\Controllers\DatabaseController::class, 'konsumen_data'])->name('db.konsumen.data');
-                Route::get('/{id}/histori-plafon', [App\Http\Controllers\DatabaseController::class, 'histori_plafon'])->name('db.konsumen.histori_plafon');
-                Route::post('/{id}/update-plafon', [App\Http\Controllers\DatabaseController::class, 'update_plafon'])->name('db.konsumen.update_plafon');
-                Route::post('/{id}/toggle-checklist', [App\Http\Controllers\DatabaseController::class, 'toggleChecklist'])->name('db.konsumen.toggle-checklist');
-                Route::post('/{id}/toggle-notif', [App\Http\Controllers\DatabaseController::class, 'toggleNotif'])->name('db.konsumen.toggle-notif');
+                Route::get('/', [DatabaseController::class, 'konsumen'])->name('db.konsumen');
+                Route::get('/data', [DatabaseController::class, 'konsumen_data'])->name('db.konsumen.data');
+                Route::get('/{id}/histori-plafon', [DatabaseController::class, 'histori_plafon'])->name('db.konsumen.histori_plafon');
+                Route::post('/{id}/update-plafon', [DatabaseController::class, 'update_plafon'])->name('db.konsumen.update_plafon');
+                Route::post('/{id}/toggle-checklist', [DatabaseController::class, 'toggleChecklist'])->name('db.konsumen.toggle-checklist');
+                Route::post('/{id}/toggle-notif', [DatabaseController::class, 'toggleNotif'])->name('db.konsumen.toggle-notif');
 
-                Route::get('/dokumen', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen'])->name('db.konsumen.dokumen');
-                Route::post('/dokumen/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen_store'])->name('db.konsumen.dokumen.store');
-                Route::delete('/dokumen/destroy/{dokumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_dokumen_destroy'])->name('db.konsumen.dokumen.destroy');
+                Route::get('/dokumen', [DatabaseController::class, 'konsumen_dokumen'])->name('db.konsumen.dokumen');
+                Route::post('/dokumen/store', [DatabaseController::class, 'konsumen_dokumen_store'])->name('db.konsumen.dokumen.store');
+                Route::delete('/dokumen/destroy/{dokumen}', [DatabaseController::class, 'konsumen_dokumen_destroy'])->name('db.konsumen.dokumen.destroy');
 
-                Route::get('/daftar-kunjungan/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_daftar_kunjungan'])->name('db.konsumen.daftar-kunjungan');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'konsumen_store'])->name('db.konsumen.store');
-                Route::patch('/{konsumen}/update', [App\Http\Controllers\DatabaseController::class, 'konsumen_update'])->name('db.konsumen.update');
-                Route::delete('/{konsumen}/delete', [App\Http\Controllers\DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');
+                Route::get('/daftar-kunjungan/{konsumen}', [DatabaseController::class, 'konsumen_daftar_kunjungan'])->name('db.konsumen.daftar-kunjungan');
+                Route::post('/store', [DatabaseController::class, 'konsumen_store'])->name('db.konsumen.store');
+                Route::patch('/{konsumen}/update', [DatabaseController::class, 'konsumen_update'])->name('db.konsumen.update');
+                Route::delete('/{konsumen}/delete', [DatabaseController::class, 'konsumen_delete'])->name('db.konsumen.delete');
 
-                Route::post('/diskon-khusus/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_diskon_khusus'])->name('db.konsumen.diskon-khusus');
+                Route::post('/diskon-khusus/{konsumen}', [DatabaseController::class, 'konsumen_diskon_khusus'])->name('db.konsumen.diskon-khusus');
 
-                Route::post('/upload-ktp/{konsumen}', [App\Http\Controllers\DatabaseController::class, 'konsumen_upload_ktp'])->name('db.konsumen.upload-ktp');
+                Route::post('/upload-ktp/{konsumen}', [DatabaseController::class, 'konsumen_upload_ktp'])->name('db.konsumen.upload-ktp');
             });
 
             Route::prefix('kode-toko')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kode_toko'])->name('db.kode-toko');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kode_toko_store'])->name('db.kode-toko.store');
-                Route::patch('/update/{kode}', [App\Http\Controllers\DatabaseController::class, 'kode_toko_update'])->name('db.kode-toko.update');
-                Route::delete('/delete/{kode}', [App\Http\Controllers\DatabaseController::class, 'kode_toko_delete'])->name('db.kode-toko.delete');
+                Route::get('/', [DatabaseController::class, 'kode_toko'])->name('db.kode-toko');
+                Route::post('/store', [DatabaseController::class, 'kode_toko_store'])->name('db.kode-toko.store');
+                Route::patch('/update/{kode}', [DatabaseController::class, 'kode_toko_update'])->name('db.kode-toko.update');
+                Route::delete('/delete/{kode}', [DatabaseController::class, 'kode_toko_delete'])->name('db.kode-toko.delete');
             });
 
             Route::prefix('sales-area')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'sales_area'])->name('db.sales-area');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'sales_area_store'])->name('db.sales-area.store');
-                Route::patch('/update/{sales}', [App\Http\Controllers\DatabaseController::class, 'sales_area_update'])->name('db.sales-area.update');
-                Route::delete('/delete/{sales}', [App\Http\Controllers\DatabaseController::class, 'sales_area_delete'])->name('db.sales-area.delete');
+                Route::get('/', [DatabaseController::class, 'sales_area'])->name('db.sales-area');
+                Route::post('/store', [DatabaseController::class, 'sales_area_store'])->name('db.sales-area.store');
+                Route::patch('/update/{sales}', [DatabaseController::class, 'sales_area_update'])->name('db.sales-area.update');
+                Route::delete('/delete/{sales}', [DatabaseController::class, 'sales_area_delete'])->name('db.sales-area.delete');
             });
 
-            Route::get('/investor', [App\Http\Controllers\InvestorController::class, 'index'])->name('db.investor');
-            Route::patch('/investor/{investor}/update', [App\Http\Controllers\InvestorController::class, 'update'])->name('db.investor.update');
+            Route::get('/investor', [InvestorController::class, 'index'])->name('db.investor');
+            Route::patch('/investor/{investor}/update', [InvestorController::class, 'update'])->name('db.investor.update');
 
-            Route::get('/rekening', [App\Http\Controllers\RekeningController::class, 'index'])->name('db.rekening');
-            Route::patch('/rekening/{rekening}/update', [App\Http\Controllers\RekeningController::class, 'update'])->name('db.rekening.update');
+            Route::get('/rekening', [RekeningController::class, 'index'])->name('db.rekening');
+            Route::patch('/rekening/{rekening}/update', [RekeningController::class, 'update'])->name('db.rekening.update');
 
             Route::prefix('investor-modal')->group(function () {
-                Route::get('/', [App\Http\Controllers\InvestorModalController::class, 'index'])->name('db.investor-modal');
-                Route::post('/store', [App\Http\Controllers\InvestorModalController::class, 'store'])->name('db.investor-modal.store');
-                Route::patch('/{investor}/update', [App\Http\Controllers\InvestorModalController::class, 'update'])->name('db.investor-modal.update');
-                Route::delete('/{investor}/delete', [App\Http\Controllers\InvestorModalController::class, 'destroy'])->name('db.investor-modal.delete');
+                Route::get('/', [InvestorModalController::class, 'index'])->name('db.investor-modal');
+                Route::post('/store', [InvestorModalController::class, 'store'])->name('db.investor-modal.store');
+                Route::patch('/{investor}/update', [InvestorModalController::class, 'update'])->name('db.investor-modal.update');
+                Route::delete('/{investor}/delete', [InvestorModalController::class, 'destroy'])->name('db.investor-modal.delete');
             });
 
             Route::prefix('pengelola')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'pengelola'])->name('db.pengelola');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'pengelola_store'])->name('db.pengelola.store');
-                Route::patch('/{pengelola}/update', [App\Http\Controllers\DatabaseController::class, 'pengelola_update'])->name('db.pengelola.update');
-                Route::delete('/{pengelola}/delete', [App\Http\Controllers\DatabaseController::class, 'pengelola_delete'])->name('db.pengelola.delete');
+                Route::get('/', [DatabaseController::class, 'pengelola'])->name('db.pengelola');
+                Route::post('/store', [DatabaseController::class, 'pengelola_store'])->name('db.pengelola.store');
+                Route::patch('/{pengelola}/update', [DatabaseController::class, 'pengelola_update'])->name('db.pengelola.update');
+                Route::delete('/{pengelola}/delete', [DatabaseController::class, 'pengelola_delete'])->name('db.pengelola.delete');
             });
 
             Route::prefix('supplier')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'supplier'])->name('db.supplier');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'supplier_store'])->name('db.supplier.store');
-                Route::patch('/update/{supplier}', [App\Http\Controllers\DatabaseController::class, 'supplier_update'])->name('db.supplier.update');
-                Route::delete('/delete/{supplier}', [App\Http\Controllers\DatabaseController::class, 'supplier_delete'])->name('db.supplier.delete');
+                Route::get('/', [DatabaseController::class, 'supplier'])->name('db.supplier');
+                Route::post('/store', [DatabaseController::class, 'supplier_store'])->name('db.supplier.store');
+                Route::patch('/update/{supplier}', [DatabaseController::class, 'supplier_update'])->name('db.supplier.update');
+                Route::delete('/delete/{supplier}', [DatabaseController::class, 'supplier_delete'])->name('db.supplier.delete');
             });
 
             Route::prefix('satuan')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'satuan'])->name('db.satuan');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'satuan_store'])->name('db.satuan.store');
-                Route::patch('/update/{satuan}', [App\Http\Controllers\DatabaseController::class, 'satuan_update'])->name('db.satuan.update');
-                Route::delete('/delete/{satuan}', [App\Http\Controllers\DatabaseController::class, 'satuan_delete'])->name('db.satuan.delete');
+                Route::get('/', [DatabaseController::class, 'satuan'])->name('db.satuan');
+                Route::post('/store', [DatabaseController::class, 'satuan_store'])->name('db.satuan.store');
+                Route::patch('/update/{satuan}', [DatabaseController::class, 'satuan_update'])->name('db.satuan.update');
+                Route::delete('/delete/{satuan}', [DatabaseController::class, 'satuan_delete'])->name('db.satuan.delete');
             });
 
             Route::prefix('pajak')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'pajak'])->name('db.pajak');
-                Route::patch('/update/{pajak}', [App\Http\Controllers\DatabaseController::class, 'pajak_update'])->name('db.pajak.update');
+                Route::get('/', [DatabaseController::class, 'pajak'])->name('db.pajak');
+                Route::patch('/update/{pajak}', [DatabaseController::class, 'pajak_update'])->name('db.pajak.update');
             });
 
-             Route::prefix('diskon-umum')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'diskon_umum'])->name('db.diskon-umum');
-                Route::patch('/update/{diskon}', [App\Http\Controllers\DatabaseController::class, 'diskon_umum_update'])->name('db.diskon-umum.update');
+            Route::prefix('diskon-umum')->group(function () {
+                Route::get('/', [DatabaseController::class, 'diskon_umum'])->name('db.diskon-umum');
+                Route::patch('/update/{diskon}', [DatabaseController::class, 'diskon_umum_update'])->name('db.diskon-umum.update');
             });
 
-            Route::prefix('kelompok-rute')->group(function(){
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute'])->name('db.kelompok-rute');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute_store'])->name('db.kelompok-rute.store');
-                Route::patch('/update/{kelompok}', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute_update'])->name('db.kelompok-rute.update');
-                Route::delete('/delete/{kelompok}', [App\Http\Controllers\DatabaseController::class, 'kelompok_rute_delete'])->name('db.kelompok-rute.delete');
+            Route::prefix('kelompok-rute')->group(function () {
+                Route::get('/', [DatabaseController::class, 'kelompok_rute'])->name('db.kelompok-rute');
+                Route::post('/store', [DatabaseController::class, 'kelompok_rute_store'])->name('db.kelompok-rute.store');
+                Route::patch('/update/{kelompok}', [DatabaseController::class, 'kelompok_rute_update'])->name('db.kelompok-rute.update');
+                Route::delete('/delete/{kelompok}', [DatabaseController::class, 'kelompok_rute_delete'])->name('db.kelompok-rute.delete');
             });
 
             Route::prefix('staff')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'staff'])->name('db.staff');
+                Route::get('/attendance-integration', [AttendanceIntegrationController::class, 'index'])->name('attendance-integration.index');
+                Route::post('/attendance-integration/sync', [AttendanceIntegrationController::class, 'sync'])->middleware('throttle:6,1')->name('attendance-integration.sync');
+                Route::get('/', [DatabaseController::class, 'staff'])->name('db.staff');
 
                 Route::prefix('jabatan')->group(function () {
-                    Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'jabatan_store'])->name('db.staff.jabatan.store');
-                    Route::patch('/update/{jabatan}', [App\Http\Controllers\DatabaseController::class, 'jabatan_update'])->name('db.staff.jabatan.update');
-                    Route::delete('/delete/{jabatan}', [App\Http\Controllers\DatabaseController::class, 'jabatan_delete'])->name('db.staff.jabatan.delete');
+                    Route::post('/store', [DatabaseController::class, 'jabatan_store'])->name('db.staff.jabatan.store');
+                    Route::patch('/update/{jabatan}', [DatabaseController::class, 'jabatan_update'])->name('db.staff.jabatan.update');
+                    Route::delete('/delete/{jabatan}', [DatabaseController::class, 'jabatan_delete'])->name('db.staff.jabatan.delete');
                 });
 
-                Route::get('/create', [App\Http\Controllers\DatabaseController::class, 'staff_create'])->name('db.staff.create');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'staff_store'])->name('db.staff.store');
+                Route::get('/create', [DatabaseController::class, 'staff_create'])->name('db.staff.create');
+                Route::post('/store', [DatabaseController::class, 'staff_store'])->name('db.staff.store');
 
-                Route::get('/edit/{staff}', [App\Http\Controllers\DatabaseController::class, 'staff_edit'])->name('db.staff.edit');
-                Route::patch('/update/{staff}', [App\Http\Controllers\DatabaseController::class, 'staff_update'])->name('db.staff.update');
-                Route::delete('/delete/{staff}', [App\Http\Controllers\DatabaseController::class, 'staff_delete'])->name('db.staff.delete');
+                Route::get('/edit/{staff}', [DatabaseController::class, 'staff_edit'])->name('db.staff.edit');
+                Route::patch('/update/{staff}', [DatabaseController::class, 'staff_update'])->name('db.staff.update');
+                Route::patch('/status/{staff}', [DatabaseController::class, 'staff_status'])->name('db.staff.status');
+                Route::delete('/delete/{staff}', [DatabaseController::class, 'staff_delete'])->name('db.staff.delete');
             });
 
             Route::prefix('cost-operational')->group(function () {
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'cost_operational'])->name('db.cost-operational');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'cost_operational_store'])->name('db.cost-operational.store');
-                Route::patch('/update/{cost}', [App\Http\Controllers\DatabaseController::class, 'cost_operational_update'])->name('db.cost-operational.update');
-                Route::delete('/delete/{cost}', [App\Http\Controllers\DatabaseController::class, 'cost_operational_delete'])->name('db.cost-operational.delete');
+                Route::get('/', [DatabaseController::class, 'cost_operational'])->name('db.cost-operational');
+                Route::post('/store', [DatabaseController::class, 'cost_operational_store'])->name('db.cost-operational.store');
+                Route::patch('/update/{cost}', [DatabaseController::class, 'cost_operational_update'])->name('db.cost-operational.update');
+                Route::delete('/delete/{cost}', [DatabaseController::class, 'cost_operational_delete'])->name('db.cost-operational.delete');
             });
 
             Route::prefix('barang-unit')->group(function () {
 
-                Route::get('/getBarangNama', [App\Http\Controllers\BarangController::class, 'get_barang_nama'])->name('db.barang.get-barang-nama');
+                Route::get('/getBarangNama', [BarangController::class, 'get_barang_nama'])->name('db.barang.get-barang-nama');
 
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'unit'])->name('db.unit');
-                Route::post('/store', [App\Http\Controllers\BarangController::class, 'unit_store'])->name('db.unit.store');
-                Route::patch('/update/{unit}', [App\Http\Controllers\BarangController::class, 'unit_update'])->name('db.unit.update');
-                Route::delete('/delete/{unit}', [App\Http\Controllers\BarangController::class, 'unit_delete'])->name('db.unit.delete');
+                Route::get('/', [BarangController::class, 'unit'])->name('db.unit');
+                Route::post('/store', [BarangController::class, 'unit_store'])->name('db.unit.store');
+                Route::patch('/update/{unit}', [BarangController::class, 'unit_update'])->name('db.unit.update');
+                Route::delete('/delete/{unit}', [BarangController::class, 'unit_delete'])->name('db.unit.delete');
 
-                Route::post('/type/store', [App\Http\Controllers\BarangController::class, 'type_store'])->name('db.unit.type.store');
-                Route::patch('/type/update/{type}', [App\Http\Controllers\BarangController::class, 'type_update'])->name('db.unit.type.update');
-                Route::delete('/type/delete/{type}', [App\Http\Controllers\BarangController::class, 'type_delete'])->name('db.unit.type.delete');
+                Route::post('/type/store', [BarangController::class, 'type_store'])->name('db.unit.type.store');
+                Route::patch('/type/update/{type}', [BarangController::class, 'type_update'])->name('db.unit.type.update');
+                Route::delete('/type/delete/{type}', [BarangController::class, 'type_delete'])->name('db.unit.type.delete');
             });
 
             Route::prefix('barang-kategori')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'barang_kategori'])->name('db.barang-kategori');
-                Route::post('/nama-store', [App\Http\Controllers\BarangController::class, 'barang_nama_store'])->name('db.barang-kategori.nama-store');
-                Route::patch('/nama-update/{nama}', [App\Http\Controllers\BarangController::class, 'barang_nama_update'])->name('db.barang-kategori.nama-update');
-                Route::delete('/nama-delete/{nama}', [App\Http\Controllers\BarangController::class, 'barang_nama_delete'])->name('db.barang-kategori.delete');
+                Route::get('/', [BarangController::class, 'barang_kategori'])->name('db.barang-kategori');
+                Route::post('/nama-store', [BarangController::class, 'barang_nama_store'])->name('db.barang-kategori.nama-store');
+                Route::patch('/nama-update/{nama}', [BarangController::class, 'barang_nama_update'])->name('db.barang-kategori.nama-update');
+                Route::delete('/nama-delete/{nama}', [BarangController::class, 'barang_nama_delete'])->name('db.barang-kategori.delete');
             });
 
             Route::prefix('barang')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'barang'])->name('db.barang');
-                Route::get('/data', [App\Http\Controllers\BarangController::class, 'barang_data'])->name('db.barang.data');
-                Route::post('/toggle-status/{id}', [App\Http\Controllers\BarangController::class, 'toggle_status'])->name('db.barang.toggle-status');
+                Route::get('/', [BarangController::class, 'barang'])->name('db.barang');
+                Route::get('/data', [BarangController::class, 'barang_data'])->name('db.barang.data');
+                Route::post('/toggle-status/{id}', [BarangController::class, 'toggle_status'])->name('db.barang.toggle-status');
 
-                Route::get('/get-grosir', [App\Http\Controllers\BarangController::class, 'barang_get_grosir'])->name('db.barang.get-grosir');
-                Route::post('/store-grosir', [App\Http\Controllers\BarangController::class, 'barang_grosir_store'])->name('db.barang.store-grosir');
-                Route::post('/delete-grosir', [App\Http\Controllers\BarangController::class, 'barang_grosir_delete'])->name('db.barang.delete-grosir');
+                Route::get('/get-grosir', [BarangController::class, 'barang_get_grosir'])->name('db.barang.get-grosir');
+                Route::post('/store-grosir', [BarangController::class, 'barang_grosir_store'])->name('db.barang.store-grosir');
+                Route::post('/delete-grosir', [BarangController::class, 'barang_grosir_delete'])->name('db.barang.delete-grosir');
 
-                Route::post('/store', [App\Http\Controllers\BarangController::class, 'barang_store'])->name('db.barang.store');
-                Route::patch('/update/{barang}', [App\Http\Controllers\BarangController::class, 'barang_update'])->name('db.barang.update');
-                Route::delete('/delete/{barang}', [App\Http\Controllers\BarangController::class, 'barang_delete'])->name('db.barang.delete');
+                Route::post('/store', [BarangController::class, 'barang_store'])->name('db.barang.store');
+                Route::patch('/update/{barang}', [BarangController::class, 'barang_update'])->name('db.barang.update');
+                Route::delete('/delete/{barang}', [BarangController::class, 'barang_delete'])->name('db.barang.delete');
 
-                Route::post('/upload/image/{barang}', [App\Http\Controllers\BarangController::class, 'barang_upload_foto'])->name('db.barang.upload-image');
-                Route::post('/diskon/{barang}', [App\Http\Controllers\BarangController::class, 'barang_diskon'])->name('db.barang.diskon');
+                Route::post('/upload/image/{barang}', [BarangController::class, 'barang_upload_foto'])->name('db.barang.upload-image');
+                Route::post('/diskon/{barang}', [BarangController::class, 'barang_diskon'])->name('db.barang.diskon');
 
-                Route::post('/kategori/store', [App\Http\Controllers\BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
-                Route::patch('/kategori/update/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
-                Route::delete('/kategori/delete/{kategori}', [App\Http\Controllers\BarangController::class, 'kategori_barang_delete'])->name('db.barang.kategori.delete');
+                Route::post('/kategori/store', [BarangController::class, 'kategori_barang_store'])->name('db.barang.kategori.store');
+                Route::patch('/kategori/update/{kategori}', [BarangController::class, 'kategori_barang_update'])->name('db.barang.kategori.update');
+                Route::delete('/kategori/delete/{kategori}', [BarangController::class, 'kategori_barang_delete'])->name('db.barang.kategori.delete');
 
             });
 
-            Route::post('/hide/{barang}', [App\Http\Controllers\BarangController::class, 'hide_stok'])->name('db.hide');
+            Route::post('/hide/{barang}', [BarangController::class, 'hide_stok'])->name('db.hide');
 
-            Route::patch('/stok/edit-stok-su/{stok}', [App\Http\Controllers\BarangController::class, 'edit_stok_su'])->name('db.stok.edit-stok-su');
+            Route::patch('/stok/edit-stok-su/{stok}', [BarangController::class, 'edit_stok_su'])->name('db.stok.edit-stok-su');
 
-            Route::get('/stok-data', [App\Http\Controllers\BarangController::class, 'stok_data'])->name('db.stok-data');
+            Route::get('/stok-data', [BarangController::class, 'stok_data'])->name('db.stok-data');
 
             Route::prefix('stok-ppn')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
-                Route::get('/history', [App\Http\Controllers\BarangController::class, 'stok_history'])->name('db.stok-ppn.history');
-                Route::get('/download', [App\Http\Controllers\BarangController::class, 'stok_ppn_download'])->name('db.stok-ppn.download');
-                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
+                Route::get('/', [BarangController::class, 'stok_ppn'])->name('db.stok-ppn');
+                Route::get('/history', [BarangController::class, 'stok_history'])->name('db.stok-ppn.history');
+                Route::get('/download', [BarangController::class, 'stok_ppn_download'])->name('db.stok-ppn.download');
+                Route::patch('/store/{barang}', [BarangController::class, 'stok_harga_update'])->name('db.stok-ppn.store');
             });
 
-            Route::post('/stok-hilang/{stok}', [App\Http\Controllers\BarangController::class, 'ganti_rugi'])->name('db.stok-hilang');
+            Route::post('/stok-hilang/{stok}', [BarangController::class, 'ganti_rugi'])->name('db.stok-hilang');
 
             Route::prefix('stok-non-ppn')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_non_ppn'])->name('db.stok-non-ppn');
-                Route::get('/download', [App\Http\Controllers\BarangController::class, 'stok_non_ppn_download'])->name('db.stok-non-ppn.download');
-                Route::patch('/store/{barang}', [App\Http\Controllers\BarangController::class, 'stok_harga_update'])->name('db.stok-non-ppn.store');
+                Route::get('/', [BarangController::class, 'stok_non_ppn'])->name('db.stok-non-ppn');
+                Route::get('/download', [BarangController::class, 'stok_non_ppn_download'])->name('db.stok-non-ppn.download');
+                Route::patch('/store/{barang}', [BarangController::class, 'stok_harga_update'])->name('db.stok-non-ppn.store');
 
             });
         });
@@ -499,23 +522,23 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:su,admin,user,investor']], function () {
 
         Route::prefix('statistik')->group(function () {
-            Route::get('/', [App\Http\Controllers\StatistikController::class, 'index'])->name('statistik');
+            Route::get('/', [StatistikController::class, 'index'])->name('statistik');
 
-            Route::prefix('omset-harian-sales')->group(function(){
-                Route::get('/', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales'])->name('statistik.omset-harian-sales');
-                Route::get('/detail', [App\Http\Controllers\StatistikController::class, 'omset_harian_sales_detail'])->name('statistik.omset-harian-sales.detail');
+            Route::prefix('omset-harian-sales')->group(function () {
+                Route::get('/', [StatistikController::class, 'omset_harian_sales'])->name('statistik.omset-harian-sales');
+                Route::get('/detail', [StatistikController::class, 'omset_harian_sales_detail'])->name('statistik.omset-harian-sales.detail');
             });
 
-            Route::prefix('profit')->group(function(){
-                Route::get('/harian', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit.harian');
+            Route::prefix('profit')->group(function () {
+                Route::get('/harian', [StatistikController::class, 'profit_harian'])->name('statistik.profit.harian');
             });
 
-            Route::get('/omset-bulanan-konsumen', [App\Http\Controllers\StatistikController::class, 'omset_bulanan_konsumen'])->name('statistik.omset-bulanan-konsumen');
+            Route::get('/omset-bulanan-konsumen', [StatistikController::class, 'omset_bulanan_konsumen'])->name('statistik.omset-bulanan-konsumen');
 
-            Route::get('/omset-konsumen/excel', [App\Http\Controllers\StatistikController::class, 'export_excel_omset'])->name('statistik.omset.excel');
-            Route::get('/omset-konsumen/print', [App\Http\Controllers\StatistikController::class, 'print_omset'])->name('statistik.omset.print');
+            Route::get('/omset-konsumen/excel', [StatistikController::class, 'export_excel_omset'])->name('statistik.omset.excel');
+            Route::get('/omset-konsumen/print', [StatistikController::class, 'print_omset'])->name('statistik.omset.print');
             // Route untuk halaman detail omset
-            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [App\Http\Controllers\StatistikController::class, 'detail_omset_page'])
+            Route::get('/omset-konsumen/detail/{konsumen}/{bulan}/{tahun}', [StatistikController::class, 'detail_omset_page'])
                 ->name('statistik.omset.detail_page');
 
         });
@@ -523,12 +546,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
 
-            Route::prefix('retur')->group(function() {
+            Route::prefix('retur')->group(function () {
                 Route::get('/', [RekapController::class, 'retur'])->name('rekap.retur');
                 Route::get('/data', [RekapController::class, 'retur_data'])->name('rekap.retur.data');
             });
 
-            Route::prefix('janji-bayar')->group(function(){
+            Route::prefix('janji-bayar')->group(function () {
                 Route::get('/', [RekapController::class, 'janji_bayar'])->name('rekap.janji-bayar');
             });
 
@@ -547,7 +570,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/{kas}/void', [RekapController::class, 'void_kas_kecil'])->name('rekap.kas-kecil.void');
             });
 
-            Route::prefix('barang-retur')->group(function() {
+            Route::prefix('barang-retur')->group(function () {
                 Route::get('/', [RekapController::class, 'barang_retur'])->name('rekap.barang-retur');
                 Route::get('/data', [RekapController::class, 'barang_retur_data'])->name('rekap.barang-retur.data');
             });
@@ -616,7 +639,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/', [RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
             });
 
-            Route::prefix('uang-gantung')->group(function() {
+            Route::prefix('uang-gantung')->group(function () {
                 Route::get('/', [RekapController::class, 'uang_gantung_selesai'])->name('rekap.uang-gantung.selesai');
                 Route::get('/data', [RekapController::class, 'uang_gantung_selesai_data'])->name('rekap.uang-gantung.selesai.data');
             });
@@ -626,12 +649,12 @@ Route::group(['middleware' => ['auth']], function () {
     // END ROUTE REKAP
 
     // START ROUTE ASISTEN ADMIN
-    Route::group(['middleware' => ['role:su,admin,user,asisten-admin']], function() {
-        Route::get('/db/barang-unit/getType', [App\Http\Controllers\BarangController::class, 'get_type'])->name('db.barang.get-type');
+    Route::group(['middleware' => ['role:su,admin,user,asisten-admin']], function () {
+        Route::get('/db/barang-unit/getType', [BarangController::class, 'get_type'])->name('db.barang.get-type');
 
-        Route::prefix('db')->group(function(){
-              Route::prefix('stok-all')->group(function () {
-                Route::get('/', [App\Http\Controllers\BarangController::class, 'stok_all'])->name('db.stok-all');
+        Route::prefix('db')->group(function () {
+            Route::prefix('stok-all')->group(function () {
+                Route::get('/', [BarangController::class, 'stok_all'])->name('db.stok-all');
                 Route::post('/harga-ajuan/{barang}', [BarangController::class, 'harga_ajuan_store'])->name('db.stok-all.harga-ajuan-store');
             });
 
@@ -642,154 +665,152 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/order/export-excel', [DatabaseController::class, 'export_excel'])->name('db.order.export_excel');
         });
 
-          Route::prefix('billing/form-beli')->group(function() {
-                Route::get('/', [FormBeliController::class, 'index'])->name('billing.form-beli');
-                Route::post('/store', [FormBeliController::class, 'store'])->name('billing.form-beli.store');
-                Route::post('/delete/{keranjang}', [FormBeliController::class, 'delete'])->name('billing.form-beli.delete');
-                Route::get('/detail/{keranjang}', [FormBeliController::class, 'detail'])->name('billing.form-beli.detail');
+        Route::prefix('billing/form-beli')->group(function () {
+            Route::get('/', [FormBeliController::class, 'index'])->name('billing.form-beli');
+            Route::post('/store', [FormBeliController::class, 'store'])->name('billing.form-beli.store');
+            Route::post('/delete/{keranjang}', [FormBeliController::class, 'delete'])->name('billing.form-beli.delete');
+            Route::get('/detail/{keranjang}', [FormBeliController::class, 'detail'])->name('billing.form-beli.detail');
 
-                Route::get('/detail/{keranjang}/data', [FormBeliController::class, 'detail_datatable'])->name('billing.form-beli.detail.data');
-                Route::post('/detail/{keranjang}/store', [FormBeliController::class, 'detail_store'])->name('billing.form-beli.detail.store');
-                Route::post('/detail/{keranjang}/empty', [FormBeliController::class, 'detail_empty'])->name('billing.form-beli.detail.empty');
-                Route::post('/detail/{keranjang}/lanjutkan', [FormBeliController::class, 'detail_lanjutkan'])->name('billing.form-beli.detail.lanjutkan');
+            Route::get('/detail/{keranjang}/data', [FormBeliController::class, 'detail_datatable'])->name('billing.form-beli.detail.data');
+            Route::post('/detail/{keranjang}/store', [FormBeliController::class, 'detail_store'])->name('billing.form-beli.detail.store');
+            Route::post('/detail/{keranjang}/empty', [FormBeliController::class, 'detail_empty'])->name('billing.form-beli.detail.empty');
+            Route::post('/detail/{keranjang}/lanjutkan', [FormBeliController::class, 'detail_lanjutkan'])->name('billing.form-beli.detail.lanjutkan');
 
-                Route::get('/detail/{keranjang}/preview', [FormBeliController::class, 'detail_preview'])->name('billing.form-beli.detail.preview');
-                Route::post('/detail/preview/delete', [FormBeliController::class, 'detail_preview_delete'])->name('billing.form-beli.detail.preview.delete');
+            Route::get('/detail/{keranjang}/preview', [FormBeliController::class, 'detail_preview'])->name('billing.form-beli.detail.preview');
+            Route::post('/detail/preview/delete', [FormBeliController::class, 'detail_preview_delete'])->name('billing.form-beli.detail.preview.delete');
 
-                // Route::get('/get-kategori', [App\Http\Controllers\FormBeliController::class, 'getKategori'])->name('billing.form-beli.get-kategori');
-                // Route::get('/get-barang', [App\Http\Controllers\FormBeliController::class, 'getBarang'])->name('billing.form-beli.get-barang');
-                // Route::get('/get-merk', [App\Http\Controllers\FormBeliController::class, 'getMerk'])->name('billing.form-beli.get-merk');
-                // Route::get('/get-kode', [App\Http\Controllers\FormBeliController::class, 'getKode'])->name('billing.form-beli.get-kode');
-                // Route::get('/get-supplier', [App\Http\Controllers\FormBeliController::class, 'getSupplier'])->name('billing.form-beli.get-supplier');
+            // Route::get('/get-kategori', [App\Http\Controllers\FormBeliController::class, 'getKategori'])->name('billing.form-beli.get-kategori');
+            // Route::get('/get-barang', [App\Http\Controllers\FormBeliController::class, 'getBarang'])->name('billing.form-beli.get-barang');
+            // Route::get('/get-merk', [App\Http\Controllers\FormBeliController::class, 'getMerk'])->name('billing.form-beli.get-merk');
+            // Route::get('/get-kode', [App\Http\Controllers\FormBeliController::class, 'getKode'])->name('billing.form-beli.get-kode');
+            // Route::get('/get-supplier', [App\Http\Controllers\FormBeliController::class, 'getSupplier'])->name('billing.form-beli.get-supplier');
 
-                // Route::prefix('keranjang')->group(function () {
-                //     Route::post('/empty', [App\Http\Controllers\FormBeliController::class, 'keranjang_empty'])->name('billing.form-beli.keranjang.empty');
-                //     Route::post('/store', [App\Http\Controllers\FormBeliController::class, 'keranjang_store'])->name('billing.form-beli.keranjang.store');
-                //     Route::delete('/delete/{keranjang}', [App\Http\Controllers\FormBeliController::class, 'keranjang_delete'])->name('billing.form-beli.keranjang.delete');
-                // });
-            });
+            // Route::prefix('keranjang')->group(function () {
+            //     Route::post('/empty', [App\Http\Controllers\FormBeliController::class, 'keranjang_empty'])->name('billing.form-beli.keranjang.empty');
+            //     Route::post('/store', [App\Http\Controllers\FormBeliController::class, 'keranjang_store'])->name('billing.form-beli.keranjang.store');
+            //     Route::delete('/delete/{keranjang}', [App\Http\Controllers\FormBeliController::class, 'keranjang_delete'])->name('billing.form-beli.keranjang.delete');
+            // });
+        });
 
     });
-
 
     Route::group(['middleware' => ['role:su,admin,user']], function () {
 
         Route::prefix('checklist-sales')->group(function () {
 
-            Route::get('/download', [App\Http\Controllers\HomeController::class, 'checklist_sales_download'])->name('checklist-sales.download');
-            Route::post('/update', [App\Http\Controllers\HomeController::class, 'update_checklist'])->name('checklist-sales.update');
-            Route::post('/uncheck', [App\Http\Controllers\HomeController::class, 'uncheck_checklist'])->name('checklist-sales.uncheck');
+            Route::get('/download', [HomeController::class, 'checklist_sales_download'])->name('checklist-sales.download');
+            Route::post('/update', [HomeController::class, 'update_checklist'])->name('checklist-sales.update');
+            Route::post('/uncheck', [HomeController::class, 'uncheck_checklist'])->name('checklist-sales.uncheck');
         });
 
-
-        Route::get('/status-wa', [App\Http\Controllers\HomeController::class, 'getStatusWa'])->name('status-wa');
-        Route::get('/get-kab-kota', [App\Http\Controllers\HomeController::class, 'getKabKota'])->name('get-kab-kota');
-        Route::get('/get-kecamatan', [App\Http\Controllers\HomeController::class, 'getKecamatan'])->name('get-kecamatan');
+        Route::get('/status-wa', [HomeController::class, 'getStatusWa'])->name('status-wa');
+        Route::get('/get-kab-kota', [HomeController::class, 'getKabKota'])->name('get-kab-kota');
+        Route::get('/get-kecamatan', [HomeController::class, 'getKecamatan'])->name('get-kecamatan');
 
         Route::prefix('holding')->group(function () {
-            Route::get('/check-connection', [App\Http\Controllers\HoldingController::class, 'check_connection'])->name('holding.check_connection');
+            Route::get('/check-connection', [HoldingController::class, 'check_connection'])->name('holding.check_connection');
         });
 
         Route::prefix('inventaris')->group(function () {
-            Route::get('/', [App\Http\Controllers\InventarisController::class, 'index'])->name('inventaris.index');
-            Route::get('/invoice', [App\Http\Controllers\InventarisController::class, 'invoice'])->name('inventaris.invoice');
+            Route::get('/', [InventarisController::class, 'index'])->name('inventaris.index');
+            Route::get('/invoice', [InventarisController::class, 'invoice'])->name('inventaris.invoice');
 
             Route::prefix('/{kategori}')->group(function () {
-                Route::get('/', [App\Http\Controllers\InventarisController::class, 'detail'])->name('inventaris.detail');
-                Route::get('/{jenis}', [App\Http\Controllers\InventarisController::class, 'detail_jenis'])->name('inventaris.detail.jenis');
-                Route::post('/{jenis}/{inventaris}', [App\Http\Controllers\InventarisController::class, 'aksi'])->name('inventaris.aksi');
+                Route::get('/', [InventarisController::class, 'detail'])->name('inventaris.detail');
+                Route::get('/{jenis}', [InventarisController::class, 'detail_jenis'])->name('inventaris.detail.jenis');
+                Route::post('/{jenis}/{inventaris}', [InventarisController::class, 'aksi'])->name('inventaris.aksi');
             });
         });
 
         Route::prefix('legalitas')->group(function () {
 
             Route::prefix('kategori')->group(function () {
-                Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'kategori_store'])->name('legalitas.kategori-store');
-                Route::patch('/update/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_update'])->name('legalitas.kategori-update');
-                Route::delete('/destroy/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_destroy'])->name('legalitas.kategori-destroy');
+                Route::post('/store', [LegalitasController::class, 'kategori_store'])->name('legalitas.kategori-store');
+                Route::patch('/update/{id}', [LegalitasController::class, 'kategori_update'])->name('legalitas.kategori-update');
+                Route::delete('/destroy/{id}', [LegalitasController::class, 'kategori_destroy'])->name('legalitas.kategori-destroy');
             });
 
-            Route::get('/', [App\Http\Controllers\LegalitasController::class, 'index'])->name('legalitas');
-            Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'store'])->name('legalitas.store');
-            Route::patch('/update/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'update'])->name('legalitas.update');
-            Route::delete('/destroy/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'destroy'])->name('legalitas.destroy');
+            Route::get('/', [LegalitasController::class, 'index'])->name('legalitas');
+            Route::post('/store', [LegalitasController::class, 'store'])->name('legalitas.store');
+            Route::patch('/update/{legalitas}', [LegalitasController::class, 'update'])->name('legalitas.update');
+            Route::delete('/destroy/{legalitas}', [LegalitasController::class, 'destroy'])->name('legalitas.destroy');
 
-            Route::post('/kirim-wa/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'kirim_wa'])->name('legalitas.kirim-wa');
+            Route::post('/kirim-wa/{legalitas}', [LegalitasController::class, 'kirim_wa'])->name('legalitas.kirim-wa');
 
         });
 
         Route::prefix('dokumen')->group(function () {
-            Route::get('/', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
+            Route::get('/', [DokumenController::class, 'index'])->name('dokumen');
 
             Route::prefix('mutasi-rekening')->group(function () {
-                Route::get('/', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening'])->name('dokumen.mutasi-rekening');
-                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_store'])->name('dokumen.mutasi-rekening.store');
-                Route::delete('/destroy/{mutasi}', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_destroy'])->name('dokumen.mutasi-rekening.destroy');
-                Route::post('/kirim-wa/{mutasi}', [App\Http\Controllers\DokumenController::class, 'kirim_wa'])->name('dokumen.mutasi-rekening.kirim-wa');
+                Route::get('/', [DokumenController::class, 'mutasi_rekening'])->name('dokumen.mutasi-rekening');
+                Route::post('/store', [DokumenController::class, 'mutasi_rekening_store'])->name('dokumen.mutasi-rekening.store');
+                Route::delete('/destroy/{mutasi}', [DokumenController::class, 'mutasi_rekening_destroy'])->name('dokumen.mutasi-rekening.destroy');
+                Route::post('/kirim-wa/{mutasi}', [DokumenController::class, 'kirim_wa'])->name('dokumen.mutasi-rekening.kirim-wa');
 
-                Route::post('/checklist/{mutasi}', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_checklist'])->name('dokumen.mutasi-rekening.checklist');
+                Route::post('/checklist/{mutasi}', [DokumenController::class, 'mutasi_rekening_checklist'])->name('dokumen.mutasi-rekening.checklist');
             });
 
             Route::prefix('kontrak-tambang')->group(function () {
-                Route::get('/', [App\Http\Controllers\DokumenController::class, 'kontrak_tambang'])->name('dokumen.kontrak-tambang');
-                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'kontrak_tambang_store'])->name('dokumen.kontrak-tambang.store');
-                Route::delete('/destroy/{kontrak_tambang}', [App\Http\Controllers\DokumenController::class, 'kontrak_tambang_destroy'])->name('dokumen.kontrak-tambang.destroy');
-                Route::post('/kirim-wa/{kontrak_tambang}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_tambang'])->name('dokumen.kontrak-tambang.kirim-wa');
+                Route::get('/', [DokumenController::class, 'kontrak_tambang'])->name('dokumen.kontrak-tambang');
+                Route::post('/store', [DokumenController::class, 'kontrak_tambang_store'])->name('dokumen.kontrak-tambang.store');
+                Route::delete('/destroy/{kontrak_tambang}', [DokumenController::class, 'kontrak_tambang_destroy'])->name('dokumen.kontrak-tambang.destroy');
+                Route::post('/kirim-wa/{kontrak_tambang}', [DokumenController::class, 'kirim_wa_tambang'])->name('dokumen.kontrak-tambang.kirim-wa');
             });
 
             Route::prefix('kontrak-vendor')->group(function () {
-                Route::get('/', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor'])->name('dokumen.kontrak-vendor');
-                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor_store'])->name('dokumen.kontrak-vendor.store');
-                Route::delete('/destroy/{kontrak_vendor}', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor_destroy'])->name('dokumen.kontrak-vendor.destroy');
-                Route::post('/kirim-wa/{kontrak_vendor}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_vendor'])->name('dokumen.kontrak-vendor.kirim-wa');
+                Route::get('/', [DokumenController::class, 'kontrak_vendor'])->name('dokumen.kontrak-vendor');
+                Route::post('/store', [DokumenController::class, 'kontrak_vendor_store'])->name('dokumen.kontrak-vendor.store');
+                Route::delete('/destroy/{kontrak_vendor}', [DokumenController::class, 'kontrak_vendor_destroy'])->name('dokumen.kontrak-vendor.destroy');
+                Route::post('/kirim-wa/{kontrak_vendor}', [DokumenController::class, 'kirim_wa_vendor'])->name('dokumen.kontrak-vendor.kirim-wa');
             });
 
             Route::prefix('sph')->group(function () {
-                Route::get('/', [App\Http\Controllers\DokumenController::class, 'sph'])->name('dokumen.sph');
-                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'sph_store'])->name('dokumen.sph.store');
-                Route::delete('/destroy/{sph}', [App\Http\Controllers\DokumenController::class, 'sph_destroy'])->name('dokumen.sph.destroy');
-                Route::post('/kirim-wa/{sph}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_sph'])->name('dokumen.sph.kirim-wa');
+                Route::get('/', [DokumenController::class, 'sph'])->name('dokumen.sph');
+                Route::post('/store', [DokumenController::class, 'sph_store'])->name('dokumen.sph.store');
+                Route::delete('/destroy/{sph}', [DokumenController::class, 'sph_destroy'])->name('dokumen.sph.destroy');
+                Route::post('/kirim-wa/{sph}', [DokumenController::class, 'kirim_wa_sph'])->name('dokumen.sph.kirim-wa');
             });
         });
 
         Route::prefix('company-profile')->group(function () {
-            Route::get('/', [App\Http\Controllers\DokumenController::class, 'company_profile'])->name('company-profile');
-            Route::post('/store', [App\Http\Controllers\DokumenController::class, 'company_profile_store'])->name('company-profile.store');
-            Route::delete('/destroy/{company_profile}', [App\Http\Controllers\DokumenController::class, 'company_profile_destroy'])->name('company-profile.destroy');
-            Route::post('/kirim-wa/{company_profile}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_cp'])->name('company-profile.kirim-wa');
+            Route::get('/', [DokumenController::class, 'company_profile'])->name('company-profile');
+            Route::post('/store', [DokumenController::class, 'company_profile_store'])->name('company-profile.store');
+            Route::delete('/destroy/{company_profile}', [DokumenController::class, 'company_profile_destroy'])->name('company-profile.destroy');
+            Route::post('/kirim-wa/{company_profile}', [DokumenController::class, 'kirim_wa_cp'])->name('company-profile.kirim-wa');
         });
 
         Route::prefix('pajak')->group(function () {
 
-            Route::get('/', [App\Http\Controllers\PajakController::class, 'index'])->name('pajak.index');
+            Route::get('/', [PajakController::class, 'index'])->name('pajak.index');
             Route::prefix('rekap-ppn')->group(function () {
-                Route::get('/', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
-                Route::get('/masukan/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_masukan_detail'])->name('pajak.rekap-ppn.masukan');
-                Route::get('/keluaran/{rekapPpn}', [App\Http\Controllers\PajakController::class, 'rekap_ppn_keluaran_detail'])->name('pajak.rekap-ppn.keluaran');
+                Route::get('/', [PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
+                Route::get('/masukan/{rekapPpn}', [PajakController::class, 'rekap_ppn_masukan_detail'])->name('pajak.rekap-ppn.masukan');
+                Route::get('/keluaran/{rekapPpn}', [PajakController::class, 'rekap_ppn_keluaran_detail'])->name('pajak.rekap-ppn.keluaran');
             });
             // Route::get('/rekap-ppn', [App\Http\Controllers\PajakController::class, 'rekap_ppn'])->name('pajak.rekap-ppn');
 
             Route::prefix('ppn-expired')->group(function () {
-                Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_expired'])->name('pajak.ppn-expired');
-                Route::post('/back/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_expired_back'])->name('pajak.ppn-expired.back');
+                Route::get('/', [PajakController::class, 'ppn_expired'])->name('pajak.ppn-expired');
+                Route::post('/back/{ppnKeluaran}', [PajakController::class, 'ppn_expired_back'])->name('pajak.ppn-expired.back');
             });
 
             Route::prefix('ppn-masukan')->group(function () {
-                Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
-                Route::patch('/store-faktur/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
-                Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_store'])->name('pajak.ppn-masukan.keranjang-store');
-                Route::post('/keranjang-destroy/{ppnMasukan}', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_destroy'])->name('pajak.ppn-masukan.keranjang-destroy');
-                Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_masukan_keranjang_lanjut'])->name('pajak.ppn-masukan.keranjang-lanjut');
+                Route::get('/', [PajakController::class, 'ppn_masukan'])->name('pajak.ppn-masukan');
+                Route::patch('/store-faktur/{ppnMasukan}', [PajakController::class, 'ppn_masukan_store_faktur'])->name('pajak.ppn-masukan.store-faktur');
+                Route::post('/keranjang-store', [PajakController::class, 'ppn_masukan_keranjang_store'])->name('pajak.ppn-masukan.keranjang-store');
+                Route::post('/keranjang-destroy/{ppnMasukan}', [PajakController::class, 'ppn_masukan_keranjang_destroy'])->name('pajak.ppn-masukan.keranjang-destroy');
+                Route::post('/keranjang-lanjut', [PajakController::class, 'ppn_masukan_keranjang_lanjut'])->name('pajak.ppn-masukan.keranjang-lanjut');
             });
 
             Route::prefix('ppn-keluaran')->group(function () {
-                Route::get('/', [App\Http\Controllers\PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
-                Route::post('/expired/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_expired'])->name('pajak.ppn-keluaran.expired');
-                Route::patch('/store-faktur/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
-                Route::get('/keranjang', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang'])->name('pajak.ppn-keluaran.keranjang');
-                Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_store'])->name('pajak.ppn-keluaran.keranjang-store');
-                Route::post('/keranjang-destroy/{ppnKeluaran}', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_destroy'])->name('pajak.ppn-keluaran.keranjang-destroy');
-                Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
+                Route::get('/', [PajakController::class, 'ppn_keluaran'])->name('pajak.ppn-keluaran');
+                Route::post('/expired/{ppnKeluaran}', [PajakController::class, 'ppn_keluaran_expired'])->name('pajak.ppn-keluaran.expired');
+                Route::patch('/store-faktur/{ppnKeluaran}', [PajakController::class, 'ppn_keluaran_store_faktur'])->name('pajak.ppn-keluaran.store-faktur');
+                Route::get('/keranjang', [PajakController::class, 'ppn_keluaran_keranjang'])->name('pajak.ppn-keluaran.keranjang');
+                Route::post('/keranjang-store', [PajakController::class, 'ppn_keluaran_keranjang_store'])->name('pajak.ppn-keluaran.keranjang-store');
+                Route::post('/keranjang-destroy/{ppnKeluaran}', [PajakController::class, 'ppn_keluaran_keranjang_destroy'])->name('pajak.ppn-keluaran.keranjang-destroy');
+                Route::post('/keranjang-lanjut', [PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
             });
 
         });
@@ -798,40 +819,39 @@ Route::group(['middleware' => ['auth']], function () {
             Route::view('/laporan-keuangan', 'laporan-keuangan.index')->name('laporan-keuangan.index');
         });
 
-        Route::prefix('katalog')->group(function() {
-            Route::get('/', [App\Http\Controllers\HomeController::class, 'katalog'])->name('katalog');
-            Route::post('/', [App\Http\Controllers\HomeController::class, 'katalog_store'])->name('katalog.store');
-            Route::patch('/{katalog}', [App\Http\Controllers\HomeController::class, 'katalog_update'])->name('katalog.update');
-            Route::delete('/{katalog}', [App\Http\Controllers\HomeController::class, 'katalog_destroy'])->name('katalog.delete');
+        Route::prefix('katalog')->group(function () {
+            Route::get('/', [HomeController::class, 'katalog'])->name('katalog');
+            Route::post('/', [HomeController::class, 'katalog_store'])->name('katalog.store');
+            Route::patch('/{katalog}', [HomeController::class, 'katalog_update'])->name('katalog.update');
+            Route::delete('/{katalog}', [HomeController::class, 'katalog_destroy'])->name('katalog.delete');
         });
 
-
         Route::prefix('po')->group(function () {
-            Route::get('/', [App\Http\Controllers\PoController::class, 'index'])->name('po');
-            Route::get('/form', [App\Http\Controllers\PoController::class, 'form'])->name('po.form');
-            Route::post('/form/store', [App\Http\Controllers\PoController::class, 'store'])->name('po.form.store');
+            Route::get('/', [PoController::class, 'index'])->name('po');
+            Route::get('/form', [PoController::class, 'form'])->name('po.form');
+            Route::post('/form/store', [PoController::class, 'store'])->name('po.form.store');
 
-            Route::get('/rekap', [App\Http\Controllers\PoController::class, 'rekap'])->name('po.rekap');
-            Route::get('/rekap/{po}', [App\Http\Controllers\PoController::class, 'pdf'])->name('po.rekap.pdf');
-            Route::delete('/rekap/{po}', [App\Http\Controllers\PoController::class, 'delete'])->name('po.rekap.delete');
+            Route::get('/rekap', [PoController::class, 'rekap'])->name('po.rekap');
+            Route::get('/rekap/{po}', [PoController::class, 'pdf'])->name('po.rekap.pdf');
+            Route::delete('/rekap/{po}', [PoController::class, 'delete'])->name('po.rekap.delete');
 
-            Route::get('/get-types/{unitId}', [App\Http\Controllers\PoController::class, 'getTypes']);
-            Route::get('/get-kategori/{typeId}', [App\Http\Controllers\PoController::class, 'getKategori']);
-            Route::get('/get-barang/{typeId}/{kategoriId}', [App\Http\Controllers\PoController::class, 'getBarang']);
+            Route::get('/get-types/{unitId}', [PoController::class, 'getTypes']);
+            Route::get('/get-kategori/{typeId}', [PoController::class, 'getKategori']);
+            Route::get('/get-barang/{typeId}/{kategoriId}', [PoController::class, 'getBarang']);
         });
 
         Route::prefix('billing')->group(function () {
             Route::get('/', [BillingController::class, 'index'])->name('billing');
 
-            Route::prefix('otorisasi-pembelian')->group(function(){
+            Route::prefix('otorisasi-pembelian')->group(function () {
                 Route::get('/', [BillingController::class, 'otorisasi_pembelian'])->name('billing.otorisasi-pembelian');
-                Route::prefix('keranjang')->group(function() {
+                Route::prefix('keranjang')->group(function () {
                     Route::get('/{keranjang}', [BillingController::class, 'otorisasi_pembelian_keranjang'])->name('billing.otorisasi-pembelian.keranjang');
                     // Route::post('/checkout', [BillingController::class, 'otorisasi_pembelian_keranjang_checkout'])->name('billing.otorisasi-pembelian.keranjang.checkout');
                 });
             });
 
-            Route::prefix('uang-gantung')->group(function() {
+            Route::prefix('uang-gantung')->group(function () {
                 Route::get('/', [BillingController::class, 'uang_gantung'])->name('billing.uang-gantung');
                 Route::get('/data', [BillingController::class, 'uang_gantung_data'])->name('billing.uang-gantung.data');
                 Route::post('/void/{uangGantung}', [BillingController::class, 'uang_gantung_void'])->name('billing.uang-gantung.void');
@@ -873,11 +893,11 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/cetak-diterima/{retur}', [BillingController::class, 'barang_retur_cetak_diterima'])->name('billing.barang-retur.cetak_diterima');
             });
 
-            Route::prefix('barang-retur-proses')->group(function() {
+            Route::prefix('barang-retur-proses')->group(function () {
                 Route::Get('/', [BillingController::class, 'barang_retur_proses'])->name('billing.barang-retur-proses');
             });
 
-            Route::prefix('stok-retur')->group(function() {
+            Route::prefix('stok-retur')->group(function () {
                 Route::get('/', [BillingController::class, 'stok_retur'])->name('billing.stok-retur');
                 Route::get('/keranjang', [ReturController::class, 'cartIndex'])->name('billing.stok-retur.cart');
                 Route::post('/add-to-cart', [ReturController::class, 'addToCart'])->name('billing.stok-retur.add-to-cart');
@@ -891,7 +911,7 @@ Route::group(['middleware' => ['auth']], function () {
 
             });
 
-            Route::prefix('penyelesaian-retur')->group(function(){
+            Route::prefix('penyelesaian-retur')->group(function () {
                 Route::get('/', [ReturController::class, 'invoiceIndex'])->name('billing.penyelesaian-retur.index');
                 Route::get('/data', [ReturController::class, 'invoiceData'])->name('billing.penyelesaian-retur.data');
                 Route::get('/detail/{id}', [ReturController::class, 'invoiceShow'])->name('billing.penyelesaian-retur.detail');
@@ -917,7 +937,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/detail/delete/{orderDetail}', [BillingController::class, 'sales_order_delete'])->name('billing.sales-order.detail.delete');
             });
 
-              Route::prefix('pre-order')->group(function() {
+            Route::prefix('pre-order')->group(function () {
                 Route::get('/', [BillingController::class, 'preorder'])->name('billing.pre-order');
                 Route::get('/{preorder}', [BillingController::class, 'preorder_detail'])->name('billing.pre-order.detail');
                 Route::post('/update/{preorder}', [BillingController::class, 'preorder_detail_update'])->name('billing.pre-order.update');
@@ -941,14 +961,14 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('form-inventaris')->group(function () {
                 Route::get('/', [BillingController::class, 'form_inventaris'])->name('billing.form-inventaris');
-                Route::get('/get-jenis', [App\Http\Controllers\FormInventaris::class, 'getJenis'])->name('billing.form-inventaris.get-jenis');
-                Route::get('/beli', [App\Http\Controllers\FormInventaris::class, 'index'])->name('billing.form-inventaris.beli');
-                Route::post('/beli/store', [App\Http\Controllers\FormInventaris::class, 'store'])->name('billing.form-inventaris.beli.store');
+                Route::get('/get-jenis', [FormInventaris::class, 'getJenis'])->name('billing.form-inventaris.get-jenis');
+                Route::get('/beli', [FormInventaris::class, 'index'])->name('billing.form-inventaris.beli');
+                Route::post('/beli/store', [FormInventaris::class, 'store'])->name('billing.form-inventaris.beli.store');
 
                 Route::prefix('hutang')->group(function () {
-                    Route::get('/', [App\Http\Controllers\FormInventaris::class, 'hutang'])->name('billing.form-inventaris.hutang');
-                    Route::post('/pelunasan/{invoice}', [App\Http\Controllers\FormInventaris::class, 'pelunasan'])->name('billing.form-inventaris.hutang.pelunasan');
-                    Route::post('/void/{invoice}', [App\Http\Controllers\FormInventaris::class, 'void'])->name('billing.form-inventaris.hutang.void');
+                    Route::get('/', [FormInventaris::class, 'hutang'])->name('billing.form-inventaris.hutang');
+                    Route::post('/pelunasan/{invoice}', [FormInventaris::class, 'pelunasan'])->name('billing.form-inventaris.hutang.pelunasan');
+                    Route::post('/void/{invoice}', [FormInventaris::class, 'void'])->name('billing.form-inventaris.hutang.void');
                 });
             });
             Route::prefix('form-cost-operational')->group(function () {
@@ -965,27 +985,27 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::prefix('form-deposit')->group(function () {
-                Route::get('/getRekening', [App\Http\Controllers\FormDepositController::class, 'getRekening'])->name('form-deposit.get-rekening');
-                Route::get('/masuk', [App\Http\Controllers\FormDepositController::class, 'masuk'])->name('form-deposit.masuk');
-                Route::post('/masuk/store', [App\Http\Controllers\FormDepositController::class, 'masuk_store'])->name('form-deposit.masuk.store');
-                Route::get('/keluar', [App\Http\Controllers\FormDepositController::class, 'keluar'])->name('form-deposit.keluar');
-                Route::post('/keluar/store', [App\Http\Controllers\FormDepositController::class, 'keluar_store'])->name('form-deposit.keluar.store');
-                Route::get('/keluar-all', [App\Http\Controllers\FormDepositController::class, 'keluar_all'])->name('form-deposit.keluar-all');
-                Route::post('/keluar-all/store', [App\Http\Controllers\FormDepositController::class, 'keluar_all_store'])->name('form-deposit.keluar-all.store');
+                Route::get('/getRekening', [FormDepositController::class, 'getRekening'])->name('form-deposit.get-rekening');
+                Route::get('/masuk', [FormDepositController::class, 'masuk'])->name('form-deposit.masuk');
+                Route::post('/masuk/store', [FormDepositController::class, 'masuk_store'])->name('form-deposit.masuk.store');
+                Route::get('/keluar', [FormDepositController::class, 'keluar'])->name('form-deposit.keluar');
+                Route::post('/keluar/store', [FormDepositController::class, 'keluar_store'])->name('form-deposit.keluar.store');
+                Route::get('/keluar-all', [FormDepositController::class, 'keluar_all'])->name('form-deposit.keluar-all');
+                Route::post('/keluar-all/store', [FormDepositController::class, 'keluar_all_store'])->name('form-deposit.keluar-all.store');
             });
 
             Route::prefix('form-kas-kecil')->group(function () {
-                Route::get('/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk'])->name('form-kas-kecil.masuk');
-                Route::post('/masuk/store', [App\Http\Controllers\FormKasKecilController::class, 'masuk_store'])->name('form-kas-kecil.masuk.store');
-                Route::get('/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar'])->name('form-kas-kecil.keluar');
-                Route::post('/keluar/store', [App\Http\Controllers\FormKasKecilController::class, 'keluar_store'])->name('form-kas-kecil.keluar.store');
+                Route::get('/masuk', [FormKasKecilController::class, 'masuk'])->name('form-kas-kecil.masuk');
+                Route::post('/masuk/store', [FormKasKecilController::class, 'masuk_store'])->name('form-kas-kecil.masuk.store');
+                Route::get('/keluar', [FormKasKecilController::class, 'keluar'])->name('form-kas-kecil.keluar');
+                Route::post('/keluar/store', [FormKasKecilController::class, 'keluar_store'])->name('form-kas-kecil.keluar.store');
             });
 
             Route::prefix('form-lain')->group(function () {
-                Route::get('/masuk', [App\Http\Controllers\FormLainController::class, 'masuk'])->name('form-lain.masuk');
-                Route::post('/masuk/store', [App\Http\Controllers\FormLainController::class, 'masuk_store'])->name('form-lain.masuk.store');
-                Route::get('/keluar', [App\Http\Controllers\FormLainController::class, 'keluar'])->name('form-lain.keluar');
-                Route::post('/keluar/store', [App\Http\Controllers\FormLainController::class, 'keluar_store'])->name('form-lain.keluar.store');
+                Route::get('/masuk', [FormLainController::class, 'masuk'])->name('form-lain.masuk');
+                Route::post('/masuk/store', [FormLainController::class, 'masuk_store'])->name('form-lain.masuk.store');
+                Route::get('/keluar', [FormLainController::class, 'keluar'])->name('form-lain.keluar');
+                Route::post('/keluar/store', [FormLainController::class, 'keluar_store'])->name('form-lain.keluar.store');
             });
 
             Route::prefix('form-dividen')->group(function () {
@@ -997,54 +1017,54 @@ Route::group(['middleware' => ['auth']], function () {
             // Route::post('form-beli/keranjang/checkout', [App\Http\Controllers\FormBeliController::class, 'keranjang_checkout'])->name('billing.form-beli.keranjang.checkout');
 
             Route::prefix('form-jual')->group(function () {
-                Route::get('/', [App\Http\Controllers\FormJualController::class, 'index'])->name('billing.form-jual');
-                Route::get('/get-stok/{id}/{barangPpn}', [App\Http\Controllers\FormJualController::class, 'get_stok'])->name('billing.form-jual.get-stok-ppn');
+                Route::get('/', [FormJualController::class, 'index'])->name('billing.form-jual');
+                Route::get('/get-stok/{id}/{barangPpn}', [FormJualController::class, 'get_stok'])->name('billing.form-jual.get-stok-ppn');
 
                 Route::prefix('keranjang')->group(function () {
-                    Route::post('/store', [App\Http\Controllers\FormJualController::class, 'keranjang_store'])->name('billing.form-jual.keranjang.store');
-                    Route::post('/update', [App\Http\Controllers\FormJualController::class, 'keranjang_update'])->name('billing.form-jual.keranjang.update');
-                    Route::post('/set-jumlah', [App\Http\Controllers\FormJualController::class, 'keranjang_set'])->name('billing.form-jual.keranjang.set-jumlah');
-                    Route::post('/empty', [App\Http\Controllers\FormJualController::class, 'keranjang_empty'])->name('billing.form-jual.keranjang.empty');
+                    Route::post('/store', [FormJualController::class, 'keranjang_store'])->name('billing.form-jual.keranjang.store');
+                    Route::post('/update', [FormJualController::class, 'keranjang_update'])->name('billing.form-jual.keranjang.update');
+                    Route::post('/set-jumlah', [FormJualController::class, 'keranjang_set'])->name('billing.form-jual.keranjang.set-jumlah');
+                    Route::post('/empty', [FormJualController::class, 'keranjang_empty'])->name('billing.form-jual.keranjang.empty');
                 });
 
                 Route::prefix('keranjang-jual')->group(function () {
-                    Route::get('/', [App\Http\Controllers\FormJualController::class, 'keranjang'])->name('billing.form-jual.keranjang');
-                    Route::post('/checkout', [App\Http\Controllers\FormJualController::class, 'keranjang_checkout'])->name('billing.form-jual.keranjang.checkout');
-                    Route::get('/get-konsumen', [App\Http\Controllers\FormJualController::class, 'get_konsumen'])->name('billing.form-jual.keranjang.get-konsumen');
+                    Route::get('/', [FormJualController::class, 'keranjang'])->name('billing.form-jual.keranjang');
+                    Route::post('/checkout', [FormJualController::class, 'keranjang_checkout'])->name('billing.form-jual.keranjang.checkout');
+                    Route::get('/get-konsumen', [FormJualController::class, 'get_konsumen'])->name('billing.form-jual.keranjang.get-konsumen');
                 });
 
-                Route::get('/invoice/{invoice}', [App\Http\Controllers\FormJualController::class, 'invoice'])->name('billing.form-jual.invoice');
+                Route::get('/invoice/{invoice}', [FormJualController::class, 'invoice'])->name('billing.form-jual.invoice');
             });
 
             Route::prefix('invoice-supplier')->group(function () {
-                Route::get('/ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier'])->name('billing.invoice-supplier');
-                Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_non_ppn'])->name('billing.invoice-supplier.non-ppn');
-                Route::get('/detail/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_detail'])->name('billing.invoice-supplier.detail');
-                Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_bayar'])->name('billing.invoice-supplier.bayar');
+                Route::get('/ppn', [InvoiceController::class, 'invoice_supplier'])->name('billing.invoice-supplier');
+                Route::get('/non-ppn', [InvoiceController::class, 'invoice_supplier_non_ppn'])->name('billing.invoice-supplier.non-ppn');
+                Route::get('/detail/{invoice}', [InvoiceController::class, 'invoice_supplier_detail'])->name('billing.invoice-supplier.detail');
+                Route::post('/bayar/{invoice}', [InvoiceController::class, 'invoice_supplier_bayar'])->name('billing.invoice-supplier.bayar');
 
-                Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_cicil'])->name('billing.invoice-supplier.cicil');
+                Route::post('/cicil/{invoice}', [InvoiceController::class, 'invoice_supplier_cicil'])->name('billing.invoice-supplier.cicil');
 
-                Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
+                Route::post('/void/{invoice}', [InvoiceController::class, 'invoice_supplier_void'])->name('billing.invoice-supplier.void');
             });
 
             Route::prefix('invoice-konsumen')->group(function () {
-                Route::get('/ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen'])->name('billing.invoice-konsumen');
-                Route::get('/ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan'])->name('billing.invoice-konsumen.titipan');
-                Route::get('/non-ppn', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_non_ppn'])->name('billing.invoice-konsumen.non-ppn');
-                Route::get('/non-ppn/titipan', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_titipan_non_ppn'])->name('billing.invoice-konsumen.non-ppn.titipan');
+                Route::get('/ppn', [InvoiceController::class, 'invoice_konsumen'])->name('billing.invoice-konsumen');
+                Route::get('/ppn/titipan', [InvoiceController::class, 'invoice_konsumen_titipan'])->name('billing.invoice-konsumen.titipan');
+                Route::get('/non-ppn', [InvoiceController::class, 'invoice_konsumen_non_ppn'])->name('billing.invoice-konsumen.non-ppn');
+                Route::get('/non-ppn/titipan', [InvoiceController::class, 'invoice_konsumen_titipan_non_ppn'])->name('billing.invoice-konsumen.non-ppn.titipan');
 
-                Route::post('/bayar/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_bayar'])->name('billing.invoice-konsumen.bayar');
+                Route::post('/bayar/{invoice}', [InvoiceController::class, 'invoice_konsumen_bayar'])->name('billing.invoice-konsumen.bayar');
 
-                Route::post('/void/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_void'])->name('billing.invoice-konsumen.void');
+                Route::post('/void/{invoice}', [InvoiceController::class, 'invoice_konsumen_void'])->name('billing.invoice-konsumen.void');
 
-                Route::get('/invoice/{invoice}', [App\Http\Controllers\FormJualController::class, 'invoice_image'])->name('billing.invoice-konsumen.invoice-jpeg');
+                Route::get('/invoice/{invoice}', [FormJualController::class, 'invoice_image'])->name('billing.invoice-konsumen.invoice-jpeg');
 
-                Route::post('/cicil/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_cicil'])->name('billing.invoice-konsumen.cicil');
+                Route::post('/cicil/{invoice}', [InvoiceController::class, 'invoice_konsumen_cicil'])->name('billing.invoice-konsumen.cicil');
 
-                Route::get('/all', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_all'])->name('billing.invoice-konsumen.all');
+                Route::get('/all', [InvoiceController::class, 'invoice_konsumen_all'])->name('billing.invoice-konsumen.all');
 
-                Route::get('/pdf', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_download'])->name('billing.invoice-konsumen.pdf');
-                Route::get('/pdf-all', [App\Http\Controllers\InvoiceController::class, 'invoice_konsumen_all_download'])->name('billing.invoice-konsumen.pdf-all');
+                Route::get('/pdf', [InvoiceController::class, 'invoice_konsumen_download'])->name('billing.invoice-konsumen.pdf');
+                Route::get('/pdf-all', [InvoiceController::class, 'invoice_konsumen_all_download'])->name('billing.invoice-konsumen.pdf-all');
             });
 
             Route::prefix('form-janji-bayar')->group(function () {

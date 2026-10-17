@@ -1,0 +1,1 @@
+<div class="small"><div><span class="text-muted">Bank:</span> <strong>{{ $employee->bank ?: '—' }}</strong></div><div><span class="text-muted">Nomor Rekening:</span> {{ $employee->no_rek ?: '—' }}</div><div><span class="text-muted">Nama Rekening:</span> {{ $employee->nama_rek ?: '—' }}</div></div>

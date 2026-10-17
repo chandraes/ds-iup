@@ -1,0 +1,2 @@
+@push('css')<link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}"><link rel="stylesheet" href="{{ asset('employee-crud.css').'?v='.filemtime(public_path('employee-crud.css')) }}">@endpush
+@push('js')<script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script><script src="{{ asset('employee-crud.js').'?v='.filemtime(public_path('employee-crud.js')) }}"></script>@endpush

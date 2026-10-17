@@ -26,14 +26,13 @@ use App\Models\db\Satuan;
 use App\Models\db\Supplier;
 use App\Models\MetodeBayar;
 use App\Models\Pengelola;
-use App\Models\transaksi\InvoiceJualDetail;
 use App\Models\Wilayah;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Ramsey\Uuid\Uuid;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -139,20 +138,46 @@ class DatabaseController extends Controller
 
     public function jabatan_delete(Jabatan $jabatan)
     {
+        if ($jabatan->karyawan()->exists()) {
+            return back()->with('error', 'Jabatan masih digunakan pegawai dan tidak dapat dihapus.');
+        }
         $jabatan->delete();
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 
-    public function staff()
+    public function staff(Request $request)
     {
-        $data = Karyawan::with(['jabatan'])->get();
-        $jabatan = Jabatan::all();
+        $filters = $request->validate(['status' => 'nullable|in:1,0,all']);
+        $status = $filters['status'] ?? '1';
+        $query = Karyawan::with('jabatan');
+        if ($status !== 'all') {
+            $query->where('status', (int) $status);
+        }
+        if ($request->ajax()) {
+            $data = $request->validate(['draw' => 'required|integer|min:0', 'start' => 'required|integer|min:0', 'length' => 'required|integer|in:10,25,50,100', 'search.value' => 'nullable|string|max:100', 'order.0.column' => 'nullable|integer|between:0,6', 'order.0.dir' => 'nullable|in:asc,desc']);
+            $total = (clone $query)->count();
+            $search = trim($data['search']['value'] ?? '');
+            if ($search !== '') {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('nama', 'like', '%'.$search.'%')->orWhere('nickname', 'like', '%'.$search.'%')
+                        ->orWhereHas('jabatan', fn ($position) => $position->where('nama', 'like', '%'.$search.'%'));
+                });
+            }
+            $filtered = $search === '' ? $total : (clone $query)->count();
+            $columns = ['nomor', 'nama', 'nickname', 'jabatan_id', 'bank', 'status', 'id'];
+            $rows = $query->orderBy($columns[$data['order'][0]['column'] ?? 1], $data['order'][0]['dir'] ?? 'asc')->orderBy('id')
+                ->offset($data['start'])->limit($data['length'])->get()->map(fn ($employee) => [
+                    e((string) $employee->nomor), e($employee->nama), e($employee->nickname), e($employee->jabatan?->nama ?? '—'),
+                    view('db.karyawan.bank', ['employee' => $employee])->render(),
+                    $employee->status ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>',
+                    view('db.karyawan.actions', ['employee' => $employee])->render(),
+                ]);
 
-        return view('db.karyawan.index', [
-            'data' => $data,
-            'jabatan' => $jabatan,
-        ]);
+            return response()->json(['draw' => (int) $data['draw'], 'recordsTotal' => $total, 'recordsFiltered' => $filtered, 'data' => $rows]);
+        }
+
+        return view('db.karyawan.index', ['status' => $status, 'jabatan' => Jabatan::orderBy('nama')->get()]);
     }
 
     public function staff_create()
@@ -166,30 +191,35 @@ class DatabaseController extends Controller
 
     public function staff_store(Request $request)
     {
+        foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga'] as $field) {
+            if (is_string($request->input($field))) {
+                $request->merge([$field => str_replace('.', '', $request->input($field))]);
+            }
+        }
         $data = $request->validate([
             'jabatan_id' => 'required|exists:jabatans,id',
-            'nama' => 'required',
-            'nickname' => 'required',
-            'gaji_pokok' => 'required',
-            'tunjangan_jabatan' => 'required',
-            'tunjangan_keluarga' => 'required',
-            'nik' => 'required',
-            'npwp' => 'required',
+            'nama' => 'required|string|max:255',
+            'nickname' => 'required|string|max:255',
+            'gaji_pokok' => 'required|integer|between:0,2147483647',
+            'tunjangan_jabatan' => 'required|integer|between:0,2147483647',
+            'tunjangan_keluarga' => 'required|integer|between:0,2147483647',
+            'nik' => 'required|string|max:255',
+            'npwp' => 'required|string|max:255',
             'apa_bpjs_tk' => 'nullable',
             'apa_bpjs_kes' => 'nullable',
-            'bpjs_tk' => 'required',
-            'bpjs_kesehatan' => 'required',
-            'tempat_lahir' => 'required',
-            'tanggal_lahir' => 'required',
+            'bpjs_tk' => 'required|string|max:255',
+            'bpjs_kesehatan' => 'required|string|max:255',
+            'tempat_lahir' => 'required|string|max:255',
+            'tanggal_lahir' => 'required|date_format:Y-m-d',
             'alamat' => 'required',
-            'no_hp' => 'required',
-            'bank' => 'required',
-            'no_rek' => 'required',
-            'nama_rek' => 'required',
-            'mulai_bekerja' => 'required',
-            'foto_ktp' => 'required|mimes:jpg,jpeg,png|max:10000',
-            'foto_diri' => 'required|mimes:jpg,jpeg,png|max:10000',
-            'status' => 'required',
+            'no_hp' => 'required|string|max:255',
+            'bank' => 'required|string|max:255',
+            'no_rek' => 'required|string|max:255',
+            'nama_rek' => 'required|string|max:255',
+            'mulai_bekerja' => 'required|date_format:Y-m-d',
+            'foto_ktp' => 'required|image|mimes:jpg,jpeg,png|max:10000',
+            'foto_diri' => 'required|image|mimes:jpg,jpeg,png|max:10000',
+            'status' => 'required|boolean',
         ]);
 
         $data['nomor'] = Karyawan::max('nomor') + 1;
@@ -198,24 +228,34 @@ class DatabaseController extends Controller
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
 
-        $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
-        $data['apa_bpjs_kes'] = $request->filled('apa_bpjs_kes') ? 1 : 0;
+        $data['apa_bpjs_tk'] = $request->boolean('apa_bpjs_tk') ? 1 : 0;
+        $data['apa_bpjs_kes'] = $request->boolean('apa_bpjs_kes') ? 1 : 0;
 
+        $newPhotoPaths = [];
+        $oldPhotoPaths = [];
         try {
             DB::beginTransaction();
             $file_name_ktp = Uuid::uuid4().'- KTP - '.$data['nama'].'.'.$request->foto_ktp->extension();
             $file_name_diri = Uuid::uuid4().' - Foto Diri '.$data['nama'].'.'.$request->foto_diri->extension();
 
             $data['foto_ktp'] = $request->file('foto_ktp')->storeAs('public/karyawan', $file_name_ktp);
+            $newPhotoPaths[] = $data['foto_ktp'];
             $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
+            $newPhotoPaths[] = $data['foto_diri'];
 
             Karyawan::create($data);
 
             DB::commit();
+            foreach (array_filter($oldPhotoPaths) as $path) {
+                Storage::disk('local')->delete($path);
+            }
 
             return redirect()->route('db.staff')->with('success', 'Data berhasil ditambahkan');
         } catch (\Exception $e) {
             DB::rollBack();
+            foreach ($newPhotoPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
 
             return redirect()->back()->with('error', 'Terjadi kesalahan');
         }
@@ -234,64 +274,77 @@ class DatabaseController extends Controller
 
     public function staff_update(Karyawan $staff, Request $request)
     {
+        foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga'] as $field) {
+            if (is_string($request->input($field))) {
+                $request->merge([$field => str_replace('.', '', $request->input($field))]);
+            }
+        }
         $data = $request->validate([
             'jabatan_id' => 'required|exists:jabatans,id',
-            'nama' => 'required',
-            'nickname' => 'required',
-            'gaji_pokok' => 'required',
-            'tunjangan_jabatan' => 'required',
-            'tunjangan_keluarga' => 'required',
-            'nik' => 'required',
-            'npwp' => 'required',
+            'nama' => 'required|string|max:255',
+            'nickname' => 'required|string|max:255',
+            'gaji_pokok' => 'required|integer|between:0,2147483647',
+            'tunjangan_jabatan' => 'required|integer|between:0,2147483647',
+            'tunjangan_keluarga' => 'required|integer|between:0,2147483647',
+            'nik' => 'required|string|max:255',
+            'npwp' => 'required|string|max:255',
             'apa_bpjs_tk' => 'nullable',
             'apa_bpjs_kes' => 'nullable',
-            'bpjs_tk' => 'required',
-            'bpjs_kesehatan' => 'required',
-            'tempat_lahir' => 'required',
-            'tanggal_lahir' => 'required',
+            'bpjs_tk' => 'required|string|max:255',
+            'bpjs_kesehatan' => 'required|string|max:255',
+            'tempat_lahir' => 'required|string|max:255',
+            'tanggal_lahir' => 'required|date_format:Y-m-d',
             'alamat' => 'required',
-            'no_hp' => 'required',
-            'bank' => 'required',
-            'no_rek' => 'required',
-            'nama_rek' => 'required',
-            'mulai_bekerja' => 'required',
-            'status' => 'required',
-            'foto_ktp' => 'nullable|mimes:jpg,jpeg,png|max:10000',
-            'foto_diri' => 'nullable|mimes:jpg,jpeg,png|max:10000',
+            'no_hp' => 'required|string|max:255',
+            'bank' => 'required|string|max:255',
+            'no_rek' => 'required|string|max:255',
+            'nama_rek' => 'required|string|max:255',
+            'mulai_bekerja' => 'required|date_format:Y-m-d',
+            'status' => 'required|boolean',
+            'foto_ktp' => 'nullable|image|mimes:jpg,jpeg,png|max:10000',
+            'foto_diri' => 'nullable|image|mimes:jpg,jpeg,png|max:10000',
         ]);
 
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
 
-        $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
-        $data['apa_bpjs_kes'] = $request->filled('apa_bpjs_kes') ? 1 : 0;
+        $data['apa_bpjs_tk'] = $request->boolean('apa_bpjs_tk') ? 1 : 0;
+        $data['apa_bpjs_kes'] = $request->boolean('apa_bpjs_kes') ? 1 : 0;
 
+        $newPhotoPaths = [];
+        $oldPhotoPaths = [];
         try {
             DB::beginTransaction();
 
             if ($request->hasFile('foto_ktp')) {
                 $file_name_ktp = Uuid::uuid4().'- KTP - '.$data['nama'].'.'.$request->foto_ktp->extension();
                 $data['foto_ktp'] = $request->file('foto_ktp')->storeAs('public/karyawan', $file_name_ktp);
-                $ktp_path = storage_path('app/'.$staff->foto_ktp);
-                unlink($ktp_path);
+                $newPhotoPaths[] = $data['foto_ktp'];
+                $oldPhotoPaths[] = $staff->foto_ktp;
             }
 
             if ($request->hasFile('foto_diri')) {
                 $file_name_diri = Uuid::uuid4().' - Foto Diri '.$data['nama'].'.'.$request->foto_diri->extension();
                 $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
-                $diri_path = storage_path('app/'.$staff->foto_diri);
-                unlink($diri_path);
+                $newPhotoPaths[] = $data['foto_diri'];
+                $oldPhotoPaths[] = $staff->foto_diri;
             }
 
             $staff->update($data);
 
             DB::commit();
+            foreach (array_filter($oldPhotoPaths) as $path) {
+                Storage::disk('local')->delete($path);
+            }
 
         } catch (\Throwable $th) {
             // throw $th;
 
             DB::rollBack();
+            foreach ($newPhotoPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
 
             return redirect()->back()->with('error', 'Terjadi kesalahan');
         }
@@ -299,29 +352,42 @@ class DatabaseController extends Controller
         return redirect()->route('db.staff')->with('success', 'Data berhasil diupdate');
     }
 
-    public function staff_delete(Karyawan $staff)
+    public function staff_status(Request $request, Karyawan $staff)
     {
+        $data = $request->validate(['status' => 'required|boolean']);
+        $staff->update(['status' => (bool) $data['status']]);
+
+        return redirect()->route('db.staff')->with('success', $data['status'] ? 'Pegawai berhasil diaktifkan kembali.' : 'Pegawai dinonaktifkan. Riwayat tetap tersimpan dan akses akun web terkait diblokir.');
+    }
+
+    public function staff_delete(Request $request, Karyawan $staff)
+    {
+        $request->validate(['deletion_reason' => 'required|string|min:5|max:500']);
+        $newPhotoPaths = [];
+        $oldPhotoPaths = [];
         try {
             DB::beginTransaction();
+            $staff = Karyawan::whereKey($staff->id)->lockForUpdate()->firstOrFail();
+            if ($reason = $staff->deletionBlockReason()) {
+                DB::rollBack();
 
-            $ktp_path = storage_path('app/'.$staff->foto_ktp);
-            $diri_path = storage_path('app/'.$staff->foto_diri);
-
-            if (file_exists($ktp_path)) {
-                unlink($ktp_path);
+                return redirect()->back()->with('error', $reason);
             }
-
-            if (file_exists($diri_path)) {
-                unlink($diri_path);
-            }
+            $oldPhotoPaths = [$staff->foto_ktp, $staff->foto_diri];
 
             $staff->delete();
 
             DB::commit();
+            foreach (array_filter($oldPhotoPaths) as $path) {
+                Storage::disk('local')->delete($path);
+            }
 
         } catch (\Throwable $th) {
             // throw $th;
             DB::rollBack();
+            foreach ($newPhotoPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
 
             return redirect()->back()->with('error', 'Terjadi kesalahan');
         }
@@ -517,14 +583,13 @@ class DatabaseController extends Controller
         ]);
     }
 
-
     public function konsumen_data(Request $request)
     {
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status', 'kabupaten_kota', 'status_wa']); // Ambil filter dari request
 
         $data = Konsumen::query()->with(['kode_toko', 'provinsi', 'kabupaten_kota', 'kecamatan', 'karyawan'])
-                ->withCount('docs')
-                ->filter($filters);
+            ->withCount('docs')
+            ->filter($filters);
 
         // Ambil semua no_hp yang duplikat sekaligus
         $duplicateNoHp = Konsumen::select('no_hp')
@@ -534,12 +599,13 @@ class DatabaseController extends Controller
             ->toArray();
 
         return DataTables::of($data)
-            ->addColumn('full_kode', fn($d) => $d->full_kode)
-            ->addColumn('limit_plafon', fn($d) => $d->nf_plafon)
-            ->addColumn('kode_toko', fn($d) => $d->kode_toko->kode ?? '')
+            ->addColumn('full_kode', fn ($d) => $d->full_kode)
+            ->addColumn('limit_plafon', fn ($d) => $d->nf_plafon)
+            ->addColumn('kode_toko', fn ($d) => $d->kode_toko->kode ?? '')
             // ->addColumn('nama', fn($d) => $d->nama)
             ->addColumn('cp', function ($d) use ($duplicateNoHp) {
                 $noHpWarning = (substr_count($d->no_hp, ' ') > 0 || in_array($d->no_hp, $duplicateNoHp)) ? 'text-danger' : '';
+
                 return "
                     <ul>
                         <li>CP : $d->cp</li>
@@ -548,25 +614,25 @@ class DatabaseController extends Controller
                     </ul>
                 ";
             })
-            ->filterColumn('cp', function($query, $keyword) {
+            ->filterColumn('cp', function ($query, $keyword) {
                 // Gunakan where() dengan closure agar kueri dikelompokkan dengan tanda kurung (...)
                 // Ini mencegah orWhere merusak kueri utama kamu.
-                $query->where(function($q) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
                     $q->where('no_hp', 'like', "%{$keyword}%")
-                    ->orWhere('cp', 'like', "%{$keyword}%")
-                    ->orWhere('no_kantor', 'like', "%{$keyword}%");
+                        ->orWhere('cp', 'like', "%{$keyword}%")
+                        ->orWhere('no_kantor', 'like', "%{$keyword}%");
                 });
             })
-            ->addColumn('pembayaran_raw', function ($d){
+            ->addColumn('pembayaran_raw', function ($d) {
                 return "
                     $d->sistem_pembayaran <br>
-                    (".($d->pembayaran == 2 ? $d->tempo_hari. ' Hari' : '').")
-                ";
+                    (".($d->pembayaran == 2 ? $d->tempo_hari.' Hari' : '').')
+                ';
             })
             ->addColumn('ktp', function ($d) {
                 return view('db.konsumen._ktp', compact('d'))->render();
             })
-            ->addColumn('diskon', function ($d){
+            ->addColumn('diskon', function ($d) {
                 return view('db.konsumen._diskon', compact('d'))->render();
             })
             ->addColumn('aksi', function ($d) {
@@ -587,25 +653,27 @@ class DatabaseController extends Controller
             })
             ->addColumn('checklist_kunjungan', function ($d) {
                 $checked = $d->checklist_kunjungan ? 'checked' : '';
+
                 return '
                     <div class="text-center">
                         <input class="form-check-input shadow-none" type="checkbox"
-                               onchange="toggleChecklist(' . $d->id . ', this)" ' . $checked . '
+                               onchange="toggleChecklist('.$d->id.', this)" '.$checked.'
                                style="cursor: pointer; transform: scale(2.3);">
                     </div>
                 ';
             })
             ->addColumn('notif', function ($d) {
                 $checked = $d->wa_notif ? 'checked' : '';
+
                 return '
                     <div class="text-center">
                         <input class="form-check-input shadow-none" type="checkbox"
-                               onchange="toggleNotif(' . $d->id . ', this)" ' . $checked . '
+                               onchange="toggleNotif('.$d->id.', this)" '.$checked.'
                                style="cursor: pointer; transform: scale(2.3);">
                     </div>
                 ';
             })
-            ->rawColumns(['cp', 'ktp','aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon', 'notif'])
+            ->rawColumns(['cp', 'ktp', 'aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon', 'notif'])
             ->make(true);
     }
 
@@ -621,10 +689,10 @@ class DatabaseController extends Controller
                 return $d->created_at->format('d/m/Y H:i');
             })
             ->editColumn('plafon_lama', function ($d) {
-                return 'Rp ' . number_format($d->nominal_lama, 0, ',', '.');
+                return 'Rp '.number_format($d->nominal_lama, 0, ',', '.');
             })
             ->editColumn('plafon_baru', function ($d) {
-                return 'Rp ' . number_format($d->nominal_baru, 0, ',', '.');
+                return 'Rp '.number_format($d->nominal_baru, 0, ',', '.');
             })
             ->addColumn('user', function ($d) {
                 return $d->updatedBy->name ?? '-';
@@ -650,13 +718,13 @@ class DatabaseController extends Controller
             if ($plafonLama == $plafonBaru) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Nilai plafon sama.'
+                    'message' => 'Nilai plafon sama.',
                 ]);
             }
 
             // 1. Update plafon di tabel konsumen
             $konsumen->update([
-                'plafon' => $plafonBaru
+                'plafon' => $plafonBaru,
             ]);
 
             // 2. Simpan ke tabel histori
@@ -672,14 +740,15 @@ class DatabaseController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Limit plafon berhasil diperbarui.'
+                'message' => 'Limit plafon berhasil diperbarui.',
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -692,7 +761,7 @@ class DatabaseController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Status checklist kunjungan berhasil diperbarui.'
+            'message' => 'Status checklist kunjungan berhasil diperbarui.',
         ]);
     }
 
@@ -704,7 +773,7 @@ class DatabaseController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Status whatsapp notifikasi berhasil diperbarui.'
+            'message' => 'Status whatsapp notifikasi berhasil diperbarui.',
         ]);
     }
 
@@ -712,7 +781,7 @@ class DatabaseController extends Controller
     {
         $konsumen = Konsumen::withCount('docs')->find($request->konsumen_id);
 
-        if (!$konsumen) {
+        if (! $konsumen) {
             return response()->json(['status' => 'error', 'message' => 'Konsumen tidak ditemukan'], 404);
         }
 
@@ -742,7 +811,7 @@ class DatabaseController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menghapus dokumen. '. $e->getMessage() ], 500);
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menghapus dokumen. '.$e->getMessage()], 500);
         }
     }
 
@@ -759,7 +828,7 @@ class DatabaseController extends Controller
             $file = $request->file('file');
             $filename = $data['konsumen_id'].'_'.$data['nama'].'_'.time().'.'.$file->getClientOriginalExtension();
 
-            if (!Storage::disk('public')->exists('konsumen_docs')) {
+            if (! Storage::disk('public')->exists('konsumen_docs')) {
                 Storage::disk('public')->makeDirectory('konsumen_docs');
             }
 
@@ -777,7 +846,7 @@ class DatabaseController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menyimpan dokumen. '. $e->getMessage() ], 500);
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menyimpan dokumen. '.$e->getMessage()], 500);
         }
     }
 
@@ -800,7 +869,6 @@ class DatabaseController extends Controller
             'upload_ktp' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:512',
         ]);
 
-
         if ($konsumen->upload_ktp && Storage::disk('public')->exists($konsumen->upload_ktp)) {
             Storage::disk('public')->delete($konsumen->upload_ktp);
         }
@@ -808,7 +876,7 @@ class DatabaseController extends Controller
         $file = $request->file('upload_ktp');
         $filename = $konsumen->id.'_KTP'.'_'.time().'.'.$file->getClientOriginalExtension();
 
-        if (!Storage::disk('public')->exists('konsumen')) {
+        if (! Storage::disk('public')->exists('konsumen')) {
             Storage::disk('public')->makeDirectory('konsumen');
         }
 
@@ -826,7 +894,7 @@ class DatabaseController extends Controller
 
         $tahun = date('Y');
 
-        $pdf = PDF::loadview('db.konsumen.daftar-kunjungan', [
+        $pdf = Pdf::loadview('db.konsumen.daftar-kunjungan', [
             'konsumen' => $konsumen,
             'pt' => $pt,
         ])->setPaper('a4', 'portrait');
@@ -898,8 +966,8 @@ class DatabaseController extends Controller
         ]);
 
         $konsumen->update([
-            'active' => !$konsumen->active,
-            'checklist_kunjungan' => !$konsumen->checlist_kunjungan,
+            'active' => ! $konsumen->active,
+            'checklist_kunjungan' => ! $konsumen->checlist_kunjungan,
             'alasan' => $data['alasan'] ?? null,
         ]);
 
@@ -914,7 +982,7 @@ class DatabaseController extends Controller
 
         return view('db.supplier.index', [
             'data' => $data,
-            'unit' => $unit
+            'unit' => $unit,
         ]);
     }
 
@@ -1114,7 +1182,6 @@ class DatabaseController extends Controller
             'wilayah_id.*' => 'required|exists:wilayahs,id',
         ]);
 
-
         try {
             DB::beginTransaction();
 
@@ -1132,8 +1199,9 @@ class DatabaseController extends Controller
 
             return redirect()->back()->with('success', 'Data berhasil ditambahkan');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data! ', $th->getMessage());
         }
     }
@@ -1165,8 +1233,9 @@ class DatabaseController extends Controller
 
             return redirect()->back()->with('success', 'Data berhasil diupdate');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengupdate data! ', $th->getMessage());
         }
     }
@@ -1181,8 +1250,9 @@ class DatabaseController extends Controller
 
             return redirect()->back()->with('success', 'Data berhasil dihapus');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data! ', $th->getMessage());
         }
     }
@@ -1196,7 +1266,7 @@ class DatabaseController extends Controller
         ]);
     }
 
-     public function diskon_umum_update(DiskonUmum $diskon, Request $request)
+    public function diskon_umum_update(DiskonUmum $diskon, Request $request)
     {
         $data = $request->validate([
             'persen' => 'required|numeric|min:0|max:100',
@@ -1230,10 +1300,14 @@ class DatabaseController extends Controller
         $kategoriQuery = BarangKategori::query();
 
         if ($unitId || $bidangId) {
-            $kategoriQuery->whereHas('barangs', function($q) use ($unitId, $bidangId) {
+            $kategoriQuery->whereHas('barangs', function ($q) use ($unitId, $bidangId) {
                 $q->where('is_active', 1); // Opsional: hanya yang aktif
-                if ($unitId) $q->where('barang_unit_id', $unitId);
-                if ($bidangId) $q->where('barang_type_id', $bidangId);
+                if ($unitId) {
+                    $q->where('barang_unit_id', $unitId);
+                }
+                if ($bidangId) {
+                    $q->where('barang_type_id', $bidangId);
+                }
             });
         }
         // Jika tidak ada filter, tampilkan semua kategori (atau batasi sesuai kebutuhan)
@@ -1247,10 +1321,14 @@ class DatabaseController extends Controller
         }
         // Jika unit/bidang dipilih, pastikan Nama Barang tersebut memang ada di unit/bidang itu (via relasi Barang)
         if ($unitId || $bidangId) {
-            $namaQuery->whereHas('barang', function($q) use ($unitId, $bidangId) {
+            $namaQuery->whereHas('barang', function ($q) use ($unitId, $bidangId) {
                 $q->where('is_active', 1);
-                if ($unitId) $q->where('barang_unit_id', $unitId);
-                if ($bidangId) $q->where('barang_type_id', $bidangId);
+                if ($unitId) {
+                    $q->where('barang_unit_id', $unitId);
+                }
+                if ($bidangId) {
+                    $q->where('barang_type_id', $bidangId);
+                }
             });
         }
 
@@ -1259,7 +1337,7 @@ class DatabaseController extends Controller
         return response()->json([
             'bidang' => $bidangOptions,
             'kategori' => $kategoriOptions,
-            'nama' => $namaOptions
+            'nama' => $namaOptions,
         ]);
     }
 
@@ -1269,6 +1347,7 @@ class DatabaseController extends Controller
         $selectBidang = BarangType::select('id', 'nama')->get();
         $selectKategori = BarangKategori::all();
         $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
+
         return view('db.order.index', compact('selectKategori', 'selectBarangNama', 'selectUnit', 'selectBidang'));
     }
 
@@ -1276,7 +1355,7 @@ class DatabaseController extends Controller
     {
         // 0. Ambil Input Multiplier (Default 2 jika kosong)
         $multiplier = $request->input('multiplier');
-        if(is_null($multiplier) || $multiplier === '') {
+        if (is_null($multiplier) || $multiplier === '') {
             $multiplier = 2;
         } else {
             // Pastikan angka untuk keamanan
@@ -1360,6 +1439,7 @@ class DatabaseController extends Controller
             // Kolom Order Qty (Dinamis berdasarkan multiplier)
             ->addColumn('order_qty', function ($row) use ($multiplier) {
                 $qty = ($row->avg_sales * $multiplier) - $row->stok_ready;
+
                 return number_format($qty, 0, ',', '.');
             })
             ->orderColumn('order_qty', "((avg_sales * {$multiplier}) - stok_ready) $1")
@@ -1371,16 +1451,16 @@ class DatabaseController extends Controller
     public function order_export_pdf(Request $request)
     {
         $request->validate([
-            'unit' => 'required|exists:barang_units,id'
+            'unit' => 'required|exists:barang_units,id',
         ], [
             'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
-            'unit.exists' => 'Perusahaan yang dipilih tidak valid'
+            'unit.exists' => 'Perusahaan yang dipilih tidak valid',
         ]);
         // --- LOGIKA QUERY SAMA PERSIS DENGAN ORDER_DATA ---
         // Kita ulangi query builder disini agar hasil PDF sama persis dengan tabel
 
         $multiplier = $request->input('multiplier');
-        if(is_null($multiplier) || $multiplier === '') {
+        if (is_null($multiplier) || $multiplier === '') {
             $multiplier = 2;
         } else {
             $multiplier = (float) $multiplier;
@@ -1454,17 +1534,19 @@ class DatabaseController extends Controller
     public function export_excel(Request $request)
     {
         $request->validate([
-            'unit' => 'required|exists:barang_units,id'
+            'unit' => 'required|exists:barang_units,id',
         ], [
             'unit.required' => ' Silahkan Melakukan Filter Perusahaan Terlebih Dahulu!!',
-            'unit.exists' => 'Perusahaan yang dipilih tidak valid'
+            'unit.exists' => 'Perusahaan yang dipilih tidak valid',
         ]);
         // set_time_limit(0);
         // ini_set('memory_limit', '-1');
-        if (ob_get_contents()) ob_end_clean();
+        if (ob_get_contents()) {
+            ob_end_clean();
+        }
 
         $multiplier = $request->input('multiplier');
-        if(is_null($multiplier) || $multiplier === '') {
+        if (is_null($multiplier) || $multiplier === '') {
             $multiplier = 2;
         } else {
             $multiplier = (float) $multiplier;
@@ -1524,17 +1606,17 @@ class DatabaseController extends Controller
             $saranOrder = max(0, round($saranOrder));
 
             $writer->addRow([
-                'Perusahaan'   => $row->unit?->nama,
-                'Bidang'       => $row->type?->nama,
-                'Kategori'     => $row->kategori?->nama,
-                'Nama Barang'  => $row->barang_nama?->nama,
-                'Kode'         => $row->kode,
-                'Merk'         => $row->merk,
-                'Jenis'        => $row->jenis == 1 ? 'PPN' : ($row->jenis == 2 ? 'Non PPN' : '-'),
-                'Stok Saat Ini'=> (float) $row->stok_ready,
-                'Satuan'       => $row->satuan?->nama,
-                'Rata2 Jual'   => round($row->avg_sales),
-                'Saran Order'  => $saranOrder,
+                'Perusahaan' => $row->unit?->nama,
+                'Bidang' => $row->type?->nama,
+                'Kategori' => $row->kategori?->nama,
+                'Nama Barang' => $row->barang_nama?->nama,
+                'Kode' => $row->kode,
+                'Merk' => $row->merk,
+                'Jenis' => $row->jenis == 1 ? 'PPN' : ($row->jenis == 2 ? 'Non PPN' : '-'),
+                'Stok Saat Ini' => (float) $row->stok_ready,
+                'Satuan' => $row->satuan?->nama,
+                'Rata2 Jual' => round($row->avg_sales),
+                'Saran Order' => $saranOrder,
             ]);
 
             if (ob_get_length() > 0) {
@@ -1549,32 +1631,31 @@ class DatabaseController extends Controller
     public function metode_bayar()
     {
         // Proteksi Role Admin / Super User
-        if (!in_array(Auth::user()->role, ['admin', 'su'])) {
+        if (! in_array(Auth::user()->role, ['admin', 'su'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
         $metodeBayars = MetodeBayar::all();
+
         return view('db.metode-bayar.index', compact('metodeBayars'));
     }
 
     public function metode_bayar_update(Request $request, MetodeBayar $metodeBayar)
     {
         // Proteksi Role Admin / Super User
-        if (!in_array(Auth::user()->role, ['admin', 'su'])) {
+        if (! in_array(Auth::user()->role, ['admin', 'su'])) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
         $data = $request->validate([
-            'max_hari' => 'required|integer|min:0'
+            'max_hari' => 'required|integer|min:0',
         ]);
 
         $metodeBayar->update($data);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Batas jatuh tempo untuk ' . $metodeBayar->nama . ' berhasil diubah menjadi ' . $request->max_hari . ' hari.'
+            'message' => 'Batas jatuh tempo untuk '.$metodeBayar->nama.' berhasil diubah menjadi '.$request->max_hari.' hari.',
         ]);
     }
-
-
 }
