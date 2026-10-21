@@ -58,6 +58,7 @@
                     <th rowspan="2" class="text-center align-middle">Konsumen</th>
                     <th rowspan="2" class="text-center align-middle">NIK/NPWP</th>
                     <th rowspan="2" class="text-center align-middle">Uraian</th>
+                    <th rowspan="2" class="text-center align-middle">No. Faktur</th>
                     <th colspan="2" class="text-center align-middle">Sebelum Terbit Faktur</th>
                     <th rowspan="2" class="text-center align-middle">Setelah<br>Terbit<br>Faktur</th>
                     <th rowspan="2" class="text-center align-middle">ACT</th>
@@ -72,7 +73,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="6">Grand Total</th>
+                    <th class="text-end align-middle" colspan="7">Grand Total</th>
                     <th class="text-end align-middle">{{ number_format($totalNonNpwp, 0, ',','.') }}</th>
                     <th class="text-end align-middle">{{ number_format($totalNpwp, 0, ',','.') }}</th>
                     <th class="text-end align-middle">{{ number_format($totalFaktur, 0, ',','.') }}</th>
@@ -155,6 +156,7 @@
                 { data: 'konsumen', name: 'konsumen', className: 'text-start align-middle' },
                 { data: 'nik_npwp', name: 'nik_npwp', className: 'text-start align-middle text-nowrap' },
                 { data: 'uraian', name: 'uraian', className: 'text-start align-middle' },
+                { data: 'no_faktur', name: 'ppn_keluarans.no_faktur', defaultContent: '-', className: 'text-start align-middle text-nowrap', render: function(data) { return data || '-'; } },
                 { data: 'non_npwp', name: 'non_npwp', className: 'text-end align-middle' },
                 { data: 'npwp', name: 'npwp', className: 'text-end align-middle' },
                 { data: 'faktur', name: 'faktur', className: 'text-end align-middle' },
