@@ -552,6 +552,24 @@ class KasbonTest extends TestCase
         $this->assertEquals(3999997, $record->sisa_gaji_dibayar);
     }
 
+    public function test_payroll_preview_reads_missing_attendance_period_only_once(): void
+    {
+        config(['attendance.enabled' => true]);
+        KaryawanFactory::new()->count(3)->create();
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+
+        try {
+            $response = $this->get(route('billing.form-cost-operational.gaji'));
+            $queries = collect(DB::getQueryLog());
+        } finally {
+            DB::disableQueryLog();
+        }
+
+        $response->assertOk()->assertViewHas('attendancePeriod', null);
+        $this->assertCount(1, $queries->filter(fn ($query): bool => str_contains($query['query'], 'select * from "payroll_attendance_periods"')));
+    }
+
     public function test_payroll_batches_loan_reads_and_groups_sales_below_other_positions(): void
     {
         $salesJob = Jabatan::create(['nama' => 'Sales']);
