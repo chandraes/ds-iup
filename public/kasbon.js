@@ -19,6 +19,7 @@
     const count = document.getElementById('loan-count');
     const simulation = document.getElementById('loan-simulation-values');
     let installmentLimit = null;
+    let installmentUnlimited = false;
     function simulate() {
         if (!simulation) return;
         const principal = Number(amount.value.replace(/\./g, ''));
@@ -37,6 +38,10 @@
             : `${months - 1} kali × ${money(monthly)}, lalu angsuran terakhir ${money(last)}. Total ${money(principal)}.`;
         const comparison = document.getElementById('loan-limit-comparison');
         comparison.className = '';
+        if (installmentUnlimited) {
+            comparison.textContent = 'Cicilan Sales tidak dibatasi berdasarkan penghasilan. Hanya satu cicilan aktif per pegawai.';
+            return;
+        }
         if (installmentLimit === null) {
             comparison.textContent = employee.value ? 'Perbandingan batas menunggu ringkasan pegawai tersedia.' : 'Pilih pegawai untuk membandingkan dengan batas angsuran bulanan.';
             return;
@@ -55,6 +60,7 @@
         request = new AbortController();
         const currentRequest = request;
         installmentLimit = null;
+        installmentUnlimited = false;
         simulate();
         if (!employee.value) { summary.textContent = 'Pilih pegawai untuk melihat batas kasbon.'; return; }
         summary.textContent = 'Memuat batas kasbon…';
@@ -65,15 +71,20 @@
             const data = await response.json();
             if (currentRequest.signal.aborted) return;
             if (!response.ok) throw new Error(data.message || 'Batas kasbon belum tersedia.');
-            installmentLimit = Number.isFinite(Number(data.installment_limit)) ? Number(data.installment_limit) : null;
+            installmentUnlimited = data.is_sales === true && data.installment_limit === null;
+            installmentLimit = data.installment_limit !== null && Number.isFinite(Number(data.installment_limit)) ? Number(data.installment_limit) : null;
+            const rule = document.getElementById('loan-summary-rule');
+            if (rule) rule.textContent = summary.dataset.type === 'cicilan'
+                ? (data.is_sales ? 'Cicilan Sales tanpa batas nominal berbasis penghasilan. Satu cicilan aktif per pegawai.' : 'Batas angsuran: 30% × (penghasilan − kasbon potong gaji belum lunas). Satu cicilan aktif per pegawai.')
+                : (data.is_sales ? 'Batas: (50% × komisi sampai tanggal proses) − angsuran periode ini − kasbon potong gaji belum lunas. ' : 'Batas: 50% × (penghasilan − angsuran berjalan), dikurangi kasbon potong gaji belum lunas. ') + 'Maksimal satu kali per pegawai per periode. ' + (data.ordinary_submitted ? 'Pegawai sudah mengajukan pada periode ini.' : 'Belum ada pengajuan pada periode ini.');
             simulate();
             summary.replaceChildren();
-            const rows = [['Penghasilan acuan', data.income], ['Kasbon potong gaji belum lunas', data.ordinary_due], ['Angsuran berjalan', data.installment_due]];
-            rows.push(summary.dataset.type === 'cicilan' ? ['Batas angsuran bulanan', data.installment_limit] : ['Sisa batas pengajuan baru', data.ordinary_available]);
+            const rows = [[data.is_sales ? 'Komisi sampai ' + data.commission_as_of : 'Penghasilan acuan', data.income], ['Kasbon potong gaji belum lunas', data.ordinary_due], ['Angsuran berjalan', data.installment_due]];
+            rows.push(summary.dataset.type === 'cicilan' ? ['Batas angsuran bulanan', installmentUnlimited ? 'Tanpa batas berbasis penghasilan' : data.installment_limit] : ['Sisa batas pengajuan baru', data.ordinary_available]);
             for (const [label, value] of rows) {
                 const block = document.createElement('div'); block.className = 'loan-summary-row';
                 const title = document.createElement('span'); title.className = 'loan-summary-label'; title.textContent = label;
-                const amount = document.createElement('strong'); amount.textContent = money(value);
+                const amount = document.createElement('strong'); amount.textContent = typeof value === 'string' ? value : money(value);
                 block.append(title, amount); summary.append(block);
             }
         } catch (error) { if (error.name !== 'AbortError') summary.textContent = error.message; }

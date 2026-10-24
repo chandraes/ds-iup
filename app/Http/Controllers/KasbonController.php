@@ -62,10 +62,10 @@ class KasbonController extends Controller
         $data = $request->validate(['jenis' => 'nullable|in:potong_gaji,cicilan']);
         $type = $data['jenis'] ?? 'potong_gaji';
         abort_if($type === 'cicilan' && ! in_array($request->user()->role, ['admin', 'su'], true), 403);
-        $employees = Karyawan::with('jabatan')->where('status', 1)->orderBy('nama')->get()
-            ->reject(fn (Karyawan $employee): bool => $employee->jabatan?->isProtectedSales() ?? false);
+        $employees = Karyawan::with('jabatan')->where('status', 1)->orderBy('nama')->get();
 
-        return view('billing.kasbon.create', ['employees' => $employees, 'type' => $type, 'token' => (string) Str::uuid()]);
+        return view('billing.kasbon.create', ['employees' => $employees, 'type' => $type, 'token' => (string) Str::uuid(),
+            'minimumPeriod' => app(KasbonService::class)->earliestSubmissionPeriod()]);
     }
 
     public function summary(Request $request, KasbonService $service): JsonResponse

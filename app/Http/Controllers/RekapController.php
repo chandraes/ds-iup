@@ -21,15 +21,18 @@ use App\Models\KasKonsumen;
 use App\Models\PesanWa;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
+use App\Models\RekapGajiDetail;
 use App\Models\ReturSupplier;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\transaksi\JanjiBayar;
 use App\Models\UangGantung;
+use App\Services\EmployeePayrollService;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -93,7 +96,7 @@ class RekapController extends Controller
 
         $dataSebelumnya = $kas->kasBesarByMonth($bulanSebelumnya, $tahunSebelumnya, $ppn_kas);
 
-        $pdf = PDF::loadview('rekap.kas-besar.pdf', [
+        $pdf = Pdf::loadview('rekap.kas-besar.pdf', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
@@ -156,7 +159,7 @@ class RekapController extends Controller
 
         $dataSebelumnya = $kas->kasKecilByMonth($bulanSebelumnya, $tahunSebelumnya);
 
-        $pdf = PDF::loadview('rekap.kas-kecil.pdf', [
+        $pdf = Pdf::loadview('rekap.kas-kecil.pdf', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
@@ -441,7 +444,11 @@ class RekapController extends Controller
             'tahun' => 'required',
         ]);
 
-        $data = RekapGaji::with('details')->where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
+        $data = RekapGaji::with(['details' => fn (HasMany $query) => $query->select([
+            'id', 'rekap_gaji_id', 'nik', 'nama', 'jabatan', 'gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga',
+            'bpjs_tk', 'bpjs_k', 'potongan_bpjs_tk', 'potongan_bpjs_kesehatan', 'pendapatan_kotor', 'pendapatan_bersih',
+            'potongan_kasbon', 'sisa_gaji_dibayar', 'komisi', 'tunjangan_bbm', 'omset_komisi', 'persen_komisi', 'no_rek', 'nama_rek', 'bank',
+        ])])->where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
 
         if (! $data) {
             return redirect()->back()->with('error', 'Data tidak ditemukan!!');
@@ -449,12 +456,20 @@ class RekapController extends Controller
 
         $bulan = Carbon::createFromDate($v['tahun'], $v['bulan'])->locale('id')->monthName;
         $tahun = $v['tahun'];
+        $rows = app(EmployeePayrollService::class)->sortRows($data->details->map(function (RekapGajiDetail $detail): array {
+            $row = $detail->toArray();
+            $row['sisa_gaji_dibayar'] = $detail->sisa_gaji_dibayar ?? $detail->pendapatan_bersih;
+            $row['commission_url'] = $detail->persen_komisi !== null ? route('rekap.gaji.komisi', ['detail' => $detail->id]) : null;
+
+            return $row;
+        }));
 
         return view('rekap.gaji.detail', [
             'data' => $data,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'bulan_angka' => $v['bulan'],
+            'rows' => $rows,
         ]);
     }
 
@@ -543,7 +558,7 @@ class RekapController extends Controller
 
         $data = $db->invoiceByMonth($bulan, $tahun, $data['ppn_kas']);
 
-        $pdf = PDF::loadview('rekap.invoice-penjualan.pdf', [
+        $pdf = Pdf::loadview('rekap.invoice-penjualan.pdf', [
             'data' => $data,
             'ppn_kas' => $ppn_kas,
             'tahun' => $tahun,
@@ -612,7 +627,7 @@ class RekapController extends Controller
 
         $data = $db->invoiceByMonth($bulan, $tahun, $data['ppn_kas'], $request->supplier_id ?? null);
 
-        $pdf = PDF::loadview('rekap.invoice-pembelian.pdf', [
+        $pdf = Pdf::loadview('rekap.invoice-pembelian.pdf', [
             'data' => $data,
             'ppn_kas' => $ppn_kas,
             'tahun' => $tahun,
@@ -722,7 +737,7 @@ class RekapController extends Controller
 
         $data = $db->barangStokPdf($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
-        $pdf = PDF::loadview('rekap.pricelist.pdf', [
+        $pdf = Pdf::loadview('rekap.pricelist.pdf', [
             'data' => $data,
             'ppn_kas' => $jenis,
             'unitFilter' => $unitFilter,
@@ -755,8 +770,8 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
         // get latest data from month before current month
         //    $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
@@ -774,7 +789,7 @@ class RekapController extends Controller
         ]);
     }
 
-     public function cost_operational(Request $request)
+    public function cost_operational(Request $request)
     {
         $kas = new KasBesar;
 
@@ -790,7 +805,6 @@ class RekapController extends Controller
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
         $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-
 
         return view('rekap.cost-operational.index', [
             'data' => $data,
@@ -861,21 +875,34 @@ class RekapController extends Controller
             ->addIndexColumn()
             ->editColumn('kode', function ($row) { // Link ke detail
                 $url = route('billing.barang-retur.detail', ['retur' => $row->id]);
+
                 return '<a href="'.$url.'" class="btn btn-primary btn-sm">'.$row->kode.'</a>';
             })
             ->addColumn('supplier', function ($row) { // Nama Supplier
                 return $row->barang_unit ? $row->barang_unit->nama : '-';
             })
             ->addColumn('konsumen_nama', function ($row) { // Nama Konsumen
-                if (!$row->konsumen) return '-';
+                if (! $row->konsumen) {
+                    return '-';
+                }
                 $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode : '';
-                return $kode . ' ' . $row->konsumen->nama;
+
+                return $kode.' '.$row->konsumen->nama;
             })
             ->addColumn('status_badge', function ($row) { // Badge Status
-                if ($row->status == 1) return '<span class="badge bg-warning">Diajukan</span>';
-                if ($row->status == 2) return '<span class="badge bg-primary">Diproses</span>';
-                if ($row->status == 3) return '<span class="badge bg-success">Selesai</span>';
-                if ($row->status == 4) return '<span class="badge bg-danger">Dibatalkan</span>';
+                if ($row->status == 1) {
+                    return '<span class="badge bg-warning">Diajukan</span>';
+                }
+                if ($row->status == 2) {
+                    return '<span class="badge bg-primary">Diproses</span>';
+                }
+                if ($row->status == 3) {
+                    return '<span class="badge bg-success">Selesai</span>';
+                }
+                if ($row->status == 4) {
+                    return '<span class="badge bg-danger">Dibatalkan</span>';
+                }
+
                 return '';
             })
             ->addColumn('tanggal_en', function ($row) { // Format tanggal
@@ -890,11 +917,13 @@ class RekapController extends Controller
                 // karena PDF baru dibuat setelah diproses (status 2)
                 if ($row->status == 2 || $row->status == 3) {
                     $urlCetak = route('billing.barang-retur.cetak', ['retur' => $row->id]);
+
                     return '<a href="'.$urlCetak.'" target="_blank" class="btn btn-secondary btn-sm me-1"
                             data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat PDF">
                             <i class="fa fa-print"></i>
                             </a>';
                 }
+
                 // Status 1 (Diajukan) atau 4 (Void) tidak memiliki PDF
                 return '-';
             })
@@ -935,10 +964,10 @@ class RekapController extends Controller
 
             return datatables()->of($query)
                 ->addIndexColumn()
-                ->addColumn('status_kas', function($row){
+                ->addColumn('status_kas', function ($row) {
                     return ($row->ppn_kas == 1) ? '<span class="badge bg-success">KAS PPN</span>' : '<span class="badge bg-warning">KAS NON PPN</span>';
                 })
-                ->addColumn('status', function($row){
+                ->addColumn('status', function ($row) {
                     // Contoh label status
                     $label = '';
                     if ($row->void == 1) {
@@ -1000,6 +1029,7 @@ class RekapController extends Controller
     public function retur()
     {
         $units = BarangUnit::orderBy('nama', 'asc')->get();
+
         return view('rekap.retur.index', compact('units'));
     }
 
@@ -1008,13 +1038,13 @@ class RekapController extends Controller
         if ($request->ajax()) {
             // PENTING: Filter ->where('tipe', 3) agar hanya memunculkan yang sudah Selesai
             $query = ReturSupplier::with(['barang_unit', 'user', 'details', 'receipts.details'])
-                    ->where('tipe', '>',2);
+                ->where('tipe', '>', 2);
 
             // Filter Tanggal jika diisi oleh user
             if ($request->filled('start_date') && $request->filled('end_date')) {
                 $query->whereBetween('created_at', [
-                    $request->start_date . ' 00:00:00',
-                    $request->end_date . ' 23:59:59'
+                    $request->start_date.' 00:00:00',
+                    $request->end_date.' 23:59:59',
                 ]);
             }
 
@@ -1025,16 +1055,16 @@ class RekapController extends Controller
 
             return datatables()->of($query)
                 ->addIndexColumn()
-                ->addColumn('nomor_display', function($row){
-                    return '<span class="fw-bold font-monospace text-success">RS-' . sprintf('%04d', $row->nomor) . '</span>';
+                ->addColumn('nomor_display', function ($row) {
+                    return '<span class="fw-bold font-monospace text-success">RS-'.sprintf('%04d', $row->nomor).'</span>';
                 })
-                ->editColumn('created_at', function($row){
+                ->editColumn('created_at', function ($row) {
                     return $row->created_at->format('Y-m-d');
                 })
-                ->addColumn('supplier', function($row){
+                ->addColumn('supplier', function ($row) {
                     return $row->barang_unit->nama ?? '-';
                 })
-                ->addColumn('ringkasan_barang', function($row){
+                ->addColumn('ringkasan_barang', function ($row) {
                     // Menghitung total item awal vs yang masuk stok
                     $totalAwal = $row->details->sum('qty');
                     $totalDiterima = 0;
@@ -1042,8 +1072,12 @@ class RekapController extends Controller
 
                     foreach ($row->receipts as $receipt) {
                         foreach ($receipt->details as $rd) {
-                            if ($rd->status_proses == 'terima') $totalDiterima += $rd->qty_terima;
-                            if ($rd->status_proses == 'hapus') $totalBatal += $rd->qty_terima;
+                            if ($rd->status_proses == 'terima') {
+                                $totalDiterima += $rd->qty_terima;
+                            }
+                            if ($rd->status_proses == 'hapus') {
+                                $totalBatal += $rd->qty_terima;
+                            }
                         }
                     }
 
@@ -1053,9 +1087,10 @@ class RekapController extends Controller
                         $html .= '<div class="text-danger small"><i class="bi bi-x-circle"></i> Batal/Hilang: '.$totalBatal.'</div>';
                     }
                     $html .= '</div>';
+
                     return $html;
                 })
-                ->addColumn('aksi', function($row){
+                ->addColumn('aksi', function ($row) {
                     $btn = '<div class="btn-group" role="group">';
                     // Gunakan kembali route detail lama yang sudah kita buat/rapikan sebelumnya!
                     $btn .= '<button class="btn btn-sm btn-outline-success btn-detail" data-id="'.$row->id.'" title="Lihat Rekap Beres"><i class="bi bi-journal-check"></i> Detail</button>';
@@ -1065,6 +1100,7 @@ class RekapController extends Controller
                     $btn .= '<a href="'.$urlPrint.'" target="_blank" class="btn btn-sm btn-secondary" title="Cetak Arsip"><i class="bi bi-printer"></i></a>';
 
                     $btn .= '</div>';
+
                     return $btn;
                 })
                 ->rawColumns(['nomor_display', 'ringkasan_barang', 'aksi'])

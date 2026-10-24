@@ -1,108 +1,64 @@
 @extends('layouts.app')
 @section('content')
-
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1><u>DETAIL OMSET HARIAN {{$karyawan->nama}}<br>{{ \Carbon\Carbon::parse(request('tanggal'))->format('d-m-Y') }}</u></h1>
-        </div>
+@php
+    $date = \Carbon\Carbon::parse(request('tanggal'))->locale('id');
+    $salesTotal = $data['data']->sum('grand_total');
+    $voidTotal = $data['void']->sum('grand_total');
+    $number = 1;
+@endphp
+<div class="container-fluid sales-turnover">
+    <header class="turnover-header">
+        <div><div class="turnover-eyebrow">Statistik · Detail omset</div><h1>{{ $karyawan->nama }}</h1><p>Rincian omset {{ $date->translatedFormat('d F Y') }} <span aria-hidden="true">·</span> Periode {{ \Carbon\Carbon::create($backYear,$backMonth,1)->locale('id')->translatedFormat('F Y') }}</p></div>
+        <a href="{{ route('statistik.omset-harian-sales',['month'=>$backMonth,'year'=>$backYear]) }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali ke omset</a>
+    </header>
+    <div class="turnover-stats">
+        <div class="turnover-stat is-highlight"><span>Omset bersih hari ini</span><strong>Rp {{ number_format($salesTotal-$voidTotal,0,',','.') }}</strong><small>Nilai penjualan dikurangi koreksi pembatalan</small></div>
+        <div class="turnover-stat"><span>Penjualan</span><strong>Rp {{ number_format($salesTotal,0,',','.') }}</strong><small>{{ $data['data']->count() }} invoice terbit pada tanggal ini</small></div>
+        <div class="turnover-stat"><span>Koreksi pembatalan</span><strong class="turnover-negative">Rp {{ number_format($voidTotal,0,',','.') }}</strong><small>{{ $data['void']->count() }} invoice mengurangi omset tanggal ini</small></div>
     </div>
-    <div class="row justify-content-between mt-3">
-        <div class="col-md-8">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td><a href="{{route('statistik.omset-harian-sales')}}"><img src="{{asset('images/back.svg')}}" alt="dashboard"
-                                width="30"> Kembali</a></td>
-
-                </tr>
-            </table>
-        </div>
-
-    </div>
-</div>
-<div class="container table-responsive mt-2">
-    <div class="row">
-        <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%">
-            <thead>
-                <tr class="table-success">
-                    <th class="text-center align-middle">No</th>
-                    <th class="text-center align-middle">Kode<br>Toko</th>
-                    <th class="text-center align-middle">Nama Toko</th>
-                    <th class="text-center align-middle">Kab/Kota</th>
-                    <th class="text-center align-middle">Kecamatan</th>
-                    <th class="text-center align-middle">Invoice</th>
-                    <th class="text-center align-middle">Nominal</th>
-                </tr>
-            </thead>
+    <section class="turnover-panel">
+        <div class="turnover-panel-heading"><div><h2>Rincian invoice</h2><p>Cari nama toko, wilayah, atau nomor invoice. Klik nomor invoice untuk melihat rinciannya.</p></div><span class="turnover-badge">{{ $date->translatedFormat('d F Y') }}</span></div>
+        @if($data['data']->isEmpty() && $data['void']->isEmpty())
+            <p class="turnover-empty">Tidak ada transaksi omset untuk sales pada tanggal ini.</p>
+        @else
+        <div class="table-responsive"><table id="turnover-detail" class="table table-hover turnover-table" style="width:100%">
+            <thead class="table-success"><tr><th scope="col">No</th><th scope="col">Toko</th><th scope="col">Kabupaten / Kota</th><th scope="col">Kecamatan</th><th scope="col">Invoice</th><th scope="col">Pencatatan</th><th scope="col" class="text-end">Nominal (Rp)</th></tr></thead>
             <tbody>
-                @php
-                    $no = 1;
-                @endphp
-                @foreach ($data['data'] as $d)
-                <tr>
-                    <td class="text-center align-middle">{{$no++}}</td>
-                    <td class="text-center align-middle">{{$d->konsumen->kode_toko ? $d->konsumen->kode_toko->kode : ''}}</td>
-                    <td class="text-center align-middle">{{$d->konsumen->nama}}</td>
-                    <td class="text-center align-middle">{{$d->konsumen->kabupaten_kota->nama_wilayah}}</td>
-                    <td class="text-center align-middle">{{$d->konsumen->kecamatan->nama_wilayah}}</td>
-                    <td class="text-start align-middle">
-                        <a href="{{route('rekap.invoice-penjualan.detail', ['invoice' => $d->id])}}" />
-                        {{$d->kode}}
-                    </td>
-                    <td class="text-end align-middle" data-order="{{$d->grand_total}}">{{$d->nf_grand_total}}</td>
-                </tr>
-                @endforeach
-                 @foreach ($data['void'] as $v)
-                <tr>
-                    <td class="text-center align-middle text-danger">{{$no++}}</td>
-                    <td class="text-center align-middle text-danger">{{$v->konsumen->kode_toko ? $v->konsumen->kode_toko->kode : ''}}</td>
-                    <td class="text-center align-middle text-danger">{{$v->konsumen->nama}}</td>
-                     <td class="text-center align-middle text-danger">{{$v->konsumen->kabupaten_kota->nama_wilayah}}</td>
-                    <td class="text-center align-middle text-danger">{{$v->konsumen->kecamatan->nama_wilayah}}</td>
-                    <td class="text-start align-middle text-danger">
-                        <a href="{{route('rekap.invoice-penjualan.detail', ['invoice' => $v->id])}}" />
-                        {{$v->kode}}
-                    </td>
-                    <td class="text-end align-middle text-danger" data-order="{{$v->grand_total*-1}}">-{{$v->nf_grand_total}}</td>
-                </tr>
+                @foreach(['data'=>'Penjualan','void'=>'Koreksi void'] as $group=>$label)
+                    @foreach($data[$group] as $invoice)
+                    <tr>
+                        <td>{{ $number++ }}</td>
+                        <td><strong>{{ $invoice->konsumen?->nama ?? 'Konsumen tidak tersedia' }}</strong><div class="small text-muted">{{ $invoice->konsumen?->kode_toko?->kode ?? '—' }}</div></td>
+                        <td>{{ $invoice->konsumen?->kabupaten_kota?->nama_wilayah ?? '—' }}</td>
+                        <td>{{ $invoice->konsumen?->kecamatan?->nama_wilayah ?? '—' }}</td>
+                        <td><a href="{{ route('rekap.invoice-penjualan.detail',['invoice'=>$invoice->id]) }}">{{ $invoice->kode }}</a></td>
+                        <td><span class="turnover-entry {{ $group === 'void' ? 'is-void' : '' }}">{{ $label }}</span></td>
+                        <td class="text-end {{ $group === 'void' ? 'turnover-negative' : '' }}" data-order="{{ $group === 'void' ? -$invoice->grand_total : $invoice->grand_total }}">{{ $group === 'void' ? '−' : '' }}{{ number_format($invoice->grand_total,0,',','.') }}</td>
+                    </tr>
+                    @endforeach
                 @endforeach
             </tbody>
-            <tfoot>
-                <tr>
-                    <th class="text-end align-middle" colspan="6">Grand Total</th>
-                    <th class="text-end align-middle">{{number_format($data['data']->sum('grand_total')+($data['void']->sum('grand_total')*-1), 0,',','.')}}</th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+            <tfoot><tr><th scope="row" colspan="6">Total omset hari ini</th><td class="text-end fw-bold">{{ number_format($salesTotal-$voidTotal,0,',','.') }}</td></tr></tfoot>
+        </table></div>
+        @endif
+        <p class="turnover-footnote">Penjualan mengikuti tanggal invoice dibuat. Koreksi void mengikuti tanggal pembaruan invoice yang dibatalkan. Total mencakup seluruh transaksi pada tanggal ini.</p>
+    </section>
 </div>
-
 @endsection
 @push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link href="{{ asset('assets/css/dt.min.css') }}" rel="stylesheet">
+<link href="{{ asset('sales-turnover.css').'?v='.filemtime(public_path('sales-turnover.css')) }}" rel="stylesheet">
 @endpush
 @push('js')
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
-
+<script src="{{ asset('assets/js/dt5.min.js') }}"></script>
 <script>
-    $(document).ready(function() {
-        $('#rekapTable').DataTable({
-            "paging": false,
-            "ordering": true,
-            "scrollCollapse": true,
-            "scrollY": "60vh", // Set scrollY to 50% of the viewport height
-            "scrollCollapse": true,
-            "scrollX": true,
-
-        });
-
-        $('#supplier_id').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-        });
-
+$(function () {
+    if (!document.getElementById('turnover-detail')) return;
+    $('#turnover-detail').DataTable({
+        paging:false, ordering:true, order:[], scrollCollapse:true, scrollY:'520px', scrollX:true,
+        language:{search:'Cari invoice:',searchPlaceholder:'Toko, wilayah, atau invoice…',zeroRecords:'Tidak ada invoice yang sesuai pencarian.',info:'Menampilkan _START_–_END_ dari _TOTAL_ pencatatan',infoEmpty:'Tidak ada pencatatan yang ditampilkan',infoFiltered:'(dari _MAX_ pencatatan)'},
+        initComplete:function(){this.api().columns.adjust();}
     });
+});
 </script>
 @endpush

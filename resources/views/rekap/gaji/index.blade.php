@@ -1,45 +1,15 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-12 text-center">
-            <h1><u>PILIH BULAN DAN TAHUN</u></h1>
-        </div>
-    </div>
-    @include('swal')
-    @php
-    $bulan = [
-            '1' => 'Januari',
-            '2' => 'Februari',
-            '3' => 'Maret',
-            '4' => 'April',
-            '5' => 'Mei',
-            '6' => 'Juni',
-            '7' => 'Juli',
-            '8' => 'Agustus',
-            '9' => 'September',
-            '10' => 'Oktober',
-            '11' => 'November',
-            '12' => 'Desember',
-        ];
-    @endphp
-    <form action="{{route('rekap.gaji.detail')}}" method="get">
-        <div class="justify-content-center px-5">
-            <div class="px-5">
-                <label for="bulan" class="form-label">Bulan & Tahun</label>
-                <div class="input-group mb-3">
-                    <select class="form-select" name="bulan" id="bulan" required>
-                        <option selected> -- Pilih Bulan -- </option>
-                        @foreach ($bulan as $key => $value)
-                        <option value="{{$key}}">{{$value}}</option>
-                        @endforeach
-                    </select>
-                    <input type="text" name="tahun" id="tahun" class="form-control" value="{{date('Y')}}" required>
-                    <button class="btn btn-outline-primary" type="submit" id="">Lanjutkan</button>
-                    <a href="{{route('rekap')}}" class="btn btn-outline-danger">Keluar</a>
-                </div>
-            </div>
-        </div>
-    </form>
+<div class="container payroll-ui payroll-picker">
+    <header class="payroll-header"><div><div class="payroll-eyebrow">Rekap · Penggajian</div><h1>Rekap gaji pegawai</h1><p>Pilih periode untuk melihat rincian gaji yang telah diproses.</p></div><a href="{{ route('rekap') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Rekap</a></header>
+    <section class="payroll-sheet payroll-picker-sheet"><span class="payroll-picker-icon"><i class="fa fa-calendar" aria-hidden="true"></i></span><h2>Pilih periode</h2><p class="payroll-footnote">Rekap menampilkan penghasilan, potongan kasbon, dan gaji yang dibayarkan pada periode pilihan.</p>
+        @if($errors->any())<div class="alert alert-danger mt-3" role="alert">{{ $errors->first() }}</div>@endif
+        <form action="{{ route('rekap.gaji.detail') }}" method="get" class="payroll-picker-form">
+            <div><label for="bulan" class="form-label">Bulan periode</label><select class="form-select" name="bulan" id="bulan" required>@foreach([1=>'Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $value=>$label)<option value="{{ $value }}" @selected((int)old('bulan',now()->month) === $value)>{{ $label }}</option>@endforeach</select></div>
+            <div><label for="tahun" class="form-label">Tahun</label><input type="number" min="1901" max="2155" name="tahun" id="tahun" class="form-control" value="{{ old('tahun',now()->year) }}" required></div>
+            <button class="btn btn-success"><i class="fa fa-search" aria-hidden="true"></i> Lihat rekap</button>
+        </form>
+    </section>
 </div>
 @endsection
+@push('css')<link rel="stylesheet" href="{{ asset('payroll-ui.css').'?v='.filemtime(public_path('payroll-ui.css')) }}">@endpush

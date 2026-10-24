@@ -11,6 +11,11 @@ class RekapGajiDetail extends Model
 
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return ['rincian_komisi' => 'array'];
+    }
+
     public function rekap_gaji()
     {
         return $this->belongsTo(RekapGaji::class);

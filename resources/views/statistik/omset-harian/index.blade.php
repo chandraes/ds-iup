@@ -1,241 +1,60 @@
 @extends('layouts.app')
 @section('content')
-@php
-$selectedBulan = request('month') ?? date('m');
-$selectedTahun = request('year') ?? date('Y');
-@endphp
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            @php
-            use Carbon\Carbon;
-            $bulanNama = Carbon::createFromDate(null, $selectedBulan, 1)
-            ->locale('id')
-            ->monthName;
-            @endphp
-            <h1><u>OMSET HARIAN SALES<br>{{ ucfirst($bulanNama) }} {{$selectedTahun}}</u></h1>
+<div class="container-fluid sales-turnover">
+    <header class="turnover-header">
+        <div><div class="turnover-eyebrow">Statistik · Penjualan</div><h1>Omset harian sales</h1><p>Periode {{ $dataBulan[$selectedMonth] }} {{ $selectedYear }} <span aria-hidden="true">·</span> {{ $periodStart->copy()->locale('id')->translatedFormat('d F Y') }}–{{ $periodEnd->copy()->locale('id')->translatedFormat('d F Y') }}</p></div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('statistik') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali ke statistik</a>
+            <a href="{{ route('home') }}" class="btn btn-outline-secondary"><i class="fa fa-home" aria-hidden="true"></i> Dashboard</a>
         </div>
+    </header>
+    <section class="turnover-filter" aria-label="Filter periode omset">
+        <div><h2>Periode</h2><p>Dimulai tanggal 26 bulan sebelumnya hingga tanggal 25 bulan yang dipilih.</p></div>
+        <form action="{{ route('statistik.omset-harian-sales') }}" method="get">
+            <div><label for="month">Bulan periode</label><select name="month" id="month" class="form-select">@foreach($dataBulan as $value=>$label)<option value="{{ $value }}" @selected((int)$value === $selectedMonth)>{{ $label }}</option>@endforeach</select></div>
+            <div><label for="year">Tahun</label><select name="year" id="year" class="form-select">@foreach($years as $value)<option value="{{ $value }}" @selected($value === $selectedYear)>{{ $value }}</option>@endforeach</select></div>
+            <button class="btn btn-success"><i class="fa fa-filter" aria-hidden="true"></i> Tampilkan</button>
+        </form>
+    </section>
+    <div class="turnover-stats">
+        <div class="turnover-stat is-highlight"><span>Total omset periode</span><strong>Rp {{ number_format($totals->sum(),0,',','.') }}</strong><small>Penjualan dikurangi pembatalan pada periode ini</small></div>
+        <div class="turnover-stat"><span>Sales aktif</span><strong>{{ $karyawans->count() }} <small>pegawai</small></strong><small>Sales yang ditampilkan pada rekap</small></div>
+        <div class="turnover-stat"><span>Rentang periode</span><strong>{{ count($rows) }} <small>hari kalender</small></strong><small>Jumlah hari dalam rentang, bukan jumlah hari kerja</small></div>
     </div>
-    <div class="row justify-content-between mt-3">
-        <div class="col-md-6">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-
-                </tr>
-            </table>
-        </div>
-        <div class="col-md-6">
-            <form action="{{url()->current()}}" method="get">
-                {{-- select bulan dan tanggal --}}
-                <div class="row mt-1">
-                    <div class="col-md-6">
-
-                        <select name="month" id="month" class="form-select" onchange="this.form.submit()">
-                            @foreach ($dataBulan as $key => $value)
-                            <option value="{{ $key }}" {{ $key==$selectedBulan ? 'selected' : '' }}>{{ $value }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-
-                        <select name="year" id="year" class="form-select" onchange="this.form.submit()">
-                            @foreach ($dataTahun as $tahun)
-                            <option value="{{ $tahun->tahun }}" {{ $tahun->tahun==$selectedTahun ? 'selected' : '' }}>{{
-                                $tahun->tahun }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    <section class="turnover-panel">
+        <div class="turnover-panel-heading"><div><h2>Rincian omset harian</h2><p>Klik nominal untuk melihat invoice. Nilai negatif menunjukkan koreksi pembatalan.</p></div><span class="turnover-badge">{{ $periodStart->format('d/m/Y') }}–{{ $periodEnd->format('d/m/Y') }}</span></div>
+        @if($karyawans->isEmpty())<p class="turnover-empty">Belum ada sales aktif untuk ditampilkan.</p>@else
+        <div class="table-responsive"><table id="rekapTable" class="table table-hover turnover-table" style="width:100%">
+            <thead class="table-success"><tr><th scope="col">Tanggal</th>@foreach($karyawans as $employee)<th scope="col" class="text-end">{{ $employee->nama }}</th>@endforeach</tr></thead>
+            <tbody>@foreach($rows as $row)<tr><th scope="row" data-order="{{ $row['tanggal'] }}">{{ \Carbon\Carbon::parse($row['tanggal'])->locale('id')->translatedFormat('d M Y') }}</th>@foreach($karyawans as $employee)<td class="text-end {{ $row[$employee->id] < 0 ? 'turnover-negative' : '' }}" data-order="{{ $row[$employee->id] }}">@if($row[$employee->id] != 0)<a href="{{ route('statistik.omset-harian-sales.detail',['tanggal'=>$row['tanggal'],'karyawan_id'=>$employee->id,'month'=>$selectedMonth,'year'=>$selectedYear]) }}" aria-label="Detail omset {{ $employee->nama }} tanggal {{ $row['tanggal'] }}">{{ number_format($row[$employee->id],0,',','.') }}</a>@else<span class="text-muted">0</span>@endif</td>@endforeach</tr>@endforeach</tbody>
+            <tfoot><tr><th scope="row">Total periode</th>@foreach($karyawans as $employee)<td class="text-end fw-bold">{{ number_format($totals[$employee->id],0,',','.') }}</td>@endforeach</tr></tfoot>
+        </table></div>
+        @endif
+        <p class="turnover-footnote">Nominal dalam rupiah. Omset menggunakan nilai grand total invoice non-titipan, termasuk invoice yang belum lunas.</p>
+    </section>
+    @if($karyawans->isNotEmpty())<section class="turnover-panel"><div class="turnover-panel-heading"><div><h2>Tren omset sales</h2><p>Perbandingan omset harian selama periode yang dipilih.</p></div></div><div class="turnover-chart"><canvas id="omsetChart" role="img" aria-label="Grafik omset harian sales. Rincian angka tersedia pada tabel di atas."></canvas></div></section>@endif
 </div>
-<div class="container table-responsive mt-2">
-    <div class="row">
-        <table class="table table-hover table-bordered" id="rekapTable" style="width: 100%">
-            <thead class="table-success">
-                <tr>
-                    <th class="text-center align-middle">Tanggal</th>
-                    @foreach ($karyawans as $karyawan)
-                    <th class="text-center align-middle">{{ $karyawan->nama }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($rows as $row)
-                <tr>
-                    <td class="text-center align-middle">{{ \Carbon\Carbon::parse($row['tanggal'])->format('d') }}</td>
-                    @foreach ($karyawans as $karyawan)
-                    <td class="text-end align-middle {{$row[$karyawan->id] < 0 ? "table-danger" : ''}}" data-order="{{ $row[$karyawan->id] ?? 0 }}">
-                        @if ($row[$karyawan->id] != 0)
-                        <a href="{{route('statistik.omset-harian-sales.detail', ['tanggal' => $row['tanggal'], 'karyawan_id' => $karyawan->id])}}" />
-                        @endif
-                        {{ number_format($row[$karyawan->id] ?? 0, 0, ',', '.') }}
-                    </td>
-                    @endforeach
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                @php
-                    $gt = 0;
-                @endphp
-                <tr>
-                    <th class="text-center align-middle">Total</th>
-                    @foreach ($karyawans as $karyawan)
-                    @php
-                    $total = collect($rows)->sum(function($row) use ($karyawan) {
-                    return $row[$karyawan->id] ?? 0;
-                    });
-                    $gt += $total;
-                    @endphp
-                    <th class="text-end align-middle">
-
-                        {{ number_format($total, 0, ',', '.') }}
-                    </th>
-                    @endforeach
-                </tr>
-                <tr>
-                    <th class="text-center align-middle">Grand Total</th>
-                    <th class="text-center align-middle" colspan="{{ count($karyawans) }}">
-                        {{ number_format($gt, 0, ',', '.') }}
-                    </th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    <hr>
-    <div class="row">
-        <canvas id="omsetChart"></canvas>
-    </div>
-</div>
-@php
-$tanggalLabels = collect($rows)->pluck('tanggal')->map(fn($t) => \Carbon\Carbon::parse($t)->format('d'));
-
-// Ambil nilai maksimum untuk sumbu Y
-$maxOmset = collect($rows)->flatMap(function($row) use ($karyawans) {
-return $karyawans->map(function($k) use ($row) {
-return $row[$k->id] ?? 0;
-});
-})->max();
-$maxYAxis = ceil($maxOmset * 1.2); // tambahkan 20% ruang atas
-
-// Warna kontras
-$colors = [
-'#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-'#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
-'#008080', '#e6beff', '#9a6324', '#fffac8', '#800000',
-'#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
-];
-@endphp
 @endsection
 @push('css')
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<link href="{{ asset('assets/css/dt.min.css') }}" rel="stylesheet">
+<link href="{{ asset('sales-turnover.css').'?v='.filemtime(public_path('sales-turnover.css')) }}" rel="stylesheet">
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="{{ asset('assets/js/dt5.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#rekapTable').DataTable({
-            "paging": false,
-            "ordering": true,
-            "scrollCollapse": true,
-            "scrollY": "60vh", // Set scrollY to 50% of the viewport height
-            "scrollCollapse": true,
-            "scrollX": true,
-
-        });
-
-        $('#supplier_id').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-        });
-
+$(function () {
+    if (!document.getElementById('rekapTable')) return;
+    $('#rekapTable').DataTable({paging:false, ordering:false, searching:false, info:false, scrollCollapse:true, scrollY:'520px', scrollX:true, initComplete:function(){this.api().columns.adjust();}});
+    const rows = @json($rows);
+    const employees = @json($chartSales);
+    const colors = ['#17694f','#3469a3','#ae6331','#7957a6','#a33c57','#36858a','#897326','#596b85'];
+    const money = value => new Intl.NumberFormat('id-ID').format(value);
+    new Chart(document.getElementById('omsetChart'), {
+        type:'line',
+        data:{labels:rows.map(row=>{const parts=row.tanggal.split('-');return parts[2]+'/'+parts[1];}),datasets:employees.map((employee,index)=>({label:employee.nama,data:rows.map(row=>Number(row[employee.id]||0)),borderColor:colors[index%colors.length],backgroundColor:'transparent',borderWidth:2,pointRadius:2,pointHoverRadius:5,tension:.2}))},
+        options:{responsive:true,maintainAspectRatio:false,animation:!window.matchMedia('(prefers-reduced-motion: reduce)').matches,plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:18}},tooltip:{callbacks:{label:context=>context.dataset.label+': Rp '+money(context.parsed.y)}}},scales:{y:{beginAtZero:true,ticks:{callback:value=>'Rp '+money(value)}},x:{grid:{display:false}}}}
     });
-
-
-</script>
-<script>
-    const tanggalLabels = @json($tanggalLabels);
-    const datasets = [];
-
-    @foreach ($karyawans as $index => $karyawan)
-        datasets.push({
-            label: "{{ $karyawan->nama }}",
-            data: [
-                @foreach ($rows as $row)
-                    {{ (int) ($row[$karyawan->id] ?? 0) }},
-                @endforeach
-            ],
-            borderColor: "{{ $colors[$index % count($colors)] }}",
-            backgroundColor: "transparent",
-            borderWidth: 3,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0.3,
-        });
-    @endforeach
-
-    const ctx = document.getElementById('omsetChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: tanggalLabels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Grafik Omset Harian Karyawan',
-                    font: {
-                        size: 18
-                    }
-                },
-                legend: {
-                    position: 'bottom',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let value = context.parsed.y || 0;
-                            return context.dataset.label + ': Rp ' + value.toLocaleString('id-ID');
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: {{ $maxYAxis }},
-                    title: {
-                        display: true,
-                        text: 'Total Omset (Rp)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return 'Rp ' + value.toLocaleString('id-ID');
-                        }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Tanggal'
-                    }
-                }
-            }
-        }
-    });
+});
 </script>
 @endpush

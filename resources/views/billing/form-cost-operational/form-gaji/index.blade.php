@@ -1,143 +1,18 @@
 @extends('layouts.app')
 @section('content')
-<div class="container-fluid">
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-12 text-center">
-            <h1><u>Form Gaji Staff</u></h1>
-            <h1>{{$month}} {{date('Y')}}</h1>
-        </div>
-    </div>
-    @php
-        $total = 0;
-        $grandTotalPotonganBpjsTk = 0;
-        $grandTotalPotonganBpjsKesehatan = 0;
-        $grandTotalPendapatanKotor = 0;
-        $grandTotalPendapatanBersih = 0;
-        $grandTotalKasbon = 0;
-    @endphp
-    @include('swal')
-    <div style="font-size:12px">
-        <table class="table table-bordered table-hover" id="rekapTable">
-            <thead class="table-success">
-                <tr>
-                    <th rowspan="2" class="text-center align-middle">NIK</th>
-                    <th rowspan="2" class="text-center align-middle">Nama</th>
-                    <th rowspan="2" class="text-center align-middle">Jabatan</th>
-                    <th rowspan="2" class="text-center align-middle">Gaji Pokok</th>
-                    <th colspan="4" class="text-center align-middle">Tunjangan</th>
-                    <th rowspan="2" class="text-center align-middle">Potongan BPJS-TK (2%)</th>
-                    <th rowspan="2" class="text-center align-middle">Potongan BPJS-Kesehatan (1%)</th>
-                    <th rowspan="2" class="text-center align-middle">Total Pendapatan Kotor</th>
-                    <th rowspan="2" class="text-center align-middle">Total Pendapatan Bersih</th>
-                    <th rowspan="2" class="text-center align-middle">Potongan Kasbon</th>
-                    <th rowspan="2" class="text-center align-middle">Sisa Gaji Dibayar</th>
-                </tr>
-                <tr>
-                    <th class="text-center align-middle">Jabatan</th>
-                    <th class="text-center align-middle">Keluarga</th>
-                    <th class="text-center align-middle">BPJS-TK (4,89%)</th>
-                    <th class="text-center align-middle">BPJS-Kesehatan (4%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($data as $i)
-                @php
-                    $amounts = $payroll->amounts($i, now()->startOfMonth());
-                    $bpjs_tk = $amounts['bpjs_tk'];
-                    $bpjs_k = $amounts['bpjs_k'];
-                    $potongan_bpjs_tk = $amounts['potongan_bpjs_tk'];
-                    $potongan_bpjs_kesehatan = $amounts['potongan_bpjs_kesehatan'];
-                    $pendapatan_kotor = $amounts['pendapatan_kotor'];
-                    $pendapatan_bersih = $amounts['pendapatan_bersih'];
-                    $grandTotalPotonganBpjsTk += $potongan_bpjs_tk;
-                    $grandTotalPotonganBpjsKesehatan += $potongan_bpjs_kesehatan;
-                    $grandTotalPendapatanKotor += $pendapatan_kotor;
-                    $grandTotalPendapatanBersih += $pendapatan_bersih;
-                @endphp
-                <tr>
-                    <td class="text-center align-middle">{{$i->kode}}{{sprintf("%03d",$i->nomor)}}</td>
-                    <td class="text-center align-middle">{{$i->nama}}</td>
-                    <td class="text-center align-middle">{{$i->jabatan->nama}}</td>
-                    <td class="text-center align-middle">{{number_format($i->gaji_pokok, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($i->tunjangan_jabatan, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($i->tunjangan_keluarga, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($bpjs_k, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($potongan_bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($potongan_bpjs_kesehatan, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($pendapatan_kotor, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($pendapatan_bersih, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{ number_format($amounts['potongan_kasbon'], 0, ',', '.') }}</td>
-                    <td class="text-center align-middle">
-                        @php
-                            $sisa_gaji_dibayar = $amounts['sisa_gaji_dibayar'];
-                            $total = $total + $sisa_gaji_dibayar;
-                            $grandTotalKasbon += $amounts['potongan_kasbon'];
-                        @endphp
-                        {{number_format($sisa_gaji_dibayar, 0, ',','.')}}
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="8" class="text-end align-middle">Grand Total : </th>
-                    <th class="text-center align-middle">{{number_format($grandTotalPotonganBpjsTk, 0, ',','.')}}</th>
-                    <th class="text-center align-middle">{{number_format($grandTotalPotonganBpjsKesehatan, 0, ',','.')}}</th>
-                    <th class="text-center align-middle">{{number_format($grandTotalPendapatanKotor, 0, ',','.')}}</th>
-                    <th class="text-center align-middle">{{number_format($grandTotalPendapatanBersih, 0, ',','.')}}</th>
-                    <th class="text-center align-middle">{{number_format($grandTotalKasbon, 0, ',','.')}}</th>
-                    <th class="text-center align-middle">{{number_format($total, 0, ',','.')}}</th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    <div class="container-fluid mt-3 mb-3">
-        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-            <form action="{{route('billing.form-cost-operational.gaji.store')}}" method="post" id="lanjutForm">
-                @csrf
-                <input type="hidden" name="total" value="{{$total}}">
-                <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
-            </form>
-            <a href="{{route('billing')}}" class="btn btn-secondary btn-lg">Batalkan</a>
-            {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
-          </div>
-    </div>
+@php
+    $total = $rows->sum('sisa_gaji_dibayar');
+    $periodLabel = $month.' '.$period->year;
+@endphp
+<div class="container-fluid payroll-ui">
+    <header class="payroll-header"><div><div class="payroll-eyebrow">Billing · Penggajian</div><h1>Form gaji pegawai</h1><p>Periksa komponen penghasilan dan potongan sebelum memproses gaji.</p></div><a href="{{ route('billing.form-cost-operational') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali</a></header>
+    @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
+    <div class="payroll-period"><div><span>Periode</span><strong>{{ $periodLabel }}</strong><p>{{ $period->copy()->subMonth()->day(26)->locale('id')->translatedFormat('d F Y') }}–{{ $period->copy()->day(25)->locale('id')->translatedFormat('d F Y') }}</p></div><span class="payroll-tag"><i class="fa fa-clock-o" aria-hidden="true"></i> Menunggu diproses</span></div>
+    @include('rekap.gaji.summary',['rows'=>$rows])
+    @include('rekap.gaji.table',['rows'=>$rows,'showAccounts'=>false])
+    <div class="payroll-notice"><i class="fa fa-info-circle" aria-hidden="true"></i><span>Komisi Sales mengikuti omset periode × persentase pegawai. Klik nominal komisi untuk melihat rinciannya. Tunjangan BBM masih bernilai 0.</span></div>
+    <div class="payroll-actions"><div><span>Sumber dana</span><strong><i class="fa fa-university" aria-hidden="true"></i> Kas Besar PPN</strong><p>Gaji dicatat keluar saat proses berhasil disimpan.</p></div><div class="payroll-action-buttons"><a href="{{ route('billing') }}" class="btn btn-outline-secondary">Batal</a><form action="{{ route('billing.form-cost-operational.gaji.store') }}" method="post" id="lanjutForm" data-period="{{ $periodLabel }}" data-total="{{ $total }}">@csrf<input type="hidden" name="periode" value="{{ $period->format('Y-m') }}"><input type="hidden" name="total" value="{{ $total }}"><button class="btn btn-success" type="submit"><i class="fa fa-check" aria-hidden="true"></i> Proses gaji</button></form></div></div>
 </div>
 @endsection
-@push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-@endpush
-@push('js')
-{{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
-<script>
-    $(document).ready(function(){
-
-            $('#rekapTable').DataTable({
-                "paging": false,
-                "ordering": false,
-                "scrollCollapse": true,
-                "scrollY": "550px",
-            });
-        });
-        // masukForm on submit, sweetalert confirm
-        $('#lanjutForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
-        });
-</script>
-@endpush
+@push('css')<link rel="stylesheet" href="{{ asset('payroll-ui.css').'?v='.filemtime(public_path('payroll-ui.css')) }}">@endpush
+@push('js')<script src="{{ asset('payroll-ui.js').'?v='.filemtime(public_path('payroll-ui.js')) }}"></script>@endpush

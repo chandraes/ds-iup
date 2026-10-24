@@ -10,6 +10,7 @@ use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\transaksi\InvoiceJual;
 use App\Models\Wilayah;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,10 +26,11 @@ class StatistikController extends Controller
 
     public function omset_harian_sales(Request $request)
     {
-         $month = $request->input('month') ?? date('m');
-        $year = $request->input('year') ?? date('Y');
+        $filters = $request->validate(['month' => 'nullable|integer|between:1,12', 'year' => 'nullable|integer|between:1901,2155']);
+        $month = (int) ($filters['month'] ?? now()->month);
+        $year = (int) ($filters['year'] ?? now()->year);
 
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
 
         $dataTahun = $db->dataTahun();
 
@@ -45,16 +47,25 @@ class StatistikController extends Controller
             '9' => 'September',
             '10' => 'Oktober',
             '11' => 'November',
-            '12' => 'Desember'
+            '12' => 'Desember',
         ];
 
-        $data = $db->omset_harian($month, $year);
+        $data = $db->omset_harian($month, $year, payrollPeriod: true);
+        $years = $dataTahun->pluck('tahun')->map(fn ($value): int => (int) $value)->push(now()->year)->push($year)->unique()->sortDesc()->values();
+        $totals = $data['karyawans']->mapWithKeys(fn ($employee): array => [$employee->id => collect($data['data'])->sum($employee->id)]);
 
         return view('statistik.omset-harian.index', [
-             'rows' => $data['data'],
+            'rows' => $data['data'],
             'karyawans' => $data['karyawans'],
             'dataTahun' => $dataTahun,
             'dataBulan' => $dataBulan,
+            'selectedMonth' => $month,
+            'selectedYear' => $year,
+            'years' => $years,
+            'totals' => $totals,
+            'periodStart' => $data['period_start'],
+            'periodEnd' => $data['period_end'],
+            'chartSales' => $data['karyawans']->map(fn ($employee): array => ['id' => $employee->id, 'nama' => $employee->nama])->values(),
         ]);
     }
 
@@ -63,21 +74,29 @@ class StatistikController extends Controller
         $req = $request->validate([
             'tanggal' => 'required|date',
             'karyawan_id' => 'required|exists:karyawans,id',
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|between:1901,2155',
         ]);
 
         $db = new InvoiceJual;
 
-        $karyawan = Karyawan::where('id',$req['karyawan_id'])->select('nama')->first();
+        $karyawan = Karyawan::where('id', $req['karyawan_id'])->select('nama')->first();
 
         if ($karyawan == null) {
             return redirect()->back()->with('error', 'Karyawan tidak ditemukan');
         }
 
         $data = $db->omset_harian_detail($request->input('tanggal'), $request->input('karyawan_id'));
+        $backPeriod = Carbon::parse($req['tanggal'])->startOfDay();
+        if ($backPeriod->day >= 26) {
+            $backPeriod->addMonthNoOverflow();
+        }
 
         return view('statistik.omset-harian.detail', [
             'data' => $data,
             'karyawan' => $karyawan,
+            'backMonth' => $req['month'] ?? $backPeriod->month,
+            'backYear' => $req['year'] ?? $backPeriod->year,
         ]);
     }
 
@@ -86,7 +105,7 @@ class StatistikController extends Controller
         $month = $request->input('month') ?? date('m');
         $year = $request->input('year') ?? date('Y');
 
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
 
         $dataTahun = $db->dataTahun();
 
@@ -103,7 +122,7 @@ class StatistikController extends Controller
             '9' => 'September',
             '10' => 'Oktober',
             '11' => 'November',
-            '12' => 'Desember'
+            '12' => 'Desember',
         ];
 
         $data = $db->profit_harian($month, $year);
@@ -171,35 +190,37 @@ class StatistikController extends Controller
             return DataTables::of($query)
                 ->with('grand_totals', $grandTotals)
                 ->addIndexColumn()
-                ->addColumn('kode_toko', function($row){
+                ->addColumn('kode_toko', function ($row) {
                     return $row->kode_toko->kode ?? $row->kode_toko_id ?? '-';
                 })
                 // Format angka menjadi Rupiah untuk tampilan
-                ->editColumn('kabupaten_kota.nama_wilayah', function($row) {
+                ->editColumn('kabupaten_kota.nama_wilayah', function ($row) {
                     $nama = $row->kabupaten_kota?->nama_wilayah ?? '-';
+
                     return str_replace(['Kab. ', 'Kota '], '', $nama);
                 })
-                ->editColumn('kecamatan.nama_wilayah', function($row) {
+                ->editColumn('kecamatan.nama_wilayah', function ($row) {
                     $nama = $row->kecamatan?->nama_wilayah ?? '-';
+
                     return str_replace(['Kec. '], '', $nama);
                 })
-                ->editColumn('bulan_1', fn($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_2', fn($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_3', fn($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_4', fn($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_5', fn($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_6', fn($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_7', fn($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_8', fn($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_9', fn($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_10', fn($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_11', fn($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_12', fn($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
-                ->addColumn('total', function($row) {
+                ->editColumn('bulan_1', fn ($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_2', fn ($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_3', fn ($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_4', fn ($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_5', fn ($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_6', fn ($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_7', fn ($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_8', fn ($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_9', fn ($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_10', fn ($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_11', fn ($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_12', fn ($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function ($row) {
                     return '<strong>'.number_format($row->total_setahun ?? 0, 0, ',', '.').'</strong>';
                 })
                 ->rawColumns(['total'])
-                ->filterColumn('nama', function($q, $keyword) {
+                ->filterColumn('nama', function ($q, $keyword) {
                     $q->where('konsumens.nama', 'like', "%{$keyword}%");
                 })
                 ->make(true);
@@ -210,9 +231,10 @@ class StatistikController extends Controller
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
         $kodeTokos = KodeToko::select('id', 'kode')->get();
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->whereIn('id', $kabupatenKotaIds)->get();
+
         // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
         return view('statistik.omset-bulanan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
@@ -265,33 +287,33 @@ class StatistikController extends Controller
         // [BARU] Tangkap array bulan
         $bulan = $request->input('bulan', []);
 
-        $fileName = 'Omset_Konsumen_' . $tahun . '.csv';
+        $fileName = 'Omset_Konsumen_'.$tahun.'.csv';
 
         $headers = [
-            'Content-type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=' . $fileName,
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename='.$fileName,
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
         // [MODIFIKASI] Gunakan 'use ($bulan)' pada callback
-        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan, $statusKonsumen) {
+        $callback = function () use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan, $statusKonsumen) {
             $file = fopen('php://output', 'w');
 
             // 1. Susun Header Excel Secara Dinamis
             $csvHeaders = [
-                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko','Kab/Kota','Kecamatan', 'Sales Area'
+                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Kab/Kota', 'Kecamatan', 'Sales Area',
             ];
 
             $namaBulan = [
                 1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
-                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
             ];
 
             // Looping header bulan (tambahkan hanya jika bulan tidak difilter atau termasuk yang dipilih)
             for ($i = 1; $i <= 12; $i++) {
-                if (empty($bulan) || in_array((string)$i, $bulan)) {
+                if (empty($bulan) || in_array((string) $i, $bulan)) {
                     $csvHeaders[] = $namaBulan[$i];
                 }
             }
@@ -307,7 +329,7 @@ class StatistikController extends Controller
 
             // 3. CHUNKING
             $no = 1;
-            $query->chunk(500, function($konsumens) use ($file, &$no, $bulan) { // [MODIFIKASI] use $bulan
+            $query->chunk(500, function ($konsumens) use ($file, &$no, $bulan) { // [MODIFIKASI] use $bulan
                 foreach ($konsumens as $row) {
                     // Siapkan baris data awal
                     $csvRow = [
@@ -317,13 +339,13 @@ class StatistikController extends Controller
                         $row->nama,
                         str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah) ?? '-',
                         str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah) ?? '-',
-                        $row->karyawan?->nama ?? '-'
+                        $row->karyawan?->nama ?? '-',
                     ];
 
                     // Looping nilai per bulan secara dinamis
                     for ($i = 1; $i <= 12; $i++) {
-                        if (empty($bulan) || in_array((string)$i, $bulan)) {
-                            $kolomBulan = 'bulan_' . $i;
+                        if (empty($bulan) || in_array((string) $i, $bulan)) {
+                            $kolomBulan = 'bulan_'.$i;
                             $csvRow[] = $row->$kolomBulan ?? 0;
                         }
                     }
@@ -349,7 +371,9 @@ class StatistikController extends Controller
 
         // 1. Ambil Data Konsumen
         $konsumen = Konsumen::with('kode_toko')->where('id', $konsumenId)->select('nama', 'kode', 'kode_toko_id')->first();
-        if (!$konsumen) abort(404, 'Konsumen tidak ditemukan');
+        if (! $konsumen) {
+            abort(404, 'Konsumen tidak ditemukan');
+        }
 
         // 2. Query Detail Transaksi
         $query = DB::table('invoice_jual_details as d')
@@ -367,21 +391,21 @@ class StatistikController extends Controller
                 'd.harga_satuan',
                 'd.diskon',
                 'd.ppn',
-                'd.total'
+                'd.total',
             ])
             ->where('i.konsumen_id', $konsumenId)
             ->where('i.void', 0) // Pastikan tidak mengambil nota void
             ->whereYear('i.created_at', $tahun);
 
         // Filter Bulan (Jika bukan 'total', filter per bulan)
-       if ($bulan !== 'total') {
+        if ($bulan !== 'total') {
             $query->whereMonth('i.created_at', $bulan);
 
             // Fix: Gunakan createFromDate, paksa (int), dan set tanggal ke 1 agar aman
-            $namaBulan = \Carbon\Carbon::createFromDate($tahun, (int)$bulan, 1)->isoFormat('MMMM');
+            $namaBulan = Carbon::createFromDate($tahun, (int) $bulan, 1)->isoFormat('MMMM');
         } else {
-           // Jika klik pada kolom "Total" di ujung kanan
-            if (!empty($bulanFilter)) {
+            // Jika klik pada kolom "Total" di ujung kanan
+            if (! empty($bulanFilter)) {
                 $arrayBulan = explode(',', $bulanFilter); // Ubah string "1,2" jadi array [1, 2]
 
                 // Gunakan DB::raw untuk filter array bulan
@@ -389,12 +413,12 @@ class StatistikController extends Controller
 
                 // Menyusun nama bulan dinamis untuk judul (misal: "Januari, Maret, Desember")
                 $namaBulanArray = [];
-                foreach($arrayBulan as $b) {
-                    $namaBulanArray[] = \Carbon\Carbon::createFromDate($tahun, (int)$b, 1)->isoFormat('MMMM');
+                foreach ($arrayBulan as $b) {
+                    $namaBulanArray[] = Carbon::createFromDate($tahun, (int) $b, 1)->isoFormat('MMMM');
                 }
                 $namaBulan = implode(', ', $namaBulanArray);
             } else {
-                $namaBulan = "Setahun (Jan - Des)";
+                $namaBulan = 'Setahun (Jan - Des)';
             }
         }
 
@@ -438,7 +462,7 @@ class StatistikController extends Controller
 
             if ($user->role == 'perusahaan') {
                 $unitId = $user->barang_unit_id;
-                if (!$unitId) {
+                if (! $unitId) {
                     return response()->json(['error' => 'Unit tidak ditemukan untuk perusahaan'], 400);
                 }
             }
@@ -476,21 +500,21 @@ class StatistikController extends Controller
                 ->with('grand_totals', $grandTotals)
                 ->with('years_array', $years) // <--- PENTING: Untuk merubah Header di Datatables
                 ->addIndexColumn()
-                ->addColumn('kode_toko', function($row){
+                ->addColumn('kode_toko', function ($row) {
                     return $row->kode_toko->kode ?? $row->kode_toko_id ?? '-';
                 })
-                ->editColumn('kabupaten_kota.nama_wilayah', function($row) {
+                ->editColumn('kabupaten_kota.nama_wilayah', function ($row) {
                     return str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah ?? '-');
                 })
-                ->editColumn('kecamatan.nama_wilayah', function($row) {
+                ->editColumn('kecamatan.nama_wilayah', function ($row) {
                     return str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah ?? '-');
                 })
-                ->editColumn('tahun_1', fn($row) => number_format($row->tahun_1 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_2', fn($row) => number_format($row->tahun_2 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_3', fn($row) => number_format($row->tahun_3 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_4', fn($row) => number_format($row->tahun_4 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_5', fn($row) => number_format($row->tahun_5 ?? 0, 0, ',', '.'))
-                ->addColumn('total', function($row) {
+                ->editColumn('tahun_1', fn ($row) => number_format($row->tahun_1 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_2', fn ($row) => number_format($row->tahun_2 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_3', fn ($row) => number_format($row->tahun_3 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_4', fn ($row) => number_format($row->tahun_4 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_5', fn ($row) => number_format($row->tahun_5 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function ($row) {
                     return '<strong>'.number_format($row->total_semua ?? 0, 0, ',', '.').'</strong>';
                 })
                 ->rawColumns(['total'])
@@ -508,7 +532,7 @@ class StatistikController extends Controller
         $units = $units->get();
 
         $kodeTokos = KodeToko::select('id', 'kode')->get();
-        $sales = Karyawan::with('jabatan')->whereHas('jabatan', fn($q) => $q->where('is_sales', 1))->select('id', 'nama')->get();
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', fn ($q) => $q->where('is_sales', 1))->select('id', 'nama')->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->whereIn('id', $kabupatenKotaIds)->get();
 
         return view('statistik.omset-tahunan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
@@ -521,7 +545,7 @@ class StatistikController extends Controller
 
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-             if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -532,7 +556,9 @@ class StatistikController extends Controller
 
         // 1. Ambil Data Konsumen
         $konsumen = Konsumen::with('kode_toko')->where('id', $konsumenId)->select('nama', 'kode', 'kode_toko_id')->first();
-        if (!$konsumen) abort(404, 'Konsumen tidak ditemukan');
+        if (! $konsumen) {
+            abort(404, 'Konsumen tidak ditemukan');
+        }
 
         // 2. Query Detail Transaksi
         $query = DB::table('invoice_jual_details as d')
@@ -550,7 +576,7 @@ class StatistikController extends Controller
                 'd.harga_satuan',
                 'd.diskon',
                 'd.ppn',
-                'd.total'
+                'd.total',
             ])
             ->where('i.konsumen_id', $konsumenId)
             ->where('i.void', 0); // Pastikan tidak mengambil nota void
@@ -559,7 +585,7 @@ class StatistikController extends Controller
         if ($tahunKlik !== 'total') {
             // Jika User klik pada kolom tahun spesifik (misal: 2023)
             $query->whereYear('i.created_at', $tahunKlik);
-            $periodeTeks = "Tahun " . $tahunKlik;
+            $periodeTeks = 'Tahun '.$tahunKlik;
         } else {
             // Jika User klik pada kolom "Total", tampilkan seluruh transaksi di range tahun filter
             if ($tahunAwal && $tahunAkhir) {
@@ -567,7 +593,7 @@ class StatistikController extends Controller
                     ->whereYear('i.created_at', '<=', $tahunAkhir);
                 $periodeTeks = "Periode $tahunAwal - $tahunAkhir";
             } else {
-                $periodeTeks = "Semua Tahun";
+                $periodeTeks = 'Semua Tahun';
             }
         }
 
@@ -610,7 +636,7 @@ class StatistikController extends Controller
         $unitId = $request->input('barang_unit_id');
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-             if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -619,7 +645,7 @@ class StatistikController extends Controller
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
         if (Auth::user()->role == 'sales') {
-            $salesId =  Auth::user()->karyawan_id;
+            $salesId = Auth::user()->karyawan_id;
         }
         $kabupatenKotaId = $request->input('kabupaten_kota_id');
         $kecamatanId = $request->input('kecamatan_id');
@@ -658,7 +684,7 @@ class StatistikController extends Controller
         $unitId = $request->input('barang_unit_id');
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-             if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -667,29 +693,29 @@ class StatistikController extends Controller
         $statusOmset = $request->input('status_omset');
         $salesId = $request->input('sales_id');
         if (Auth::user()->role == 'sales') {
-            $salesId =  Auth::user()->karyawan_id;
+            $salesId = Auth::user()->karyawan_id;
         }
         $kabupatenKotaId = $request->input('kabupaten_kota_id');
         $kecamatanId = $request->input('kecamatan_id');
         $statusInvoice = $request->input('status_invoice');
         $statusKonsumen = $request->input('status_konsumen');
 
-        $fileName = 'Omset_Tahunan_Konsumen_' . $tahunAwal . '_' . $tahunAkhir . '.csv';
+        $fileName = 'Omset_Tahunan_Konsumen_'.$tahunAwal.'_'.$tahunAkhir.'.csv';
 
         $headers = [
-            'Content-type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=' . $fileName,
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename='.$fileName,
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
-        $callback = function() use ($tahunAwal, $tahunAkhir, $years, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $statusKonsumen) {
+        $callback = function () use ($tahunAwal, $tahunAkhir, $years, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $statusKonsumen) {
             $file = fopen('php://output', 'w');
 
             // 1. Susun Header Excel Secara Dinamis
             $csvHeaders = [
-                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Kab/Kota', 'Kecamatan', 'Sales Area'
+                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Kab/Kota', 'Kecamatan', 'Sales Area',
             ];
 
             // Tambahkan Header Tahun (misal: 2022, 2023, 2024)
@@ -708,7 +734,7 @@ class StatistikController extends Controller
 
             // 3. CHUNKING
             $no = 1;
-            $query->chunk(500, function($konsumens) use ($file, &$no, $years) {
+            $query->chunk(500, function ($konsumens) use ($file, &$no, $years) {
                 foreach ($konsumens as $row) {
                     $csvRow = [
                         $no++,
@@ -717,13 +743,13 @@ class StatistikController extends Controller
                         $row->nama,
                         str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah) ?? '-',
                         str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah) ?? '-',
-                        $row->karyawan?->nama ?? '-'
+                        $row->karyawan?->nama ?? '-',
                     ];
 
                     // Looping nilai per tahun (tahun_1 s/d tahun_N)
                     // Jumlah kolom tahun akan sama dengan jumlah elemen di array $years
                     for ($i = 1; $i <= count($years); $i++) {
-                        $kolomTahun = 'tahun_' . $i;
+                        $kolomTahun = 'tahun_'.$i;
                         $csvRow[] = $row->$kolomTahun ?? 0;
                     }
 
@@ -744,9 +770,9 @@ class StatistikController extends Controller
     {
         $unitId = $request->input('barang_unit_id');
 
-         if (Auth::user()->role == 'perusahaan') {
+        if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-             if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -785,23 +811,23 @@ class StatistikController extends Controller
                 ->with('mode', $modeTampil)
                 ->with('bulan_array', $bulan) // <- PENTING: Untuk kontrol kolom di UI
                 ->addIndexColumn()
-                ->addColumn('perusahaan', fn($row) => $row->unit->nama ?? '-')
-                ->addColumn('kategori', fn($row) => $row->kategori->nama ?? '-')
-                ->addColumn('nama_barang', fn($row) => $row->barang_nama->nama ?? '-')
-                ->addColumn('satuan', fn($row) => $row->satuan->nama ?? '-')
-                ->editColumn('bulan_1', fn($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_2', fn($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_3', fn($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_4', fn($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_5', fn($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_6', fn($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_7', fn($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_8', fn($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_9', fn($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_10', fn($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_11', fn($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_12', fn($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
-                ->addColumn('total', function($row) {
+                ->addColumn('perusahaan', fn ($row) => $row->unit->nama ?? '-')
+                ->addColumn('kategori', fn ($row) => $row->kategori->nama ?? '-')
+                ->addColumn('nama_barang', fn ($row) => $row->barang_nama->nama ?? '-')
+                ->addColumn('satuan', fn ($row) => $row->satuan->nama ?? '-')
+                ->editColumn('bulan_1', fn ($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_2', fn ($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_3', fn ($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_4', fn ($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_5', fn ($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_6', fn ($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_7', fn ($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_8', fn ($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_9', fn ($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_10', fn ($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_11', fn ($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_12', fn ($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function ($row) {
                     return '<strong>'.number_format($row->total_setahun ?? 0, 0, ',', '.').'</strong>';
                 })
                 ->rawColumns(['total'])
@@ -811,7 +837,7 @@ class StatistikController extends Controller
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
 
         $kategoris = BarangKategori::select('id', 'nama')
-            ->when($unitId, function($query) use ($unitId) {
+            ->when($unitId, function ($query) use ($unitId) {
                 $query->whereIn('id',
                     Barang::where('barang_unit_id', $unitId)
                         ->distinct()
@@ -837,7 +863,9 @@ class StatistikController extends Controller
 
         // Ambil Data Barang
         $barang = Barang::with(['unit', 'kategori', 'barang_nama', 'satuan'])->find($barangId);
-        if (!$barang) abort(404, 'Barang tidak ditemukan');
+        if (! $barang) {
+            abort(404, 'Barang tidak ditemukan');
+        }
 
         // Query Detail Transaksi untuk barang tersebut
         $query = DB::table('invoice_jual_details as d')
@@ -853,7 +881,7 @@ class StatistikController extends Controller
                 'd.harga_satuan',
                 'd.diskon',
                 'd.ppn',
-                'd.total'
+                'd.total',
             ])
             ->where('d.barang_id', $barangId)
             ->where('i.void', 0)
@@ -862,19 +890,19 @@ class StatistikController extends Controller
         // Logic Filter Bulan
         if ($bulan !== 'total') {
             $query->whereMonth('i.created_at', $bulan);
-            $namaBulan = \Carbon\Carbon::createFromDate($tahun, (int)$bulan, 1)->isoFormat('MMMM');
+            $namaBulan = Carbon::createFromDate($tahun, (int) $bulan, 1)->isoFormat('MMMM');
         } else {
-            if (!empty($bulanFilter)) {
+            if (! empty($bulanFilter)) {
                 $arrayBulan = explode(',', $bulanFilter);
                 $query->whereIn(DB::raw('MONTH(i.created_at)'), $arrayBulan);
 
                 $namaBulanArray = [];
-                foreach($arrayBulan as $b) {
-                    $namaBulanArray[] = \Carbon\Carbon::createFromDate($tahun, (int)$b, 1)->isoFormat('MMMM');
+                foreach ($arrayBulan as $b) {
+                    $namaBulanArray[] = Carbon::createFromDate($tahun, (int) $b, 1)->isoFormat('MMMM');
                 }
                 $namaBulan = implode(', ', $namaBulanArray);
             } else {
-                $namaBulan = "Setahun (Jan - Des)";
+                $namaBulan = 'Setahun (Jan - Des)';
             }
         }
 
@@ -892,7 +920,7 @@ class StatistikController extends Controller
         $unitId = $request->input('barang_unit_id');
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-             if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -902,25 +930,25 @@ class StatistikController extends Controller
         $bulan = $request->input('bulan', []);
 
         $tipeData = ($modeTampil == 'nominal') ? 'Nominal_Rp' : 'Qty';
-        $fileName = 'Omset_Barang_' . $tipeData . '_' . $tahun . '.csv';
+        $fileName = 'Omset_Barang_'.$tipeData.'_'.$tahun.'.csv';
 
         $headers = [
-            'Content-type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=' . $fileName,
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename='.$fileName,
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
-        $callback = function() use ($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan) {
+        $callback = function () use ($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan) {
             $file = fopen('php://output', 'w');
 
             // Header Dinamis
             $csvHeaders = ['No', 'Perusahaan', 'Kategori', 'Kode Barang', 'Merk', 'Nama Barang', 'Satuan'];
-            $namaBulan = [1=>'Jan', 2=>'Feb', 3=>'Mar', 4=>'Apr', 5=>'Mei', 6=>'Jun', 7=>'Jul', 8=>'Agu', 9=>'Sep', 10=>'Okt', 11=>'Nov', 12=>'Des'];
+            $namaBulan = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'];
 
             for ($i = 1; $i <= 12; $i++) {
-                if (empty($bulan) || in_array((string)$i, $bulan)) {
+                if (empty($bulan) || in_array((string) $i, $bulan)) {
                     $csvHeaders[] = $namaBulan[$i];
                 }
             }
@@ -929,10 +957,10 @@ class StatistikController extends Controller
 
             $db = new InvoiceJual; // Sesuaikan dengan lokasi model fungsi Anda
             $query = $db->getOmsetBarangBulananQuery($tahun, $unitId, $kategoriId, $modeTampil, $statusOmset, $bulan)
-                        ->orderBy('barang_nama_id', 'asc'); // Urut berdasarkan nama barang
+                ->orderBy('barang_nama_id', 'asc'); // Urut berdasarkan nama barang
 
             $no = 1;
-            $query->chunk(500, function($barangs) use ($file, &$no, $bulan) {
+            $query->chunk(500, function ($barangs) use ($file, &$no, $bulan) {
                 foreach ($barangs as $row) {
                     $csvRow = [
                         $no++,
@@ -941,12 +969,12 @@ class StatistikController extends Controller
                         $row->kode,
                         $row->merk,
                         $row->barang_nama->nama ?? '-',
-                        $row->satuan->nama ?? '-'
+                        $row->satuan->nama ?? '-',
                     ];
 
                     for ($i = 1; $i <= 12; $i++) {
-                        if (empty($bulan) || in_array((string)$i, $bulan)) {
-                            $kolom = 'bulan_' . $i;
+                        if (empty($bulan) || in_array((string) $i, $bulan)) {
+                            $kolom = 'bulan_'.$i;
                             $csvRow[] = $row->$kolom ?? 0;
                         }
                     }
@@ -971,7 +999,7 @@ class StatistikController extends Controller
         $unitId = $request->input('barang_unit_id');
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-             if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -1001,7 +1029,7 @@ class StatistikController extends Controller
         // Filter Proteksi Akses Perusahaan (Sesuai modifikasi Anda)
         if (Auth::user()->role == 'perusahaan') {
             $unitId = Auth::user()->barang_unit_id;
-            if (!$unitId) {
+            if (! $unitId) {
                 abort(400, 'Unit tidak ditemukan untuk perusahaan');
             }
         }
@@ -1042,16 +1070,16 @@ class StatistikController extends Controller
                 ->with('mode', $modeTampil)
                 ->with('years_array', $years)
                 ->addIndexColumn()
-                ->addColumn('perusahaan', fn($row) => $row->unit->nama ?? '-')
-                ->addColumn('kategori', fn($row) => $row->kategori->nama ?? '-')
-                ->addColumn('nama_barang', fn($row) => $row->barang_nama->nama ?? '-')
-                ->addColumn('satuan', fn($row) => $row->satuan->nama ?? '-')
-                ->editColumn('tahun_1', fn($row) => number_format($row->tahun_1 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_2', fn($row) => number_format($row->tahun_2 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_3', fn($row) => number_format($row->tahun_3 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_4', fn($row) => number_format($row->tahun_4 ?? 0, 0, ',', '.'))
-                ->editColumn('tahun_5', fn($row) => number_format($row->tahun_5 ?? 0, 0, ',', '.'))
-                ->addColumn('total', function($row) {
+                ->addColumn('perusahaan', fn ($row) => $row->unit->nama ?? '-')
+                ->addColumn('kategori', fn ($row) => $row->kategori->nama ?? '-')
+                ->addColumn('nama_barang', fn ($row) => $row->barang_nama->nama ?? '-')
+                ->addColumn('satuan', fn ($row) => $row->satuan->nama ?? '-')
+                ->editColumn('tahun_1', fn ($row) => number_format($row->tahun_1 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_2', fn ($row) => number_format($row->tahun_2 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_3', fn ($row) => number_format($row->tahun_3 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_4', fn ($row) => number_format($row->tahun_4 ?? 0, 0, ',', '.'))
+                ->editColumn('tahun_5', fn ($row) => number_format($row->tahun_5 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function ($row) {
                     return '<strong>'.number_format($row->total_semua ?? 0, 0, ',', '.').'</strong>';
                 })
                 ->rawColumns(['total'])
@@ -1059,8 +1087,8 @@ class StatistikController extends Controller
         }
 
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
-          $kategoris = BarangKategori::select('id', 'nama')
-            ->when($unitId, function($query) use ($unitId) {
+        $kategoris = BarangKategori::select('id', 'nama')
+            ->when($unitId, function ($query) use ($unitId) {
                 $query->whereIn('id',
                     Barang::where('barang_unit_id', $unitId)
                         ->distinct()
@@ -1126,7 +1154,9 @@ class StatistikController extends Controller
 
         $tahunAkhir = $request->input('tahun_akhir', date('Y'));
         $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
-        if (($tahunAkhir - $tahunAwal) > 4) $tahunAwal = $tahunAkhir - 4;
+        if (($tahunAkhir - $tahunAwal) > 4) {
+            $tahunAwal = $tahunAkhir - 4;
+        }
 
         $years = range($tahunAwal, $tahunAkhir);
         $paddedYears = array_pad($years, 5, null);
@@ -1146,11 +1176,11 @@ class StatistikController extends Controller
 
         $fileName = "Omset_Barang_Tahunan_{$tahunAwal}-{$tahunAkhir}.csv";
         $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=$fileName",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
         $callback = function () use ($query, $paddedYears) {
@@ -1158,7 +1188,9 @@ class StatistikController extends Controller
 
             $headerRow = ['No', 'Perusahaan', 'Kategori', 'Kode', 'Merk', 'Nama Barang', 'Satuan'];
             foreach ($paddedYears as $y) {
-                if ($y !== null) $headerRow[] = "Tahun $y";
+                if ($y !== null) {
+                    $headerRow[] = "Tahun $y";
+                }
             }
             $headerRow[] = 'TOTAL';
             fputcsv($file, $headerRow);
@@ -1174,12 +1206,12 @@ class StatistikController extends Controller
                         $row->kode,
                         $row->merk,
                         $row->barang_nama->nama ?? '-',
-                        $row->satuan->nama ?? '-'
+                        $row->satuan->nama ?? '-',
                     ];
 
                     for ($i = 1; $i <= 5; $i++) {
                         if ($paddedYears[$i - 1] !== null) {
-                            $col = "tahun_" . $i;
+                            $col = 'tahun_'.$i;
                             $csvRow[] = $row->$col ?? 0;
                         }
                     }
@@ -1203,7 +1235,9 @@ class StatistikController extends Controller
 
         $tahunAkhir = $request->input('tahun_akhir', date('Y'));
         $tahunAwal = $request->input('tahun_awal', date('Y') - 4);
-        if (($tahunAkhir - $tahunAwal) > 4) $tahunAwal = $tahunAkhir - 4;
+        if (($tahunAkhir - $tahunAwal) > 4) {
+            $tahunAwal = $tahunAkhir - 4;
+        }
 
         $years = range($tahunAwal, $tahunAkhir);
 

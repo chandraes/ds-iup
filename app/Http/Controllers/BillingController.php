@@ -30,7 +30,6 @@ use App\Models\Pengaturan;
 use App\Models\Pengelola;
 use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
-use App\Models\RekapGaji;
 use App\Models\Rekening;
 use App\Models\ReturSupplier;
 use App\Models\StokRetur;
@@ -239,13 +238,14 @@ class BillingController extends Controller
 
     public function gaji()
     {
-        $check = RekapGaji::where('bulan', date('m'))->where('tahun', date('Y'))->first();
+        $payroll = app(EmployeePayrollService::class);
+        $period = $payroll->nextPeriod();
 
-        if ($check) {
-            return redirect()->route('billing')->with('error', 'Form Gaji Bulan Ini Sudah Dibuat');
+        if (! $period) {
+            return redirect()->route('billing')->with('error', 'Seluruh periode gaji sampai bulan berjalan sudah dibuat.');
         }
-        $month = Carbon::now()->locale('id')->monthName;
-        $data = Karyawan::with(['jabatan'])->where('status', 1)->get();
+        $month = $period->copy()->locale('id')->monthName;
+        $data = $payroll->employees();
 
         if ($data->count() == 0) {
             return redirect()->back()->with('error', 'Data Staff/Direksi Kosong, Silahkan Tambahkan Data Terlebih Dahulu');
@@ -254,13 +254,23 @@ class BillingController extends Controller
         return view('billing.form-cost-operational.form-gaji.index', [
             'data' => $data,
             'month' => $month,
-            'payroll' => app(EmployeePayrollService::class),
+            'period' => $period,
+            'payroll' => $payroll,
+            'rows' => $payroll->previewRows($data, $period)->map(function (array $row) use ($period): array {
+                $row['commission_url'] = $row['rincian_komisi'] ? route('billing.form-cost-operational.gaji.komisi', [
+                    'karyawan_id' => $row['rincian_komisi']['karyawan_id'], 'periode' => $period->format('Y-m'),
+                ]) : null;
+                unset($row['rincian_komisi']);
+
+                return $row;
+            }),
         ]);
     }
 
     public function gaji_store(Request $request, EmployeePayrollService $payroll): RedirectResponse
     {
-        $rekap = $payroll->store();
+        $data = $request->validate(['periode' => 'required|date_format:Y-m']);
+        $rekap = $payroll->store($data['periode']);
         try {
             $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
             if ($group) {

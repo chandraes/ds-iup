@@ -6,7 +6,9 @@ use App\Models\db\Karyawan;
 use App\Models\KasBesar;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\transaksi\InvoiceJual;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -14,39 +16,134 @@ class EmployeePayrollService
 {
     public function __construct(private KasbonService $kasbon) {}
 
-    /** @return array<string, int> */
-    public function amounts(Karyawan $employee, Carbon $period, bool $lock = false): array
+    /** @return \Illuminate\Database\Eloquent\Collection<int, Karyawan> */
+    public function employees(bool $lock = false): \Illuminate\Database\Eloquent\Collection
     {
+        $query = Karyawan::select(['id', 'jabatan_id', 'nomor', 'nama', 'gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga',
+            'apa_bpjs_tk', 'apa_bpjs_kes', 'bank', 'no_rek', 'nama_rek', 'persen_komisi'])
+            ->with('jabatan:id,nama')->where('status', 1)->orderBy('id');
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->get();
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    public function sortRows(Collection $rows): Collection
+    {
+        return $rows->sort(function (array $left, array $right): int {
+            $leftJob = mb_strtolower(trim($left['jabatan']));
+            $rightJob = mb_strtolower(trim($right['jabatan']));
+
+            return [$leftJob === 'sales' ? 1 : 0, $leftJob, mb_strtolower($left['nama']), $left['nik']]
+                <=> [$rightJob === 'sales' ? 1 : 0, $rightJob, mb_strtolower($right['nama']), $right['nik']];
+        })->values();
+    }
+
+    public function nextPeriod(bool $lock = false): ?Carbon
+    {
+        $query = RekapGaji::orderBy('tahun')->orderBy('bulan');
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+        $records = $query->get(['bulan', 'tahun']);
+        $current = now()->startOfMonth();
+        if ($records->isEmpty()) {
+            return $current;
+        }
+        $paid = $records->mapWithKeys(fn (RekapGaji $record): array => [sprintf('%04d-%02d', $record->tahun, $record->bulan) => true]);
+        $first = $records->first();
+        $period = Carbon::create((int) $first->tahun, (int) $first->bulan, 1)->startOfDay();
+        while ($period->lte($current)) {
+            if (! $paid->has($period->format('Y-m'))) {
+                return $period;
+            }
+            $period->addMonth();
+        }
+
+        return null;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function commissions(Collection $employees, Carbon $period): array
+    {
+        $sales = $employees->filter(fn (Karyawan $employee): bool => $employee->jabatan?->isSales() ?? false);
+        $start = $period->copy()->startOfMonth()->subMonth()->day(26);
+        $end = $period->copy()->startOfMonth()->day(26);
+        $daily = (new InvoiceJual)->salesTurnoverByDay($start, $end, $sales->pluck('id')->all());
+        $commissions = [];
+        foreach ($sales as $employee) {
+            $days = [];
+            for ($date = $start->copy(); $date->lt($end); $date->addDay()) {
+                $days[] = ['tanggal' => $date->toDateString()] + ($daily[$employee->id][$date->toDateString()] ?? ['penjualan' => 0, 'void' => 0, 'omset' => 0]);
+            }
+            $turnover = array_sum(array_column($days, 'omset'));
+            $rate = (int) round((float) $employee->persen_komisi * 100);
+            $commission = intdiv($turnover, 10000) * $rate + (int) round(($turnover % 10000) * $rate / 10000);
+            $commissions[$employee->id] = ['omset_komisi' => $turnover, 'persen_komisi' => number_format($rate / 100, 2, '.', ''), 'komisi' => $commission,
+                'rincian_komisi' => ['karyawan_id' => $employee->id, 'periode_mulai' => $start->toDateString(), 'periode_selesai' => $end->copy()->subDay()->toDateString(),
+                    'penjualan' => array_sum(array_column($days, 'penjualan')), 'void' => array_sum(array_column($days, 'void')), 'harian' => $days]];
+        }
+
+        return $commissions;
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    public function previewRows(Collection $employees, Carbon $period): Collection
+    {
+        $commissions = $this->commissions($employees, $period);
+        $payments = $this->kasbon->paymentsForEmployees($employees->pluck('id')->all(), $period);
+
+        return $this->sortRows($employees->map(fn (Karyawan $employee): array => array_merge([
+            'nik' => ($employee->kode ?? '').sprintf('%03d', $employee->nomor), 'nama' => $employee->nama,
+            'jabatan' => $employee->jabatan?->nama ?? '—', 'gaji_pokok' => $employee->gaji_pokok,
+            'tunjangan_jabatan' => $employee->tunjangan_jabatan, 'tunjangan_keluarga' => $employee->tunjangan_keluarga,
+        ], $this->amounts($employee, $period, commission: $commissions[$employee->id] ?? [], payments: $payments[$employee->id] ?? []))));
+    }
+
+    /** @return array<string, mixed> */
+    public function amounts(Karyawan $employee, Carbon $period, bool $lock = false, ?array $commission = null, ?array $payments = null): array
+    {
+        $commission ??= $this->commissions(collect([$employee]), $period)[$employee->id] ?? [];
+        $commissionAmount = $commission['komisi'] ?? 0;
         $base = (int) $employee->gaji_pokok;
-        $tk = $employee->apa_bpjs_tk ? (int) round($base * 0.049) : 0;
+        $tk = $employee->apa_bpjs_tk ? (int) round($base * 0.0489) : 0;
         $kes = $employee->apa_bpjs_kes ? (int) round($base * 0.04) : 0;
         $potTk = $employee->apa_bpjs_tk ? (int) round($base * 0.02) : 0;
         $potKes = $employee->apa_bpjs_kes ? (int) round($base * 0.01) : 0;
-        $income = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga;
+        $income = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga + $commissionAmount;
         $net = $income - $potTk - $potKes;
-        $deduction = array_sum(array_column($this->kasbon->payments($employee, $period, $lock), 'amount'));
+        $payments ??= $this->kasbon->payments($employee, $period, $lock);
+        $deduction = array_sum(array_column($payments, 'amount'));
 
-        return ['bpjs_tk' => $tk, 'bpjs_k' => $kes, 'potongan_bpjs_tk' => $potTk, 'potongan_bpjs_kesehatan' => $potKes,
+        return array_merge(['komisi' => 0, 'omset_komisi' => null, 'persen_komisi' => null, 'rincian_komisi' => null, 'tunjangan_bbm' => 0, 'bpjs_tk' => $tk, 'bpjs_k' => $kes, 'potongan_bpjs_tk' => $potTk, 'potongan_bpjs_kesehatan' => $potKes,
             'pendapatan_kotor' => $income + $tk + $kes, 'pendapatan_bersih' => $net,
-            'potongan_kasbon' => $deduction, 'sisa_gaji_dibayar' => $net - $deduction];
+            'potongan_kasbon' => $deduction, 'sisa_gaji_dibayar' => $net - $deduction], $commission);
     }
 
-    public function store(): RekapGaji
+    public function store(?string $expectedPeriod = null): RekapGaji
     {
-        return DB::transaction(function (): RekapGaji {
-            $period = now()->startOfMonth();
-            $employees = Karyawan::with('jabatan')->where('status', 1)->orderBy('id')->lockForUpdate()->get();
+        return DB::transaction(function () use ($expectedPeriod): RekapGaji {
+            $employees = $this->employees(true);
             if ($employees->isEmpty()) {
                 throw ValidationException::withMessages(['total' => 'Tidak ada pegawai aktif.']);
             }
-            if (RekapGaji::where('bulan', $period->month)->where('tahun', $period->year)->lockForUpdate()->exists()) {
-                throw ValidationException::withMessages(['total' => 'Gaji bulan ini sudah dibuat.']);
+            $period = $this->nextPeriod(true);
+            if (! $period || ($expectedPeriod !== null && $expectedPeriod !== $period->format('Y-m'))) {
+                throw ValidationException::withMessages(['total' => 'Periode gaji sudah diproses atau berubah. Muat ulang form sebelum melanjutkan.']);
             }
             $cash = KasBesar::where('ppn_kas', 1)->orderByDesc('id')->lockForUpdate()->first();
-            $rekap = RekapGaji::create(['bulan' => $period->month, 'tahun' => $period->year, 'uraian' => 'Gaji Bulan '.$period->format('F Y'), 'total' => 0]);
+            $rekap = RekapGaji::create(['bulan' => $period->month, 'tahun' => $period->year,
+                'periode_mulai' => $period->copy()->subMonth()->day(26)->toDateString(),
+                'periode_selesai' => $period->copy()->day(25)->toDateString(),
+                'uraian' => 'Gaji Bulan '.$period->copy()->locale('id')->translatedFormat('F Y'), 'total' => 0]);
             $total = 0;
+            $commissions = $this->commissions($employees, $period);
+            $payments = $this->kasbon->paymentsForEmployees($employees->pluck('id')->all(), $period, true);
             foreach ($employees as $employee) {
-                $amounts = $this->amounts($employee, $period, true);
+                $employeePayments = $payments[$employee->id] ?? [];
+                $amounts = $this->amounts($employee, $period, true, $commissions[$employee->id] ?? [], $employeePayments);
                 if ($amounts['sisa_gaji_dibayar'] < 0) {
                     throw ValidationException::withMessages(['total' => 'Potongan melebihi gaji bersih '.$employee->nama.'.']);
                 }
@@ -55,7 +152,7 @@ class EmployeePayrollService
                     'jabatan' => $employee->jabatan?->nama ?? '—', 'gaji_pokok' => $employee->gaji_pokok,
                     'tunjangan_jabatan' => $employee->tunjangan_jabatan, 'tunjangan_keluarga' => $employee->tunjangan_keluarga,
                     'bank' => $employee->bank, 'no_rek' => $employee->no_rek, 'nama_rek' => $employee->nama_rek]));
-                foreach ($this->kasbon->payments($employee, $period, true) as $payment) {
+                foreach ($employeePayments as $payment) {
                     $loan = $payment['loan'];
                     $remaining = (int) $loan->sisa_kas - $payment['amount'];
                     $loan->update(['sisa_kas' => $remaining, 'total_bayar' => $loan->total_bayar + $payment['amount'], 'lunas' => $remaining === 0]);

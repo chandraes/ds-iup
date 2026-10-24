@@ -27,9 +27,9 @@ class InvoiceJual extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['tanggal', 'tanggal_lunas','id_jatuh_tempo', 'dpp', 'nf_ppn',
+    protected $appends = ['tanggal', 'tanggal_lunas', 'id_jatuh_tempo', 'dpp', 'nf_ppn',
         'nf_grand_total', 'nf_dp', 'nf_dp_ppn', 'nf_sisa_ppn',
-        'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word', 'tanggal_en', 'total_cicilan'
+        'nf_sisa_tagihan',  'dpp_setelah_diskon', 'sistem_pembayaran_word', 'tanggal_en', 'total_cicilan',
     ];
 
     public function invoice_jual_cicil()
@@ -39,12 +39,12 @@ class InvoiceJual extends Model
 
     public function getTotalCicilanAttribute()
     {
-        return $this->invoice_jual_cicil ?  number_format($this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn'), 0, ',', '.') : 0;
+        return $this->invoice_jual_cicil ? number_format($this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn'), 0, ',', '.') : 0;
     }
 
-     public function getRawTotalCicilanAttribute()
+    public function getRawTotalCicilanAttribute()
     {
-        return $this->invoice_jual_cicil ?  $this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn') : 0;
+        return $this->invoice_jual_cicil ? $this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn') : 0;
     }
 
     public function dataTahun()
@@ -605,7 +605,7 @@ class InvoiceJual extends Model
 
     public function scopeGabung($query, $filters)
     {
-        $data = $query->with(['konsumen.kode_toko', 'konsumen.kecamatan', 'konsumen.kabupaten_kota','invoice_jual_cicil', 'karyawan'])
+        $data = $query->with(['konsumen.kode_toko', 'konsumen.kecamatan', 'konsumen.kabupaten_kota', 'invoice_jual_cicil', 'karyawan'])
             ->where('void', 0)
             ->where('titipan', 0)
             ->where('lunas', 0);
@@ -614,11 +614,11 @@ class InvoiceJual extends Model
             $data->where('jatuh_tempo', $filters['expired'] == 'no' ? '>' : '<=', Carbon::now());
         }
 
-        if (isset($filters['konsumen_id']) && $filters['konsumen_id'] != ''){
+        if (isset($filters['konsumen_id']) && $filters['konsumen_id'] != '') {
             $data->where('konsumen_id', $filters['konsumen_id']);
         }
 
-        if (isset($filters['karyawan_id']) && $filters['karyawan_id'] != ''){
+        if (isset($filters['karyawan_id']) && $filters['karyawan_id'] != '') {
             $data->where('karyawan_id', $filters['karyawan_id']);
         }
 
@@ -628,13 +628,13 @@ class InvoiceJual extends Model
             });
         }
 
-        if(isset($filters['kabupaten_id']) && $filters['kabupaten_id'] != ''){
+        if (isset($filters['kabupaten_id']) && $filters['kabupaten_id'] != '') {
             $data->whereHas('konsumen', function ($query) use ($filters) {
                 $query->where('kabupaten_kota_id', $filters['kabupaten_id']);
             });
         }
 
-        if(isset($filters['apa_ppn']) && $filters['apa_ppn'] != ''){
+        if (isset($filters['apa_ppn']) && $filters['apa_ppn'] != '') {
             $ppn = $filters['apa_ppn'] == 'yes' ? 1 : 0;
             $data->where('kas_ppn', $ppn);
         }
@@ -644,22 +644,22 @@ class InvoiceJual extends Model
         return $data;
     }
 
-     public function scopeJanjiBayar($query, $filters)
+    public function scopeJanjiBayar($query, $filters)
     {
-        $query->with(['konsumen.kode_toko', 'konsumen.kecamatan', 'konsumen.kabupaten_kota','invoice_jual_cicil', 'karyawan'])
+        $query->with(['konsumen.kode_toko', 'konsumen.kecamatan', 'konsumen.kabupaten_kota', 'invoice_jual_cicil', 'karyawan'])
             ->where('void', 0)
             ->where('titipan', 0)
             ->where('lunas', 0);
 
         if (isset($filters['expired']) && $filters['expired'] != '') {
-            $query->where('jatuh_tempo', $filters['expired'] == 'no' ? '>' : '<=', \Carbon\Carbon::now());
+            $query->where('jatuh_tempo', $filters['expired'] == 'no' ? '>' : '<=', Carbon::now());
         }
 
-        if (isset($filters['konsumen_id']) && $filters['konsumen_id'] != ''){
+        if (isset($filters['konsumen_id']) && $filters['konsumen_id'] != '') {
             $query->where('konsumen_id', $filters['konsumen_id']);
         }
 
-        if (isset($filters['karyawan_id']) && $filters['karyawan_id'] != ''){
+        if (isset($filters['karyawan_id']) && $filters['karyawan_id'] != '') {
             $query->where('karyawan_id', $filters['karyawan_id']);
         }
 
@@ -669,13 +669,13 @@ class InvoiceJual extends Model
             });
         }
 
-        if(isset($filters['kabupaten_id']) && $filters['kabupaten_id'] != ''){
+        if (isset($filters['kabupaten_id']) && $filters['kabupaten_id'] != '') {
             $query->whereHas('konsumen', function ($q) use ($filters) {
                 $q->where('kabupaten_kota_id', $filters['kabupaten_id']);
             });
         }
 
-        if(isset($filters['apa_ppn']) && $filters['apa_ppn'] != ''){
+        if (isset($filters['apa_ppn']) && $filters['apa_ppn'] != '') {
             $ppn = $filters['apa_ppn'] == 'yes' ? 1 : 0;
             $query->where('kas_ppn', $ppn);
         }
@@ -708,7 +708,6 @@ class InvoiceJual extends Model
 
         try {
             DB::beginTransaction();
-
 
             $dipungut = $invoiceSales->ppn_dipungut;
 
@@ -779,7 +778,6 @@ class InvoiceJual extends Model
                 $data['jatuh_tempo'] = now()->addDays($konsumen->tempo_hari);
 
             }
-
 
             $stateBayar = $data['lunas'] == 1 ? 1 : 0;
             $stateDP = 0;
@@ -1105,10 +1103,11 @@ class InvoiceJual extends Model
         ];
     }
 
-    public function omset_harian($month, $year, $karyawan_id = null)
+    public function omset_harian(int $month, int $year, ?int $karyawan_id = null, bool $payrollPeriod = false): array
     {
-        $startDate = Carbon::create($year, $month, 1);
-        $endDate = $startDate->copy()->endOfMonth();
+        $selectedMonth = Carbon::create($year, $month, 1)->startOfDay();
+        $startDate = $payrollPeriod ? $selectedMonth->copy()->subMonth()->day(26) : $selectedMonth->copy();
+        $endExclusive = $payrollPeriod ? $selectedMonth->copy()->day(26) : $selectedMonth->copy()->addMonth();
 
         // Ambil semua karyawan dengan jabatan_id = 3
         if ($karyawan_id) {
@@ -1120,55 +1119,15 @@ class InvoiceJual extends Model
         // Buat array tanggal
         $dates = collect();
 
-
-        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+        for ($date = $startDate->copy(); $date->lt($endExclusive); $date->addDay()) {
             $dates->push($date->format('Y-m-d'));
         }
-        // dd($dates, $month, $year);
-        // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
-        $invoices = $this
-            ->selectRaw('DATE(created_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
-            ->where('titipan', 0)
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->whereNotNull('karyawan_id')
-            ->groupBy('tanggal_raw', 'karyawan_id')
-            ->get()
-            ->map(function($item) {
-                $item->tanggal = Carbon::parse($item->tanggal_raw)->format('Y-m-d');
-                return $item;
-            });
-
-        $invoice_void = $this->where('void', 1)
-            ->selectRaw('DATE(updated_at) as tanggal_raw, karyawan_id, SUM(grand_total) as total')
-            ->where('titipan', 0)
-            ->whereMonth('updated_at', $month)
-            ->whereYear('updated_at', $year)
-            ->whereNotNull('karyawan_id')
-            ->groupBy('tanggal_raw', 'karyawan_id')
-            ->get()
-            ->map(function($item) {
-                $item->tanggal = Carbon::parse($item->tanggal_raw)->format('Y-m-d');
-                return $item;
-            });
-        // Buat array hasil [tanggal][karyawan_id] = total
+        $daily = $this->salesTurnoverByDay($startDate, $endExclusive, $karyawans->modelKeys());
         $result = [];
-
         foreach ($dates as $date) {
             $row = ['tanggal' => $date];
-
             foreach ($karyawans as $karyawan) {
-                $found = $invoices->first(function ($item) use ($date, $karyawan) {
-                    return $item->tanggal_raw === $date && $item->karyawan_id == $karyawan->id;
-                });
-
-                $found_void = $invoice_void->first(function ($item) use ($date, $karyawan) {
-                    return $item->tanggal_raw === $date && $item->karyawan_id == $karyawan->id;
-                });
-
-                $row[$karyawan->id] = $found ? $found->total : 0;
-
-                $row[$karyawan->id] = $found_void ? $row[$karyawan->id] - $found_void->total : $row[$karyawan->id];
+                $row[$karyawan->id] = $daily[$karyawan->id][$date]['omset'] ?? 0;
             }
             $result[] = $row;
         }
@@ -1176,7 +1135,37 @@ class InvoiceJual extends Model
         return [
             'data' => $result,
             'karyawans' => $karyawans,
+            'period_start' => $startDate,
+            'period_end' => $endExclusive->copy()->subDay(),
         ];
+    }
+
+    /**
+     * @param  list<int>  $employeeIds
+     * @return array<int, array<string, array{penjualan: int, void: int, omset: int}>>
+     */
+    public function salesTurnoverByDay(Carbon $start, Carbon $endExclusive, array $employeeIds): array
+    {
+        if ($employeeIds === []) {
+            return [];
+        }
+        $base = DB::table($this->getTable())->where('titipan', 0)->whereIn('karyawan_id', $employeeIds);
+        $sales = (clone $base)->where('created_at', '>=', $start)->where('created_at', '<', $endExclusive)
+            ->selectRaw('karyawan_id, DATE(created_at) as tanggal, SUM(grand_total) as nominal')->groupBy('karyawan_id', 'tanggal')->get();
+        $voids = (clone $base)->where('void', 1)->where('updated_at', '>=', $start)->where('updated_at', '<', $endExclusive)
+            ->selectRaw('karyawan_id, DATE(updated_at) as tanggal, SUM(grand_total) as nominal')->groupBy('karyawan_id', 'tanggal')->get();
+        $daily = [];
+        foreach (['penjualan' => $sales, 'void' => $voids] as $kind => $records) {
+            foreach ($records as $record) {
+                $id = (int) $record->karyawan_id;
+                $date = (string) $record->tanggal;
+                $daily[$id][$date] ??= ['penjualan' => 0, 'void' => 0, 'omset' => 0];
+                $daily[$id][$date][$kind] = (int) $record->nominal;
+                $daily[$id][$date]['omset'] = $daily[$id][$date]['penjualan'] - $daily[$id][$date]['void'];
+            }
+        }
+
+        return $daily;
     }
 
     public function omset_harian_detail($tanggal, $karyawan_id)
@@ -1189,7 +1178,7 @@ class InvoiceJual extends Model
             ->whereDate('created_at', $tanggal)
             ->get();
 
-        $void = $this->with(['invoice_detail', 'konsumen.kode_toko','konsumen.kabupaten_kota', 'konsumen.kecamatan'])
+        $void = $this->with(['invoice_detail', 'konsumen.kode_toko', 'konsumen.kabupaten_kota', 'konsumen.kecamatan'])
             ->where('titipan', 0)
             ->where('void', 1)
             ->where('karyawan_id', $karyawan_id)
@@ -1198,7 +1187,7 @@ class InvoiceJual extends Model
 
         return [
             'data' => $data,
-            'void' => $void
+            'void' => $void,
         ];
     }
 
@@ -1207,26 +1196,25 @@ class InvoiceJual extends Model
         $startDate = Carbon::create($year, $month, 1);
         $endDate = $startDate->copy()->endOfMonth();
 
-         $dates = collect();
-
+        $dates = collect();
 
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             $dates->push($date->format('Y-m-d'));
         }
         // dd($dates, $month, $year);
         // Ambil semua invoice dan pastikan 'tanggal' dalam format string Y-m-d
-        $invoices = $this->select('id','created_at', 'total', 'konsumen_id', 'kode', 'konsumen_temp_id', 'diskon', 'add_fee')
-                        ->with(['konsumen.kode_toko', 'konsumen_temp','invoice_detail.stok'])
-                        ->whereMonth('created_at', $month)
-                        ->whereYear('created_at', $year)
-                        ->get();
+        $invoices = $this->select('id', 'created_at', 'total', 'konsumen_id', 'kode', 'konsumen_temp_id', 'diskon', 'add_fee')
+            ->with(['konsumen.kode_toko', 'konsumen_temp', 'invoice_detail.stok'])
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->get();
 
         $invoices_void = $this->where('void', 1)
-                        ->select('id', 'total', 'konsumen_id', 'kode', 'konsumen_temp_id', 'diskon', 'add_fee', 'updated_at')
-                        ->with(['konsumen.kode_toko', 'konsumen_temp','invoice_detail.stok'])
-                        ->whereMonth('updated_at', $month)
-                        ->whereYear('updated_at', $year)
-                        ->get();
+            ->select('id', 'total', 'konsumen_id', 'kode', 'konsumen_temp_id', 'diskon', 'add_fee', 'updated_at')
+            ->with(['konsumen.kode_toko', 'konsumen_temp', 'invoice_detail.stok'])
+            ->whereMonth('updated_at', $month)
+            ->whereYear('updated_at', $year)
+            ->get();
 
         foreach ($invoices as $invoice) {
             $total_beli = 0;
@@ -1259,14 +1247,14 @@ class InvoiceJual extends Model
         }
 
         return [
-            "invoice" => $invoices,
+            'invoice' => $invoices,
             'invoice_void' => $invoices_void,
         ];
 
     }
 
     public function getOmsetQuery($tahun, $unitId, $kodeTokoId = null, $statusOmset = null, $salesId = null, $kabupatenKotaId = null, $kecamatanId = null, $statusInvoice = null,
-                                    $bulan = [], $statusKonsumen = null)
+        $bulan = [], $statusKonsumen = null)
     {
         // 1. Subquery Transaksi (Sama seperti sebelumnya)
         $subquery = DB::table('invoice_juals as i')
@@ -1293,7 +1281,7 @@ class InvoiceJual extends Model
         for ($m = 1; $m <= 12; $m++) {
             $selectsRaw[] = "COALESCE(SUM(CASE WHEN MONTH(i.created_at) = $m THEN d.total ELSE 0 END), 0) as bulan_$m";
         }
-        $selectsRaw[] = "COALESCE(SUM(d.total), 0) as total_setahun";
+        $selectsRaw[] = 'COALESCE(SUM(d.total), 0) as total_setahun';
 
         $subquery->addSelect(DB::raw(implode(',', $selectsRaw)));
         $subquery->groupBy('i.konsumen_id');
@@ -1314,7 +1302,7 @@ class InvoiceJual extends Model
                 'transaksi.bulan_4', 'transaksi.bulan_5', 'transaksi.bulan_6',
                 'transaksi.bulan_7', 'transaksi.bulan_8', 'transaksi.bulan_9',
                 'transaksi.bulan_10', 'transaksi.bulan_11', 'transaksi.bulan_12',
-                'transaksi.total_setahun'
+                'transaksi.total_setahun',
             ])
             ->with('kode_toko', 'karyawan', 'kabupaten_kota', 'kecamatan')
             // ->where('konsumens.active', 1)
@@ -1322,57 +1310,57 @@ class InvoiceJual extends Model
                 $join->on('konsumens.id', '=', 'transaksi.konsumen_id');
             });
 
-            if ($statusKonsumen) {
-                if ($statusKonsumen == 'aktif') {
-                    $query->where('konsumens.active', 1);
-                } elseif ($statusKonsumen == 'nonaktif') {
-                    $query->where('konsumens.active', 0);
-                }
+        if ($statusKonsumen) {
+            if ($statusKonsumen == 'aktif') {
+                $query->where('konsumens.active', 1);
+            } elseif ($statusKonsumen == 'nonaktif') {
+                $query->where('konsumens.active', 0);
             }
+        }
 
-            if ($kodeTokoId) {
-                $query->where('konsumens.kode_toko_id', $kodeTokoId);
-            }
+        if ($kodeTokoId) {
+            $query->where('konsumens.kode_toko_id', $kodeTokoId);
+        }
 
-            if ($salesId) {
-                $query->where('konsumens.karyawan_id', $salesId);
-            }
+        if ($salesId) {
+            $query->where('konsumens.karyawan_id', $salesId);
+        }
 
-                if ($kabupatenKotaId) {
-                    $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
-                }
+        if ($kabupatenKotaId) {
+            $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
+        }
 
-                if ($kecamatanId) {
-                    $query->where('konsumens.kecamatan_id', $kecamatanId);
-                }
+        if ($kecamatanId) {
+            $query->where('konsumens.kecamatan_id', $kecamatanId);
+        }
 
-            if ($statusOmset) {
+        if ($statusOmset) {
 
             // Tentukan kolom mana saja yang akan dijumlahkan berdasarkan filter bulan
-            if (!empty($bulan)) {
+            if (! empty($bulan)) {
                 $sumParts = [];
                 foreach ($bulan as $b) {
                     // intval() memastikan aman dari SQL Injection
-                    $sumParts[] = "COALESCE(transaksi.bulan_" . intval($b) . ", 0)";
+                    $sumParts[] = 'COALESCE(transaksi.bulan_'.intval($b).', 0)';
                 }
                 // Menghasilkan string misal: "COALESCE(transaksi.bulan_1, 0) + COALESCE(transaksi.bulan_2, 0)"
                 $sumExpression = implode(' + ', $sumParts);
-                } else {
-                    // Jika tidak ada filter bulan, gunakan total setahun bawaan
-                    $sumExpression = "COALESCE(transaksi.total_setahun, 0)";
-                }
-
-                if ($statusOmset == 'ada') {
-                    // Filter Omset > 0 menggunakan Query Raw dinamis
-                    $query->whereRaw("($sumExpression) > 0");
-                } elseif ($statusOmset == 'nol') {
-                    // Filter Omset = 0 atau NULL (tidak ada transaksi)
-                    $query->where(function($q) use ($sumExpression) {
-                        $q->whereNull('transaksi.total_setahun')
-                        ->orWhereRaw("($sumExpression) = 0");
-                    });
-                }
+            } else {
+                // Jika tidak ada filter bulan, gunakan total setahun bawaan
+                $sumExpression = 'COALESCE(transaksi.total_setahun, 0)';
             }
+
+            if ($statusOmset == 'ada') {
+                // Filter Omset > 0 menggunakan Query Raw dinamis
+                $query->whereRaw("($sumExpression) > 0");
+            } elseif ($statusOmset == 'nol') {
+                // Filter Omset = 0 atau NULL (tidak ada transaksi)
+                $query->where(function ($q) use ($sumExpression) {
+                    $q->whereNull('transaksi.total_setahun')
+                        ->orWhereRaw("($sumExpression) = 0");
+                });
+            }
+        }
 
         return $query;
     }
@@ -1414,7 +1402,7 @@ class InvoiceJual extends Model
         $selectsRaw = [];
         // Looping 5 kolom pasti
         for ($i = 0; $i < 5; $i++) {
-            $colName = "tahun_" . ($i + 1);
+            $colName = 'tahun_'.($i + 1);
             if ($paddedYears[$i] !== null) {
                 $y = $paddedYears[$i];
                 $selectsRaw[] = "COALESCE(SUM(CASE WHEN YEAR(i.created_at) = $y THEN d.total ELSE 0 END), 0) as $colName";
@@ -1423,7 +1411,7 @@ class InvoiceJual extends Model
                 $selectsRaw[] = "0 as $colName";
             }
         }
-        $selectsRaw[] = "COALESCE(SUM(d.total), 0) as total_semua";
+        $selectsRaw[] = 'COALESCE(SUM(d.total), 0) as total_semua';
 
         $subquery->addSelect(DB::raw(implode(',', $selectsRaw)));
         $subquery->groupBy('i.konsumen_id');
@@ -1434,7 +1422,7 @@ class InvoiceJual extends Model
                 'konsumens.id', 'konsumens.kode', 'konsumens.nama', 'konsumens.kode_toko_id',
                 'konsumens.kabupaten_kota_id', 'konsumens.kecamatan_id', 'konsumens.karyawan_id', 'konsumens.active',
                 'transaksi.tahun_1', 'transaksi.tahun_2', 'transaksi.tahun_3',
-                'transaksi.tahun_4', 'transaksi.tahun_5', 'transaksi.total_semua'
+                'transaksi.tahun_4', 'transaksi.tahun_5', 'transaksi.total_semua',
             ])
             ->with('kode_toko', 'karyawan', 'kabupaten_kota', 'kecamatan')
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
@@ -1445,19 +1433,27 @@ class InvoiceJual extends Model
         if ($statusKonsumen) {
             $query->where('konsumens.active', $statusKonsumen == 'aktif' ? 1 : 0);
         }
-        if ($kodeTokoId) $query->where('konsumens.kode_toko_id', $kodeTokoId);
-        if ($salesId) $query->where('konsumens.karyawan_id', $salesId);
-        if ($kabupatenKotaId) $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
-        if ($kecamatanId) $query->where('konsumens.kecamatan_id', $kecamatanId);
+        if ($kodeTokoId) {
+            $query->where('konsumens.kode_toko_id', $kodeTokoId);
+        }
+        if ($salesId) {
+            $query->where('konsumens.karyawan_id', $salesId);
+        }
+        if ($kabupatenKotaId) {
+            $query->where('konsumens.kabupaten_kota_id', $kabupatenKotaId);
+        }
+        if ($kecamatanId) {
+            $query->where('konsumens.kecamatan_id', $kecamatanId);
+        }
 
         if ($statusOmset) {
-            $sumExpression = "COALESCE(transaksi.total_semua, 0)";
+            $sumExpression = 'COALESCE(transaksi.total_semua, 0)';
             if ($statusOmset == 'ada') {
                 $query->whereRaw("($sumExpression) > 0");
             } elseif ($statusOmset == 'nol') {
-                $query->where(function($q) use ($sumExpression) {
+                $query->where(function ($q) use ($sumExpression) {
                     $q->whereNull('transaksi.total_semua')
-                    ->orWhereRaw("($sumExpression) = 0");
+                        ->orWhereRaw("($sumExpression) = 0");
                 });
             }
         }
@@ -1494,7 +1490,7 @@ class InvoiceJual extends Model
                 'transaksi.bulan_4', 'transaksi.bulan_5', 'transaksi.bulan_6',
                 'transaksi.bulan_7', 'transaksi.bulan_8', 'transaksi.bulan_9',
                 'transaksi.bulan_10', 'transaksi.bulan_11', 'transaksi.bulan_12',
-                'transaksi.total_setahun'
+                'transaksi.total_setahun',
             ])
             ->with(['unit', 'kategori', 'barang_nama', 'satuan']) // <- Sesuai relasi yang Anda modifikasi
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
@@ -1511,22 +1507,22 @@ class InvoiceJual extends Model
 
         // --- FILTER STATUS OMSET & BULAN ---
         if ($statusOmset) {
-            if (!empty($bulan)) {
+            if (! empty($bulan)) {
                 $sumParts = [];
                 foreach ($bulan as $b) {
-                    $sumParts[] = "COALESCE(transaksi.bulan_" . intval($b) . ", 0)";
+                    $sumParts[] = 'COALESCE(transaksi.bulan_'.intval($b).', 0)';
                 }
                 $sumExpression = implode(' + ', $sumParts);
             } else {
-                $sumExpression = "COALESCE(transaksi.total_setahun, 0)";
+                $sumExpression = 'COALESCE(transaksi.total_setahun, 0)';
             }
 
             if ($statusOmset == 'ada') {
                 $query->whereRaw("($sumExpression) > 0");
             } elseif ($statusOmset == 'nol') {
-                $query->where(function($q) use ($sumExpression) {
+                $query->where(function ($q) use ($sumExpression) {
                     $q->whereNull('transaksi.total_setahun')
-                    ->orWhereRaw("($sumExpression) = 0");
+                        ->orWhereRaw("($sumExpression) = 0");
                 });
             }
         }
@@ -1554,7 +1550,7 @@ class InvoiceJual extends Model
 
         $selectsRaw = [];
         for ($i = 0; $i < 5; $i++) {
-            $colName = "tahun_" . ($i + 1);
+            $colName = 'tahun_'.($i + 1);
             if ($paddedYears[$i] !== null) {
                 $y = $paddedYears[$i];
                 $selectsRaw[] = "COALESCE(SUM(CASE WHEN YEAR(i.created_at) = $y THEN $kolomHitung ELSE 0 END), 0) as $colName";
@@ -1573,7 +1569,7 @@ class InvoiceJual extends Model
                 'barangs.id', 'barangs.kode', 'barangs.merk', 'barangs.barang_unit_id',
                 'barangs.barang_kategori_id', 'barangs.barang_nama_id', 'barangs.satuan_id', 'barangs.is_active',
                 'transaksi.tahun_1', 'transaksi.tahun_2', 'transaksi.tahun_3',
-                'transaksi.tahun_4', 'transaksi.tahun_5', 'transaksi.total_semua'
+                'transaksi.tahun_4', 'transaksi.tahun_5', 'transaksi.total_semua',
             ])
             ->with(['unit', 'kategori', 'barang_nama', 'satuan'])
             ->leftJoinSub($subquery, 'transaksi', function ($join) {
@@ -1590,14 +1586,14 @@ class InvoiceJual extends Model
 
         // --- FILTER STATUS OMSET ---
         if ($statusOmset) {
-            $sumExpression = "COALESCE(transaksi.total_semua, 0)";
+            $sumExpression = 'COALESCE(transaksi.total_semua, 0)';
 
             if ($statusOmset == 'ada') {
                 $query->whereRaw("($sumExpression) > 0");
             } elseif ($statusOmset == 'nol') {
-                $query->where(function($q) use ($sumExpression) {
+                $query->where(function ($q) use ($sumExpression) {
                     $q->whereNull('transaksi.total_semua')
-                      ->orWhereRaw("($sumExpression) = 0");
+                        ->orWhereRaw("($sumExpression) = 0");
                 });
             }
         }
