@@ -13,7 +13,7 @@ class RekapGajiDetail extends Model
 
     protected function casts(): array
     {
-        return ['rincian_komisi' => 'array'];
+        return ['rincian_komisi' => 'array', 'rincian_absensi' => 'array'];
     }
 
     public function rekap_gaji()

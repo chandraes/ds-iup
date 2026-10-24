@@ -14,12 +14,15 @@ use App\Models\User;
 use App\Services\EmployeePayrollService;
 use App\Services\KasbonMessage;
 use App\Services\KasbonService;
+use App\Services\PayrollAttendanceService;
 use Carbon\Carbon;
 use Database\Factories\KaryawanFactory;
 use Database\Factories\KasbonFactory;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -75,6 +78,8 @@ class KasbonTest extends TestCase
         (require database_path('migrations/2026_10_24_100217_enforce_unique_payroll_period_on_rekap_gajis_table.php'))->up();
         (require database_path('migrations/2026_10_24_151732_add_sales_components_and_period_dates_to_payroll_tables.php'))->up();
         (require database_path('migrations/2026_10_24_153457_add_commission_calculation_snapshot_to_rekap_gaji_details_table.php'))->up();
+        (require database_path('migrations/2026_10_24_214601_add_attendance_calculations_to_payroll_tables.php'))->up();
+        (require database_path('migrations/2026_10_16_202122_create_attendance_employee_syncs_table.php'))->up();
         Schema::create('invoice_juals', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('karyawan_id')->nullable();
@@ -599,6 +604,215 @@ class KasbonTest extends TestCase
         $this->getJson(route('rekap.gaji.komisi', ['detail' => $detail->id]))->assertForbidden();
         $this->app['auth']->forgetGuards();
         $this->getJson($url.'?karyawan_id='.$sales->id.'&periode=2026-10')->assertUnauthorized();
+    }
+
+    private function attendanceSnapshot(array $employees, array $overrides = [], bool $ready = true): array
+    {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
+        config(['attendance.enabled' => true, 'attendance.url' => 'https://attendance.test', 'attendance.token' => str_repeat('t', 64), 'attendance.send_immediately' => false]);
+        $sources = array_map(fn (Karyawan $employee): string => (string) $employee->id, $employees);
+        sort($sources, SORT_STRING);
+        $people = [];
+        foreach ($employees as $employee) {
+            $days = [];
+            for ($date = Carbon::parse('2026-09-26'); $date->lte(Carbon::parse('2026-10-25')); $date->addDay()) {
+                $key = $date->toDateString();
+                $days[] = array_replace(['date' => $key, 'status' => 'off', 'schedule_mode' => 'weekly', 'schedule_name' => null, 'scheduled_minutes' => 0, 'break_minutes' => 0, 'late_minutes' => 0, 'early_minutes' => 0, 'check_in_late_minutes' => 0, 'check_in_at' => null, 'check_out_at' => null], $overrides[$employee->id][$key] ?? []);
+            }
+            $people[] = ['source_employee_id' => (string) $employee->id, 'attendance_required' => true, 'days' => $days];
+        }
+        $snapshot = ['schema_version' => 1, 'monitoring_version' => 1, 'fuel_allowance_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => $sources, 'employees' => $people, 'issues' => $ready ? [] : ['Ada izin menunggu persetujuan.'], 'ready' => $ready, 'as_of' => now()->toIso8601String()];
+        $snapshot['revision'] = hash('sha256', json_encode($snapshot));
+
+        return $snapshot;
+    }
+
+    private function fakeAttendance(array $snapshot): void
+    {
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://attendance.test/api/v1/integration/payroll-snapshot' => fn ($request) => Http::response(['data' => isset($request['request_id']) ? $snapshot + ['lock_request_id' => $request['request_id']] : $snapshot])]);
+    }
+
+    private function attendanceDay(string $status, int $late = 0, int $early = 0): array
+    {
+        return ['status' => $status, 'scheduled_minutes' => 540, 'break_minutes' => 60, 'late_minutes' => $status === 'present' ? $late : 0, 'early_minutes' => $early, 'check_in_late_minutes' => $late,
+            'check_in_at' => in_array($status, ['present', 'half_day', 'in_progress'], true) ? '2026-10-01T09:00:00+07:00' : null];
+    }
+
+    public function test_attendance_calculates_non_sales_and_daily_sales_bbm_without_double_deductions(): void
+    {
+        $staff = KaryawanFactory::new()->create();
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'gaji_pokok' => 0, 'tunjangan_jabatan' => 0, 'tunjangan_keluarga' => 0, 'tunjangan_bbm' => 30000, 'persen_komisi' => 0]);
+        $snapshot = $this->attendanceSnapshot([$staff, $sales], [
+            $staff->id => ['2026-10-01' => $this->attendanceDay('present', 48), '2026-10-02' => $this->attendanceDay('half_day', 96), '2026-10-03' => $this->attendanceDay('absent')],
+            $sales->id => ['2026-10-01' => $this->attendanceDay('present', 48, 120), '2026-10-02' => $this->attendanceDay('half_day', 96), '2026-10-03' => $this->attendanceDay('absent'), '2026-10-04' => $this->attendanceDay('excused'), '2026-10-05' => ['status' => 'holiday'], '2026-10-07' => $this->attendanceDay('present', 600)],
+        ]);
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $payroll = app(EmployeePayrollService::class);
+        $rows = $payroll->previewRows($payroll->employees(), Carbon::parse('2026-10-01'))->keyBy('karyawan_id');
+        $this->assertSame(256000, $rows[$staff->id]['potongan_absensi']);
+        $this->assertSame(0, $rows[$staff->id]['tunjangan_bbm']);
+        $this->assertSame(0, $rows[$sales->id]['potongan_absensi']);
+        $this->assertSame(51000, $rows[$sales->id]['tunjangan_bbm']);
+        $this->assertSame(51000, $rows[$sales->id]['sisa_gaji_dibayar']);
+        $detail = $rows[$sales->id]['rincian_absensi'];
+        $this->assertSame(90000, $detail['bbm_gross']);
+        $this->assertSame(39000, $detail['bbm_reduction']);
+        $this->assertSame(24000, collect($detail['days'])->firstWhere('date', '2026-10-02')['bbm_received']);
+        $this->get(route('billing.form-cost-operational.gaji'))->assertOk()->assertSee('Lihat rincian BBM '.$sales->nama)->assertSee('Lihat rincian potongan absensi '.$staff->nama);
+        $this->getJson(route('billing.form-cost-operational.gaji.absensi.detail', ['karyawan_id' => $sales->id, 'periode' => '2026-10']))->assertOk()->assertJsonPath('title', 'Tunjangan BBM '.$sales->nama);
+        $this->fund();
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10', 'attendance_revision' => $snapshot['revision']])->assertSessionHasNoErrors();
+        $record = RekapGajiDetail::where('karyawan_id', $sales->id)->sole();
+        $this->assertEquals(51000, $record->tunjangan_bbm);
+        $this->assertSame(30000, $record->rincian_absensi['daily_rate']);
+        $this->assertNotNull(DB::table('payroll_attendance_periods')->sole()->sealed_at);
+        $sales->update(['tunjangan_bbm' => 90000, 'status' => 0]);
+        config(['attendance.enabled' => false]);
+        $this->getJson(route('rekap.gaji.absensi', ['detail' => $record->id]))->assertOk()->assertSee('30.000');
+        $this->get(route('rekap.gaji.detail', ['bulan' => 10, 'tahun' => 2026]))->assertOk()->assertSee(route('rekap.gaji.absensi', ['detail' => $record->id]));
+        $this->assertSame(30000, $record->fresh()->rincian_absensi['daily_rate']);
+    }
+
+    public function test_non_sales_cap_and_sales_tariff_change_are_calculated_before_payroll(): void
+    {
+        $staff = KaryawanFactory::new()->create();
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'tunjangan_bbm' => 30000]);
+        $days = [];
+        for ($day = 1; $day <= 7; $day++) {
+            $days[sprintf('2026-10-%02d', $day)] = $this->attendanceDay('absent');
+        }
+        $snapshot = $this->attendanceSnapshot([$staff, $sales], [$staff->id => $days, $sales->id => ['2026-10-01' => $this->attendanceDay('present', 48)]]);
+        $this->fakeAttendance($snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $service->refresh(Carbon::parse('2026-10-01'), $snapshot['source_employee_ids']);
+        $detail = $service->calculate($staff->load('jabatan'), Carbon::parse('2026-10-01'));
+        $this->assertSame(1120000, $detail['rincian_absensi']['raw']);
+        $this->assertSame(1000000, $detail['potongan_absensi']);
+        $sales->update(['tunjangan_bbm' => 40000]);
+        $this->assertSame(36000, $service->calculate($sales->load('jabatan'), Carbon::parse('2026-10-01'))['tunjangan_bbm']);
+        config(['attendance.enabled' => false]);
+        $this->assertSame(0, $service->calculate($staff, Carbon::parse('2026-10-01'))['potongan_absensi']);
+        $this->assertSame(0, $service->calculate($sales, Carbon::parse('2026-10-01'))['tunjangan_bbm']);
+    }
+
+    public function test_incomplete_or_changed_snapshot_blocks_payroll_without_cash_or_debt_changes(): void
+    {
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee], [], false);
+        $this->fakeAttendance($snapshot);
+        $this->fund();
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $this->get(route('billing.form-cost-operational.gaji'))->assertOk()->assertSee('Penggajian diblokir');
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10', 'attendance_revision' => $snapshot['revision']])->assertSessionHasErrors('attendance');
+        $this->assertSame(0, RekapGaji::count());
+        $this->assertSame(1, KasBesar::count());
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10', 'attendance_revision' => str_repeat('a', 64)])->assertSessionHasErrors('attendance');
+        $this->assertNull(DB::table('payroll_attendance_periods')->sole()->lock_attempted_at);
+    }
+
+    public function test_lock_timeout_can_retry_same_request_without_duplicate_payroll(): void
+    {
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $this->fund();
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $requestId = DB::table('payroll_attendance_periods')->sole()->request_id;
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://attendance.test/api/v1/integration/payroll-snapshot' => Http::failedConnection()]);
+        $data = ['periode' => '2026-10', 'attendance_revision' => $snapshot['revision']];
+        $this->post(route('billing.form-cost-operational.gaji.store'), $data)->assertSessionHasErrors('attendance');
+        $this->assertNotNull(DB::table('payroll_attendance_periods')->sole()->lock_attempted_at);
+        $this->assertSame(0, RekapGaji::count());
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasErrors('attendance');
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.store'), $data)->assertSessionHasNoErrors();
+        Http::assertSent(fn ($request): bool => $request['request_id'] === $requestId);
+        $this->assertSame(1, RekapGaji::count());
+        $this->assertSame(2, KasBesar::count());
+        $this->post(route('billing.form-cost-operational.gaji.store'), $data)->assertSessionHasErrors('total');
+        $this->assertSame(1, RekapGaji::count());
+    }
+
+    public function test_remote_revision_conflict_and_malformed_payload_are_rejected(): void
+    {
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $this->fund();
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://attendance.test/api/v1/integration/payroll-snapshot' => Http::response([], 409)]);
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10', 'attendance_revision' => $snapshot['revision']])->assertSessionHasErrors('attendance');
+        $this->assertNull(DB::table('payroll_attendance_periods')->sole()->lock_attempted_at);
+        $this->assertSame(0, RekapGaji::count());
+        unset($snapshot['fuel_allowance_version']);
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasErrors('attendance');
+    }
+
+    public function test_disabled_attendance_does_not_contact_server_or_pay_configured_fuel_allowance(): void
+    {
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'tunjangan_bbm' => 30000]);
+        Http::preventStrayRequests();
+        $this->fund();
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $row = RekapGajiDetail::sole();
+        $this->assertEquals(0, $row->potongan_absensi);
+        $this->assertEquals(0, $row->tunjangan_bbm);
+        $this->assertNull($row->rincian_absensi);
+        Http::assertNothingSent();
+    }
+
+    public function test_snapshot_employee_mismatch_and_reader_mutations_are_rejected(): void
+    {
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $snapshot['employees'][0]['source_employee_id'] = '999999';
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasErrors('attendance');
+        $this->assertSame(0, DB::table('payroll_attendance_periods')->count());
+        $reader = new User(['name' => 'Reader', 'role' => 'sales']);
+        $reader->id = 998;
+        $this->actingAs($reader)->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertForbidden();
+        $this->getJson(route('billing.form-cost-operational.gaji.absensi.detail', ['karyawan_id' => $employee->id, 'periode' => '2026-10']))->assertForbidden();
+    }
+
+    public function test_local_failure_after_remote_lock_keeps_request_for_safe_retry(): void
+    {
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $this->fund();
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $requestId = DB::table('payroll_attendance_periods')->sole()->request_id;
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://attendance.test/api/v1/integration/payroll-snapshot' => function ($request) use ($snapshot) {
+            DB::table('kas_besars')->update(['saldo' => 0]);
+
+            return Http::response(['data' => $snapshot + ['lock_request_id' => $request['request_id']]]);
+        }]);
+        $data = ['periode' => '2026-10', 'attendance_revision' => $snapshot['revision']];
+        $this->post(route('billing.form-cost-operational.gaji.store'), $data)->assertSessionHasErrors('total');
+        $this->assertSame(0, RekapGaji::count());
+        $this->assertSame(0, RekapGajiDetail::count());
+        $this->assertNotNull(DB::table('payroll_attendance_periods')->sole()->remote_locked_at);
+        $this->assertNull(DB::table('payroll_attendance_periods')->sole()->sealed_at);
+        $this->fund();
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.store'), $data)->assertSessionHasNoErrors();
+        Http::assertSent(fn ($request): bool => $request['request_id'] === $requestId);
+        $this->assertSame(1, RekapGaji::count());
+        $this->assertSame(1, RekapGajiDetail::count());
     }
 
     protected function tearDown(): void

@@ -14,13 +14,13 @@ use Illuminate\Validation\ValidationException;
 
 class EmployeePayrollService
 {
-    public function __construct(private KasbonService $kasbon) {}
+    public function __construct(private KasbonService $kasbon, private PayrollAttendanceService $attendance) {}
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, Karyawan> */
     public function employees(bool $lock = false): \Illuminate\Database\Eloquent\Collection
     {
         $query = Karyawan::select(['id', 'jabatan_id', 'nomor', 'nama', 'gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga',
-            'apa_bpjs_tk', 'apa_bpjs_kes', 'bank', 'no_rek', 'nama_rek', 'persen_komisi'])
+            'apa_bpjs_tk', 'apa_bpjs_kes', 'bank', 'no_rek', 'nama_rek', 'persen_komisi', 'tunjangan_bbm'])
             ->with('jabatan:id,nama')->where('status', 1)->orderBy('id');
         if ($lock) {
             $query->lockForUpdate();
@@ -96,7 +96,7 @@ class EmployeePayrollService
         $payments = $this->kasbon->paymentsForEmployees($employees->pluck('id')->all(), $period);
 
         return $this->sortRows($employees->map(fn (Karyawan $employee): array => array_merge([
-            'nik' => ($employee->kode ?? '').sprintf('%03d', $employee->nomor), 'nama' => $employee->nama,
+            'karyawan_id' => $employee->id, 'nik' => ($employee->kode ?? '').sprintf('%03d', $employee->nomor), 'nama' => $employee->nama,
             'jabatan' => $employee->jabatan?->nama ?? '—', 'gaji_pokok' => $employee->gaji_pokok,
             'tunjangan_jabatan' => $employee->tunjangan_jabatan, 'tunjangan_keluarga' => $employee->tunjangan_keluarga,
         ], $this->amounts($employee, $period, commission: $commissions[$employee->id] ?? [], payments: $payments[$employee->id] ?? []))));
@@ -107,24 +107,44 @@ class EmployeePayrollService
     {
         $commission ??= $this->commissions(collect([$employee]), $period)[$employee->id] ?? [];
         $commissionAmount = $commission['komisi'] ?? 0;
+        $attendance = $this->attendance->calculate($employee, $period);
         $base = (int) $employee->gaji_pokok;
         $tk = $employee->apa_bpjs_tk ? (int) round($base * 0.0489) : 0;
         $kes = $employee->apa_bpjs_kes ? (int) round($base * 0.04) : 0;
         $potTk = $employee->apa_bpjs_tk ? (int) round($base * 0.02) : 0;
         $potKes = $employee->apa_bpjs_kes ? (int) round($base * 0.01) : 0;
-        $income = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga + $commissionAmount;
+        $income = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga + $commissionAmount + $attendance['tunjangan_bbm'];
         $net = $income - $potTk - $potKes;
         $payments ??= $this->kasbon->payments($employee, $period, $lock);
         $deduction = array_sum(array_column($payments, 'amount'));
 
         return array_merge(['komisi' => 0, 'omset_komisi' => null, 'persen_komisi' => null, 'rincian_komisi' => null, 'tunjangan_bbm' => 0, 'bpjs_tk' => $tk, 'bpjs_k' => $kes, 'potongan_bpjs_tk' => $potTk, 'potongan_bpjs_kesehatan' => $potKes,
             'pendapatan_kotor' => $income + $tk + $kes, 'pendapatan_bersih' => $net,
-            'potongan_kasbon' => $deduction, 'sisa_gaji_dibayar' => $net - $deduction], $commission);
+            'potongan_kasbon' => $deduction, 'sisa_gaji_dibayar' => $net - $deduction - $attendance['potongan_absensi']], $commission, $attendance);
     }
 
-    public function store(?string $expectedPeriod = null): RekapGaji
+    public function store(?string $expectedPeriod = null, ?string $attendanceRevision = null): RekapGaji
     {
-        return DB::transaction(function () use ($expectedPeriod): RekapGaji {
+        $this->attendance->clear();
+        $attendancePeriod = null;
+        if ($this->attendance->enabled()) {
+            $employees = $this->employees();
+            $period = $this->nextPeriod();
+            if (! $period || $expectedPeriod !== $period->format('Y-m') || $employees->isEmpty()) {
+                throw ValidationException::withMessages(['total' => 'Periode/pegawai gaji berubah. Muat ulang form.']);
+            }
+            $this->attendance->assertReady($period, $this->attendance->sources($employees), $attendanceRevision);
+            $rows = $this->previewRows($employees, $period);
+            if ($rows->contains(fn (array $row): bool => $row['sisa_gaji_dibayar'] < 0)) {
+                throw ValidationException::withMessages(['total' => 'Potongan melebihi gaji bersih. Periksa kembali rincian pegawai.']);
+            }
+            if ((KasBesar::where('ppn_kas', 1)->latest('id')->value('saldo') ?? 0) < $rows->sum('sisa_gaji_dibayar')) {
+                throw ValidationException::withMessages(['total' => 'Saldo Kas Besar PPN tidak mencukupi.']);
+            }
+            $attendancePeriod = $this->attendance->lock($period, $this->attendance->sources($employees), $attendanceRevision);
+        }
+
+        return DB::transaction(function () use ($expectedPeriod, $attendanceRevision, $attendancePeriod): RekapGaji {
             $employees = $this->employees(true);
             if ($employees->isEmpty()) {
                 throw ValidationException::withMessages(['total' => 'Tidak ada pegawai aktif.']);
@@ -132,6 +152,11 @@ class EmployeePayrollService
             $period = $this->nextPeriod(true);
             if (! $period || ($expectedPeriod !== null && $expectedPeriod !== $period->format('Y-m'))) {
                 throw ValidationException::withMessages(['total' => 'Periode gaji sudah diproses atau berubah. Muat ulang form sebelum melanjutkan.']);
+            }
+            if ($attendancePeriod) {
+                DB::table('payroll_attendance_periods')->where('id', $attendancePeriod->id)->lockForUpdate()->first();
+                $this->attendance->clear();
+                $this->attendance->assertReady($period, $this->attendance->sources($employees), $attendanceRevision);
             }
             $cash = KasBesar::where('ppn_kas', 1)->orderByDesc('id')->lockForUpdate()->first();
             $rekap = RekapGaji::create(['bulan' => $period->month, 'tahun' => $period->year,
@@ -148,7 +173,7 @@ class EmployeePayrollService
                     throw ValidationException::withMessages(['total' => 'Potongan melebihi gaji bersih '.$employee->nama.'.']);
                 }
                 RekapGajiDetail::create(array_merge($amounts, ['rekap_gaji_id' => $rekap->id,
-                    'nik' => ($employee->kode ?? '').sprintf('%03d', $employee->nomor), 'nama' => $employee->nama,
+                    'karyawan_id' => $employee->id, 'nik' => ($employee->kode ?? '').sprintf('%03d', $employee->nomor), 'nama' => $employee->nama,
                     'jabatan' => $employee->jabatan?->nama ?? '—', 'gaji_pokok' => $employee->gaji_pokok,
                     'tunjangan_jabatan' => $employee->tunjangan_jabatan, 'tunjangan_keluarga' => $employee->tunjangan_keluarga,
                     'bank' => $employee->bank, 'no_rek' => $employee->no_rek, 'nama_rek' => $employee->nama_rek]));
@@ -166,6 +191,8 @@ class EmployeePayrollService
             KasBesar::create(['ppn_kas' => 1, 'jenis' => 0, 'uraian' => $rekap->uraian, 'nominal' => $total,
                 'saldo' => $cash->saldo - $total, 'modal_investor_terakhir' => $cash->modal_investor_terakhir,
                 'nama_rek' => 'Masing-masing karyawan', 'bank' => '-', 'no_rek' => '-']);
+
+            $this->attendance->seal($attendancePeriod, $rekap->id);
 
             return $rekap;
         }, 3);

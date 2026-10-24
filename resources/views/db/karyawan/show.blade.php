@@ -28,7 +28,7 @@
             'Rekening bank' => ['bank' => 'Nama bank', 'no_rek' => 'Nomor rekening', 'nama_rek' => 'Nama pemilik rekening'],
         ];
         if ($employee->jabatan?->isSales()) {
-            $sections['Gaji & tunjangan'] += ['persen_komisi' => 'Persentase komisi', 'tunjangan_bbm' => 'Tunjangan BBM'];
+            $sections['Gaji & tunjangan'] += ['persen_komisi' => 'Persentase komisi', 'tunjangan_bbm' => 'Tarif BBM per hari kerja'];
         }
     @endphp
     <div class="row g-4">

@@ -26,7 +26,7 @@ $sections = [
 <h6 class="fw-bold">Kompensasi Sales</h6><p class="small text-muted">Wajib diisi untuk pegawai dengan jabatan Sales.</p>
 <div class="row g-3">
 <div class="col-md-6"><label class="form-label fw-semibold" for="persen_komisi">Persentase komisi (%)</label><input class="form-control" type="number" min="0" max="100" step="0.01" name="persen_komisi" id="persen_komisi" value="{{ old('persen_komisi', $employee->persen_komisi) }}" @required($salesSelected) @disabled(!$salesSelected)>@error('persen_komisi')<div class="text-danger small">{{ $message }}</div>@enderror</div>
-<div class="col-md-6"><label class="form-label fw-semibold" for="tunjangan_bbm">Tunjangan BBM (Rp)</label><input class="form-control employee-money" type="text" inputmode="numeric" name="tunjangan_bbm" id="tunjangan_bbm" value="{{ old('tunjangan_bbm', $employee->tunjangan_bbm) }}" @required($salesSelected) @disabled(!$salesSelected)>@error('tunjangan_bbm')<div class="text-danger small">{{ $message }}</div>@enderror</div>
+<div class="col-md-6"><label class="form-label fw-semibold" for="tunjangan_bbm">Tarif BBM per hari kerja (Rp)</label><input class="form-control employee-money" type="text" inputmode="numeric" name="tunjangan_bbm" id="tunjangan_bbm" value="{{ old('tunjangan_bbm', $employee->tunjangan_bbm) }}" @required($salesSelected) @disabled(!$salesSelected)>@error('tunjangan_bbm')<div class="text-danger small">{{ $message }}</div>@enderror</div>
 </div></div>
 @endif
 </div></section>@endforeach

@@ -49,6 +49,7 @@ use App\Models\UangGantung;
 use App\Models\User;
 use App\Models\Wilayah;
 use App\Services\EmployeePayrollService;
+use App\Services\PayrollAttendanceService;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -244,6 +245,9 @@ class BillingController extends Controller
         if (! $period) {
             return redirect()->route('billing')->with('error', 'Seluruh periode gaji sampai bulan berjalan sudah dibuat.');
         }
+        $attendance = app(PayrollAttendanceService::class);
+        $attendancePeriod = $attendance->enabled() ? $attendance->period($period) : null;
+        $attendanceSnapshot = $attendance->payload($attendancePeriod);
         $month = $period->copy()->locale('id')->monthName;
         $data = $payroll->employees();
 
@@ -256,11 +260,16 @@ class BillingController extends Controller
             'month' => $month,
             'period' => $period,
             'payroll' => $payroll,
+            'attendanceEnabled' => $attendance->enabled(),
+            'attendancePeriod' => $attendancePeriod,
+            'attendanceSnapshot' => $attendanceSnapshot,
+            'attendanceReady' => ! $attendance->enabled() || (($attendanceSnapshot['ready'] ?? false) && ($attendanceSnapshot['source_employee_ids'] ?? []) === $attendance->sources($data)),
             'rows' => $payroll->previewRows($data, $period)->map(function (array $row) use ($period): array {
                 $row['commission_url'] = $row['rincian_komisi'] ? route('billing.form-cost-operational.gaji.komisi', [
                     'karyawan_id' => $row['rincian_komisi']['karyawan_id'], 'periode' => $period->format('Y-m'),
                 ]) : null;
-                unset($row['rincian_komisi']);
+                $row['attendance_url'] = $row['rincian_absensi'] ? route('billing.form-cost-operational.gaji.absensi.detail', ['karyawan_id' => $row['karyawan_id'], 'periode' => $period->format('Y-m')]) : null;
+                unset($row['rincian_komisi'], $row['rincian_absensi']);
 
                 return $row;
             }),
@@ -269,8 +278,8 @@ class BillingController extends Controller
 
     public function gaji_store(Request $request, EmployeePayrollService $payroll): RedirectResponse
     {
-        $data = $request->validate(['periode' => 'required|date_format:Y-m']);
-        $rekap = $payroll->store($data['periode']);
+        $data = $request->validate(['periode' => 'required|date_format:Y-m', 'attendance_revision' => 'nullable|string|size:64']);
+        $rekap = $payroll->store($data['periode'], $data['attendance_revision'] ?? null);
         try {
             $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
             if ($group) {

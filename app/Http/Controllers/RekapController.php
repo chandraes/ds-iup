@@ -464,7 +464,7 @@ class RekapController extends Controller
         $data = RekapGaji::with(['details' => fn (HasMany $query) => $query->select([
             'id', 'rekap_gaji_id', 'nik', 'nama', 'jabatan', 'gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga',
             'bpjs_tk', 'bpjs_k', 'potongan_bpjs_tk', 'potongan_bpjs_kesehatan', 'pendapatan_kotor', 'pendapatan_bersih',
-            'potongan_kasbon', 'sisa_gaji_dibayar', 'komisi', 'tunjangan_bbm', 'omset_komisi', 'persen_komisi', 'no_rek', 'nama_rek', 'bank',
+            'potongan_kasbon', 'potongan_absensi', 'karyawan_id', 'attendance_revision', 'sisa_gaji_dibayar', 'komisi', 'tunjangan_bbm', 'omset_komisi', 'persen_komisi', 'no_rek', 'nama_rek', 'bank',
         ])])->where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
 
         if (! $data) {
@@ -475,6 +475,7 @@ class RekapController extends Controller
         $tahun = $v['tahun'];
         $rows = app(EmployeePayrollService::class)->sortRows($data->details->map(function (RekapGajiDetail $detail): array {
             $row = $detail->toArray();
+            $row['attendance_url'] = $detail->attendance_revision !== null ? route('rekap.gaji.absensi', ['detail' => $detail->id]) : null;
             $row['sisa_gaji_dibayar'] = $detail->sisa_gaji_dibayar ?? $detail->pendapatan_bersih;
             $row['commission_url'] = $detail->persen_komisi !== null ? route('rekap.gaji.komisi', ['detail' => $detail->id]) : null;
 

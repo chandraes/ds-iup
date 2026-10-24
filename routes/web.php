@@ -22,6 +22,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KasbonController;
 use App\Http\Controllers\LegalitasController;
 use App\Http\Controllers\PajakController;
+use App\Http\Controllers\PayrollAttendanceController;
 use App\Http\Controllers\PayrollCommissionController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\PerusahaanController;
@@ -615,6 +616,7 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::prefix('gaji')->group(function () {
+                Route::get('/absensi/{detail}', [PayrollAttendanceController::class, 'stored'])->name('rekap.gaji.absensi');
                 Route::get('/komisi/{detail}', [PayrollCommissionController::class, 'stored'])->name('rekap.gaji.komisi');
                 Route::view('/', 'rekap.gaji.index')->name('rekap.gaji');
                 Route::get('/detail', [RekapController::class, 'gaji_detail'])->name('rekap.gaji.detail');
@@ -996,6 +998,8 @@ Route::group(['middleware' => ['auth']], function () {
                 });
 
                 Route::prefix('form-gaji')->group(function () {
+                    Route::post('/absensi/perbarui', [PayrollAttendanceController::class, 'refresh'])->middleware('role:su,admin')->name('billing.form-cost-operational.gaji.absensi.refresh');
+                    Route::get('/absensi', [PayrollAttendanceController::class, 'preview'])->name('billing.form-cost-operational.gaji.absensi.detail');
                     Route::get('/komisi', [PayrollCommissionController::class, 'preview'])->name('billing.form-cost-operational.gaji.komisi');
                     Route::get('/', [BillingController::class, 'gaji'])->name('billing.form-cost-operational.gaji');
                     Route::post('/store', [BillingController::class, 'gaji_store'])->name('billing.form-cost-operational.gaji.store');
