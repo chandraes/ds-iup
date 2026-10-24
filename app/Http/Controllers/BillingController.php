@@ -31,7 +31,6 @@ use App\Models\Pengelola;
 use App\Models\PpnKeluaran;
 use App\Models\PpnMasukan;
 use App\Models\RekapGaji;
-use App\Models\RekapGajiDetail;
 use App\Models\Rekening;
 use App\Models\ReturSupplier;
 use App\Models\StokRetur;
@@ -50,9 +49,11 @@ use App\Models\transaksi\OrderIndenDetail;
 use App\Models\UangGantung;
 use App\Models\User;
 use App\Models\Wilayah;
+use App\Services\EmployeePayrollService;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -145,7 +146,7 @@ class BillingController extends Controller
 
         $gr = GantiRugi::where('lunas', 0)->count();
 
-        $br = BarangRetur::whereIn('status', [1,2])->count();
+        $br = BarangRetur::whereIn('status', [1, 2])->count();
         $sr = StokRetur::where('status', 0)->count();
         $ps = ReturSupplier::where('tipe', '<', 3)->count();
         $ug = UangGantung::where('lunas', 0)->where('void', 0)->count();
@@ -169,7 +170,7 @@ class BillingController extends Controller
             'sr' => $sr,
             'sales_order_all' => $sales_order_all,
             'asistenAdm' => $asistenAdm,
-            'sumKeranjangBeli' => $sumKeranjangBeli
+            'sumKeranjangBeli' => $sumKeranjangBeli,
         ]);
     }
 
@@ -238,7 +239,7 @@ class BillingController extends Controller
 
     public function gaji()
     {
-        $check = RekapGaji::where('bulan', date('m'))->whereYear('tahun', date('Y'))->first();
+        $check = RekapGaji::where('bulan', date('m'))->where('tahun', date('Y'))->first();
 
         if ($check) {
             return redirect()->route('billing')->with('error', 'Form Gaji Bulan Ini Sudah Dibuat');
@@ -253,108 +254,22 @@ class BillingController extends Controller
         return view('billing.form-cost-operational.form-gaji.index', [
             'data' => $data,
             'month' => $month,
+            'payroll' => app(EmployeePayrollService::class),
         ]);
     }
 
-    public function gaji_store(Request $request)
+    public function gaji_store(Request $request, EmployeePayrollService $payroll): RedirectResponse
     {
-        ini_set('max_execution_time', 300); // 300 seconds = 5 minutes
-        ini_set('memory_limit', '512M');
-
-        $ds = $request->validate([
-            'total' => 'required',
-        ]);
-
-        $data = Karyawan::where('status', 1)->get();
-
-        $db = new KasBesar;
-        $saldo = $db->saldoTerakhir(1);
-
-        if ($saldo < $ds['total']) {
-            return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Cukup');
-        }
+        $rekap = $payroll->store();
         try {
-            DB::beginTransaction();
-            $rekap = RekapGaji::create([
-                'uraian' => 'Gaji Bulan '.date('F').' Tahun '.date('Y'),
-                'bulan' => date('m'),
-                'tahun' => date('Y'),
-                'total' => $ds['total'],
-            ]);
-
-            $rekapGajiDetails = []; // Initialize an array to hold all records for bulk insertion
-
-            foreach ($data as $d) {
-                $bpjs_tk = $d->apa_bpjs_tk == 1 ? $d->gaji_pokok * 0.049 : 0;
-                $potongan_bpjs_tk = $d->apa_bpjs_tk == 1 ? $d->gaji_pokok * 0.02 : 0;
-                $bpjs_k = $d->apa_bpjs_kes == 1 ? $d->gaji_pokok * 0.04 : 0;
-                $potongan_bpjs_kesehatan = $d->apa_bpjs_kes == 1 ? $d->gaji_pokok * 0.01 : 0;
-
-                $pendapatan_kotor = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
-                $pendapatan_bersih = $pendapatan_kotor - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
-
-                $rekapGajiDetails[] = [
-                    'rekap_gaji_id' => $rekap->id,
-                    'nik' => $d->kode.sprintf('%03d', $d->nomor),
-                    'nama' => $d->nama,
-                    'jabatan' => $d->jabatan->nama,
-                    'gaji_pokok' => $d->gaji_pokok,
-                    'tunjangan_jabatan' => $d->tunjangan_jabatan,
-                    'tunjangan_keluarga' => $d->tunjangan_keluarga,
-                    'bpjs_tk' => $bpjs_tk,
-                    'bpjs_k' => $bpjs_k,
-                    'potongan_bpjs_tk' => $potongan_bpjs_tk,
-                    'potongan_bpjs_kesehatan' => $potongan_bpjs_kesehatan,
-                    'pendapatan_kotor' => $pendapatan_kotor,
-                    'pendapatan_bersih' => $pendapatan_bersih,
-                    'nama_rek' => $d->nama_rek,
-                    'bank' => $d->bank,
-                    'no_rek' => $d->no_rek,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ];
+            $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
+            if ($group) {
+                $message = '*FORM GAJI KARYAWAN*'."\n".$rekap->uraian."\nNilai: Rp ".number_format($rekap->total, 0, ',', '.');
+                (new StarSender($group->nama_group, $message))->sendGroup();
             }
-
-            // Perform a bulk insert after the loop
-            RekapGajiDetail::insert($rekapGajiDetails);
-
-            $arrayKasBesar['uraian'] = 'Gaji Bulan '.date('F').' '.date('Y');
-            $arrayKasBesar['tanggal'] = date('Y-m-d');
-            $arrayKasBesar['nominal'] = $ds['total'];
-            $arrayKasBesar['jenis'] = 0;
-            $arrayKasBesar['saldo'] = $saldo - $ds['total'];
-            $arrayKasBesar['modal_investor_terakhir'] = $db->modalInvestorTerakhir(1);
-            $arrayKasBesar['nama_rek'] = 'Msng2 Karyawan';
-            $arrayKasBesar['bank'] = 'BCA';
-            $arrayKasBesar['no_rek'] = '-';
-            $arrayKasBesar['ppn_kas'] = 1;
-            $storeKasBesar = $db->create($arrayKasBesar);
-
-            DB::commit();
-
-        } catch (\Throwable $th) {
-            // throw $th;
-            DB::rollback();
-
-            return redirect()->back()->with('error', 'Gagal Membuat Form Gaji, '.$th->getMessage());
+        } catch (\Throwable $exception) {
+            report($exception);
         }
-
-        $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
-
-        $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*FORM GAJI KARYAWAN*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    'Nilai :  *Rp. '.number_format($ds['total'], 0, ',', '.')."*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    "Nama     : Masing2 Karyawan\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Besar : \n".
-                    'Rp. '.number_format($storeKasBesar->saldo, 0, ',', '.')."\n\n".
-                    "Total Modal Investor : \n".
-                    'Rp. '.number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
 
         return redirect()->route('billing.form-cost-operational')->with('success', 'Form Gaji Berhasil Dibuat');
     }
@@ -508,7 +423,6 @@ class BillingController extends Controller
             });
         }
 
-
         $data = $data->get();
 
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
@@ -546,7 +460,7 @@ class BillingController extends Controller
         }
 
         $orderDetail->update([
-            'deleted' => !$orderDetail->deleted,
+            'deleted' => ! $orderDetail->deleted,
         ]);
 
         return redirect()->back()->with('success', 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.');
@@ -585,7 +499,7 @@ class BillingController extends Controller
         ini_set('max_execution_time', 300);
         ini_set('memory_limit', '512M');
 
-        $db = new InvoiceJual();
+        $db = new InvoiceJual;
         $res = $db->lanjut_order($order->id);
 
         if ($res['status'] == 'success') {
@@ -618,12 +532,13 @@ class BillingController extends Controller
     {
 
         $orderDetail->update([
-            'deleted' => !$orderDetail->deleted,
+            'deleted' => ! $orderDetail->deleted,
         ]);
 
         $message = $orderDetail->deleted
             ? 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.'
             : 'Item berhasil dibatalkan dari status dihapus.';
+
         return response()->json(['status' => 'success', 'message' => $message]);
     }
 
@@ -632,7 +547,6 @@ class BillingController extends Controller
         $detail = $preorder->detail;
 
         $count = $detail->where('deleted', 1)->count();
-
 
         if ($count == 0) {
             return redirect()->back()->with('error', 'Tidak ada item yang ditandai untuk dihapus');
@@ -666,8 +580,6 @@ class BillingController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Preorder berhasil diselesaikan']);
     }
 
-
-
     public function form_barang_retur(Request $request)
     {
 
@@ -682,11 +594,11 @@ class BillingController extends Controller
         $data = BarangRetur::with(['karyawan', 'konsumen.kode_toko'])->where('status', 0)->where('tipe', $d['tipe'])->get();
         $supplier = BarangUnit::select('id', 'nama')->get();
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
         $konsumen = $d['tipe'] == 1 ? null : Konsumen::where('active', 1)
-                                            ->with(['kode_toko'])
-                                            ->get();
+            ->with(['kode_toko'])
+            ->get();
 
         return view('billing.form-barang-retur.index', [
             'data' => $data,
@@ -704,7 +616,7 @@ class BillingController extends Controller
             'barang_unit_id' => 'required_if:tipe,1|exists:barang_units,id',
             'karyawan_id' => 'required_if:tipe,2|exists:karyawans,id',
             'konsumen_id' => 'required_if:tipe,2|exists:konsumens,id',
-        ],[
+        ], [
             // 2. Definisikan Kustom Pesan Error di Sini
             'tipe.required' => 'Pilihan tipe wajib diisi.',
             'tipe.in' => 'Tipe yang dipilih tidak valid (harus dari supplier atau dari konsumen).',
@@ -740,7 +652,6 @@ class BillingController extends Controller
             return redirect()->back()->with('error', 'Gagal Membuat Form Barang Retur, '.$th->getMessage());
         }
 
-
         return redirect()->route('billing.form-barang-retur.detail', ['retur' => $b->id]);
     }
 
@@ -757,18 +668,18 @@ class BillingController extends Controller
             return [
                 $detail->barang_id => [
                     'qty' => $detail->qty,
-                    'id' => $detail->id // Ini adalah 'barang_retur_detail_id'
-                ]
+                    'id' => $detail->id, // Ini adalah 'barang_retur_detail_id'
+                ],
             ];
         });
-            // TIPE 2 (Dari Konsumen) -> Tampilkan daftar BARANG (Produk)
+        // TIPE 2 (Dari Konsumen) -> Tampilkan daftar BARANG (Produk)
         $query = Barang::with(['barang_nama', 'satuan', 'kategori'])
             ->select('barangs.*')
-            ->withSum(['stok_harga' => function($q) {
+            ->withSum(['stok_harga' => function ($q) {
                 $q->where('stok', '>', 0);
             }], 'stok');
 
-        if($retur->tipe == 1) {
+        if ($retur->tipe == 1) {
             $query->where('barang_unit_id', $retur->barang_unit_id);
         }
 
@@ -785,10 +696,10 @@ class BillingController extends Controller
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('stok_info', function ($row) {
-                return number_format($row->stok_harga_sum_stok, 0 , ',','.');
+                return number_format($row->stok_harga_sum_stok, 0, ',', '.');
             })
             ->addColumn('action', function ($row) use ($keranjangMap) {
-                $row->nf_stok = number_format($row->stok_harga_sum_stok, 0 , ',','.');
+                $row->nf_stok = number_format($row->stok_harga_sum_stok, 0, ',', '.');
 
                 $rowData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
                 $barangId = $row->id;
@@ -805,10 +716,10 @@ class BillingController extends Controller
 
                     // Buat tombol "Edit" (hijau) yang menampilkan Qty
                     return '<button type="button" class="btn btn-success btn-sm btn-modal-trigger" '.
-                        ' data-row=\'' . $rowData . '\' '.
-                        ' data-qty="' . $qty . '" '. // <= Kirim Qty
-                        ' data-detail-id="' . $detailId . '">'. // <= Kirim Detail ID
-                        $qtyFormatted . ' ' . $satuan .
+                        ' data-row=\''.$rowData.'\' '.
+                        ' data-qty="'.$qty.'" '. // <= Kirim Qty
+                        ' data-detail-id="'.$detailId.'">'. // <= Kirim Detail ID
+                        $qtyFormatted.' '.$satuan.
                         '</button>';
 
                 } else {
@@ -817,7 +728,7 @@ class BillingController extends Controller
 
                     // Buat tombol "Pilih" (biru) seperti biasa
                     return '<button type="button" class="btn btn-primary btn-sm btn-modal-trigger" '.
-                        ' data-row=\'' . $rowData . '\' '.
+                        ' data-row=\''.$rowData.'\' '.
                         ' data-qty="0" '. // <= Qty adalah 0
                         ' data-detail-id="0">'. // <= Detail ID adalah 0
                         'Pilih'.
@@ -836,7 +747,6 @@ class BillingController extends Controller
 
         $selectKategori = BarangKategori::all();
         $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
-
 
         return view('billing.form-barang-retur.detail', [
             'b' => $retur,
@@ -893,7 +803,7 @@ class BillingController extends Controller
             $res = $db->updateOrCreate([
                 'barang_retur_id' => $retur->id,
                 'barang_id' => $data['barang_id'],
-            ],[
+            ], [
                 'barang_retur_id' => $retur->id,
                 'barang_id' => $data['barang_id'],
                 'qty' => $data['jumlah'],
@@ -929,7 +839,6 @@ class BillingController extends Controller
 
         $res = $db->checkout_retur($retur->id);
 
-
         if ($res['status'] == 'success') {
             return redirect()->route('billing')->with($res['status'], $res['message']);
         }
@@ -952,9 +861,9 @@ class BillingController extends Controller
     {
         $konsumens = Konsumen::with(['kode_toko'])->where('active', 1)->orderBy('nama', 'asc')->get();
         $barang_units = BarangUnit::orderBy('nama', 'asc')->get(); // Asumsi ini adalah supplier
-         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
+        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
 
         return view('billing.barang-retur.index', [
             'sales' => $sales,
@@ -965,7 +874,7 @@ class BillingController extends Controller
 
     public function barang_retur_data(Request $request)
     {
-        $query = BarangRetur::with(['barang_unit', 'konsumen.kode_toko', 'karyawan' => function($q){
+        $query = BarangRetur::with(['barang_unit', 'konsumen.kode_toko', 'karyawan' => function ($q) {
             $q->select('id', 'nama');
         }]);
 
@@ -997,14 +906,13 @@ class BillingController extends Controller
         return DataTables::of($query)
             ->addIndexColumn() // Menambahkan kolom DT_RowIndex
 
-
             // Buat Link di Kode
             ->editColumn('kode', function ($row) {
                 $url = route('billing.barang-retur.detail', ['retur' => $row->id]);
+
                 return '<a href="'.$url.'" class="btn btn-primary btn-sm">'.$row->kode.'</a>';
             })
-
-             ->addColumn('sales', function ($row) {
+            ->addColumn('sales', function ($row) {
                 return $row->karyawan ? $row->karyawan->nama : '-';
             })
             // Ambil Nama Supplier
@@ -1014,20 +922,20 @@ class BillingController extends Controller
 
             // Format Nama Konsumen
             ->addColumn('konsumen_nama', function ($row) {
-                if (!$row->konsumen) {
+                if (! $row->konsumen) {
                     return '-';
                 }
                 $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode : '';
-                return $kode . ' ' . $row->konsumen->nama;
+
+                return $kode.' '.$row->konsumen->nama;
             })
-            ->addColumn('status_badge', function($row){
+            ->addColumn('status_badge', function ($row) {
                 return $row->status_badge; // Memanggil accessor
             })
 
-            ->addColumn('action', function($row){
+            ->addColumn('action', function ($row) {
                 return $row->action; // Memanggil accessor
             })
-
 
             // Izinkan HTML di kolom ini
             ->rawColumns(['kode', 'status_badge', 'action'])
@@ -1061,7 +969,7 @@ class BillingController extends Controller
         // return ['status' => 'error', 'message' => 'fitur dalam perbaikan'];
         // Panggil fungsi model yang sudah diubah namanya menjadi 'proses_retur'
 
-        if($retur->tipe == 2) {
+        if ($retur->tipe == 2) {
             $res = $retur->proses_retur($retur->id);
         } else {
             $res = $retur->proses_retur_supplier($retur->id);
@@ -1089,18 +997,19 @@ class BillingController extends Controller
     {
         // Panggil fungsi 'void_retur' yang logikanya sudah disesuaikan
         $userAllow = ['su', 'admin'];
-        if (!in_array(Auth::user()->role, $userAllow )) {
-            return response()->json(['status' => 'error', 'message' => "Hanya admin yang boleh void!!"]);
+        if (! in_array(Auth::user()->role, $userAllow)) {
+            return response()->json(['status' => 'error', 'message' => 'Hanya admin yang boleh void!!']);
         }
 
         $res = $retur->void_retur($retur->id);
+
         return response()->json($res);
     }
 
     public function barang_retur_selesaikan(BarangRetur $retur)
     {
         // Panggil fungsi 'selesaikan_retur' yang logikanya sudah disesuaikan
-        return response()->json(['status' => 'error', 'message' =>'Fitur Sedang Dalam Perbaikan']);
+        return response()->json(['status' => 'error', 'message' => 'Fitur Sedang Dalam Perbaikan']);
         // $res = $retur->selesaikan_retur($retur->id);
         // return response()->json($res);
     }
@@ -1110,13 +1019,13 @@ class BillingController extends Controller
         $fileName = 'retur-'.$retur->kode.'.pdf';
         $filePath = 'public/pdf/barang_retur/'.$fileName;
 
-        if (!Storage::exists($filePath)) {
+        if (! Storage::exists($filePath)) {
             try {
                 $retur->load(['details.barang.satuan', 'details.barang.barang_nama', 'konsumen.kode_toko', 'details.barang.unit']);
-                $pt = Config::where('untuk', 'resmi' )->first();
+                $pt = Config::where('untuk', 'resmi')->first();
                 $tanggal = Carbon::parse($retur->waktu_diproses)->format('d-m-Y');
 
-                $pdf = PDF::loadView('billing.barang-retur.pdf', [ // PDF LAMA
+                $pdf = Pdf::loadView('billing.barang-retur.pdf', [ // PDF LAMA
                     'data' => $retur,
                     'pt' => $pt,
                     'tanggal' => $tanggal,
@@ -1143,7 +1052,7 @@ class BillingController extends Controller
         $filePath = 'public/pdf/barang_retur_diterima/'.$fileName; // Folder baru agar tidak tumpang tindih
 
         // Buat folder jika belum ada
-        if (!Storage::exists('public/pdf/barang_retur_diterima')) {
+        if (! Storage::exists('public/pdf/barang_retur_diterima')) {
             Storage::makeDirectory('public/pdf/barang_retur_diterima');
         }
 
@@ -1154,11 +1063,11 @@ class BillingController extends Controller
 
         try {
             $retur->load(['details.barang.satuan', 'details.barang.barang_nama', 'konsumen.kode_toko', 'barang_unit']);
-            $pt = Config::where('untuk', 'resmi' )->first();
+            $pt = Config::where('untuk', 'resmi')->first();
             $tanggal = Carbon::parse($retur->waktu_diterima)->format('d-m-Y');
 
             // PANGGIL BLADE PDF BARU ANDA
-            $pdf = PDF::loadView('billing.barang-retur.pdf-diterima', [ // <-- Nama blade PDF baru Anda
+            $pdf = Pdf::loadView('billing.barang-retur.pdf-diterima', [ // <-- Nama blade PDF baru Anda
                 'data' => $retur,
                 'pt' => $pt,
                 'tanggal' => $tanggal,
@@ -1182,8 +1091,9 @@ class BillingController extends Controller
         $konsumens = Konsumen::with(['kode_toko'])->where('active', 1)->orderBy('nama', 'asc')->get();
         $barang_units = BarangUnit::orderBy('nama', 'asc')->get(); // Asumsi ini adalah supplier
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
+
         return view('billing.barang-retur-proses.index', [
             'sales' => $sales,
             'konsumens' => $konsumens,       // Kirim data konsumen ke view
@@ -1195,18 +1105,18 @@ class BillingController extends Controller
     {
         if ($request->ajax()) {
             $query = StokRetur::with(['barang.unit', 'barang.kategori', 'barang.satuan', 'barang.barang_nama', 'sources.detail.barang_retur.konsumen'])
-                    ->where('total_qty_karantina', '>', 0)
-                    ->select('stok_returs.*');
+                ->where('total_qty_karantina', '>', 0)
+                ->select('stok_returs.*');
 
             // --- Logic Filter ---
             if ($request->has('unit_filter') && $request->unit_filter != '') {
-                $query->whereHas('barang', function($q) use ($request) {
+                $query->whereHas('barang', function ($q) use ($request) {
                     $q->where('barang_unit_id', $request->unit_filter);
                 });
             }
 
             if ($request->has('kategori_filter') && $request->kategori_filter != '') {
-                $query->whereHas('barang', function($q) use ($request) {
+                $query->whereHas('barang', function ($q) use ($request) {
                     $q->where('barang_kategori_id', $request->kategori_filter);
                 });
             }
@@ -1214,35 +1124,35 @@ class BillingController extends Controller
             // Menggunakan Yajra DataTables (Recommended)
             return datatables()->of($query)
                 ->addIndexColumn()
-                ->addColumn('perusahaan', function($row){
+                ->addColumn('perusahaan', function ($row) {
                     return $row->barang->unit->nama ?? '-';
                 })
-                ->addColumn('kelompok', function($row){
+                ->addColumn('kelompok', function ($row) {
                     return $row->barang->kategori->nama ?? '-';
                 })
-                ->addColumn('nama_barang', function($row){
+                ->addColumn('nama_barang', function ($row) {
                     return $row->barang->barang_nama->nama ?? '-';
                 })
-                ->addColumn('kode_barang', function($row){
+                ->addColumn('kode_barang', function ($row) {
                     return $row->barang->kode ?? '-';
                 })
-                ->addColumn('merk', function($row){
+                ->addColumn('merk', function ($row) {
                     return $row->barang->merk ?? '-';
                 })
-                ->addColumn('stok_retur', function($row){
+                ->addColumn('stok_retur', function ($row) {
                     return '<span class="fw-bold text-danger">'.number_format($row->total_qty_karantina).'</span>';
                 })
-                ->addColumn('satuan', function($row){
+                ->addColumn('satuan', function ($row) {
                     return $row->barang->satuan->nama ?? '-';
                 })
-                ->addColumn('ppn', function($row){
+                ->addColumn('ppn', function ($row) {
                     // Logika PPN (Sesuaikan dengan kolom database Anda)
                     return ($row->barang->jenis == 1) ? '<span class="badge bg-success">Ya</span>' : '-';
                 })
-                ->addColumn('non_ppn', function($row){
+                ->addColumn('non_ppn', function ($row) {
                     return ($row->barang->jenis == 2) ? '<span class="badge bg-success">Ya</span>' : '-';
                 })
-                ->addColumn('detail_sumber', function($row){
+                ->addColumn('detail_sumber', function ($row) {
                     // Tombol Trigger Modal History (Logic sebelumnya)
                     return '<button type="button" class="btn btn-sm btn-info text-white btn-history"
                             data-id="'.$row->id.'"
@@ -1250,18 +1160,18 @@ class BillingController extends Controller
                             <i class="bi bi-clock-history"></i> Lihat
                             </button>';
                 })
-                ->addColumn('aksi', function($row){
+                ->addColumn('aksi', function ($row) {
                     // Data attributes untuk Modal Keranjang
                     return '<button type="button" class="btn btn-primary btn-sm btn-modal-trigger"
                                 data-row=\''.json_encode([
-                                    'id' => $row->barang_id, // ID Barang untuk keranjang
-                                    'stok_retur_id' => $row->id,
-                                    'nama' => $row->barang->barang_nama->nama,
-                                    'kode' => $row->barang->kode,
-                                    'merk' => $row->barang->merk,
-                                    'stok' => $row->total_qty_karantina,
-                                    'satuan' => $row->barang->satuan
-                                ]).'\'
+                        'id' => $row->barang_id, // ID Barang untuk keranjang
+                        'stok_retur_id' => $row->id,
+                        'nama' => $row->barang->barang_nama->nama,
+                        'kode' => $row->barang->kode,
+                        'merk' => $row->barang->merk,
+                        'stok' => $row->total_qty_karantina,
+                        'satuan' => $row->barang->satuan,
+                    ]).'\'
                                 data-qty="0"
                                 data-detail-id="">
                                 <i class="bi bi-cart-plus"></i> Proses
@@ -1274,12 +1184,13 @@ class BillingController extends Controller
 
     public function stok_retur(Request $request)
     {
-       $units = BarangUnit::all();
+        $units = BarangUnit::all();
         $kategoris = BarangKategori::all();
+
         // 5. Kirim data dan nilai filter ke view
         return view('billing.barang-retur-kirim.index', [
             'units' => $units,
-            'kategoris' => $kategoris
+            'kategoris' => $kategoris,
         ]);
     }
 
@@ -1290,7 +1201,7 @@ class BillingController extends Controller
             'barang.satuan',
             // Load sampai ke konsumen dan barang stok harga (batch asal)
             'sources.detail.barang_retur.konsumen.kode_toko',
-            'sources.detail.stok'
+            'sources.detail.stok',
         ])->findOrFail($id);
 
         // Kita return berupa Partial View (HTML potongan)
@@ -1300,7 +1211,7 @@ class BillingController extends Controller
     public function otorisasi_pembelian(Request $request)
     {
         $data = $request->validate([
-            'asistenId' => 'required|exists:users,id'
+            'asistenId' => 'required|exists:users,id',
         ]);
 
         $user = User::find($data['asistenId']);
@@ -1309,9 +1220,9 @@ class BillingController extends Controller
         }
 
         $keranjang = KeranjangBeli::where('user_id', $user->id)
-                    ->withCount('details')
-                    ->withSum('details', 'total')
-                    ->get();
+            ->withCount('details')
+            ->withSum('details', 'total')
+            ->get();
 
         // dd($keranjang);
 
@@ -1328,9 +1239,10 @@ class BillingController extends Controller
     {
         $supplier = Supplier::where('barang_unit_id', $keranjang->barang_unit_id)->first();
 
-        if (!$supplier) {
+        if (! $supplier) {
             $message = Auth::user()->role != 'asisten-admin' ? 'Perusahaan ini belum di atur Suppliernya. Silahkan atur terlebih dahulu di Menu Database Supplier!' :
                                             'Perusahaan ini belum di atur Suppliernya. Silahkan hubungi admin untuk mengisi data di Menu Database Supplier!';
+
             return redirect()->back()->with('error', $message);
         }
 
@@ -1346,8 +1258,8 @@ class BillingController extends Controller
             'supplier' => $supplier,
             'ppnRate' => $ppnRate,
             'jatuhTempo' => $jatuhTempo,
-            'asistenId' => $asistenId
-         ]);
+            'asistenId' => $asistenId,
+        ]);
     }
 
     public function otorisasi_pembelian_keranjang_checkout(Request $request)
@@ -1366,7 +1278,7 @@ class BillingController extends Controller
             'jatuh_tempo' => 'required_if:tempo,1',
         ]);
 
-        $db = new KeranjangBeli();
+        $db = new KeranjangBeli;
 
         $res = $db->checkout_otorisasi($data);
 
@@ -1403,12 +1315,11 @@ class BillingController extends Controller
 
         return redirect()->route('billing')->with($res['status'], $res['message']);
 
-
     }
 
     public function uang_gantung_data(Request $request)
     {
-          if ($request->ajax()) {
+        if ($request->ajax()) {
             $query = UangGantung::with(['user'])->where('lunas', 0)->where('void', 0);
 
             // --- Logic Filter ---
@@ -1419,18 +1330,18 @@ class BillingController extends Controller
             // Menggunakan Yajra DataTables (Recommended)
             return datatables()->of($query)
                 ->addIndexColumn()
-                ->addColumn('status_kas', function($row){
+                ->addColumn('status_kas', function ($row) {
                     // Logika PPN (Sesuaikan dengan kolom database Anda)
                     return ($row->ppn_kas == 1) ? '<span class="badge bg-success">KAS PPN</span>' : '<span class="badge bg-warning">KAS NON PPN</span>';
                 })
-                ->addColumn('tanggal_input', function($row){
+                ->addColumn('tanggal_input', function ($row) {
                     return Carbon::parse($row->created_at)->format('Y-m-d');
                 })
-                ->addColumn('aksi', function($row){
+                ->addColumn('aksi', function ($row) {
                     $btn = '';
                     $role = ['su', 'admin'];
 
-                    if (!in_array(Auth::user()->role, $role)) {
+                    if (! in_array(Auth::user()->role, $role)) {
                         return '-';
                     }
                     // Asumsi: jika lunas = 0, tampilkan tombol Selesaikan. Jika sudah 1, tampilkan teks Lunas.
@@ -1438,11 +1349,12 @@ class BillingController extends Controller
                         $btn .= '<button type="button" class="btn btn-success btn-sm me-1 btn-selesaikan" data-id="'.$row->id.'">
                                     <i class="fa fa-check-circle"></i> Selesaikan
                                 </button>';
-                    // Tombol Void (Hapus)
-                    $btn .= '<button type="button" class="btn btn-danger btn-sm btn-void" data-id="'.$row->id.'">
+                        // Tombol Void (Hapus)
+                        $btn .= '<button type="button" class="btn btn-danger btn-sm btn-void" data-id="'.$row->id.'">
                                 <i class="fa fa-trash"></i> Void
                             </button>';
                     }
+
                     return $btn;
                 })
                 ->rawColumns(['status_kas', 'aksi'])
@@ -1468,7 +1380,7 @@ class BillingController extends Controller
     {
         // 1. Validasi inputan dari sisi server
         $request->validate([
-            'alasan' => 'required|string'
+            'alasan' => 'required|string',
         ]);
 
         // 2. Akses nilai alasan
@@ -1485,22 +1397,22 @@ class BillingController extends Controller
     {
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
 
         $kecamatanIds = Konsumen::distinct()->pluck('kecamatan_id')->filter()->all();
         $kabupatenIds = Konsumen::distinct()->pluck('kabupaten_kota_id')->filter()->all();
 
         $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
         $kecamatan = Wilayah::whereIn('id', $kecamatanIds)
-                    ->when(
-                        ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
-                        function ($query) use ($request) {
-                            $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
-                            return $query->where('id_induk_wilayah', $wilayah);
-                        }
-                    )->get();
+            ->when(
+                ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
+                function ($query) use ($request) {
+                    $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
 
+                    return $query->where('id_induk_wilayah', $wilayah);
+                }
+            )->get();
 
         return view('billing.form-janji-bayar.index', [
             'ppn' => $ppn,
@@ -1510,7 +1422,7 @@ class BillingController extends Controller
         ]);
     }
 
-   public function form_janji_bayar_data(Request $request)
+    public function form_janji_bayar_data(Request $request)
     {
         if ($request->ajax()) {
             $filters = $request->only(['expired', 'apa_ppn', 'karyawan_id', 'kecamatan_id', 'kabupaten_id']);
@@ -1543,35 +1455,35 @@ class BillingController extends Controller
             $currentCartKonsumen = null;
             if ($cartItems->isNotEmpty()) {
                 $firstItem = $cartItems->first();
-                $currentCartKonsumen = $firstItem->konsumen ? $firstItem->konsumen->kode_toko?->kode .' '.$firstItem->konsumen->nama : 'Konsumen Terpilih';
+                $currentCartKonsumen = $firstItem->konsumen ? $firstItem->konsumen->kode_toko?->kode.' '.$firstItem->konsumen->nama : 'Konsumen Terpilih';
             }
 
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->filterColumn('sales', function($query, $keyword) {
-                    $query->whereHas('karyawan', function($q) use ($keyword) {
+                ->filterColumn('sales', function ($query, $keyword) {
+                    $query->whereHas('karyawan', function ($q) use ($keyword) {
                         $q->where('nama', 'LIKE', "%{$keyword}%");
                     });
                 })
-                ->filterColumn('konsumen_kode', function($query, $keyword) {
-                    $query->whereHas('konsumen', function($q) use ($keyword) {
+                ->filterColumn('konsumen_kode', function ($query, $keyword) {
+                    $query->whereHas('konsumen', function ($q) use ($keyword) {
                         $q->where('kode', 'LIKE', "%{$keyword}%");
                     });
                 })
-                ->filterColumn('konsumen_nama', function($query, $keyword) {
-                    $query->whereHas('konsumen', function($q) use ($keyword) {
+                ->filterColumn('konsumen_nama', function ($query, $keyword) {
+                    $query->whereHas('konsumen', function ($q) use ($keyword) {
                         $q->where('nama', 'LIKE', "%{$keyword}%");
                     });
                 })
-                ->filterColumn('konsumen_plafon', function($query, $keyword) {
-                    $query->whereHas('konsumen', function($q) use ($keyword) {
+                ->filterColumn('konsumen_plafon', function ($query, $keyword) {
+                    $query->whereHas('konsumen', function ($q) use ($keyword) {
                         $q->where('plafon', 'LIKE', "%{$keyword}%");
                     });
                 })
-                ->filterColumn('daerah', function($query, $keyword) {
-                    $query->whereHas('konsumen.kabupaten_kota', function($q) use ($keyword) {
+                ->filterColumn('daerah', function ($query, $keyword) {
+                    $query->whereHas('konsumen.kabupaten_kota', function ($q) use ($keyword) {
                         $q->where('nama_wilayah', 'LIKE', "%{$keyword}%");
-                    })->orWhereHas('konsumen.kecamatan', function($q) use ($keyword) {
+                    })->orWhereHas('konsumen.kecamatan', function ($q) use ($keyword) {
                         $q->where('nama_wilayah', 'LIKE', "%{$keyword}%");
                     });
                 })
@@ -1600,20 +1512,21 @@ class BillingController extends Controller
                     return $row->karyawan ? $row->karyawan->nama : '';
                 })
                 ->addColumn('daerah', function ($row) {
-                    $kab = $row->konsumen->kabupaten_kota ? $row->konsumen->kabupaten_kota->nama_wilayah . ', ' : '';
+                    $kab = $row->konsumen->kabupaten_kota ? $row->konsumen->kabupaten_kota->nama_wilayah.', ' : '';
                     $kec = $row->konsumen->kecamatan ? $row->konsumen->kecamatan->nama_wilayah : '';
-                    return $kab . $kec;
+
+                    return $kab.$kec;
                 })
                 ->addColumn('konsumen_kode', function ($row) {
                     return $row->konsumen->full_kode;
                 })
                 ->addColumn('konsumen_nama', function ($row) {
-                    return ($row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode . ' ' : '') . $row->konsumen->nama;
+                    return ($row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode.' ' : '').$row->konsumen->nama;
                 })
                 ->addColumn('nota_data', function ($row) {
                     return [
                         'url' => route('billing.invoice-konsumen.detail', $row->id),
-                        'kode' => $row->kode
+                        'kode' => $row->kode,
                     ];
                 })
                 ->addColumn('nilai_data', function ($row) {
@@ -1621,7 +1534,7 @@ class BillingController extends Controller
                         'dpp' => $row->dpp,
                         'diskon' => $row->nf_diskon,
                         'ppn' => $row->nf_ppn,
-                        'add_fee' => $row->nf_add_fee
+                        'add_fee' => $row->nf_add_fee,
                     ];
                 })
                 ->addColumn('cicilan_data', function ($row) {
@@ -1632,14 +1545,15 @@ class BillingController extends Controller
                             $history[] = [
                                 'no' => $index + 1,
                                 'tanggal' => $c->tanggal ?? '-',
-                                'nominal' => number_format($c->nominal + $c->ppn, 0, ',', '.')
+                                'nominal' => number_format($c->nominal + $c->ppn, 0, ',', '.'),
                             ];
                         }
                     }
+
                     return [
                         'total_formatted' => number_format($cicilan, 0, ',', '.'),
                         'history' => $history,
-                        'kode_nota' => $row->kode
+                        'kode_nota' => $row->kode,
                     ];
                 })
 
@@ -1653,7 +1567,7 @@ class BillingController extends Controller
                         'in_cart' => in_array($row->id, $inCartIds), // O(1) Lookup Array cepat
                         'sisa_tagihan' => $row->nf_sisa_tagihan,
                         'ppn_dipungut' => $row->ppn_dipungut,
-                        'nf_sisa_ppn' => $row->nf_sisa_ppn
+                        'nf_sisa_ppn' => $row->nf_sisa_ppn,
                     ];
                 })
                 ->with([
@@ -1671,8 +1585,8 @@ class BillingController extends Controller
                     // Kirim metadata keranjang ter-update ke DataTables Frontend
                     'cart_meta' => [
                         'count' => count($inCartIds),
-                        'konsumen_nama' => $currentCartKonsumen
-                    ]
+                        'konsumen_nama' => $currentCartKonsumen,
+                    ],
                 ])
                 ->make(true);
         }
@@ -1715,11 +1629,12 @@ class BillingController extends Controller
         $existingCart = JanjiBayarKeranjang::where('user_id', $userId)->first();
 
         if ($existingCart && $existingCart->konsumen_id != $invoice->konsumen_id) {
-            $namaKonsumenAktif = $existingCart->konsumen ? $existingCart->konsumen->kode_toko?->kode . ' '. $existingCart->konsumen->nama : 'Konsumen Lain';
+            $namaKonsumenAktif = $existingCart->konsumen ? $existingCart->konsumen->kode_toko?->kode.' '.$existingCart->konsumen->nama : 'Konsumen Lain';
+
             return response()->json([
                 'status' => 'error',
                 'code' => 'DIFFERENT_CONSUMER',
-                'message' => "Keranjang Anda sedang mengunci invoice milik [{$namaKonsumenAktif}]."
+                'message' => "Keranjang Anda sedang mengunci invoice milik [{$namaKonsumenAktif}].",
             ], 400);
         }
 
@@ -1728,7 +1643,7 @@ class BillingController extends Controller
             'user_id' => $userId,
             'invoice_jual_id' => $invoice->id,
         ], [
-            'konsumen_id' => $invoice->konsumen_id
+            'konsumen_id' => $invoice->konsumen_id,
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Berhasil dimasukkan ke keranjang.']);
@@ -1748,11 +1663,12 @@ class BillingController extends Controller
     public function form_janji_bayar_kosongkan_keranjang()
     {
         JanjiBayarKeranjang::where('user_id', Auth::id())->delete();
+
         return response()->json(['status' => 'success']);
     }
 
     // 4. Eksekusi Checkout Akhir Menyimpan ke Tabel JanjiBayar & Detail
-   public function form_janji_bayar_checkout(Request $request)
+    public function form_janji_bayar_checkout(Request $request)
     {
         $userId = Auth::id();
         $cartItems = JanjiBayarKeranjang::where('user_id', $userId)->get();
@@ -1780,12 +1696,12 @@ class BillingController extends Controller
         $request->validate([
             'kode' => 'required|unique:janji_bayars,kode',
             'metode' => 'required|exists:metode_bayars,slug', // Validasi terhadap database tabel baru
-            'nominal' => 'required|numeric|min:' . $totalSisaTagihanCart,
-            'jatuh_tempo' => 'required|date|after_or_equal:today|before_or_equal:' . $maxDateAllowed,
+            'nominal' => 'required|numeric|min:'.$totalSisaTagihanCart,
+            'jatuh_tempo' => 'required|date|after_or_equal:today|before_or_equal:'.$maxDateAllowed,
         ], [
-            'nominal.min' => 'Nominal janji bayar tidak boleh lebih kecil dari total sisa tagihan (Rp ' . number_format($totalSisaTagihanCart, 0, ',', '.') . ').',
+            'nominal.min' => 'Nominal janji bayar tidak boleh lebih kecil dari total sisa tagihan (Rp '.number_format($totalSisaTagihanCart, 0, ',', '.').').',
             'kode.unique' => 'Kode unik ini sudah terdaftar di database.',
-            'jatuh_tempo.before_or_equal' => 'Tanggal jatuh tempo untuk metode ' . ($metodeBayarConfig ? $metodeBayarConfig->nama : '') . ' maksimal tanggal ' . \Carbon\Carbon::parse($maxDateAllowed)->format('d-m-Y') . ' (+' . $maxDays . ' hari).',
+            'jatuh_tempo.before_or_equal' => 'Tanggal jatuh tempo untuk metode '.($metodeBayarConfig ? $metodeBayarConfig->nama : '').' maksimal tanggal '.Carbon::parse($maxDateAllowed)->format('d-m-Y').' (+'.$maxDays.' hari).',
         ]);
 
         $konsumenId = $cartItems->first()->konsumen_id;
@@ -1809,7 +1725,7 @@ class BillingController extends Controller
                     'janji_bayar_id' => $janjiBayar->id,
                     'invoice_jual_id' => $item->invoice_jual_id,
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ];
             }
             JanjiBayarDetail::insert($details);
@@ -1824,23 +1740,25 @@ class BillingController extends Controller
             $sisaTerakhir = $dbKasKonsumen->sisaTerakhir($konsumenId);
             $penguranganSisa = $sisaTerakhir - $request->nominal;
 
-            if($penguranganSisa < 0) {
+            if ($penguranganSisa < 0) {
                 $penguranganSisa = 0; // Pastikan tidak menjadi negatif
             }
 
             $dbKasKonsumen->create([
                 'konsumen_id' => $konsumenId,
                 'janji_bayar_id' => $janjiBayar->id,
-                'uraian' => 'Janji Bayar - ' . $janjiBayar->kode,
+                'uraian' => 'Janji Bayar - '.$janjiBayar->kode,
                 'bayar' => $request->nominal,
                 'sisa' => $penguranganSisa,
             ]);
 
             DB::commit();
+
             return redirect()->route('billing.form-janji-bayar')->with('success', 'Data Janji Bayar berhasil dieksekusi dan disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal memproses data: ' . $e->getMessage())->withInput();
+
+            return redirect()->back()->with('error', 'Gagal memproses data: '.$e->getMessage())->withInput();
         }
     }
 
@@ -1851,7 +1769,7 @@ class BillingController extends Controller
 
     public function invoice_janji_bayar_data(Request $request)
     {
-       if ($request->ajax()) {
+        if ($request->ajax()) {
             // PERUBAHAN 1: Filter query agar HANYA mengambil status = 0 (Pending)
             $query = JanjiBayar::with(['konsumen.kode_toko'])
                 ->where('status', 0)
@@ -1861,17 +1779,20 @@ class BillingController extends Controller
                 ->addIndexColumn()
 
                 ->editColumn('nominal', function ($row) {
-                    return 'Rp ' . number_format($row->nominal, 0, ',', '.');
+                    return 'Rp '.number_format($row->nominal, 0, ',', '.');
                 })
 
                 ->editColumn('jatuh_tempo', function ($row) {
-                    return \Carbon\Carbon::parse($row->jatuh_tempo)->format('d-m-Y');
+                    return Carbon::parse($row->jatuh_tempo)->format('d-m-Y');
                 })
 
                 ->addColumn('konsumen_nama', function ($row) {
-                    if (!$row->konsumen) return '-';
-                    $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode . ' ' : '';
-                    return $kode . $row->konsumen->nama;
+                    if (! $row->konsumen) {
+                        return '-';
+                    }
+                    $kode = $row->konsumen->kode_toko ? $row->konsumen->kode_toko->kode.' ' : '';
+
+                    return $kode.$row->konsumen->nama;
                 })
 
                 // Menyesuaikan tampilan status berdasarkan nilai 0
@@ -1879,21 +1800,22 @@ class BillingController extends Controller
                     if ($row->status == 0) {
                         return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock-o"></i> Pending</span>';
                     }
+
                     return '<span class="badge bg-success px-2 py-1"><i class="fa fa-check"></i> Selesai</span>';
                 })
 
                 // PERUBAHAN 2: Validasi Role untuk Tombol Void di Sisi Server
-               ->addColumn('action', function ($row) {
-                    $btn = '<a href="' . route('billing.invoice-janji-bayar.detail', $row->id) . '" class="btn btn-sm btn-info text-white px-3 shadow-sm me-1">' .
+                ->addColumn('action', function ($row) {
+                    $btn = '<a href="'.route('billing.invoice-janji-bayar.detail', $row->id).'" class="btn btn-sm btn-info text-white px-3 shadow-sm me-1">'.
                         '<i class="fa fa-eye"></i> Detail</a>';
 
                     // TAMBAHAN: Tombol Selesai
-                    $btn .= '<button type="button" class="btn btn-sm btn-success px-3 shadow-sm btn-complete-document me-1" data-id="' . $row->id . '" data-kode="' . $row->kode . '">' .
+                    $btn .= '<button type="button" class="btn btn-sm btn-success px-3 shadow-sm btn-complete-document me-1" data-id="'.$row->id.'" data-kode="'.$row->kode.'">'.
                         '<i class="fa fa-check-circle"></i> Selesai</button>';
 
                     // Cek hak akses user untuk tombol Void
                     if (Auth::check() && in_array(Auth::user()->role, ['admin', 'su'])) {
-                        $btn .= '<button type="button" class="btn btn-sm btn-danger px-3 shadow-sm btn-void-document" data-id="' . $row->id . '" data-kode="' . $row->kode . '">' .
+                        $btn .= '<button type="button" class="btn btn-sm btn-danger px-3 shadow-sm btn-void-document" data-id="'.$row->id.'" data-kode="'.$row->kode.'">'.
                             '<i class="fa fa-ban"></i> Void</button>';
                     }
 
@@ -1924,7 +1846,7 @@ class BillingController extends Controller
 
     public function invoice_janji_bayar_void($id)
     {
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'su'])) {
+        if (! Auth::check() || ! in_array(Auth::user()->role, ['admin', 'su'])) {
             return response()->json(['status' => 'error', 'message' => 'Anda tidak memiliki hak akses untuk melakukan void.'], 403);
         }
 
@@ -1935,7 +1857,7 @@ class BillingController extends Controller
             // Ambil semua ID invoice jual yang terikat dengan dokumen janji bayar ini
             $invoiceIds = JanjiBayarDetail::where('janji_bayar_id', $id)->pluck('invoice_jual_id')->toArray();
 
-            if (!empty($invoiceIds)) {
+            if (! empty($invoiceIds)) {
                 // Kembalikan status lunas menjadi 0 pada tabel invoice_juals
                 InvoiceJual::whereIn('id', $invoiceIds)->update(['lunas' => 0]);
             }
@@ -1949,15 +1871,17 @@ class BillingController extends Controller
             $dbKasKonsumen->create([
                 'konsumen_id' => $janjiBayar->konsumen_id,
                 'janji_bayar_id' => $janjiBayar->id,
-                'uraian' => 'Void Janji Bayar - ' . $janjiBayar->kode,
+                'uraian' => 'Void Janji Bayar - '.$janjiBayar->kode,
                 'sisa' => $penambahanSisa,
             ]);
 
             DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Dokumen janji bayar ' . $janjiBayar->kode . ' berhasil di-void. Status invoice dikembalikan.']);
+
+            return response()->json(['status' => 'success', 'message' => 'Dokumen janji bayar '.$janjiBayar->kode.' berhasil di-void. Status invoice dikembalikan.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => 'Gagal melakukan void: ' . $e->getMessage()], 500);
+
+            return response()->json(['status' => 'error', 'message' => 'Gagal melakukan void: '.$e->getMessage()], 500);
         }
     }
 
@@ -2052,21 +1976,22 @@ class BillingController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack(); // Jika gagal, kunci juga dilepas dan data aman
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal menyelesaikan dokumen janji bayar: ' . $e->getMessage()
+                'message' => 'Gagal menyelesaikan dokumen janji bayar: '.$e->getMessage(),
             ], 500);
         }
         // =================================================================
         // 2. BLOK PROSES INTEGRASI WHATSAPP (TERISOLASI DI LUAR TRANSACTION)
         // =================================================================
-        if (!empty($waNotifications)) {
+        if (! empty($waNotifications)) {
             try {
                 // Query agregat berat dijalankan di luar transaction dan cukup 1 kali saja
                 $getKas = $kas->getKas();
-                $saldoTerakhirPpn = (new RekapPpn())->saldoTerakhir();
-                $ppnMasukan = (new PpnMasukan())->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
-                $ppnKeluaran = (new PpnKeluaran())->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
+                $saldoTerakhirPpn = (new RekapPpn)->saldoTerakhir();
+                $ppnMasukan = (new PpnMasukan)->where('is_finish', 0)->sum('nominal') + $saldoTerakhirPpn;
+                $ppnKeluaran = (new PpnKeluaran)->where('is_expired', 0)->where('is_finish', 0)->sum('nominal');
 
                 foreach ($waNotifications as $notif) {
                     try {
@@ -2074,7 +1999,9 @@ class BillingController extends Controller
                         $kas_ppn = $notif['kas_ppn'];
                         $group = $groupWas->get($kasMana)?->nama_group;
 
-                        if (!$group) continue;
+                        if (! $group) {
+                            continue;
+                        }
 
                         if ($kas_ppn == 1) {
                             $addPesan = "Sisa Saldo Kas Besar: \n".
@@ -2110,19 +2037,19 @@ class BillingController extends Controller
 
                     } catch (\Exception $waEx) {
                         // Mencegah looping WA terhenti jika salah satu pesan gagal terkirim/gagal simpan ke model PesanWa
-                        Log::error('Gagal memproses salah satu pesan WhatsApp Pelunasan Janji Bayar (Uraian: '.$notif['uraian'].'): ' . $waEx->getMessage());
+                        Log::error('Gagal memproses salah satu pesan WhatsApp Pelunasan Janji Bayar (Uraian: '.$notif['uraian'].'): '.$waEx->getMessage());
                     }
                 }
             } catch (\Exception $waAgregatEx) {
                 // Menangkap error jika query agregat di atas (getKas, sum PPN) bermasalah agar tidak merusak response sukses
-                Log::error('Gagal memproses data agregat WhatsApp pada Pelunasan Janji Bayar ID '. $janjiBayar->id .': ' . $waAgregatEx->getMessage());
+                Log::error('Gagal memproses data agregat WhatsApp pada Pelunasan Janji Bayar ID '.$janjiBayar->id.': '.$waAgregatEx->getMessage());
             }
         }
 
         // Selalu kembalikan response sukses karena status database sudah resmi berubah menjadi Selesai (1)
         return response()->json([
             'status' => 'success',
-            'message' => 'Dokumen janji bayar ' . $janjiBayar->kode . ' berhasil diselesaikan dengan sukses.'
+            'message' => 'Dokumen janji bayar '.$janjiBayar->kode.' berhasil diselesaikan dengan sukses.',
         ]);
     }
 }

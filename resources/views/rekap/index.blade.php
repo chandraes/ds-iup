@@ -42,16 +42,25 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{ route('rekap.kasbon') }}" class="text-decoration-none">
+                <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="70">
                 <h5 class="mt-3">KASBON</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalRekapLain">
+                <img src="{{ asset('images/form-lain.svg') }}" alt="" width="70">
                 <h5 class="mt-3">LAIN-LAIN</h5>
             </a>
+            <div class="modal fade" id="modalRekapLain" tabindex="-1" aria-labelledby="modalRekapLainTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content text-start">
+                    <div class="modal-header"><h5 class="modal-title" id="modalRekapLainTitle">Rekap Form Lain-lain</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+                    <form action="{{ route('rekap.lain-lain') }}" method="get">
+                        <div class="modal-body"><label for="rekap-lain-cash" class="form-label">Tipe kas</label><select id="rekap-lain-cash" name="ppn_kas" class="form-select" required><option value="1">Kas Besar PPN</option><option value="0">Kas Besar Non-PPN</option></select></div>
+                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button><button class="btn btn-success">Lanjutkan</button></div>
+                    </form>
+                </div></div>
+            </div>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none">

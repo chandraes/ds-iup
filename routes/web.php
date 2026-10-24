@@ -11,6 +11,7 @@ use App\Http\Controllers\FormInventaris;
 use App\Http\Controllers\FormJualController;
 use App\Http\Controllers\FormKasKecilController;
 use App\Http\Controllers\FormLainController;
+use App\Http\Controllers\FormLainReportController;
 use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\HoldingController;
 use App\Http\Controllers\HomeController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\InvestorController;
 use App\Http\Controllers\InvestorModalController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\KasbonController;
 use App\Http\Controllers\LegalitasController;
 use App\Http\Controllers\PajakController;
 use App\Http\Controllers\PengaturanController;
@@ -439,6 +441,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/create', [DatabaseController::class, 'staff_create'])->name('db.staff.create');
                 Route::post('/store', [DatabaseController::class, 'staff_store'])->name('db.staff.store');
 
+                Route::get('/{staff}/dokumen/{document}', [DatabaseController::class, 'staff_document'])->name('db.staff.document');
+                Route::get('/detail/{staff}', [DatabaseController::class, 'staff_show'])->name('db.staff.show');
                 Route::get('/edit/{staff}', [DatabaseController::class, 'staff_edit'])->name('db.staff.edit');
                 Route::patch('/update/{staff}', [DatabaseController::class, 'staff_update'])->name('db.staff.update');
                 Route::patch('/status/{staff}', [DatabaseController::class, 'staff_status'])->name('db.staff.status');
@@ -545,6 +549,9 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
+            Route::get('/lain-lain', [FormLainReportController::class, 'index'])->name('rekap.lain-lain');
+            Route::get('/kasbon', [KasbonController::class, 'report'])->middleware('role:su,admin,user')->name('rekap.kasbon');
+            Route::post('/kasbon/{kasbon}/cancel', [KasbonController::class, 'cancel'])->middleware('role:su,admin')->name('rekap.kasbon.cancel');
 
             Route::prefix('retur')->group(function () {
                 Route::get('/', [RekapController::class, 'retur'])->name('rekap.retur');
@@ -841,6 +848,13 @@ Route::group(['middleware' => ['auth']], function () {
         });
 
         Route::prefix('billing')->group(function () {
+            Route::prefix('kasbon')->name('billing.kasbon.')->group(function () {
+                Route::get('/', [KasbonController::class, 'index'])->name('index');
+                Route::get('/create', [KasbonController::class, 'create'])->name('create');
+                Route::get('/summary', [KasbonController::class, 'summary'])->name('summary');
+                Route::post('/', [KasbonController::class, 'store'])->name('store');
+            });
+
             Route::get('/', [BillingController::class, 'index'])->name('billing');
 
             Route::prefix('otorisasi-pembelian')->group(function () {

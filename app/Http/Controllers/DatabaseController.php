@@ -28,12 +28,14 @@ use App\Models\MetodeBayar;
 use App\Models\Pengelola;
 use App\Models\Wilayah;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Ramsey\Uuid\Uuid;
 use Spatie\SimpleExcel\SimpleExcelWriter;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Yajra\DataTables\Facades\DataTables;
 
 class DatabaseController extends Controller
@@ -127,6 +129,10 @@ class DatabaseController extends Controller
 
     public function jabatan_update(Jabatan $jabatan, Request $req)
     {
+        if ($jabatan->isProtectedSales()) {
+            return back()->with('error', 'Nama jabatan Sales dikunci karena digunakan pada proses operasional dan aturan komisi.');
+        }
+
         $data = $req->validate([
             'nama' => 'required',
         ]);
@@ -138,6 +144,10 @@ class DatabaseController extends Controller
 
     public function jabatan_delete(Jabatan $jabatan)
     {
+        if ($jabatan->isProtectedSales()) {
+            return back()->with('error', 'Jabatan Sales merupakan jabatan sistem dan tidak dapat dihapus.');
+        }
+
         if ($jabatan->karyawan()->exists()) {
             return back()->with('error', 'Jabatan masih digunakan pegawai dan tidak dapat dihapus.');
         }
@@ -148,14 +158,17 @@ class DatabaseController extends Controller
 
     public function staff(Request $request)
     {
-        $filters = $request->validate(['status' => 'nullable|in:1,0,all']);
+        $filters = $request->validate(['status' => 'nullable|in:1,0,all', 'jabatan_id' => 'nullable|integer|exists:jabatans,id']);
         $status = $filters['status'] ?? '1';
         $query = Karyawan::with('jabatan');
         if ($status !== 'all') {
             $query->where('status', (int) $status);
         }
+        if (! empty($filters['jabatan_id'])) {
+            $query->where('jabatan_id', $filters['jabatan_id']);
+        }
         if ($request->ajax()) {
-            $data = $request->validate(['draw' => 'required|integer|min:0', 'start' => 'required|integer|min:0', 'length' => 'required|integer|in:10,25,50,100', 'search.value' => 'nullable|string|max:100', 'order.0.column' => 'nullable|integer|between:0,6', 'order.0.dir' => 'nullable|in:asc,desc']);
+            $data = $request->validate(['draw' => 'required|integer|min:0', 'start' => 'required|integer|min:0', 'length' => 'required|integer|in:10,25,50,100', 'search.value' => 'nullable|string|max:100', 'order.0.column' => 'nullable|integer|between:0,7', 'order.0.dir' => 'nullable|in:asc,desc']);
             $total = (clone $query)->count();
             $search = trim($data['search']['value'] ?? '');
             if ($search !== '') {
@@ -165,19 +178,20 @@ class DatabaseController extends Controller
                 });
             }
             $filtered = $search === '' ? $total : (clone $query)->count();
-            $columns = ['nomor', 'nama', 'nickname', 'jabatan_id', 'bank', 'status', 'id'];
+            $columns = ['nomor', 'nama', 'nickname', 'jabatan_id', 'bank', 'status', 'id', 'id'];
             $rows = $query->orderBy($columns[$data['order'][0]['column'] ?? 1], $data['order'][0]['dir'] ?? 'asc')->orderBy('id')
                 ->offset($data['start'])->limit($data['length'])->get()->map(fn ($employee) => [
                     e((string) $employee->nomor), e($employee->nama), e($employee->nickname), e($employee->jabatan?->nama ?? '—'),
                     view('db.karyawan.bank', ['employee' => $employee])->render(),
                     $employee->status ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>',
+                    view('db.karyawan.documents', ['employee' => $employee])->render(),
                     view('db.karyawan.actions', ['employee' => $employee])->render(),
                 ]);
 
             return response()->json(['draw' => (int) $data['draw'], 'recordsTotal' => $total, 'recordsFiltered' => $filtered, 'data' => $rows]);
         }
 
-        return view('db.karyawan.index', ['status' => $status, 'jabatan' => Jabatan::orderBy('nama')->get()]);
+        return view('db.karyawan.index', ['status' => $status, 'selectedJabatan' => $filters['jabatan_id'] ?? null, 'jabatan' => Jabatan::orderBy('nama')->get()]);
     }
 
     public function staff_create()
@@ -191,12 +205,15 @@ class DatabaseController extends Controller
 
     public function staff_store(Request $request)
     {
-        foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga'] as $field) {
+        foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga', 'tunjangan_bbm'] as $field) {
             if (is_string($request->input($field))) {
                 $request->merge([$field => str_replace('.', '', $request->input($field))]);
             }
         }
+        $isSales = Jabatan::find($request->integer('jabatan_id'))?->isSales() ?? false;
         $data = $request->validate([
+            'persen_komisi' => ($isSales ? 'required' : 'nullable').'|numeric|between:0,100|decimal:0,2',
+            'tunjangan_bbm' => ($isSales ? 'required' : 'nullable').'|integer|between:0,2147483647',
             'jabatan_id' => 'required|exists:jabatans,id',
             'nama' => 'required|string|max:255',
             'nickname' => 'required|string|max:255',
@@ -217,6 +234,7 @@ class DatabaseController extends Controller
             'no_rek' => 'required|string|max:255',
             'nama_rek' => 'required|string|max:255',
             'mulai_bekerja' => 'required|date_format:Y-m-d',
+            'perjanjian_kerja' => 'nullable|file|mimes:pdf|extensions:pdf|max:5120',
             'foto_ktp' => 'required|image|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'required|image|mimes:jpg,jpeg,png|max:10000',
             'status' => 'required|boolean',
@@ -228,6 +246,8 @@ class DatabaseController extends Controller
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
 
+        $data['persen_komisi'] = $isSales ? $data['persen_komisi'] : null;
+        $data['tunjangan_bbm'] = $isSales ? $data['tunjangan_bbm'] : null;
         $data['apa_bpjs_tk'] = $request->boolean('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kes'] = $request->boolean('apa_bpjs_kes') ? 1 : 0;
 
@@ -242,6 +262,11 @@ class DatabaseController extends Controller
             $newPhotoPaths[] = $data['foto_ktp'];
             $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
             $newPhotoPaths[] = $data['foto_diri'];
+
+            if ($request->hasFile('perjanjian_kerja')) {
+                $data['perjanjian_kerja'] = $request->file('perjanjian_kerja')->store('karyawan/perjanjian-kerja', 'local');
+                $newPhotoPaths[] = $data['perjanjian_kerja'];
+            }
 
             Karyawan::create($data);
 
@@ -262,6 +287,11 @@ class DatabaseController extends Controller
 
     }
 
+    public function staff_show(Karyawan $staff): View
+    {
+        return view('db.karyawan.show', ['employee' => $staff->load('jabatan')]);
+    }
+
     public function staff_edit(Karyawan $staff)
     {
         $jabatan = Jabatan::all();
@@ -274,12 +304,15 @@ class DatabaseController extends Controller
 
     public function staff_update(Karyawan $staff, Request $request)
     {
-        foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga'] as $field) {
+        foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga', 'tunjangan_bbm'] as $field) {
             if (is_string($request->input($field))) {
                 $request->merge([$field => str_replace('.', '', $request->input($field))]);
             }
         }
+        $isSales = Jabatan::find($request->integer('jabatan_id'))?->isSales() ?? false;
         $data = $request->validate([
+            'persen_komisi' => ($isSales ? 'required' : 'nullable').'|numeric|between:0,100|decimal:0,2',
+            'tunjangan_bbm' => ($isSales ? 'required' : 'nullable').'|integer|between:0,2147483647',
             'jabatan_id' => 'required|exists:jabatans,id',
             'nama' => 'required|string|max:255',
             'nickname' => 'required|string|max:255',
@@ -301,6 +334,7 @@ class DatabaseController extends Controller
             'nama_rek' => 'required|string|max:255',
             'mulai_bekerja' => 'required|date_format:Y-m-d',
             'status' => 'required|boolean',
+            'perjanjian_kerja' => 'nullable|file|mimes:pdf|extensions:pdf|max:5120',
             'foto_ktp' => 'nullable|image|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'nullable|image|mimes:jpg,jpeg,png|max:10000',
         ]);
@@ -309,6 +343,8 @@ class DatabaseController extends Controller
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
 
+        $data['persen_komisi'] = $isSales ? $data['persen_komisi'] : null;
+        $data['tunjangan_bbm'] = $isSales ? $data['tunjangan_bbm'] : null;
         $data['apa_bpjs_tk'] = $request->boolean('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kes'] = $request->boolean('apa_bpjs_kes') ? 1 : 0;
 
@@ -329,6 +365,13 @@ class DatabaseController extends Controller
                 $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
                 $newPhotoPaths[] = $data['foto_diri'];
                 $oldPhotoPaths[] = $staff->foto_diri;
+            }
+
+            unset($data['perjanjian_kerja']);
+            if ($request->hasFile('perjanjian_kerja')) {
+                $data['perjanjian_kerja'] = $request->file('perjanjian_kerja')->store('karyawan/perjanjian-kerja', 'local');
+                $newPhotoPaths[] = $data['perjanjian_kerja'];
+                $oldPhotoPaths[] = $staff->perjanjian_kerja;
             }
 
             $staff->update($data);
@@ -352,6 +395,15 @@ class DatabaseController extends Controller
         return redirect()->route('db.staff')->with('success', 'Data berhasil diupdate');
     }
 
+    public function staff_document(Karyawan $staff, string $document): BinaryFileResponse
+    {
+        abort_unless(in_array($document, ['foto_ktp', 'foto_diri', 'perjanjian_kerja'], true), 404);
+        $path = $staff->getAttribute($document);
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
+
+        return response()->file(Storage::disk('local')->path($path), ['X-Content-Type-Options' => 'nosniff']);
+    }
+
     public function staff_status(Request $request, Karyawan $staff)
     {
         $data = $request->validate(['status' => 'required|boolean']);
@@ -373,7 +425,7 @@ class DatabaseController extends Controller
 
                 return redirect()->back()->with('error', $reason);
             }
-            $oldPhotoPaths = [$staff->foto_ktp, $staff->foto_diri];
+            $oldPhotoPaths = [$staff->foto_ktp, $staff->foto_diri, $staff->perjanjian_kerja];
 
             $staff->delete();
 

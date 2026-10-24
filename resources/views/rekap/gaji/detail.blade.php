@@ -31,6 +31,7 @@
                     <th rowspan="2" class="text-center align-middle">Potongan BPJS-Kesehatan (1%)</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Kotor</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Bersih</th>
+                    <th rowspan="2" class="text-center align-middle">Potongan Kasbon</th>
                     <th rowspan="2" class="text-center align-middle">Sisa Gaji Dibayar</th>
                     <th rowspan="2" class="text-center align-middle">Rekening</th>
                     <th rowspan="2" class="text-center align-middle">Nama Rekening</th>
@@ -59,7 +60,8 @@
                     </td>
                     <td class="text-center align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($dir->potongan_kasbon ?? 0, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($dir->sisa_gaji_dibayar ?? $dir->pendapatan_bersih, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{$dir->no_rek}}</td>
                     <td class="text-center align-middle">{{$dir->nama_rek}}</td>
                     <td class="text-center align-middle">{{$dir->bank}}</td>

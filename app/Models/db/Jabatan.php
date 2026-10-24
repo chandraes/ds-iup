@@ -11,6 +11,16 @@ class Jabatan extends Model
 
     protected $guarded = ['id'];
 
+    public function isSales(): bool
+    {
+        return mb_strtolower(trim($this->nama)) === 'sales';
+    }
+
+    public function isProtectedSales(): bool
+    {
+        return (int) $this->getKey() === 3 || $this->isSales();
+    }
+
     public function karyawan()
     {
         return $this->hasMany(Karyawan::class);

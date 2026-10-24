@@ -21,8 +21,8 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{ route('billing.kasbon.index') }}" class="text-decoration-none">
+                <img src="{{asset('images/kasbon.svg')}}" alt="" width="70">
                 <h5 class="mt-3">FORM KASBON</h5>
             </a>
         </div>

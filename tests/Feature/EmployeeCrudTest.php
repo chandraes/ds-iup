@@ -38,7 +38,9 @@ class EmployeeCrudTest extends TestCase
             $table->string('nama');
             $table->string('nickname');
             $table->boolean('status');
-            foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga', 'nik', 'npwp', 'bpjs_tk', 'bpjs_kesehatan', 'tempat_lahir', 'tanggal_lahir', 'alamat', 'no_hp', 'bank', 'no_rek', 'nama_rek', 'mulai_bekerja', 'foto_ktp', 'foto_diri'] as $column) {
+            $table->decimal('persen_komisi', 5, 2)->nullable();
+            $table->unsignedInteger('tunjangan_bbm')->nullable();
+            foreach (['gaji_pokok', 'tunjangan_jabatan', 'tunjangan_keluarga', 'nik', 'npwp', 'bpjs_tk', 'bpjs_kesehatan', 'tempat_lahir', 'tanggal_lahir', 'alamat', 'no_hp', 'bank', 'no_rek', 'nama_rek', 'mulai_bekerja', 'foto_ktp', 'foto_diri', 'perjanjian_kerja'] as $column) {
                 $table->string($column)->nullable();
             }
             $table->boolean('apa_bpjs_tk')->default(false);
@@ -72,6 +74,48 @@ class EmployeeCrudTest extends TestCase
         $this->assertSame(0, $controller->staff($request)->getData(true)['recordsFiltered']);
     }
 
+    public function test_staff_position_filter_combines_with_status_and_search(): void
+    {
+        $sales = Jabatan::create(['nama' => 'Sales']);
+        $admin = Jabatan::create(['nama' => 'Admin']);
+        foreach ([[$sales, 1, 'Sales aktif'], [$sales, 0, 'Sales lama'], [$admin, 1, 'Admin aktif']] as $index => [$position, $status, $name]) {
+            Karyawan::create(['nomor' => $index + 1, 'jabatan_id' => $position->id, 'nama' => $name, 'nickname' => 'Uji', 'status' => $status]);
+        }
+        $user = new User(['name' => 'Admin', 'role' => 'admin']);
+        $user->id = 999;
+        $this->actingAs($user);
+        $params = ['draw' => 1, 'start' => 0, 'length' => 25, 'jabatan_id' => $sales->id];
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+        $this->getJson('/db/staff?'.http_build_query($params), $headers)->assertOk()->assertJsonPath('recordsTotal', 1)->assertJsonPath('data.0.1', 'Sales aktif');
+        $params['status'] = 'all';
+        $this->getJson('/db/staff?'.http_build_query($params), $headers)->assertJsonPath('recordsTotal', 2);
+        $params['search'] = ['value' => 'lama'];
+        $this->getJson('/db/staff?'.http_build_query($params), $headers)->assertJsonPath('recordsFiltered', 1)->assertJsonPath('data.0.1', 'Sales lama');
+        $params['jabatan_id'] = $admin->id;
+        $this->getJson('/db/staff?'.http_build_query($params), $headers)->assertJsonPath('recordsFiltered', 0);
+        $this->getJson('/db/staff?jabatan_id=999999', $headers)->assertUnprocessable()->assertJsonValidationErrors('jabatan_id');
+        $this->get('/db/staff?jabatan_id='.$sales->id)->assertOk()->assertViewHas('selectedJabatan', (string) $sales->id)->assertSee('Semua jabatan');
+    }
+
+    public function test_sales_position_cannot_be_deleted_or_renamed_even_without_employees(): void
+    {
+        $user = new User(['name' => 'Admin', 'role' => 'admin']);
+        $user->id = 999;
+        $this->actingAs($user);
+        $sales = Jabatan::create(['nama' => ' SALES ']);
+        $this->delete(route('db.staff.jabatan.delete', $sales))->assertSessionHas('error', 'Jabatan Sales merupakan jabatan sistem dan tidak dapat dihapus.');
+        $this->assertModelExists($sales);
+        $this->patch(route('db.staff.jabatan.update', $sales), ['nama' => 'Lain'])->assertSessionHas('error');
+        $this->assertSame(' SALES ', $sales->fresh()->nama);
+        $legacy = Jabatan::forceCreate(['id' => 3, 'nama' => 'Nama lama']);
+        $this->delete(route('db.staff.jabatan.delete', $legacy))->assertSessionHas('error');
+        $this->assertModelExists($legacy);
+        $ordinary = Jabatan::create(['nama' => 'Jabatan uji']);
+        $this->delete(route('db.staff.jabatan.delete', $ordinary))->assertRedirect();
+        $this->assertModelMissing($ordinary);
+        $this->get(route('db.staff'))->assertOk()->assertSee('Nama dan penghapusan Sales dikunci.');
+    }
+
     public function test_used_position_cannot_cascade_delete_employee(): void
     {
         $position = Jabatan::create(['nama' => 'Staff']);
@@ -90,18 +134,143 @@ class EmployeeCrudTest extends TestCase
         foreach (['nik', 'npwp', 'bpjs_tk', 'bpjs_kesehatan', 'tempat_lahir', 'alamat', 'no_hp', 'bank', 'no_rek', 'nama_rek'] as $field) {
             $data[$field] = 'Data uji';
         }
-        $request = Request::create('/db/staff/store', 'POST', $data, [], ['foto_ktp' => UploadedFile::fake()->image('ktp.png'), 'foto_diri' => UploadedFile::fake()->image('diri.png')]);
+        $request = Request::create('/db/staff/store', 'POST', $data, [], ['perjanjian_kerja' => UploadedFile::fake()->create('kontrak.pdf', 5120, 'application/pdf'), 'foto_ktp' => UploadedFile::fake()->image('ktp.png'), 'foto_diri' => UploadedFile::fake()->image('diri.png')]);
         app(DatabaseController::class)->staff_store($request);
         $employee = Karyawan::firstOrFail();
         $this->assertSame(0, (int) $employee->apa_bpjs_tk);
         $this->assertSame(0, (int) $employee->apa_bpjs_kes);
         $this->assertSame(1500000, (int) $employee->gaji_pokok);
+        $oldAgreement = $employee->perjanjian_kerja;
+        Storage::disk('local')->assertExists($oldAgreement);
         $oldPhoto = $employee->foto_diri;
         $data['nama'] = 'Nama diperbarui';
         app(DatabaseController::class)->staff_update($employee, Request::create('/db/staff/update/'.$employee->id, 'PATCH', $data));
         $this->assertSame('Nama diperbarui', $employee->fresh()->nama);
         $this->assertSame($oldPhoto, $employee->fresh()->foto_diri);
         Storage::disk('local')->assertExists($oldPhoto);
+        $this->assertSame($oldAgreement, $employee->fresh()->perjanjian_kerja);
+        $replacement = Request::create('/db/staff/update/'.$employee->id, 'POST', $data, [], ['perjanjian_kerja' => UploadedFile::fake()->create('baru.pdf', 50, 'application/pdf')]);
+        app(DatabaseController::class)->staff_update($employee, $replacement);
+        Storage::disk('local')->assertMissing($oldAgreement);
+        Storage::disk('local')->assertExists($employee->fresh()->perjanjian_kerja);
+        app(DatabaseController::class)->staff_delete(Request::create('/', 'DELETE', ['deletion_reason' => 'Salah input pegawai']), $employee);
+        Storage::disk('local')->assertMissing($employee->perjanjian_kerja);
+    }
+
+    public function test_agreement_rejects_invalid_type_extension_and_size(): void
+    {
+        $user = new User(['name' => 'Admin', 'role' => 'admin']);
+        $user->id = 999;
+        $this->actingAs($user);
+        foreach ([UploadedFile::fake()->image('foto.png'), UploadedFile::fake()->create('kontrak.txt', 10, 'application/pdf'), UploadedFile::fake()->create('kontrak.pdf', 5121, 'application/pdf')] as $file) {
+            $this->post('/db/staff/store', ['perjanjian_kerja' => $file])->assertSessionHasErrors('perjanjian_kerja');
+        }
+    }
+
+    public function test_employee_documents_require_admin_and_existing_allowed_document(): void
+    {
+        Storage::fake('local');
+        $position = Jabatan::create(['nama' => 'Staff']);
+        $employee = Karyawan::create(['nomor' => 1, 'jabatan_id' => $position->id, 'nama' => 'Pegawai', 'nickname' => 'Staff', 'status' => 1, 'perjanjian_kerja' => 'karyawan/perjanjian-kerja/test.pdf']);
+        Storage::disk('local')->put($employee->perjanjian_kerja, '%PDF-1.4 test');
+        $url = route('db.staff.document', [$employee, 'perjanjian_kerja']);
+        $this->get($url)->assertRedirect('/login');
+        $user = new User(['name' => 'Penguji', 'role' => 'sales']);
+        $user->id = 999;
+        $this->actingAs($user)->get($url)->assertForbidden();
+        $user->role = 'admin';
+        $this->actingAs($user)->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->get(route('db.staff.document', [$employee, 'foto_ktp']))->assertNotFound();
+        $this->get(route('db.staff.document', [$employee, 'nik']))->assertNotFound();
+        $response = $this->getJson('/db/staff?draw=1&start=0&length=25', ['X-Requested-With' => 'XMLHttpRequest']);
+        $response->assertOk();
+        $this->assertStringContainsString($url, $response->json('data.0.6'));
+        Storage::disk('local')->assertExists($employee->perjanjian_kerja);
+    }
+
+    public function test_staff_detail_displays_employee_data_and_documents_for_admin_only(): void
+    {
+        $position = Jabatan::create(['nama' => 'Supervisor']);
+        $employee = Karyawan::create([
+            'nomor' => 17, 'jabatan_id' => $position->id, 'nama' => '<b>Pegawai detail</b>', 'nickname' => 'Panggilan uji', 'status' => 0,
+            'gaji_pokok' => 1500000, 'tunjangan_jabatan' => 200000, 'tunjangan_keluarga' => 100000,
+            'nik' => '0012345678901234', 'npwp' => '00987654321', 'bpjs_tk' => 'TK123', 'bpjs_kesehatan' => 'KES123',
+            'apa_bpjs_tk' => 1, 'apa_bpjs_kes' => 0, 'tempat_lahir' => 'Palembang', 'tanggal_lahir' => '1990-02-03',
+            'alamat' => 'Alamat pegawai uji', 'no_hp' => '081234567890', 'bank' => 'Bank uji', 'no_rek' => '00123456',
+            'nama_rek' => 'Pemilik rekening', 'mulai_bekerja' => '2026-01-02', 'foto_ktp' => 'public/karyawan/ktp.png',
+            'foto_diri' => 'public/karyawan/foto.png', 'perjanjian_kerja' => 'karyawan/perjanjian-kerja/kontrak.pdf',
+        ]);
+        $url = route('db.staff.show', $employee);
+        $this->get($url)->assertRedirect('/login');
+        $user = new User(['name' => 'Penguji', 'role' => 'sales']);
+        $user->id = 999;
+        $this->actingAs($user)->get($url)->assertForbidden();
+        $user->role = 'admin';
+        $response = $this->actingAs($user)->get($url);
+        $response->assertOk()->assertViewIs('db.karyawan.show');
+        foreach (['<b>Pegawai detail</b>', 'Panggilan uji', 'Supervisor', 'Nonaktif', 'Rp 1.500.000', 'Rp 200.000', 'Rp 100.000', '0012345678901234', '00987654321', 'TK123', 'KES123', 'Ya', 'Tidak', 'Palembang', '03-02-1990', 'Alamat pegawai uji', '081234567890', 'Bank uji', '00123456', 'Pemilik rekening', '02-01-2026'] as $value) {
+            $response->assertSee($value);
+        }
+        $response->assertDontSee('<b>Pegawai detail</b>', false);
+        $response->assertDontSee('Pencatatan data')->assertDontSee('Dibuat pada')->assertDontSee('Diperbarui pada');
+        foreach (['foto_ktp', 'foto_diri', 'perjanjian_kerja'] as $document) {
+            $response->assertSee(route('db.staff.document', [$employee, $document]));
+        }
+        $list = $this->getJson('/db/staff?status=all&draw=1&start=0&length=25', ['X-Requested-With' => 'XMLHttpRequest']);
+        $this->assertStringContainsString($url, $list->json('data.0.7'));
+        $this->get(route('db.staff.show', 999999))->assertNotFound();
+        $employee->update(['foto_ktp' => null, 'foto_diri' => null, 'perjanjian_kerja' => null]);
+        $this->get($url)->assertOk()->assertSee('Perjanjian kerja belum diunggah.')->assertSee('Belum ada foto diri.')->assertSee('Belum ada foto ktp.');
+    }
+
+    public function test_sales_compensation_is_required_validated_and_saved_on_create_and_update(): void
+    {
+        Storage::fake('local');
+        $sales = Jabatan::create(['nama' => 'SALES']);
+        $staff = Jabatan::create(['nama' => 'Admin']);
+        $user = new User(['name' => 'Admin', 'role' => 'admin']);
+        $user->id = 999;
+        $this->actingAs($user);
+        $data = ['jabatan_id' => $sales->id, 'nama' => 'Sales uji', 'nickname' => 'Uji', 'status' => 1, 'mulai_bekerja' => '2026-01-01', 'tanggal_lahir' => '1990-01-01', 'gaji_pokok' => 1000000, 'tunjangan_jabatan' => 0, 'tunjangan_keluarga' => 0];
+        foreach (['nik', 'npwp', 'bpjs_tk', 'bpjs_kesehatan', 'tempat_lahir', 'alamat', 'no_hp', 'bank', 'no_rek', 'nama_rek'] as $field) {
+            $data[$field] = 'Data uji';
+        }
+        $this->post('/db/staff/store', $data)->assertSessionHasErrors(['persen_komisi', 'tunjangan_bbm']);
+        $data += ['persen_komisi' => '4.25', 'tunjangan_bbm' => '15.000'];
+        $this->post('/db/staff/store', $data + ['foto_ktp' => UploadedFile::fake()->image('ktp.png'), 'foto_diri' => UploadedFile::fake()->image('diri.png')])->assertRedirect(route('db.staff'));
+        $employee = Karyawan::sole();
+        $this->assertEquals(4.25, $employee->persen_komisi);
+        $this->assertEquals(15000, $employee->tunjangan_bbm);
+        $url = route('db.staff.update', $employee);
+        $missing = $data;
+        unset($missing['persen_komisi'], $missing['tunjangan_bbm']);
+        $this->patch($url, $missing)->assertSessionHasErrors(['persen_komisi', 'tunjangan_bbm']);
+        foreach ([['persen_komisi' => -1], ['persen_komisi' => 101], ['persen_komisi' => '4.123'], ['tunjangan_bbm' => -1], ['tunjangan_bbm' => 'abc']] as $invalid) {
+            $this->patch($url, array_replace($data, $invalid))->assertSessionHasErrors(array_keys($invalid));
+        }
+        $this->patch($url, array_replace($data, ['persen_komisi' => 5, 'tunjangan_bbm' => '20.000']))->assertRedirect(route('db.staff'));
+        $this->assertEquals(5, $employee->fresh()->persen_komisi);
+        $this->assertEquals(20000, $employee->fresh()->tunjangan_bbm);
+        $this->get(route('db.staff.show', $employee))->assertOk()->assertSee('5 %')->assertSee('Rp 20.000');
+        $this->get(route('db.staff.edit', $employee))->assertOk()->assertSee('Persentase komisi (%)');
+        $this->patch($url, array_replace($missing, ['jabatan_id' => $staff->id]))->assertRedirect(route('db.staff'));
+        $this->assertNull($employee->fresh()->persen_komisi);
+        $this->assertNull($employee->fresh()->tunjangan_bbm);
+        $this->get(route('db.staff.show', $employee))->assertDontSee('Persentase komisi');
+    }
+
+    public function test_existing_sales_receive_initial_compensation_only_for_sales_positions(): void
+    {
+        $sales = Jabatan::create(['nama' => ' SALES ']);
+        $staff = Jabatan::create(['nama' => 'Admin']);
+        foreach ([$sales, $staff] as $position) {
+            Karyawan::create(['nomor' => $position->id, 'jabatan_id' => $position->id, 'nama' => 'Pegawai', 'nickname' => 'Uji', 'status' => 1]);
+        }
+        (require database_path('migrations/2026_10_23_074222_backfill_sales_compensation_for_existing_employees.php'))->up();
+        $employee = Karyawan::where('jabatan_id', $sales->id)->firstOrFail();
+        $this->assertEquals(4, $employee->persen_komisi);
+        $this->assertEquals(15000, $employee->tunjangan_bbm);
+        $this->assertNull(Karyawan::where('jabatan_id', $staff->id)->firstOrFail()->persen_komisi);
     }
 
     public function test_status_changes_preserve_employee_and_related_data(): void

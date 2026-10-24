@@ -29,6 +29,7 @@
                     <th rowspan="2" class="text-center align-middle">Potongan BPJS-Kesehatan (1%)</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Kotor</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Bersih</th>
+                    <th rowspan="2" class="text-center align-middle">Potongan Kasbon</th>
                     <th rowspan="2" class="text-center align-middle">Sisa Gaji Dibayar</th>
                 </tr>
                 <tr>
@@ -41,17 +42,17 @@
             <tbody>
                 @foreach ($data as $i)
                 @php
-                     $bpjs_tk = $i->apa_bpjs_tk == 1 ? $i->gaji_pokok * 0.049 : 0;
-                    $potongan_bpjs_tk = $i->apa_bpjs_tk == 1 ? $i->gaji_pokok * 0.02 : 0;
-                    $bpjs_k = $i->apa_bpjs_kes == 1 ? $i->gaji_pokok * 0.04 : 0;
-                    $potongan_bpjs_kesehatan = $i->apa_bpjs_kes == 1 ? $i->gaji_pokok * 0.01 : 0;
-
-                    $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk;
-                    $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan;
-                    $pendapatan_kotor = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
-                    $grandTotalPendapatanKotor = $grandTotalPendapatanKotor + $pendapatan_kotor;
-                    $pendapatan_bersih = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
-                    $grandTotalPendapatanBersih = $grandTotalPendapatanBersih + $pendapatan_bersih;
+                    $amounts = $payroll->amounts($i, now()->startOfMonth());
+                    $bpjs_tk = $amounts['bpjs_tk'];
+                    $bpjs_k = $amounts['bpjs_k'];
+                    $potongan_bpjs_tk = $amounts['potongan_bpjs_tk'];
+                    $potongan_bpjs_kesehatan = $amounts['potongan_bpjs_kesehatan'];
+                    $pendapatan_kotor = $amounts['pendapatan_kotor'];
+                    $pendapatan_bersih = $amounts['pendapatan_bersih'];
+                    $grandTotalPotonganBpjsTk += $potongan_bpjs_tk;
+                    $grandTotalPotonganBpjsKesehatan += $potongan_bpjs_kesehatan;
+                    $grandTotalPendapatanKotor += $pendapatan_kotor;
+                    $grandTotalPendapatanBersih += $pendapatan_bersih;
                 @endphp
                 <tr>
                     <td class="text-center align-middle">{{$i->kode}}{{sprintf("%03d",$i->nomor)}}</td>
@@ -66,11 +67,12 @@
                     <td class="text-center align-middle">{{number_format($potongan_bpjs_kesehatan, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($pendapatan_kotor, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($pendapatan_bersih, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{ number_format($amounts['potongan_kasbon'], 0, ',', '.') }}</td>
                     <td class="text-center align-middle">
                         @php
-                            $sisa_gaji_dibayar = $pendapatan_bersih;
+                            $sisa_gaji_dibayar = $amounts['sisa_gaji_dibayar'];
                             $total = $total + $sisa_gaji_dibayar;
-                            $grandTotalKasbon = $grandTotalKasbon;
+                            $grandTotalKasbon += $amounts['potongan_kasbon'];
                         @endphp
                         {{number_format($sisa_gaji_dibayar, 0, ',','.')}}
                     </td>
@@ -84,6 +86,7 @@
                     <th class="text-center align-middle">{{number_format($grandTotalPotonganBpjsKesehatan, 0, ',','.')}}</th>
                     <th class="text-center align-middle">{{number_format($grandTotalPendapatanKotor, 0, ',','.')}}</th>
                     <th class="text-center align-middle">{{number_format($grandTotalPendapatanBersih, 0, ',','.')}}</th>
+                    <th class="text-center align-middle">{{number_format($grandTotalKasbon, 0, ',','.')}}</th>
                     <th class="text-center align-middle">{{number_format($total, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
