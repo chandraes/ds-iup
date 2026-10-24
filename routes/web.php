@@ -550,6 +550,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('rekap', [RekapController::class, 'index'])->name('rekap');
         Route::prefix('rekap')->group(function () {
+            Route::get('/konsumen-options', [RekapController::class, 'konsumenOptions'])->name('rekap.konsumen-options');
             Route::get('/lain-lain', [FormLainReportController::class, 'index'])->name('rekap.lain-lain');
             Route::get('/kasbon', [KasbonController::class, 'report'])->middleware('role:su,admin,user')->name('rekap.kasbon');
             Route::post('/kasbon/{kasbon}/cancel', [KasbonController::class, 'cancel'])->middleware('role:su,admin')->name('rekap.kasbon.cancel');

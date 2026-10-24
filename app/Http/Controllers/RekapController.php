@@ -32,19 +32,36 @@ use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 class RekapController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $konsumen = Konsumen::where('active', 1)->get();
+        return view('rekap.index');
+    }
 
-        return view('rekap.index', [
-            'konsumen' => $konsumen,
-        ]);
+    public function konsumenOptions(Request $request): JsonResponse
+    {
+        $filters = $request->validate(['search' => 'nullable|string|max:100', 'page' => 'nullable|integer|between:1,100000']);
+        $search = trim($filters['search'] ?? '');
+        $page = (int) ($filters['page'] ?? 1);
+        $customers = DB::table('konsumens')->leftJoin('kode_tokos', 'kode_tokos.id', '=', 'konsumens.kode_toko_id')
+            ->where('konsumens.active', 1)
+            ->when($search !== '', fn (Builder $query): Builder => $query->where(fn (Builder $query): Builder => $query
+                ->where('konsumens.nama', 'like', '%'.$search.'%')->orWhere('kode_tokos.kode', 'like', '%'.$search.'%')))
+            ->orderBy('konsumens.nama')->orderBy('konsumens.id')->offset(($page - 1) * 20)->limit(21)
+            ->get(['konsumens.id', 'konsumens.nama', 'kode_tokos.kode']);
+
+        return response()->json(['results' => $customers->take(20)->map(fn (object $customer): array => [
+            'id' => $customer->id, 'text' => trim(($customer->kode ?? '').' '.$customer->nama),
+        ])->values(), 'pagination' => ['more' => $customers->count() > 20]]);
     }
 
     public function kas_besar(Request $request, int $ppn_kas)
