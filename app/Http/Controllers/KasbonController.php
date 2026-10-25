@@ -9,7 +9,6 @@ use App\Models\Kasbon;
 use App\Models\PasswordKonfirmasi;
 use App\Services\KasbonMessage;
 use App\Services\KasbonService;
-use App\Services\StarSender;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -121,7 +120,7 @@ class KasbonController extends Controller
             $cashId = $returned ? $loan->void_kas_besar_id : $loan->kas_besar_id;
             $cash = KasBesar::findOrFail($cashId);
             $message = app(KasbonMessage::class)->format($loan, $cash, $returned);
-            (new StarSender($group->nama_group, $message))->sendGroup();
+            $cash->sendWa($group->nama_group, $message);
         } catch (\Throwable $exception) {
             report($exception);
         }

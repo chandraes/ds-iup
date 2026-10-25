@@ -5,7 +5,7 @@
     $periodLabel = $month.' '.$period->year;
 @endphp
 <div class="container-fluid payroll-ui">
-    <header class="payroll-header"><div><div class="payroll-eyebrow">Billing · Penggajian</div><h1>Form gaji pegawai</h1><p>Periksa komponen penghasilan dan potongan sebelum memproses gaji.</p></div><a href="{{ route('billing.form-cost-operational') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali</a></header>
+    <header class="payroll-header"><div><div class="payroll-eyebrow">Billing · Penggajian</div><h1>Form gaji pegawai</h1><p>Periksa komponen penghasilan dan potongan sebelum memproses gaji.</p></div><a href="{{ route('billing') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali ke Billing</a></header>
     @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <div class="payroll-period"><div><span>Periode</span><strong>{{ $periodLabel }}</strong><p>{{ $period->copy()->subMonth()->day(26)->locale('id')->translatedFormat('d F Y') }}–{{ $period->copy()->day(25)->locale('id')->translatedFormat('d F Y') }}</p></div><span class="payroll-tag"><i class="fa fa-clock-o" aria-hidden="true"></i> Menunggu diproses</span></div>
     @include('billing.form-cost-operational.form-gaji.attendance-status')

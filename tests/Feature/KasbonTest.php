@@ -7,6 +7,7 @@ use App\Models\db\Karyawan;
 use App\Models\KasBesar;
 use App\Models\Kasbon;
 use App\Models\PasswordKonfirmasi;
+use App\Models\PesanWa;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\Rekening;
@@ -25,6 +26,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
@@ -61,6 +64,13 @@ class KasbonTest extends TestCase
             foreach (['untuk', 'bank', 'no_rek', 'nama_rek'] as $field) {
                 $table->string($field);
             }
+            $table->timestamps();
+        });
+        Schema::create('pesan_was', function (Blueprint $table): void {
+            $table->id();
+            $table->longText('pesan');
+            $table->string('tujuan');
+            $table->boolean('status');
             $table->timestamps();
         });
         Schema::create('group_was', function (Blueprint $table): void {
@@ -198,6 +208,41 @@ class KasbonTest extends TestCase
         $this->post(route('billing.kasbon.store'), $payload)->assertSessionHasErrors('karyawan_id');
         $this->assertSame(1, Kasbon::count());
         $this->assertSame(10000000, (int) KasBesar::latest('id')->first()->saldo);
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    #[TestWith(['kasbon', true])]
+    #[TestWith(['kasbon', false])]
+    #[TestWith(['void', true])]
+    #[TestWith(['void', false])]
+    #[TestWith(['gaji', true])]
+    #[TestWith(['gaji', false])]
+    public function test_payroll_and_loan_notifications_are_recorded_in_message_history(string $operation, bool $sent): void
+    {
+        $employee = KaryawanFactory::new()->create();
+        $this->fund();
+        DB::table('group_was')->insert(['untuk' => 'kas-besar-ppn', 'nama_group' => 'Grup PPN Uji']);
+        $sender = \Mockery::mock('overload:App\\Services\\StarSender');
+        $sender->shouldReceive('sendGroup')->once()->andReturn($sent);
+
+        if ($operation === 'gaji') {
+            $response = $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10']);
+        } elseif ($operation === 'void') {
+            $loan = KasbonFactory::new()->create(['karyawan_id' => $employee->id]);
+            Rekening::create(['untuk' => 'kas-besar-ppn', 'bank' => 'Bank Uji', 'no_rek' => '001', 'nama_rek' => 'IUP']);
+            PasswordKonfirmasi::create(['password' => 'confirm-test']);
+            $response = $this->post(route('rekap.kasbon.cancel', $loan), ['alasan' => 'Dibatalkan untuk pengujian', 'password' => 'confirm-test']);
+        } else {
+            $response = $this->post(route('billing.kasbon.store'), $this->payload($employee));
+        }
+
+        $response->assertSessionHasNoErrors();
+        $this->assertSame(1, PesanWa::count());
+        $message = PesanWa::sole();
+        $this->assertSame('Grup PPN Uji', $message->tujuan);
+        $this->assertSame($sent ? 1 : 0, (int) $message->status);
+        $this->assertStringContainsString($operation === 'gaji' ? '*FORM GAJI KARYAWAN*' : ($operation === 'void' ? '*Form Void Kasbon Staff*' : '*Form Kasbon Staff*'), $message->pesan);
     }
 
     public function test_billing_offers_forms_and_report_lives_under_rekap(): void

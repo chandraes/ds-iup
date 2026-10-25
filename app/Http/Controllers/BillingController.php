@@ -50,7 +50,6 @@ use App\Models\User;
 use App\Models\Wilayah;
 use App\Services\EmployeePayrollService;
 use App\Services\PayrollAttendanceService;
-use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -284,7 +283,7 @@ class BillingController extends Controller
             $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
             if ($group) {
                 $message = '*FORM GAJI KARYAWAN*'."\n".$rekap->uraian."\nNilai: Rp ".number_format($rekap->total, 0, ',', '.');
-                (new StarSender($group->nama_group, $message))->sendGroup();
+                (new KasBesar)->sendWa($group->nama_group, $message);
             }
         } catch (\Throwable $exception) {
             report($exception);
