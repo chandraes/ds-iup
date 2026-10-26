@@ -50,3 +50,6 @@ Migrasi2026_10_24_214601 diterapkan lokal setelahbackup privat storage/app/priva
 
 
 26 Oktober 2026 — Dasar BPJS pada penggajian IUP lokal kini gaji_pokok + tunjangan_jabatan + tunjangan_keluarga. Tarif tetap: TK perusahaan4,89%/pegawai2%, Kesehatan perusahaan4%/pegawai1%; pembulatan rupiah penuh dan flag kepesertaan masing-masing dipertahankan. Komisi/BBM tidak menjadi dasar. Perubahan berlaku pada pratinjau dan proses gaji baru, tidak menghitung ulang rekap tersimpan. Tes KasbonTest54lulus/452assertions mencakup semua kombinasi kepesertaan, gaji pokok nol dengan tunjangan tetap, penyimpanan nominal dan ketetapan riwayat setelah data pegawai berubah. Pint lulus. Belum deploy production.
+
+
+26 Oktober 2026 — Dasar BPJS Kesehatan IUP lokal dibatasi maksimal Rp12.000.000 dari gaji pokok+tunjangan jabatan+tunjangan keluarga, untuk perusahaan4% dan pegawai1%. Maksimum nominal masing-masing Rp480.000 dan Rp120.000. BPJS-TK tetap memakai total komponen tetap tanpa batas ini. Flag kepesertaan dan rekap lama dipertahankan. Tes sebelum perubahan membuktikan kasus dasar Rp15juta gagal pada nominal kesehatan; sesudah perubahan seluruh KasbonTest57lulus/467assertions, Pint lulus. Belum deploy production.

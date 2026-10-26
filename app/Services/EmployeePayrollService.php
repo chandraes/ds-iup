@@ -110,10 +110,11 @@ class EmployeePayrollService
         $attendance = $this->attendance->calculate($employee, $period);
         $base = (int) $employee->gaji_pokok;
         $bpjsBase = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga;
+        $healthInsuranceBase = min($bpjsBase, 12000000);
         $tk = $employee->apa_bpjs_tk ? (int) round($bpjsBase * 0.0489) : 0;
-        $kes = $employee->apa_bpjs_kes ? (int) round($bpjsBase * 0.04) : 0;
+        $kes = $employee->apa_bpjs_kes ? (int) round($healthInsuranceBase * 0.04) : 0;
         $potTk = $employee->apa_bpjs_tk ? (int) round($bpjsBase * 0.02) : 0;
-        $potKes = $employee->apa_bpjs_kes ? (int) round($bpjsBase * 0.01) : 0;
+        $potKes = $employee->apa_bpjs_kes ? (int) round($healthInsuranceBase * 0.01) : 0;
         $income = $bpjsBase + $commissionAmount + $attendance['tunjangan_bbm'];
         $net = $income - $potTk - $potKes;
         $payments ??= $this->kasbon->payments($employee, $period, $lock);

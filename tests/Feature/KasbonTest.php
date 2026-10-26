@@ -442,6 +442,9 @@ class KasbonTest extends TestCase
     #[TestWith([0, 1, 3000000, 0, 160000, 0, 40000])]
     #[TestWith([0, 0, 3000000, 0, 0, 0, 0])]
     #[TestWith([1, 1, 0, 48900, 40000, 20000, 10000])]
+    #[TestWith([1, 1, 11000000, 586800, 480000, 240000, 120000])]
+    #[TestWith([1, 1, 14000000, 733500, 480000, 300000, 120000])]
+    #[TestWith([0, 0, 14000000, 0, 0, 0, 0])]
     public function test_bpjs_uses_base_salary_and_fixed_allowances_only(int $tkEnabled, int $kesEnabled, int $baseSalary, int $companyTk, int $companyKes, int $employeeTk, int $employeeKes): void
     {
         $employee = KaryawanFactory::new()->create([
