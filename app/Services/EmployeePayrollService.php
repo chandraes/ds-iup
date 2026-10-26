@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class EmployeePayrollService
 {
-    public function __construct(private KasbonService $kasbon, private PayrollAttendanceService $attendance) {}
+    public function __construct(private KasbonService $kasbon, private PayrollAttendanceService $attendance, public BpjsHealthMinimumService $bpjs) {}
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, Karyawan> */
     public function employees(bool $lock = false): \Illuminate\Database\Eloquent\Collection
@@ -110,7 +110,7 @@ class EmployeePayrollService
         $attendance = $this->attendance->calculate($employee, $period);
         $base = (int) $employee->gaji_pokok;
         $bpjsBase = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga;
-        $healthInsuranceBase = min($bpjsBase, 12000000);
+        $healthInsuranceBase = $this->bpjs->base($bpjsBase, $period->year);
         $tk = $employee->apa_bpjs_tk ? (int) round($bpjsBase * 0.0489) : 0;
         $kes = $employee->apa_bpjs_kes ? (int) round($healthInsuranceBase * 0.04) : 0;
         $potTk = $employee->apa_bpjs_tk ? (int) round($bpjsBase * 0.02) : 0;
@@ -128,6 +128,11 @@ class EmployeePayrollService
     public function store(?string $expectedPeriod = null, ?string $attendanceRevision = null): RekapGaji
     {
         $this->attendance->clear();
+        $bpjsPeriod = $this->nextPeriod();
+        if (! $bpjsPeriod) {
+            throw ValidationException::withMessages(['total' => 'Seluruh periode gaji sudah diproses.']);
+        }
+        $this->bpjs->requireConfigured($bpjsPeriod->year);
         $attendancePeriod = null;
         if ($this->attendance->enabled()) {
             $employees = $this->employees();
@@ -155,6 +160,7 @@ class EmployeePayrollService
             if (! $period || ($expectedPeriod !== null && $expectedPeriod !== $period->format('Y-m'))) {
                 throw ValidationException::withMessages(['total' => 'Periode gaji sudah diproses atau berubah. Muat ulang form sebelum melanjutkan.']);
             }
+            $this->bpjs->requireConfigured($period->year, true);
             if ($attendancePeriod) {
                 DB::table('payroll_attendance_periods')->where('id', $attendancePeriod->id)->lockForUpdate()->first();
                 $this->attendance->clear();

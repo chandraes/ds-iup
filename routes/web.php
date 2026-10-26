@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceIntegrationController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\BpjsHealthMinimumController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\FormBeliController;
@@ -303,6 +304,8 @@ Route::group(['middleware' => ['auth']], function () {
     // ROUTE DB
     Route::view('db', 'db.index')->name('db')->middleware('role:su,admin');
     Route::prefix('db')->group(function () {
+        Route::get('/bpjs-kesehatan', [BpjsHealthMinimumController::class, 'index'])->name('bpjs-health.index')->middleware('role:su,admin');
+        Route::post('/bpjs-kesehatan', [BpjsHealthMinimumController::class, 'store'])->name('bpjs-health.store')->middleware('role:su,admin');
 
         Route::group(['middleware' => ['role:su,admin']], function () {
             Route::post('/approval-ajuan-harga/{harga}', [BarangController::class, 'harga_ajuan_approve'])->name('db.harga-ajuan-approve');
