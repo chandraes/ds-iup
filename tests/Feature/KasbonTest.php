@@ -437,12 +437,41 @@ class KasbonTest extends TestCase
         $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertRedirect('/login');
     }
 
+    #[TestWith([1, 1, 3000000, 195600, 160000, 80000, 40000])]
+    #[TestWith([1, 0, 3000000, 195600, 0, 80000, 0])]
+    #[TestWith([0, 1, 3000000, 0, 160000, 0, 40000])]
+    #[TestWith([0, 0, 3000000, 0, 0, 0, 0])]
+    #[TestWith([1, 1, 0, 48900, 40000, 20000, 10000])]
+    public function test_bpjs_uses_base_salary_and_fixed_allowances_only(int $tkEnabled, int $kesEnabled, int $baseSalary, int $companyTk, int $companyKes, int $employeeTk, int $employeeKes): void
+    {
+        $employee = KaryawanFactory::new()->create([
+            'gaji_pokok' => $baseSalary, 'tunjangan_jabatan' => 600000, 'tunjangan_keluarga' => 400000,
+            'apa_bpjs_tk' => $tkEnabled, 'apa_bpjs_kes' => $kesEnabled, 'tunjangan_bbm' => 30000,
+        ]);
+
+        $amounts = app(EmployeePayrollService::class)->amounts($employee, now(), commission: ['komisi' => 750000], payments: []);
+
+        $this->assertSame($companyTk, $amounts['bpjs_tk']);
+        $this->assertSame($companyKes, $amounts['bpjs_k']);
+        $this->assertSame($employeeTk, $amounts['potongan_bpjs_tk']);
+        $this->assertSame($employeeKes, $amounts['potongan_bpjs_kesehatan']);
+        $this->assertSame($baseSalary + 1750000 - $employeeTk - $employeeKes, $amounts['pendapatan_bersih']);
+    }
+
     public function test_loan_cannot_be_added_after_payroll_and_payroll_ignores_client_total(): void
     {
         $employee = KaryawanFactory::new()->create(['apa_bpjs_tk' => 1, 'apa_bpjs_kes' => 1]);
         $this->fund();
         $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => now()->format('Y-m'), 'total' => 1])->assertRedirect(route('billing.form-cost-operational'));
-        $this->assertEquals(3910000, RekapGaji::sole()->total);
+        $this->assertEquals(3880000, RekapGaji::sole()->total);
+        $detail = RekapGajiDetail::sole();
+        $this->assertEquals(195600, $detail->bpjs_tk);
+        $this->assertEquals(160000, $detail->bpjs_k);
+        $this->assertEquals(80000, $detail->potongan_bpjs_tk);
+        $this->assertEquals(40000, $detail->potongan_bpjs_kesehatan);
+        $employee->update(['tunjangan_jabatan' => 900000]);
+        $this->assertEquals(195600, $detail->fresh()->bpjs_tk);
+        $this->assertEquals(3880000, RekapGaji::sole()->total);
         $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasErrors('nominal');
         $this->assertSame(0, Kasbon::count());
     }
@@ -481,7 +510,7 @@ class KasbonTest extends TestCase
         $this->assertSame('2026-11-10', $record->created_at->toDateString());
         $detail = $record->details()->sole();
         $this->assertEquals(100000, $detail->potongan_kasbon);
-        $this->assertEquals(146700, $detail->bpjs_tk);
+        $this->assertEquals(195600, $detail->bpjs_tk);
         $this->assertEquals(0, $detail->komisi);
         $this->assertEquals(0, $detail->tunjangan_bbm);
         $this->get(route('rekap.gaji.detail', ['bulan' => 10, 'tahun' => 2026]))->assertOk()

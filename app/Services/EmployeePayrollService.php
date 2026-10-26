@@ -109,11 +109,12 @@ class EmployeePayrollService
         $commissionAmount = $commission['komisi'] ?? 0;
         $attendance = $this->attendance->calculate($employee, $period);
         $base = (int) $employee->gaji_pokok;
-        $tk = $employee->apa_bpjs_tk ? (int) round($base * 0.0489) : 0;
-        $kes = $employee->apa_bpjs_kes ? (int) round($base * 0.04) : 0;
-        $potTk = $employee->apa_bpjs_tk ? (int) round($base * 0.02) : 0;
-        $potKes = $employee->apa_bpjs_kes ? (int) round($base * 0.01) : 0;
-        $income = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga + $commissionAmount + $attendance['tunjangan_bbm'];
+        $bpjsBase = $base + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga;
+        $tk = $employee->apa_bpjs_tk ? (int) round($bpjsBase * 0.0489) : 0;
+        $kes = $employee->apa_bpjs_kes ? (int) round($bpjsBase * 0.04) : 0;
+        $potTk = $employee->apa_bpjs_tk ? (int) round($bpjsBase * 0.02) : 0;
+        $potKes = $employee->apa_bpjs_kes ? (int) round($bpjsBase * 0.01) : 0;
+        $income = $bpjsBase + $commissionAmount + $attendance['tunjangan_bbm'];
         $net = $income - $potTk - $potKes;
         $payments ??= $this->kasbon->payments($employee, $period, $lock);
         $deduction = array_sum(array_column($payments, 'amount'));
