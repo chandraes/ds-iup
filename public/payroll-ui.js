@@ -3,9 +3,17 @@
     if (tableElement && window.jQuery && jQuery.fn.DataTable) {
         jQuery(tableElement).DataTable({
             paging: false, ordering: false, autoWidth: false, scrollCollapse: true, scrollY: '520px', scrollX: true,
-            language: {search: 'Cari pegawai:', searchPlaceholder: 'Nama, NIK, atau jabatan…',
+            language: {search: 'Cari pegawai:', searchPlaceholder: tableElement.dataset.rowNumbers === 'true' ? 'Nama atau jabatan…' : 'Nama, NIK, atau jabatan…',
                 emptyTable: 'Tidak ada pegawai dalam rekap ini.', zeroRecords: 'Tidak ada pegawai yang sesuai pencarian.',
                 info: 'Menampilkan _START_–_END_ dari _TOTAL_ pegawai', infoEmpty: 'Tidak ada pegawai yang ditampilkan', infoFiltered: '(dari _MAX_ pegawai)'},
+            columnDefs: tableElement.dataset.rowNumbers === 'true' ? [{targets: 0, searchable: false}] : [],
+            drawCallback: function () {
+                if (tableElement.dataset.rowNumbers === 'true') {
+                    this.api().column(0, {search: 'applied', order: 'applied'}).nodes().each(function (cell, index) {
+                        cell.textContent = index + 1;
+                    });
+                }
+            },
             initComplete: function () { this.api().columns.adjust(); }
         });
         jQuery('#rekapTable_wrapper .dataTables_scrollBody').attr({tabindex: 0, role: 'region', 'aria-label': 'Rincian gaji pegawai. Gulir ke samping untuk melihat seluruh komponen.'});
