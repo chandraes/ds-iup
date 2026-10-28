@@ -33,6 +33,7 @@ use App\Http\Controllers\RekapController;
 use App\Http\Controllers\RekeningController;
 use App\Http\Controllers\ReturController;
 use App\Http\Controllers\SalesController;
+use App\Http\Controllers\SalesPayrollController;
 use App\Http\Controllers\StatistikController;
 use App\Http\Controllers\UniversalController;
 use App\Http\Controllers\UserController;
@@ -183,6 +184,8 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['role:sales']], function () {
         Route::prefix('sales')->group(function () {
+            Route::get('/gaji', [SalesPayrollController::class, 'index'])->name('sales.gaji');
+            Route::get('/gaji/rincian', [SalesPayrollController::class, 'calculation'])->name('sales.gaji.rincian');
 
             Route::get('/omset-bulanan-konsumen', [SalesController::class, 'omset_tahunan_konsumen'])->name('sales.omset-bulanan-konsumen');
             Route::get('/omset-konsumen/excel', [SalesController::class, 'export_excel_omset'])->name('sales.omset.excel');

@@ -124,6 +124,7 @@
                     <th class="text-center align-middle">Satuan<br>Barang</th>
                     <th class="text-center align-middle">PPN</th>
                     <th class="text-center align-middle">NON PPN</th>
+                    <th class="text-center align-middle">Harga + PPN<br>Jual Barang</th>
 
 
                 </tr>
@@ -216,6 +217,11 @@
                         @endif
                         </td>
 
+                    @php
+                        $hargaJual = $stokHarga->harga_temp ? $stokHarga->harga_temp->harga_ajuan : $stokHarga->harga;
+                        $hargaJualPpn = $stokHarga->barang->jenis == 1 ? $hargaJual + ($hargaJual * $ppnRate / 100) : $hargaJual;
+                    @endphp
+                    <td class="text-end align-middle text-nowrap">{{ number_format($hargaJualPpn, 0, ',', '.') }}</td>
                 </tr>
                 {{-- @endif --}}
                 @endforeach
@@ -225,7 +231,7 @@
                 @endforeach
                 @if (!$loop->last)
                 <tr>
-                    <td colspan="4" style="border: none; background-color:transparent; border-bottom-color:transparent">
+                    <td colspan="13" style="border: none; background-color:transparent; border-bottom-color:transparent">
                     </td>
                 </tr>
                 @endif

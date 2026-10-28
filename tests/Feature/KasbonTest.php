@@ -25,6 +25,7 @@ use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -632,6 +633,8 @@ class KasbonTest extends TestCase
             ->assertJsonPath('title', 'Komisi '.$sales->nama)->assertJsonPath('html', fn ($html): bool => str_contains($html, 'mode=paid'));
         $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10', 'komisi' => 999999999])->assertSessionHasNoErrors();
         $record = RekapGajiDetail::where('nama', $sales->nama)->sole();
+        $this->assertSame($sales->id, (int) $record->karyawan_id);
+        $this->assertDatabaseHas('rekap_gaji_details', ['rekap_gaji_id' => $record->rekap_gaji_id, 'karyawan_id' => $staff->id, 'nama' => $staff->nama]);
         $this->assertEquals(8100000, RekapGaji::sole()->total);
         $this->assertEquals(100000, $record->komisi);
         $this->assertEquals(2500000, $record->omset_komisi);
@@ -735,6 +738,213 @@ class KasbonTest extends TestCase
         $this->getJson(route('rekap.gaji.komisi', ['detail' => $detail->id]))->assertForbidden();
         $this->app['auth']->forgetGuards();
         $this->getJson($url.'?karyawan_id='.$sales->id.'&periode=2026-10')->assertUnauthorized();
+    }
+
+    public function test_legacy_payroll_mapping_requires_approval_and_changes_only_employee_link(): void
+    {
+        Storage::fake('local');
+        $employee = KaryawanFactory::new()->create(['nomor' => 7]);
+        $this->fund();
+        app(EmployeePayrollService::class)->store('2026-10');
+        DB::table('rekap_gaji_details')->update(['karyawan_id' => null]);
+        $before = (array) DB::table('rekap_gaji_details')->first();
+        $this->artisan('payroll:link-legacy-employees', ['--output' => 'review.csv'])->assertSuccessful();
+        $this->assertNull(DB::table('rekap_gaji_details')->value('karyawan_id'));
+        $this->artisan('payroll:link-legacy-employees', ['--apply' => 'review.csv'])->assertFailed();
+        $path = Storage::disk('local')->path('private/payroll-mapping/review.csv');
+        $stream = fopen($path, 'r');
+        $headers = fgetcsv($stream, 0, ',', '"', '');
+        $values = fgetcsv($stream, 0, ',', '"', '');
+        fclose($stream);
+        $mapping = array_combine($headers, $values);
+        $this->assertSame('strong', $mapping['match_rule']);
+        $this->assertSame((string) $employee->id, $mapping['employee_id']);
+        $mapping['approved'] = 'yes';
+        $stream = fopen($path, 'w');
+        fputcsv($stream, $headers, ',', '"', '');
+        fputcsv($stream, array_values($mapping), ',', '"', '');
+        fclose($stream);
+        $this->artisan('payroll:link-legacy-employees', ['--apply' => 'review.csv'])->assertSuccessful();
+        $after = (array) DB::table('rekap_gaji_details')->first();
+        $this->assertSame($employee->id, (int) $after['karyawan_id']);
+        unset($before['karyawan_id'], $after['karyawan_id']);
+        $this->assertSame($before, $after);
+        $this->artisan('payroll:link-legacy-employees', ['--apply' => 'review.csv'])->assertSuccessful();
+    }
+
+    public function test_legacy_payroll_mapping_rejects_changed_details_and_does_not_guess_missing_employee(): void
+    {
+        Storage::fake('local');
+        KaryawanFactory::new()->create(['nomor' => 7]);
+        $this->fund();
+        app(EmployeePayrollService::class)->store('2026-10');
+        DB::table('rekap_gaji_details')->update(['karyawan_id' => null]);
+        $this->artisan('payroll:link-legacy-employees', ['--output' => 'review.csv'])->assertSuccessful();
+        $path = Storage::disk('local')->path('private/payroll-mapping/review.csv');
+        $stream = fopen($path, 'r');
+        $headers = fgetcsv($stream, 0, ',', '"', '');
+        $values = fgetcsv($stream, 0, ',', '"', '');
+        fclose($stream);
+        $mapping = array_combine($headers, $values);
+        $mapping['approved'] = 'yes';
+        $stream = fopen($path, 'w');
+        fputcsv($stream, $headers, ',', '"', '');
+        fputcsv($stream, array_values($mapping), ',', '"', '');
+        fclose($stream);
+        DB::table('rekap_gaji_details')->update(['nama' => 'Changed since review']);
+        $this->artisan('payroll:link-legacy-employees', ['--apply' => 'review.csv'])->assertFailed();
+        $this->assertNull(DB::table('rekap_gaji_details')->value('karyawan_id'));
+        DB::table('rekap_gaji_details')->update(['nik' => '999']);
+        $this->artisan('payroll:link-legacy-employees', ['--output' => 'unknown.csv'])->assertSuccessful();
+        $stream = fopen(Storage::disk('local')->path('private/payroll-mapping/unknown.csv'), 'r');
+        $headers = fgetcsv($stream, 0, ',', '"', '');
+        $mapping = array_combine($headers, fgetcsv($stream, 0, ',', '"', ''));
+        fclose($stream);
+        $this->assertSame('not_found', $mapping['match_rule']);
+        $this->assertSame('', $mapping['employee_id']);
+    }
+
+    public function test_sales_payroll_lists_twelve_months_and_all_unprocessed_estimates_with_own_data_only(): void
+    {
+        config(['attendance.enabled' => true]);
+        Http::preventStrayRequests();
+        $job = Jabatan::create(['nama' => 'SALES']);
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => $job->id, 'persen_komisi' => 4]);
+        $other = KaryawanFactory::new()->create(['jabatan_id' => $job->id, 'nama' => 'Rahasia Sales Lain']);
+        foreach ([['2026-07-26 00:00:00', 500000], ['2026-08-26 00:00:00', 1000000], ['2026-09-26 00:00:00', 2000000]] as [$date, $amount]) {
+            DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'grand_total' => $amount, 'lunas' => true, 'created_at' => '2026-01-01', 'updated_at' => $date]);
+        }
+        $user = new User(['name' => 'Sales', 'role' => 'sales', 'karyawan_id' => $sales->id]);
+        $user->id = 88;
+        $this->actingAs($user);
+        $response = $this->get(route('sales.gaji', ['year' => 2026, 'month' => 9, 'karyawan_id' => $other->id]));
+        $response->assertOk()->assertViewHas('months', fn ($months): bool => $months->count() === 12 && ($months->firstWhere('month', 8)['amounts']['komisi'] ?? null) === 20000 && ($months->firstWhere('month', 9)['amounts']['komisi'] ?? null) === 40000 && ($months->firstWhere('month', 10)['amounts']['komisi'] ?? null) === 80000 && $months->firstWhere('month', 12)['amounts'] === null)
+            ->assertViewHas('row', fn ($row): bool => $row['komisi'] === 40000)
+            ->assertDontSee('Hitung estimasi')->assertDontSee('Pilih rincian')->assertDontSee('<th rowspan="2" scope="col">Aksi</th>', false)->assertSee('Gaji Saya')->assertSee('Potongan Kasbon')->assertSee('Snapshot absensi belum tersedia')->assertDontSee('Rahasia Sales Lain')->assertHeader('Cache-Control', 'no-store, private');
+        $this->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()->assertViewHas('row', fn ($row): bool => $row['komisi'] === 80000);
+        $this->get(route('sales.gaji', ['year' => 2026, 'month' => 12]))->assertOk()->assertViewHas('row', null)->assertSee('Periode belum dimulai');
+        $this->getJson(route('sales.gaji', ['year' => 2026, 'month' => 13]))->assertUnprocessable();
+        $this->assertSame(0, RekapGaji::count());
+        Http::assertNothingSent();
+    }
+
+    public function test_sales_payroll_uses_final_snapshot_and_cannot_be_opened_by_other_roles(): void
+    {
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => 4]);
+        DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'grand_total' => 1000000, 'lunas' => true, 'created_at' => '2026-01-01', 'updated_at' => '2026-10-01']);
+        KasbonFactory::new()->create(['karyawan_id' => $sales->id, 'nominal' => 100000, 'sisa_kas' => 100000]);
+        $this->fund();
+        app(EmployeePayrollService::class)->store('2026-10');
+        $sales->update(['persen_komisi' => 99]);
+        DB::table('invoice_juals')->update(['grand_total' => 90000000]);
+        $user = new User(['name' => 'Sales', 'role' => 'sales', 'karyawan_id' => $sales->id]);
+        $user->id = 88;
+        $this->actingAs($user)->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()
+            ->assertViewHas('isStored', true)->assertViewHas('row', fn ($row): bool => (int) $row['komisi'] === 40000 && (int) $row['potongan_kasbon'] === 100000)->assertSee('Snapshot final');
+        $other = KaryawanFactory::new()->create();
+        $user->karyawan_id = $other->id;
+        $this->actingAs($user)->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()->assertViewHas('row', null)->assertSee('Tidak tercatat');
+        foreach (['admin', 'user', 'investor'] as $role) {
+            $user->role = $role;
+            $this->actingAs($user)->get(route('sales.gaji'))->assertForbidden();
+        }
+        $user->role = 'sales';
+        $user->karyawan_id = null;
+        $this->actingAs($user)->get(route('sales.gaji'))->assertForbidden();
+    }
+
+    public function test_sales_payroll_cell_details_are_scoped_and_use_final_commission_snapshot(): void
+    {
+        $job = Jabatan::create(['nama' => 'SALES']);
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => $job->id, 'persen_komisi' => 4]);
+        $other = KaryawanFactory::new()->create(['jabatan_id' => $job->id, 'nama' => 'Rahasia Lain']);
+        DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'grand_total' => 1000000, 'lunas' => true, 'created_at' => '2026-01-01', 'updated_at' => '2026-10-01']);
+        $user = new User(['role' => 'sales', 'karyawan_id' => $sales->id]);
+        $user->id = 88;
+        $this->actingAs($user);
+        $url = route('sales.gaji.rincian', ['year' => 2026, 'month' => 10, 'type' => 'komisi', 'karyawan_id' => $other->id]);
+        $response = $this->getJson($url)->assertOk()->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertStringContainsString('40.000', $response->json('html'));
+        $this->assertStringNotContainsString('Rahasia Lain', $response->getContent());
+        $this->getJson(route('sales.gaji.rincian', ['year' => 2026, 'month' => 12, 'type' => 'komisi']))->assertNotFound();
+        $this->getJson(route('sales.gaji.rincian', ['year' => 2026, 'month' => 10, 'type' => 'invalid']))->assertUnprocessable();
+        $this->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()->assertSee('data-bs-target="#payroll-commission"', false)->assertSee('payroll-ui.js');
+        $this->fund();
+        app(EmployeePayrollService::class)->store('2026-10');
+        $sales->update(['persen_komisi' => 99]);
+        DB::table('invoice_juals')->update(['grand_total' => 90000000]);
+        $response = $this->getJson($url)->assertOk();
+        $this->assertStringContainsString('40.000', $response->json('html'));
+        $this->assertStringContainsString('Snapshot final', $response->json('title'));
+        $user->role = 'user';
+        $this->actingAs($user)->getJson($url)->assertForbidden();
+        $user->role = 'sales';
+        $user->karyawan_id = null;
+        $this->actingAs($user)->getJson($url)->assertForbidden();
+    }
+
+    public function test_sales_payroll_bbm_cell_details_report_missing_snapshot_and_never_refresh(): void
+    {
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'tunjangan_bbm' => 15000]);
+        $snapshot = $this->attendanceSnapshot([$sales], [$sales->id => ['2026-10-01' => $this->attendanceDay('present')]]);
+        Http::preventStrayRequests();
+        $user = new User(['role' => 'sales', 'karyawan_id' => $sales->id]);
+        $user->id = 88;
+        $this->actingAs($user);
+        $url = route('sales.gaji.rincian', ['year' => 2026, 'month' => 10, 'type' => 'bbm']);
+        $response = $this->getJson($url)->assertOk();
+        $this->assertStringContainsString('Snapshot absensi belum tersedia', $response->json('html'));
+        Http::assertNothingSent();
+        $this->fakeAttendance($snapshot);
+        app(PayrollAttendanceService::class)->refresh(Carbon::parse('2026-10-01'), [(string) $sales->id]);
+        $before = DB::table('payroll_attendance_periods')->first();
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        $response = $this->getJson($url)->assertOk();
+        $this->assertStringContainsString('15.000', $response->json('html'));
+        $this->assertEquals($before, DB::table('payroll_attendance_periods')->first());
+        Http::assertNothingSent();
+    }
+
+    public function test_sales_payroll_displays_legacy_net_income_when_payable_is_not_recorded(): void
+    {
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => 4]);
+        $this->fund();
+        app(EmployeePayrollService::class)->store('2026-10');
+        DB::table('rekap_gaji_details')->update(['pendapatan_bersih' => 1234567, 'sisa_gaji_dibayar' => null, 'komisi' => 0, 'rincian_komisi' => null]);
+        $before = (array) DB::table('rekap_gaji_details')->first();
+        $sales->update(['gaji_pokok' => 9000000]);
+        $user = new User(['name' => 'Sales', 'role' => 'sales', 'karyawan_id' => $sales->id]);
+        $user->id = 88;
+        $this->actingAs($user)->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()
+            ->assertSee('Pendapatan Bersih')->assertSee('Gaji pokok')->assertSee('Pendapatan kotor')->assertSee('Potongan absensi')->assertDontSee('Komponen penghasilan dan potongan')->assertDontSee('id="rincian-gaji"', false)->assertSee('1.234.567')
+            ->assertViewHas('row', fn ($row): bool => (int) $row['pendapatan_bersih'] === 1234567 && (int) $row['sisa_gaji_dibayar'] === 1234567);
+        $this->actingAs($user)->get(route('sales.gaji', ['year' => 2026, 'month' => 9]))->assertOk()->assertSee('1.234.567');
+        $this->assertSame($before, (array) DB::table('rekap_gaji_details')->first());
+        DB::table('rekap_gaji_details')->update(['sisa_gaji_dibayar' => 0]);
+        $this->actingAs($user)->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()
+            ->assertViewHas('row', fn ($row): bool => (int) $row['sisa_gaji_dibayar'] === 0 && (int) $row['pendapatan_bersih'] === 1234567);
+    }
+
+    public function test_sales_payroll_bbm_reads_admin_snapshot_without_refreshing_or_locking_it(): void
+    {
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => 4, 'tunjangan_bbm' => 15000]);
+        $snapshot = $this->attendanceSnapshot([$sales], [$sales->id => ['2026-10-01' => $this->attendanceDay('present')]]);
+        $this->fakeAttendance($snapshot);
+        app(PayrollAttendanceService::class)->refresh(Carbon::parse('2026-10-01'), [(string) $sales->id]);
+        $before = DB::table('payroll_attendance_periods')->first();
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        $user = new User(['name' => 'Sales', 'role' => 'sales', 'karyawan_id' => $sales->id]);
+        $user->id = 88;
+        $this->actingAs($user)->get(route('sales.gaji', ['year' => 2026, 'month' => 10]))->assertOk()
+            ->assertViewHas('row', fn ($row): bool => $row['tunjangan_bbm'] === 15000 && $row['rincian_absensi']['amount'] === 15000)
+            ->assertDontSee('Perbarui data absensi');
+        $this->assertEquals($before, DB::table('payroll_attendance_periods')->first());
+        $this->assertSame(0, RekapGaji::count());
+        Http::assertNothingSent();
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertForbidden();
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10'])->assertForbidden();
     }
 
     private function attendanceSnapshot(array $employees, array $overrides = [], bool $ready = true): array

@@ -23,6 +23,12 @@
 <div class="row justify-content-left">
     <h3>REKAP</h3>
     <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
+        <a href="{{ route('sales.gaji') }}" class="text-decoration-none">
+            <img src="{{ asset('images/form-gaji.svg') }}" alt="" width="70">
+            <h5 class="mt-2">GAJI SAYA</h5>
+        </a>
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
         <a href="{{route('sales.order', ['kas_ppn' => 1])}}" class="text-decoration-none">
             <img src="{{asset('images/order-ppn.svg')}}" alt="" width="70">
             <h5 class="mt-2">SALES ORDER<br>BARANG A</h5>

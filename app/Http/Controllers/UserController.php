@@ -11,6 +11,7 @@ use App\Models\db\Karyawan;
 use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\KonsumenDoc;
+use App\Models\db\Pajak;
 use App\Models\Wilayah;
 use App\Services\CustomerFileService;
 use Illuminate\Http\Request;
@@ -52,11 +53,13 @@ class UserController extends Controller
         $db = new BarangStokHarga;
 
         $data = $db->barangStokAll($unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
         return view('user.stok-all.index', [
             'data' => $data,
+            'ppnRate' => $ppnRate,
             'kategori' => $kategori,
             'units' => $units,
             'type' => $type,
