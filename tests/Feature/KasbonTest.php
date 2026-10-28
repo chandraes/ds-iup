@@ -740,6 +740,45 @@ class KasbonTest extends TestCase
         $this->getJson($url.'?karyawan_id='.$sales->id.'&periode=2026-10')->assertUnauthorized();
     }
 
+    #[TestWith(['strong', true])]
+    #[TestWith(['account', true])]
+    #[TestWith(['number_only', false])]
+    #[TestWith(['ambiguous', false])]
+    #[TestWith(['duplicate', false])]
+    #[TestWith(['existing', false])]
+    public function test_automatic_legacy_payroll_mapping_only_links_unique_strong_matches(string $scenario, bool $linked): void
+    {
+        Storage::fake('local');
+        $employee = KaryawanFactory::new()->create(['nomor' => 7]);
+        $this->fund();
+        app(EmployeePayrollService::class)->store('2026-10');
+        DB::table('rekap_gaji_details')->update(['karyawan_id' => null]);
+        if ($scenario === 'account') {
+            DB::table('rekap_gaji_details')->update(['nama' => 'Nama lama', 'bank' => 'BCA', 'no_rek' => '12345']);
+            $employee->update(['bank' => 'BCA', 'no_rek' => '12345']);
+        }
+        if ($scenario === 'number_only') {
+            DB::table('rekap_gaji_details')->update(['nama' => 'Berbeda', 'no_rek' => '-']);
+        }
+        if ($scenario === 'ambiguous') {
+            KaryawanFactory::new()->create(['nomor' => 7]);
+        }
+        if (in_array($scenario, ['duplicate', 'existing'], true)) {
+            $duplicate = (array) DB::table('rekap_gaji_details')->first();
+            unset($duplicate['id']);
+            $duplicate['karyawan_id'] = $scenario === 'existing' ? $employee->id : null;
+            DB::table('rekap_gaji_details')->insert($duplicate);
+        }
+        $before = (array) DB::table('rekap_gaji_details')->orderBy('id')->first();
+        $this->artisan('payroll:link-legacy-employees', ['--auto' => true, '--output' => 'auto.csv'])->assertSuccessful();
+        $after = (array) DB::table('rekap_gaji_details')->orderBy('id')->first();
+        $this->assertSame($linked ? $employee->id : null, $after['karyawan_id']);
+        unset($before['karyawan_id'], $after['karyawan_id']);
+        $this->assertSame($before, $after);
+        $this->artisan('payroll:link-legacy-employees', ['--auto' => true, '--output' => 'again.csv'])->assertSuccessful();
+        $this->assertSame($linked ? $employee->id : null, DB::table('rekap_gaji_details')->orderBy('id')->value('karyawan_id'));
+    }
+
     public function test_legacy_payroll_mapping_requires_approval_and_changes_only_employee_link(): void
     {
         Storage::fake('local');

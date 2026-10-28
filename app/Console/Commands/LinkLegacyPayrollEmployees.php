@@ -12,13 +12,16 @@ use Throwable;
 
 class LinkLegacyPayrollEmployees extends Command
 {
-    protected $signature = 'payroll:link-legacy-employees {--output= : Private CSV report filename} {--apply= : Reviewed CSV filename with approved=yes}';
+    protected $signature = 'payroll:link-legacy-employees {--auto : Generate a fresh report and apply only unique strong matches} {--output= : Private CSV report filename} {--apply= : Reviewed CSV filename with approved=yes}';
 
     protected $description = 'Report legacy payroll ownership candidates; only apply explicitly approved, unchanged mappings';
 
     public function handle(): int
     {
         try {
+            if ($this->option('auto') && $this->option('apply')) {
+                throw new RuntimeException('Use --auto or --apply, not both.');
+            }
             $directory = Storage::disk('local')->path('private/payroll-mapping');
             if (! is_dir($directory) && ! mkdir($directory, 0700, true) && ! is_dir($directory)) {
                 throw new RuntimeException('Cannot create private report directory.');
@@ -78,6 +81,7 @@ class LinkLegacyPayrollEmployees extends Command
         fputcsv($stream, $headers, ',', '"', '');
         $employees = $this->employeeQuery()->get()->groupBy(fn ($employee): string => str_pad((string) $employee->nomor, 3, '0', STR_PAD_LEFT));
         $periods = DB::table('rekap_gajis')->get(['id', 'bulan', 'tahun'])->keyBy('id');
+        $automatic = 0;
         $counts = ['strong' => 0, 'number_only' => 0, 'not_found' => 0, 'ambiguous' => 0];
         try {
             foreach (DB::table('rekap_gaji_details')->whereNull('karyawan_id')->orderBy('id')->cursor() as $detail) {
@@ -88,11 +92,28 @@ class LinkLegacyPayrollEmployees extends Command
                     && trim($employee->no_rek) === trim($detail->no_rek)
                     && $this->normal($employee->bank) === $this->normal($detail->bank);
                 $status = $employee ? ($nameMatches || $accountMatches ? 'strong' : 'number_only') : ($candidates->isEmpty() ? 'not_found' : 'ambiguous');
-                $counts[$status]++;
+                $approveAutomatically = false;
+                if ($this->option('auto') && $status === 'strong') {
+                    $conflict = DB::table('rekap_gaji_details')->where('rekap_gaji_id', $detail->rekap_gaji_id)
+                        ->where('id', '!=', $detail->id)
+                        ->where(function (Builder $query) use ($employee, $detail): void {
+                            $query->where('karyawan_id', $employee->id)
+                                ->orWhere(function (Builder $query) use ($detail): void {
+                                    $query->whereNull('karyawan_id')->where('nik', $detail->nik);
+                                });
+                        })->exists();
+                    if ($conflict) {
+                        $status = 'period_conflict';
+                    } else {
+                        $approveAutomatically = true;
+                        $automatic++;
+                    }
+                }
+                $counts[$status] = ($counts[$status] ?? 0) + 1;
                 $period = $periods->get($detail->rekap_gaji_id);
                 $values = [$detail->id, $period?->tahun, $period?->bulan, $detail->nik, $detail->nama, $detail->jabatan, $detail->bank, $detail->no_rek, $detail->nama_rek,
                     $candidates->pluck('id')->implode('|'), $candidates->pluck('nama')->implode(' | '), $status,
-                    $employee?->id, '', $this->fingerprint($detail, true), $employee ? $this->fingerprint($employee) : '', json_encode($detail, JSON_THROW_ON_ERROR)];
+                    $employee?->id, $approveAutomatically ? 'yes' : '', $this->fingerprint($detail, true), $employee ? $this->fingerprint($employee) : '', json_encode($detail, JSON_THROW_ON_ERROR)];
                 foreach ([4, 5, 6, 7, 8, 10] as $index) {
                     if (preg_match('/\A[=+@\-\t\r\n]/', (string) $values[$index])) {
                         $values[$index] = "'".$values[$index];
@@ -103,8 +124,18 @@ class LinkLegacyPayrollEmployees extends Command
         } finally {
             fclose($stream);
         }
-        $this->info('Dry run: '.json_encode($counts, JSON_THROW_ON_ERROR));
+        $this->info('Candidates: '.json_encode($counts, JSON_THROW_ON_ERROR));
         $this->info('Private report: '.$path);
+        if ($this->option('auto')) {
+            $this->info('Automatic candidates: '.$automatic.'. Skipped: '.(array_sum($counts) - $automatic).'.');
+            if ($automatic === 0) {
+                $this->info('No eligible mappings. Nothing changed.');
+
+                return self::SUCCESS;
+            }
+
+            return $this->applyReport($directory, $name);
+        }
         $this->warn('No database rows changed. Review ownership before setting approved=yes. Unresolved rows require identity verification and a refreshed report.');
 
         return self::SUCCESS;
@@ -159,6 +190,15 @@ class LinkLegacyPayrollEmployees extends Command
                         throw new RuntimeException('Payroll detail is already linked to another employee.');
                     }
                     DB::table('rekap_gajis')->where('id', $detail->rekap_gaji_id)->lockForUpdate()->first();
+                    if ($this->option('auto')) {
+                        $candidates = $this->employeeQuery()->lockForUpdate()->get()
+                            ->filter(fn ($candidate): bool => str_pad((string) $candidate->nomor, 3, '0', STR_PAD_LEFT) === trim($detail->nik));
+                        if ($candidates->count() !== 1 || (int) $candidates->first()->id !== (int) $employee->id
+                            || DB::table('rekap_gaji_details')->where('rekap_gaji_id', $detail->rekap_gaji_id)
+                                ->where('id', '!=', $detail->id)->whereNull('karyawan_id')->where('nik', $detail->nik)->lockForUpdate()->first(['id'])) {
+                            throw new RuntimeException('Automatic mapping is no longer unique. Regenerate report: detail '.$detail->id);
+                        }
+                    }
                     if (DB::table('rekap_gaji_details')->where('rekap_gaji_id', $detail->rekap_gaji_id)->where('karyawan_id', $employee->id)->where('id', '!=', $detail->id)->lockForUpdate()->first(['id'])) {
                         throw new RuntimeException('Employee already has a detail in the same payroll period.');
                     }
