@@ -117,6 +117,7 @@
     $(document).ready(function() {
 
 
+    $(document).on('customer-documents-changed', () => table.ajax.reload(null, false));
     let table = $('#data').DataTable({
         processing: true,
         serverSide: true,

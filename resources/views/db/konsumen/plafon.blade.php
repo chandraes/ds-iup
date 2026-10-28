@@ -14,13 +14,13 @@
                             <label class="form-label fw-bold">Ubah Nominal Limit Plafon</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text">Rp</span>
-                                <input type="text" class="form-control" id="input_plafon_baru" name="plafon" required>
+                                <input type="text" class="form-control" id="input_plafon_baru" inputmode="numeric" required><input type="hidden" id="canonical_plafon_baru" name="plafon">
                             </div>
                         </div>
-                        {{-- <div class="col-md-5">
+                        <div class="col-md-5">
                             <label class="form-label fw-bold">Keterangan (Opsional)</label>
-                            <input type="text" class="form-control form-control-sm" id="input_keterangan_plafon" name="keterangan" placeholder="Alasan perubahan...">
-                        </div> --}}
+                            <input type="text" class="form-control form-control-sm" id="input_keterangan_plafon" name="keterangan" maxlength="500" placeholder="Alasan perubahan...">
+                        </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-primary btn-sm w-100" id="btnSavePlafon">Update</button>
                         </div>
@@ -37,7 +37,7 @@
                                 <th class="text-center">Tanggal</th>
                                 <th class="text-center">Plafon Lama</th>
                                 <th class="text-center">Plafon Baru</th>
-                                <th class="text-center">Diubah Oleh</th>
+                                <th class="text-center">Diubah Oleh</th><th class="text-center">Keterangan</th>
                             </tr>
                         </thead>
                     </table>

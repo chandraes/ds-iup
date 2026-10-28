@@ -1,6 +1,6 @@
-@if ($d->upload_ktp != null)
-    <a href="{{ asset('storage/' . $d->upload_ktp) }}" data-lightbox="ktp-{{ $d->id }}" data-title="Foto KTP {{ $d->nama }}">
-        <img src="{{ asset('storage/' . $d->upload_ktp) }}" alt="Foto KTP" class="img-fluid" width="100">
+@if ($d->upload_ktp && \Illuminate\Support\Facades\Storage::disk('local')->exists($d->upload_ktp))
+    <a href="{{ route('customer-files.ktp', $d->id) }}" data-lightbox="ktp-{{ $d->id }}" data-title="Foto KTP {{ $d->nama }}">
+        <img src="{{ route('customer-files.ktp', $d->id) }}" alt="Foto KTP" class="img-fluid" width="100">
     </a>
     <div class="row px-3 text-nowrap mt-1">
         <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal"

@@ -33,172 +33,121 @@
 </div>
 @push('js')
 <script>
+(function () {
+    'use strict';
     let tableKode;
-
-    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
-
-    $('#modalKodeToko').on('shown.bs.modal', function () {
-        if (!$.fn.DataTable.isDataTable('#kodeTokoTable')) {
+    let busy = false;
+    const modal = $('#modalKodeToko');
+    const body = $('#kodeTokoTable tbody');
+    const addButton = $('#addRowBtnKode');
+    const routes = {
+        list: @json(route('db.kode-toko')),
+        store: @json(route('db.kode-toko.store')),
+        update: @json(route('db.kode-toko.update', ':id')),
+        destroy: @json(route('db.kode-toko.delete', ':id'))
+    };
+    const endpoint = (template, id) => template.replace(':id', String(id)).replace('%3Aid', String(id));
+    const errorText = xhr => Object.values(xhr.responseJSON?.errors || {}).flat().join('\n') || xhr.responseJSON?.message || xhr.responseJSON?.error || 'Permintaan gagal. Silakan coba lagi.';
+    function textSpan(value) {
+        return $('<span>').addClass('editable').text(value ?? '')[0].outerHTML;
+    }
+    function button(label, classes) {
+        return $('<button>', {type: 'button', class: 'btn btn-sm ' + classes}).text(label)[0].outerHTML;
+    }
+    function restoreRow(row) {
+        tableKode.row(row).invalidate('data').draw(false);
+    }
+    function hasDraft() {
+        return !!tableKode && tableKode.rows().data().toArray().some(row => row.isNew);
+    }
+    function syncAddButton() {
+        addButton.prop('disabled', busy || hasDraft());
+    }
+    async function mutate(row, title, text, method, url, data) {
+        if (busy) return;
+        busy = true;
+        row.find('button, input').prop('disabled', true);
+        syncAddButton();
+        try {
+            const confirmation = await Swal.fire({title, text, icon: method === 'DELETE' ? 'warning' : 'question', showCancelButton: true, confirmButtonText: method === 'DELETE' ? 'Ya, hapus' : 'Ya, simpan', cancelButtonText: 'Batal', focusCancel: true, confirmButtonColor: method === 'DELETE' ? '#dc3545' : '#166534'});
+            if (!confirmation.isConfirmed) return;
+            await $.ajax({url, method, data, headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json'}});
+            tableKode.ajax.reload(() => syncAddButton(), false);
+        } catch (xhr) {
+            await Swal.fire('Data belum dapat disimpan', errorText(xhr), 'error');
+        } finally {
+            busy = false;
+            row.find('button, input').prop('disabled', false);
+            syncAddButton();
+        }
+    }
+    modal.on('shown.bs.modal', function () {
+        if (!tableKode) {
             tableKode = $('#kodeTokoTable').DataTable({
-                ajax: '{{ route("db.kode-toko") }}',
+                ajax: routes.list,
                 columns: [
-                    {
-                        data: null,
-                        title: 'No',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center',
-                        render: function (data, type, row, meta) {
-                            return meta.row + 1;
-                        }
-                    },
-                    {
-                        data: 'kode',
-                        render: function (data, type, row) {
-                            return `<span class="editable" data-id="${row.id}">${data}</span>`;
-                        }
-                    },
-                    {
-                        data: null,
-                        className: 'text-center',
-                        render: function (data, type, row) {
-                            return `
-                                <button class="btn btn-sm btn-warning edit-btn" data-id="${row.id}">Edit</button>
-                                <button class="btn btn-sm btn-success save-edit-btn d-none" data-id="${row.id}">Simpan</button>
-                                <button class="btn btn-sm btn-secondary cancel-edit-btn d-none" data-id="${row.id}">Batal</button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-id="${row.id}">Hapus</button>
-                            `;
-                        }
-                    }
-                ]
+                    {data: null, orderable: false, searchable: false, className: 'text-center', render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1},
+                    {data: 'kode', defaultContent: '', render: function (data, type, row) {
+                        if (type !== 'display') return data ?? '';
+                        if (row.isNew) return $('<input>', {type: 'text', class: 'form-control form-control-sm new-name', maxlength: 255, 'aria-label': 'Kode toko baru'})[0].outerHTML;
+                        return textSpan(data);
+                    }},
+                    {data: null, orderable: false, searchable: false, className: 'text-center', render: function (data, type, row) {
+                        if (type !== 'display') return '';
+                        if (row.isNew) return button('Simpan', 'btn-success save-btn') + ' ' + button('Batal', 'btn-secondary cancel-new-btn');
+                        return button('Edit', 'btn-warning edit-btn') + ' ' + button('Simpan', 'btn-success save-edit-btn d-none') + ' ' + button('Batal', 'btn-secondary cancel-edit-btn d-none') + ' ' + button('Hapus', 'btn-danger delete-btn');
+                    }}
+                ],
+                language: {emptyTable: 'Belum ada kode toko.', search: 'Cari kode toko:'},
+                drawCallback: syncAddButton
             });
-
-            // Tambah Data
-            $('#addRowBtnKode').on('click', function () {
-                const newRow = tableKode.row.add({}).draw(false).node();
-                $(newRow).addClass('new-row');
-                $(newRow).html(`
-                    <td></td>
-                    <td><input type="text" class="form-control form-control-sm new-name" /></td>
-                    <td><button class="btn btn-sm btn-success save-btn">Simpan</button></td>
-                `);
-            });
-
-            // Simpan Data Baru
-            $('#kodeTokoTable tbody').on('click', '.save-btn', function () {
-                const row = $(this).closest('tr');
-                const nama = row.find('.new-name').val();
-
-                if (!nama.trim()) {
-                    alert('Nama tidak boleh kosong');
-                    return;
-                }
-
-                $.ajax({
-                    url: '/db/kode-toko/store',
-                    method: 'POST',
-                    data: { kode: nama },
-                    success: function () {
-                        tableKode.ajax.reload();
-                    },
-                    error: function (xhr) {
-                        if (xhr.status === 422) { // Validation error
-                            const errors = xhr.responseJSON.errors;
-                            if (errors && errors.kode) {
-                                alert(errors.kode[0]); // Show the first validation error for 'kode'
-                            }
-                        } else {
-                            alert('Gagal simpan data');
-                        }
-                    }
-                });
-            });
-
-
-            // Edit
-            $('#kodeTokoTable tbody').on('click', '.edit-btn', function () {
-                const row = $(this).closest('tr');
-                const span = row.find('.editable');
-                const currentText = span.text();
-                const id = $(this).data('id');
-
-                span.replaceWith(`<input type="text" class="form-control form-control-sm edit-input" value="${currentText}" data-id="${id}">`);
-                row.find('.edit-btn').addClass('d-none');
-                row.find('.save-edit-btn').removeClass('d-none');
-                row.find('.cancel-edit-btn').removeClass('d-none');
-            });
-
-            // Simpan Edit
-            $('#kodeTokoTable tbody').on('click', '.save-edit-btn', function () {
-                const row = $(this).closest('tr');
-                const input = row.find('.edit-input');
-                const id = input.data('id');
-                const newValue = input.val();
-
-                $.ajax({
-                    url: `/db/kode-toko/update/${id}`,
-                    method: 'PATCH',
-                    data: { kode: newValue },
-                    success: function () {
-                        tableKode.ajax.reload();
-                    },
-                    error: function (xhr) {
-                        if (xhr.status === 422) { // Validation error
-                            const errors = xhr.responseJSON.errors;
-                            if (errors && errors.kode) {
-                                alert(errors.kode[0]); // Show the first validation error for 'kode'
-                            }
-                        } else {
-                            alert('Gagal simpan data');
-                        }
-                    }
-                });
-            });
-
-            // Batal Edit
-            $('#kodeTokoTable tbody').on('click', '.cancel-edit-btn', function () {
-                const row = $(this).closest('tr');
-                const input = row.find('.edit-input');
-                const originalValue = input.val();
-                const id = input.data('id');
-
-                input.replaceWith(`<span class="editable" data-id="${id}">${originalValue}</span>`);
-                row.find('.edit-btn').removeClass('d-none');
-                row.find('.save-edit-btn').addClass('d-none');
-                row.find('.cancel-edit-btn').addClass('d-none');
-            });
-
-            // Hapus Data
-            $('#kodeTokoTable tbody').on('click', '.delete-btn', function () {
-                const id = $(this).data('id');
-
-                if (confirm('Yakin ingin menghapus data ini?')) {
-                    $.ajax({
-                        url: `/db/kode-toko/delete/${id}`,
-                        method: 'DELETE',
-                        success: function () {
-                            tableKode.ajax.reload();
-                        },
-                        error: function () {
-                            alert('Gagal hapus data');
-                        }
-                    });
-                }
-            });
-        } else {
-            tableKode.ajax.reload();
+        } else if (!busy) {
+            tableKode.ajax.reload(() => tableKode.columns.adjust(), false);
         }
-
-        setTimeout(() => {
-            tableKode.columns.adjust().draw();
-        }, 200);
+        tableKode.columns.adjust();
     });
-
-    $('#modalkodeToko').on('hidden.bs.modal', function () {
-        if ($.fn.DataTable.isDataTable('#kodeTokoTable')) {
-            tableKode.destroy();
-            $('#kodeTokoTable tbody').empty();
-        }
+    addButton.on('click', function () {
+        if (busy || !tableKode || hasDraft()) return;
+        const row = tableKode.row.add({id: null, kode: '', isNew: true});
+        tableKode.search('').order([]).page('last').draw(false);
+        const index = row.index();
+        tableKode.page(Math.floor(index / tableKode.page.len())).draw(false);
+        $(row.node()).find('.new-name').trigger('focus');
+        syncAddButton();
     });
+    body.on('click', '.cancel-new-btn', function () {
+        if (busy) return;
+        tableKode.row($(this).closest('tr')).remove().draw(false);
+        syncAddButton();
+    });
+    body.on('click', '.edit-btn', function () {
+        if (busy) return;
+        const row = $(this).closest('tr');
+        const current = tableKode.row(row).data();
+        row.find('.editable').replaceWith($('<input>', {type: 'text', class: 'form-control form-control-sm edit-input', maxlength: 255, 'aria-label': 'Kode toko'}).val(current.kode));
+        row.find('.edit-btn, .delete-btn').addClass('d-none');
+        row.find('.save-edit-btn, .cancel-edit-btn').removeClass('d-none');
+    });
+    body.on('click', '.cancel-edit-btn', function () {
+        if (!busy) restoreRow($(this).closest('tr'));
+    });
+    body.on('click', '.save-btn, .save-edit-btn', function () {
+        if (busy) return;
+        const row = $(this).closest('tr');
+        const data = tableKode.row(row).data();
+        const value = String(row.find('input').val() || '').trim();
+        if (!value) { Swal.fire('Kode toko belum diisi', 'Kode toko wajib diisi.', 'warning'); return; }
+        mutate(row, data.isNew ? 'Simpan kode toko baru?' : 'Simpan perubahan kode toko?', value, data.isNew ? 'POST' : 'PATCH', data.isNew ? routes.store : endpoint(routes.update, Number(data.id)), {kode: value});
+    });
+    body.on('click', '.delete-btn', function () {
+        if (busy) return;
+        const row = $(this).closest('tr');
+        const data = tableKode.row(row).data();
+        mutate(row, 'Hapus kode toko?', 'Hapus kode ' + data.kode + '? Kode yang sedang digunakan tidak dapat dihapus.', 'DELETE', endpoint(routes.destroy, Number(data.id)));
+    });
+    modal.on('hidden.bs.modal', function () {
+        if (tableKode && !busy) tableKode.ajax.reload(syncAddButton, false);
+    });
+})();
 </script>
 @endpush

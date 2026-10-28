@@ -26,13 +26,16 @@ class StatistikController extends Controller
 
     public function omset_harian_sales(Request $request)
     {
-        $filters = $request->validate(['month' => 'nullable|integer|between:1,12', 'year' => 'nullable|integer|between:1901,2155']);
+        $salesOnly = $request->user()->role === 'sales';
+        $employeeId = $salesOnly ? (int) $request->user()->karyawan_id : null;
+        abort_if($salesOnly && (! $employeeId || ! Karyawan::whereKey($employeeId)->exists()), 403, 'Akun sales belum terhubung dengan pegawai.');
+        $filters = $request->validate(['month' => 'nullable|integer|between:1,12', 'year' => 'nullable|integer|between:1901,2155', 'mode' => 'nullable|in:all,paid']);
         $month = (int) ($filters['month'] ?? now()->month);
         $year = (int) ($filters['year'] ?? now()->year);
 
         $db = new InvoiceJual;
 
-        $dataTahun = $db->dataTahun();
+        $dataTahun = $db->dataTahun($employeeId);
 
         // create array of month in indonesian with key 1-12
         $dataBulan = [
@@ -50,15 +53,20 @@ class StatistikController extends Controller
             '12' => 'Desember',
         ];
 
-        $data = $db->omset_harian($month, $year, payrollPeriod: true);
+        $mode = $filters['mode'] ?? 'all';
+        $data = $db->omset_harian($month, $year, $employeeId, payrollPeriod: true, paidOnly: $mode === 'paid');
         $years = $dataTahun->pluck('tahun')->map(fn ($value): int => (int) $value)->push(now()->year)->push($year)->unique()->sortDesc()->values();
         $totals = $data['karyawans']->mapWithKeys(fn ($employee): array => [$employee->id => collect($data['data'])->sum($employee->id)]);
 
         return view('statistik.omset-harian.index', [
+            'salesOnly' => $salesOnly,
+            'turnoverIndexRoute' => $salesOnly ? 'sales.omset-harian' : 'statistik.omset-harian-sales',
+            'turnoverDetailRoute' => $salesOnly ? 'sales.omset-harian.detail' : 'statistik.omset-harian-sales.detail',
             'rows' => $data['data'],
             'karyawans' => $data['karyawans'],
             'dataTahun' => $dataTahun,
             'dataBulan' => $dataBulan,
+            'selectedMode' => $mode,
             'selectedMonth' => $month,
             'selectedYear' => $year,
             'years' => $years,
@@ -71,11 +79,16 @@ class StatistikController extends Controller
 
     public function omset_harian_sales_detail(Request $request)
     {
+        $salesOnly = $request->user()->role === 'sales';
+        if ($salesOnly) {
+            $employeeId = (int) $request->user()->karyawan_id;
+            abort_unless($employeeId && is_scalar($request->input('karyawan_id')) && (string) $request->input('karyawan_id') === (string) $employeeId, 403);
+        }
         $req = $request->validate([
             'tanggal' => 'required|date',
-            'karyawan_id' => 'required|exists:karyawans,id',
+            'karyawan_id' => 'required|integer|exists:karyawans,id',
             'month' => 'nullable|integer|between:1,12',
-            'year' => 'nullable|integer|between:1901,2155',
+            'year' => 'nullable|integer|between:1901,2155', 'mode' => 'nullable|in:all,paid',
         ]);
 
         $db = new InvoiceJual;
@@ -86,15 +99,20 @@ class StatistikController extends Controller
             return redirect()->back()->with('error', 'Karyawan tidak ditemukan');
         }
 
-        $data = $db->omset_harian_detail($request->input('tanggal'), $request->input('karyawan_id'));
+        $mode = $req['mode'] ?? 'all';
+        $data = $db->omset_harian_detail($req['tanggal'], $req['karyawan_id'], paidOnly: $mode === 'paid');
         $backPeriod = Carbon::parse($req['tanggal'])->startOfDay();
         if ($backPeriod->day >= 26) {
             $backPeriod->addMonthNoOverflow();
         }
 
         return view('statistik.omset-harian.detail', [
+            'salesOnly' => $salesOnly,
+            'turnoverIndexRoute' => $salesOnly ? 'sales.omset-harian' : 'statistik.omset-harian-sales',
+            'invoiceDetailRoute' => $salesOnly ? 'sales.omset-harian.detail.invoice' : 'rekap.invoice-penjualan.detail',
             'data' => $data,
             'karyawan' => $karyawan,
+            'selectedMode' => $mode,
             'backMonth' => $req['month'] ?? $backPeriod->month,
             'backYear' => $req['year'] ?? $backPeriod->year,
         ]);

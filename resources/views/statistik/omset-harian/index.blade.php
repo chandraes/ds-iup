@@ -4,33 +4,34 @@
     <header class="turnover-header">
         <div><div class="turnover-eyebrow">Statistik · Penjualan</div><h1>Omset harian sales</h1><p>Periode {{ $dataBulan[$selectedMonth] }} {{ $selectedYear }} <span aria-hidden="true">·</span> {{ $periodStart->copy()->locale('id')->translatedFormat('d F Y') }}–{{ $periodEnd->copy()->locale('id')->translatedFormat('d F Y') }}</p></div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('statistik') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali ke statistik</a>
+            @unless($salesOnly)<a href="{{ route('statistik') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left" aria-hidden="true"></i> Kembali ke statistik</a>@endunless
             <a href="{{ route('home') }}" class="btn btn-outline-secondary"><i class="fa fa-home" aria-hidden="true"></i> Dashboard</a>
         </div>
     </header>
     <section class="turnover-filter" aria-label="Filter periode omset">
         <div><h2>Periode</h2><p>Dimulai tanggal 26 bulan sebelumnya hingga tanggal 25 bulan yang dipilih.</p></div>
-        <form action="{{ route('statistik.omset-harian-sales') }}" method="get">
+        <form action="{{ route($turnoverIndexRoute) }}" method="get">
             <div><label for="month">Bulan periode</label><select name="month" id="month" class="form-select">@foreach($dataBulan as $value=>$label)<option value="{{ $value }}" @selected((int)$value === $selectedMonth)>{{ $label }}</option>@endforeach</select></div>
             <div><label for="year">Tahun</label><select name="year" id="year" class="form-select">@foreach($years as $value)<option value="{{ $value }}" @selected($value === $selectedYear)>{{ $value }}</option>@endforeach</select></div>
+            <div><label for="mode">Mode perhitungan</label><select name="mode" id="mode" class="form-select"><option value="all" @selected($selectedMode === 'all')>Semua invoice − void</option><option value="paid" @selected($selectedMode === 'paid')>Invoice lunas saja</option></select></div>
             <button class="btn btn-success"><i class="fa fa-filter" aria-hidden="true"></i> Tampilkan</button>
         </form>
     </section>
     <div class="turnover-stats">
-        <div class="turnover-stat is-highlight"><span>Total omset periode</span><strong>Rp {{ number_format($totals->sum(),0,',','.') }}</strong><small>Penjualan dikurangi pembatalan pada periode ini</small></div>
-        <div class="turnover-stat"><span>Sales aktif</span><strong>{{ $karyawans->count() }} <small>pegawai</small></strong><small>Sales yang ditampilkan pada rekap</small></div>
+        <div class="turnover-stat is-highlight"><span>{{ $selectedMode === 'paid' ? 'Total invoice lunas periode' : 'Total omset periode' }}</span><strong>Rp {{ number_format($totals->sum(),0,',','.') }}</strong><small>{{ $selectedMode === 'paid' ? 'Invoice lunas dan tidak void pada periode ini' : 'Penjualan dikurangi pembatalan pada periode ini' }}</small></div>
+        <div class="turnover-stat"><span>{{ $salesOnly ? 'Sales' : 'Sales aktif' }}</span><strong>{{ $karyawans->count() }} <small>pegawai</small></strong><small>Sales yang ditampilkan pada rekap</small></div>
         <div class="turnover-stat"><span>Rentang periode</span><strong>{{ count($rows) }} <small>hari kalender</small></strong><small>Jumlah hari dalam rentang, bukan jumlah hari kerja</small></div>
     </div>
     <section class="turnover-panel">
-        <div class="turnover-panel-heading"><div><h2>Rincian omset harian</h2><p>Klik nominal untuk melihat invoice. Nilai negatif menunjukkan koreksi pembatalan.</p></div><span class="turnover-badge">{{ $periodStart->format('d/m/Y') }}–{{ $periodEnd->format('d/m/Y') }}</span></div>
+        <div class="turnover-panel-heading"><div><h2>Rincian omset harian</h2><p>{{ $selectedMode === 'paid' ? 'Klik nominal untuk melihat invoice lunas. Tanggal mengikuti pelunasan.' : 'Klik nominal untuk melihat invoice. Nilai negatif menunjukkan koreksi pembatalan.' }}</p></div><span class="turnover-badge">{{ $periodStart->format('d/m/Y') }}–{{ $periodEnd->format('d/m/Y') }}</span></div>
         @if($karyawans->isEmpty())<p class="turnover-empty">Belum ada sales aktif untuk ditampilkan.</p>@else
         <div class="table-responsive"><table id="rekapTable" class="table table-hover turnover-table" style="width:100%">
             <thead class="table-success"><tr><th scope="col">Tanggal</th>@foreach($karyawans as $employee)<th scope="col" class="text-end">{{ $employee->nama }}</th>@endforeach</tr></thead>
-            <tbody>@foreach($rows as $row)<tr><th scope="row" data-order="{{ $row['tanggal'] }}">{{ \Carbon\Carbon::parse($row['tanggal'])->locale('id')->translatedFormat('d M Y') }}</th>@foreach($karyawans as $employee)<td class="text-end {{ $row[$employee->id] < 0 ? 'turnover-negative' : '' }}" data-order="{{ $row[$employee->id] }}">@if($row[$employee->id] != 0)<a href="{{ route('statistik.omset-harian-sales.detail',['tanggal'=>$row['tanggal'],'karyawan_id'=>$employee->id,'month'=>$selectedMonth,'year'=>$selectedYear]) }}" aria-label="Detail omset {{ $employee->nama }} tanggal {{ $row['tanggal'] }}">{{ number_format($row[$employee->id],0,',','.') }}</a>@else<span class="text-muted">0</span>@endif</td>@endforeach</tr>@endforeach</tbody>
+            <tbody>@foreach($rows as $row)<tr><th scope="row" data-order="{{ $row['tanggal'] }}">{{ \Carbon\Carbon::parse($row['tanggal'])->locale('id')->translatedFormat('d M Y') }}</th>@foreach($karyawans as $employee)<td class="text-end {{ $row[$employee->id] < 0 ? 'turnover-negative' : '' }}" data-order="{{ $row[$employee->id] }}">@if($row[$employee->id] != 0)<a href="{{ route($turnoverDetailRoute,['tanggal'=>$row['tanggal'],'karyawan_id'=>$employee->id,'month'=>$selectedMonth,'year'=>$selectedYear,'mode'=>$selectedMode]) }}" aria-label="Detail omset {{ $employee->nama }} tanggal {{ $row['tanggal'] }}">{{ number_format($row[$employee->id],0,',','.') }}</a>@else<span class="text-muted">0</span>@endif</td>@endforeach</tr>@endforeach</tbody>
             <tfoot><tr><th scope="row">Total periode</th>@foreach($karyawans as $employee)<td class="text-end fw-bold">{{ number_format($totals[$employee->id],0,',','.') }}</td>@endforeach</tr></tfoot>
         </table></div>
         @endif
-        <p class="turnover-footnote">Nominal dalam rupiah. Omset menggunakan nilai grand total invoice non-titipan, termasuk invoice yang belum lunas.</p>
+        <p class="turnover-footnote">{{ $selectedMode === 'paid' ? 'Nominal dalam rupiah. Hanya grand total invoice non-titipan yang lunas dan tidak void, dikelompokkan menurut tanggal pelunasan. Tidak ada pengurangan void.' : 'Nominal dalam rupiah. Omset menggunakan nilai grand total invoice non-titipan, termasuk invoice yang belum lunas.' }}</p>
     </section>
     @if($karyawans->isNotEmpty())<section class="turnover-panel"><div class="turnover-panel-heading"><div><h2>Tren omset sales</h2><p>Perbandingan omset harian selama periode yang dipilih.</p></div></div><div class="turnover-chart"><canvas id="omsetChart" role="img" aria-label="Grafik omset harian sales. Rincian angka tersedia pada tabel di atas."></canvas></div></section>@endif
 </div>

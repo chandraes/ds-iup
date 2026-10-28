@@ -47,9 +47,9 @@ class InvoiceJual extends Model
         return $this->invoice_jual_cicil ? $this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn') : 0;
     }
 
-    public function dataTahun()
+    public function dataTahun(?int $employeeId = null)
     {
-        return $this->selectRaw('YEAR(created_at) as tahun')
+        return $this->when($employeeId !== null, fn ($query) => $query->where('karyawan_id', $employeeId))->selectRaw('YEAR(created_at) as tahun')
             ->groupBy('tahun')
             ->orderBy('tahun', 'desc')
             ->get();
@@ -1103,7 +1103,7 @@ class InvoiceJual extends Model
         ];
     }
 
-    public function omset_harian(int $month, int $year, ?int $karyawan_id = null, bool $payrollPeriod = false): array
+    public function omset_harian(int $month, int $year, ?int $karyawan_id = null, bool $payrollPeriod = false, bool $paidOnly = false): array
     {
         $selectedMonth = Carbon::create($year, $month, 1)->startOfDay();
         $startDate = $payrollPeriod ? $selectedMonth->copy()->subMonth()->day(26) : $selectedMonth->copy();
@@ -1122,7 +1122,7 @@ class InvoiceJual extends Model
         for ($date = $startDate->copy(); $date->lt($endExclusive); $date->addDay()) {
             $dates->push($date->format('Y-m-d'));
         }
-        $daily = $this->salesTurnoverByDay($startDate, $endExclusive, $karyawans->modelKeys());
+        $daily = $this->salesTurnoverByDay($startDate, $endExclusive, $karyawans->modelKeys(), $paidOnly);
         $result = [];
         foreach ($dates as $date) {
             $row = ['tanggal' => $date];
@@ -1144,15 +1144,19 @@ class InvoiceJual extends Model
      * @param  list<int>  $employeeIds
      * @return array<int, array<string, array{penjualan: int, void: int, omset: int}>>
      */
-    public function salesTurnoverByDay(Carbon $start, Carbon $endExclusive, array $employeeIds): array
+    public function salesTurnoverByDay(Carbon $start, Carbon $endExclusive, array $employeeIds, bool $paidOnly = false): array
     {
         if ($employeeIds === []) {
             return [];
         }
         $base = DB::table($this->getTable())->where('titipan', 0)->whereIn('karyawan_id', $employeeIds);
-        $sales = (clone $base)->where('created_at', '>=', $start)->where('created_at', '<', $endExclusive)
-            ->selectRaw('karyawan_id, DATE(created_at) as tanggal, SUM(grand_total) as nominal')->groupBy('karyawan_id', 'tanggal')->get();
-        $voids = (clone $base)->where('void', 1)->where('updated_at', '>=', $start)->where('updated_at', '<', $endExclusive)
+        $dateColumn = $paidOnly ? 'updated_at' : 'created_at';
+        if ($paidOnly) {
+            $base->where('lunas', 1)->where('void', 0);
+        }
+        $sales = (clone $base)->where($dateColumn, '>=', $start)->where($dateColumn, '<', $endExclusive)
+            ->selectRaw("karyawan_id, DATE({$dateColumn}) as tanggal, SUM(grand_total) as nominal")->groupBy('karyawan_id', 'tanggal')->get();
+        $voids = $paidOnly ? collect() : (clone $base)->where('void', 1)->where('updated_at', '>=', $start)->where('updated_at', '<', $endExclusive)
             ->selectRaw('karyawan_id, DATE(updated_at) as tanggal, SUM(grand_total) as nominal')->groupBy('karyawan_id', 'tanggal')->get();
         $daily = [];
         foreach (['penjualan' => $sales, 'void' => $voids] as $kind => $records) {
@@ -1168,17 +1172,18 @@ class InvoiceJual extends Model
         return $daily;
     }
 
-    public function omset_harian_detail($tanggal, $karyawan_id)
+    public function omset_harian_detail($tanggal, $karyawan_id, bool $paidOnly = false)
     {
         $tanggal = Carbon::parse($tanggal)->format('Y-m-d');
 
         $data = $this->with(['invoice_detail', 'konsumen.kode_toko', 'konsumen.kabupaten_kota', 'konsumen.kecamatan'])
             ->where('titipan', 0)
             ->where('karyawan_id', $karyawan_id)
-            ->whereDate('created_at', $tanggal)
+            ->when($paidOnly, fn ($query) => $query->where('lunas', 1)->where('void', 0))
+            ->whereDate($paidOnly ? 'updated_at' : 'created_at', $tanggal)
             ->get();
 
-        $void = $this->with(['invoice_detail', 'konsumen.kode_toko', 'konsumen.kabupaten_kota', 'konsumen.kecamatan'])
+        $void = $paidOnly ? collect() : $this->with(['invoice_detail', 'konsumen.kode_toko', 'konsumen.kabupaten_kota', 'konsumen.kecamatan'])
             ->where('titipan', 0)
             ->where('void', 1)
             ->where('karyawan_id', $karyawan_id)

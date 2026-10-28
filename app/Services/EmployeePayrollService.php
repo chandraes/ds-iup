@@ -71,7 +71,7 @@ class EmployeePayrollService
         $sales = $employees->filter(fn (Karyawan $employee): bool => $employee->jabatan?->isSales() ?? false);
         $start = $period->copy()->startOfMonth()->subMonth()->day(26);
         $end = $period->copy()->startOfMonth()->day(26);
-        $daily = (new InvoiceJual)->salesTurnoverByDay($start, $end, $sales->pluck('id')->all());
+        $daily = (new InvoiceJual)->salesTurnoverByDay($start, $end, $sales->pluck('id')->all(), paidOnly: true);
         $commissions = [];
         foreach ($sales as $employee) {
             $days = [];
@@ -82,7 +82,7 @@ class EmployeePayrollService
             $rate = (int) round((float) $employee->persen_komisi * 100);
             $commission = intdiv($turnover, 10000) * $rate + (int) round(($turnover % 10000) * $rate / 10000);
             $commissions[$employee->id] = ['omset_komisi' => $turnover, 'persen_komisi' => number_format($rate / 100, 2, '.', ''), 'komisi' => $commission,
-                'rincian_komisi' => ['karyawan_id' => $employee->id, 'periode_mulai' => $start->toDateString(), 'periode_selesai' => $end->copy()->subDay()->toDateString(),
+                'rincian_komisi' => ['mode' => 'paid', 'karyawan_id' => $employee->id, 'periode_mulai' => $start->toDateString(), 'periode_selesai' => $end->copy()->subDay()->toDateString(),
                     'penjualan' => array_sum(array_column($days, 'penjualan')), 'void' => array_sum(array_column($days, 'void')), 'harian' => $days]];
         }
 

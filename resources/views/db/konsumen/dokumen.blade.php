@@ -38,7 +38,7 @@
                                             .png</div>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-primary" onclick="uploadDokumen()">Upload Dokumen</button>
+                                <button type="submit" class="btn btn-primary">Upload Dokumen</button>
 
                             </form>
                         </div>
@@ -55,15 +55,7 @@
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="dokumenTableBody">
-                                    <tr>
-                                        <td colspan="5" class="text-center">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                <tbody id="dokumenTableBody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -78,178 +70,11 @@
     </div>
 </div>
 @push('js')
-<script>
-    function uploadDokumen() {
-       Swal.fire({
-            title: 'Apakah data sudah benar?',
-            text: "Pastikan data sudah benar sebelum disimpan!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, simpan!'
-            }).then((result) => {
-            if (result.isConfirmed) {
-                let form = document.getElementById('dokumenForm');
-                let formData = new FormData(form);
-
-                fetch("{{ route('db.konsumen.dokumen.store') }}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        loadDokumen(formData.get('konsumen_id'));
-
-                        Swal.fire(
-                            'Berhasil!',
-                            'Dokumen berhasil disimpan.',
-                            'success'
-                        );
-                        form.reset();
-
-                    } else {
-                        Swal.fire(
-                            'Gagal!',
-                            data.message || 'Terjadi kesalahan saat menyimpan dokumen.',
-                            'error'
-                        );
-                    }
-
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire(
-                        'Gagal!',
-                        'Terjadi kesalahan saat menyimpan dokumen.',
-                        'error'
-                    );
-                });
-            }
-        });
-    }
-
-   function loadDokumen(konsumenId) {
-        const id = konsumenId || document.getElementById('dokumen_konsumen_id').value;
-        document.getElementById('dokumen_konsumen_id').value = id;
-        document.getElementById('dokumenTableBody').innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </td>
-            </tr>
-        `;
-
-        $.ajax({
-            url: '{{route('db.konsumen.dokumen')}}',
-            type: 'GET',
-            data: { konsumen_id: id },
-            success: function(data) {
-                // Destroy DataTable sebelum mengisi ulang data
-                if ($.fn.DataTable.isDataTable('#dokumenTable')) {
-                    $('#dokumenTable').DataTable().destroy();
-                }
-
-                let rows = '';
-                if (data.status === 'success' && data.data.length > 0) {
-                    data.data.forEach((doc, index) => {
-                        rows += `
-                            <tr>
-                                <td class="text-center">${index + 1}</td>
-                                <td>${doc.nama}</td>
-                                <td>${doc.barang_unit ? doc.barang_unit.nama : '-'}</td>
-                                <td><a href="${doc.file_url}" target="_blank">Lihat File</a></td>
-                                <td class="text-center">
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="deleteDokumen(${doc.id}, ${id})">
-                                        <i class="fa fa-trash"></i> Hapus
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    rows = `
-                        <tr>
-                            <td colspan="5" class="text-center">Tidak ada dokumen.</td>
-                        </tr>
-                    `;
-                }
-
-                document.getElementById('dokumenTableBody').innerHTML = rows;
-
-                // Inisialisasi ulang DataTable
-                $('#dokumenTable').DataTable({
-                    paging: true,
-                    lengthChange: false,
-                    pageLength: 5,
-                    columnDefs: [
-                        { orderable: false, targets: 4 }
-                    ]
-                });
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: textStatus+' '+errorThrown
-                });
-            }
-        });
-    }
-
-    function deleteDokumen(docId, konsumenId) {
-        Swal.fire({
-            title: 'Apakah Anda yakin?',
-            text: "Dokumen yang dihapus tidak dapat dikembalikan!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, hapus!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/db/konsumen/dokumen/destroy/${docId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        loadDokumen(konsumenId);
-
-                        Swal.fire(
-                            'Terhapus!',
-                            'Dokumen berhasil dihapus.',
-                            'success'
-                        );
-                    } else {
-                        Swal.fire(
-                            'Gagal!',
-                            data.message || 'Terjadi kesalahan saat menghapus dokumen.',
-                            'error'
-                        );
-                    }
-                }
-                )
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire(
-                        'Gagal!',
-                        'Terjadi kesalahan saat menghapus dokumen.',
-                        'error'
-                    );
-                });
-            }
-        });
-
-    }
-</script>
+<script id="customer-document-config" type="application/json">{!! json_encode([
+    'listUrl' => route('db.konsumen.dokumen'),
+    'storeUrl' => route('db.konsumen.dokumen.store'),
+    'deleteUrl' => route('db.konsumen.dokumen.destroy', ':id'),
+    'unitsUrl' => route('universal.get-unit'),
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+<script src="{{ asset('customer-documents.js').'?v='.filemtime(public_path('customer-documents.js')) }}"></script>
 @endpush

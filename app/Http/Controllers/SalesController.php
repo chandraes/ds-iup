@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\Terbilang;
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangGrosir;
 use App\Models\db\Barang\BarangKategori;
@@ -32,7 +33,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Yajra\DataTables\Facades\DataTables;
-use App\Http\Traits\Terbilang;
 
 class SalesController extends Controller
 {
@@ -44,8 +44,8 @@ class SalesController extends Controller
             'barang_id' => 'required|exists:barangs,id',
         ]);
 
-        $grosir = BarangGrosir::with(['barang.satuan','satuan'])->where('barang_id',$data['barang_id'])->orderBy('qty_grosir')->get();
-  // distinc satuan_id
+        $grosir = BarangGrosir::with(['barang.satuan', 'satuan'])->where('barang_id', $data['barang_id'])->orderBy('qty_grosir')->get();
+        // distinc satuan_id
         $satuanIds = $grosir->pluck('satuan_id')->unique();
         $satuans = Satuan::whereIn('id', $satuanIds)->get();
 
@@ -86,9 +86,10 @@ class SalesController extends Controller
 
         try {
             $store = KeranjangJualKonsumen::create($data);
+
             return redirect()->route('sales.jual.keranjang', ['keranjang' => $store->id]);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menambahkan konsumen ke keranjang: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menambahkan konsumen ke keranjang: '.$e->getMessage());
         }
     }
 
@@ -96,10 +97,11 @@ class SalesController extends Controller
     {
         try {
             $keranjang->keranjang_jual()->delete();
+
             // $keranjang->delete();
             return redirect()->back()->with('success', 'Keranjang berhasil dikosongkan');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengosongkan keranjang: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengosongkan keranjang: '.$e->getMessage());
         }
     }
 
@@ -107,7 +109,7 @@ class SalesController extends Controller
     {
         $keranjang->load('konsumen.kode_toko', 'user');
 
-       $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
+        $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
@@ -169,9 +171,10 @@ class SalesController extends Controller
     {
         try {
             $keranjang->delete();
+
             return redirect()->back()->with('success', 'Konsumen berhasil dihapus dari keranjang');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus konsumen dari keranjang: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus konsumen dari keranjang: '.$e->getMessage());
         }
     }
 
@@ -195,9 +198,7 @@ class SalesController extends Controller
 
         $data['jumlah'] = $data['jumlah_grosir'] * $min_qty_barang;
 
-
-
-        $info = KeranjangJualKonsumen::with('konsumen')->where('id',$data['keranjang_jual_konsumen_id'])->first();
+        $info = KeranjangJualKonsumen::with('konsumen')->where('id', $data['keranjang_jual_konsumen_id'])->first();
 
         if ($info->user_id != Auth::user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke keranjang ini');
@@ -209,16 +210,16 @@ class SalesController extends Controller
         $diskon_konsumen = $info->konsumen->diskon_khusus ?? 0;
 
         $diskon_barang = Barang::where('id', $barang_id)
-                            ->whereNotNull('diskon_mulai')
-                            ->whereNotNull('diskon_selesai')
-                            ->whereDate('diskon_mulai', '<=', now())
-                            ->whereDate('diskon_selesai', '>=', now())
-                            ->value('diskon') ?? 0;
+            ->whereNotNull('diskon_mulai')
+            ->whereNotNull('diskon_selesai')
+            ->whereDate('diskon_mulai', '<=', now())
+            ->whereDate('diskon_selesai', '>=', now())
+            ->value('diskon') ?? 0;
 
         $diskon_grosir = BarangGrosir::where('barang_id', $barang_id)
-                    ->where('qty_grosir', '<=', $data['jumlah'])
-                    ->orderBy('qty_grosir')
-                    ->get();
+            ->where('qty_grosir', '<=', $data['jumlah'])
+            ->orderBy('qty_grosir')
+            ->get();
 
         // end Get data diskon
 
@@ -288,7 +289,6 @@ class SalesController extends Controller
         KeranjangJual::create($data);
 
         return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke keranjang');
-
 
     }
 
@@ -404,12 +404,11 @@ class SalesController extends Controller
             'barang_ppn' => 'required',
         ]);
 
-        $info = KeranjangJualKonsumen::with('konsumen')->where('id',$data['keranjang_jual_konsumen_id'])->first();
+        $info = KeranjangJualKonsumen::with('konsumen')->where('id', $data['keranjang_jual_konsumen_id'])->first();
 
         if ($info->user_id != Auth::user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke keranjang ini');
         }
-
 
         $product = BarangStokHarga::find($data['barang_stok_harga_id']);
 
@@ -417,11 +416,11 @@ class SalesController extends Controller
         $diskon_konsumen = $info->konsumen->diskon_khusus ?? 0;
 
         $diskon_barang = Barang::where('id', $product->barang_id)
-                            ->whereNotNull('diskon_mulai')
-                            ->whereNotNull('diskon_selesai')
-                            ->whereDate('diskon_mulai', '<=', now())
-                            ->whereDate('diskon_selesai', '>=', now())
-                            ->value('diskon') ?? 0;
+            ->whereNotNull('diskon_mulai')
+            ->whereNotNull('diskon_selesai')
+            ->whereDate('diskon_mulai', '<=', now())
+            ->whereDate('diskon_selesai', '>=', now())
+            ->value('diskon') ?? 0;
 
         $ppnRate = Pajak::where('untuk', 'ppn')->first()->persen;
 
@@ -584,8 +583,7 @@ class SalesController extends Controller
         $jam = Carbon::now()->translatedFormat('H:i');
         $orderInden = KeranjangInden::with(['barang.kategori', 'barang.barang_nama', 'barang.satuan'])->where('user_id', Auth::user()->id)->get();
 
-        $db = new InvoiceJual();
-
+        $db = new InvoiceJual;
 
         return view('sales.stok-harga.keranjang', [
             'orderInden' => $orderInden,
@@ -597,7 +595,7 @@ class SalesController extends Controller
             'tanggal' => $tanggal,
             'jam' => $jam,
             'penyesuaian' => $penyesuaian,
-            'adaPpn' => $adaPpn
+            'adaPpn' => $adaPpn,
         ]);
     }
 
@@ -655,7 +653,7 @@ class SalesController extends Controller
         if ($check->user_id != Auth::user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke keranjang ini');
         }
-         $data['pembayaran'] = $check->pembayaran;
+        $data['pembayaran'] = $check->pembayaran;
         // Ambil data keranjang berdasarkan user
         // $keranjang = KeranjangJual::where('keranjang_jual_konsumen_id', $data['keranjang_jual_konsumen_id'])->get();
 
@@ -665,23 +663,21 @@ class SalesController extends Controller
 
         // if ($isPpn) {
         //     $rules = array_merge($rules, [
-                // 'diskon' => 'required',
-                // 'add_fee' => 'required',
-                // 'dp' => 'nullable',
-                // 'dp_ppn' => 'nullable',
-                // 'dipungut' => 'nullable',
+        // 'diskon' => 'required',
+        // 'add_fee' => 'required',
+        // 'dp' => 'nullable',
+        // 'dp_ppn' => 'nullable',
+        // 'dipungut' => 'nullable',
         //     ]);
         // }
 
         // if ($isNonPpn) {
         //     $rules = array_merge($rules, [
-                // 'diskon_non_ppn' => 'required',
-                // 'add_fee_non_ppn' => 'required',
-                // 'dp_non_ppn' => 'nullable',
+        // 'diskon_non_ppn' => 'required',
+        // 'add_fee_non_ppn' => 'required',
+        // 'dp_non_ppn' => 'nullable',
         //     ]);
         // }
-
-
 
         // Atur batas waktu eksekusi dan memori
         ini_set('max_execution_time', 300);
@@ -718,7 +714,7 @@ class SalesController extends Controller
 
         return view('sales.order.index', [
             'data' => $data,
-            'ppn' => $ppn
+            'ppn' => $ppn,
         ]);
     }
 
@@ -745,7 +741,7 @@ class SalesController extends Controller
     public function order_detail_delete(InvoiceJualSalesDetail $orderDetail)
     {
         $orderDetail->update([
-            'deleted' => !$orderDetail->deleted,
+            'deleted' => ! $orderDetail->deleted,
         ]);
 
         return redirect()->back()->with('success', 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.');
@@ -774,7 +770,7 @@ class SalesController extends Controller
     public function preorder(Request $request)
     {
         $data = OrderInden::with(['detail.barang.barang_nama', 'detail.barang.satuan', 'konsumen'])
-                ->where('karyawan_id', Auth::user()->karyawan_id)->where('is_finished', 0)->get();
+            ->where('karyawan_id', Auth::user()->karyawan_id)->where('is_finished', 0)->get();
 
         return view('sales.pre-order.index', [
             'data' => $data,
@@ -794,12 +790,13 @@ class SalesController extends Controller
     {
 
         $orderDetail->update([
-            'deleted' => !$orderDetail->deleted,
+            'deleted' => ! $orderDetail->deleted,
         ]);
 
         $message = $orderDetail->deleted
             ? 'Item ditandai sebagai dihapus. Silahkan lanjutkan proses untuk menghapus item ini.'
             : 'Item berhasil dibatalkan dari status dihapus.';
+
         return response()->json(['status' => 'success', 'message' => $message]);
     }
 
@@ -808,7 +805,6 @@ class SalesController extends Controller
         $detail = $preorder->detail;
 
         $count = $detail->where('deleted', 1)->count();
-
 
         if ($count == 0) {
             return redirect()->back()->with('error', 'Tidak ada item yang ditandai untuk dihapus');
@@ -832,76 +828,9 @@ class SalesController extends Controller
 
     }
 
-    public function omset_harian(Request $request)
-    {
-        $month = $request->input('month') ?? date('m');
-        $year = $request->input('year') ?? date('Y');
-
-        $db = new InvoiceJual;
-
-        $dataTahun = $db->dataTahun();
-
-        // create array of month in indonesian with key 1-12
-        $dataBulan = [
-            '1' => 'Januari',
-            '2' => 'Februari',
-            '3' => 'Maret',
-            '4' => 'April',
-            '5' => 'Mei',
-            '6' => 'Juni',
-            '7' => 'Juli',
-            '8' => 'Agustus',
-            '9' => 'September',
-            '10' => 'Oktober',
-            '11' => 'November',
-            '12' => 'Desember'
-        ];
-
-        $karyawan = Auth::user()->karyawan_id;
-
-        if ($karyawan == null) {
-            return redirect()->back()->with('error', 'Akun belum memiliki Karyawan ID, Silahkan menghubungi Admin.');
-        }
-
-        $data = $db->omset_harian($month, $year, $karyawan);
-
-        return view('sales.omset-harian.index', [
-             'rows' => $data['data'],
-            'karyawans' => $data['karyawans'],
-            'dataTahun' => $dataTahun,
-            'dataBulan' => $dataBulan,
-        ]);
-    }
-
-    public function omset_harian_detail(Request $request)
-    {
-        $req = $request->validate([
-            'tanggal' => 'required|date',
-            'karyawan_id' => 'required|exists:karyawans,id',
-        ]);
-
-        if ($req['karyawan_id'] != Auth::user()->karyawan_id) {
-            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat data ini');
-        }
-
-        $db = new InvoiceJual;
-
-        $karyawan = Karyawan::where('id',$req['karyawan_id'])->select('nama')->first();
-
-        if ($karyawan == null) {
-            return redirect()->back()->with('error', 'Karyawan tidak ditemukan');
-        }
-
-        $data = $db->omset_harian_detail($request->input('tanggal'), $request->input('karyawan_id'));
-
-        return view('sales.omset-harian.detail', [
-            'data' => $data,
-            'karyawan' => $karyawan,
-        ]);
-    }
-
     public function omset_harian_detail_invoice(InvoiceJual $invoice)
     {
+        abort_unless(Auth::user()->karyawan_id && (int) $invoice->karyawan_id === (int) Auth::user()->karyawan_id, 403);
         $data = $invoice->load(['konsumen', 'invoice_detail.stok.type', 'invoice_detail.stok.barang', 'invoice_detail.stok.unit', 'invoice_detail.stok.kategori', 'invoice_detail.stok.barang_nama']);
         $jam = CarbonImmutable::parse($data->created_at)->translatedFormat('H:i');
         $tanggal = CarbonImmutable::parse($data->created_at)->translatedFormat('d F Y');
@@ -912,7 +841,6 @@ class SalesController extends Controller
             'tanggal' => $tanggal,
         ]);
     }
-
 
     public function check_konsumen()
     {
@@ -941,11 +869,11 @@ class SalesController extends Controller
 
         $db = new InvoiceJual;
         $data = InvoiceJual::where('konsumen_id', $konsumen->id)
-                    ->where('titipan', 0)
-                    ->where('lunas', 0)
-                    ->where('void', 0)
-                    ->where('jatuh_tempo', '<', today())
-                    ->get();
+            ->where('titipan', 0)
+            ->where('lunas', 0)
+            ->where('void', 0)
+            ->where('jatuh_tempo', '<', today())
+            ->get();
 
         // Return JSON for AJAX
         return response()->json([
@@ -956,7 +884,7 @@ class SalesController extends Controller
         ]);
     }
 
-     public function konsumen_data(Request $request)
+    public function konsumen_data(Request $request)
     {
         $start = $request->input('start', 0);
         $length = $request->input('length', 10);
@@ -968,9 +896,9 @@ class SalesController extends Controller
             ->filter($filters);
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%$search%")
-                ->orWhere('alamat', 'like', "%$search%");
+                    ->orWhere('alamat', 'like', "%$search%");
             });
         }
 
@@ -1013,7 +941,7 @@ class SalesController extends Controller
 
         if ($request->has('kabupaten_kota') && $request->input('kabupaten_kota') != '') {
             $kab = Wilayah::find($request->input('kabupaten_kota'));
-            $kecamatan_filter = Wilayah::where('id_induk_wilayah', $kab->id_wilayah )->where('id_level_wilayah', 3)->get();
+            $kecamatan_filter = Wilayah::where('id_induk_wilayah', $kab->id_wilayah)->where('id_level_wilayah', 3)->get();
         } else {
             $kecamatan_filter = $wilayah->get(3, collect());
         }
@@ -1047,8 +975,8 @@ class SalesController extends Controller
         $data = InvoiceJual::gabung($filters)->whereIn('konsumen_id', $konsumenIds);
         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->get();
 
         // Get unique kecamatan_id and kabupaten_kota_id directly as arrays to minimize memory usage
         $kecamatanIds = Konsumen::where('karyawan_id', $karyawanUserId)->distinct()->pluck('kecamatan_id')->filter()->all();
@@ -1057,23 +985,24 @@ class SalesController extends Controller
         // Fetch only needed Wilayah records
         $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
         $kecamatan = Wilayah::whereIn('id', $kecamatanIds)
-                    ->when(
-                        ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
-                        function ($query) use ($request) {
-                            $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
-                            return $query->where('id_induk_wilayah', $wilayah);
-                        }
-                    )->get();
+            ->when(
+                ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
+                function ($query) use ($request) {
+                    $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
+
+                    return $query->where('id_induk_wilayah', $wilayah);
+                }
+            )->get();
 
         return view('sales.invoice.index',
-        [
-            'data' => $data,
-            'ppn' => $ppn,
-            'sales' => $sales,
-            'kecamatan' => $kecamatan,
-            'kabupaten' => $kabupaten,
-            'konsumen' => $konsumen,
-        ]);
+            [
+                'data' => $data,
+                'ppn' => $ppn,
+                'sales' => $sales,
+                'kecamatan' => $kecamatan,
+                'kabupaten' => $kabupaten,
+                'konsumen' => $konsumen,
+            ]);
     }
 
     public function invoice_konsumen_detail(InvoiceJual $invoice)
@@ -1082,15 +1011,16 @@ class SalesController extends Controller
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat data ini');
         }
 
-         $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
+        $jam = CarbonImmutable::parse($invoice->created_at)->translatedFormat('H:i');
         $tanggal = CarbonImmutable::parse($invoice->created_at)->translatedFormat('d F Y');
 
         $tanggal_tempo = $invoice->sistem_pembayaran !== 1 ? Carbon::parse($invoice->jatuh_tempo)->translatedFormat('d F Y') : '-';
 
         $terbilang = $invoice->sistem_pembayaran !== 1 ? ucwords($this->pembilang($invoice->sisa_tagihan)) : ucwords($this->pembilang($invoice->grand_total));
-         $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
+
         return view('sales.invoice.detail', [
-             'data' => $invoice->loadMissing([
+            'data' => $invoice->loadMissing([
                 'konsumen',
                 'karyawan',
                 'invoice_detail.stok.type',
@@ -1160,35 +1090,37 @@ class SalesController extends Controller
             return DataTables::of($query)
                 ->with('grand_totals', $grandTotals)
                 ->addIndexColumn()
-                ->addColumn('kode_toko', function($row){
+                ->addColumn('kode_toko', function ($row) {
                     return $row->kode_toko->kode ?? $row->kode_toko_id ?? '-';
                 })
                 // Format angka menjadi Rupiah untuk tampilan
-                ->editColumn('kabupaten_kota.nama_wilayah', function($row) {
+                ->editColumn('kabupaten_kota.nama_wilayah', function ($row) {
                     $nama = $row->kabupaten_kota?->nama_wilayah ?? '-';
+
                     return str_replace(['Kab. ', 'Kota '], '', $nama);
                 })
-                ->editColumn('kecamatan.nama_wilayah', function($row) {
+                ->editColumn('kecamatan.nama_wilayah', function ($row) {
                     $nama = $row->kecamatan?->nama_wilayah ?? '-';
+
                     return str_replace(['Kec. '], '', $nama);
                 })
-                ->editColumn('bulan_1', fn($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_2', fn($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_3', fn($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_4', fn($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_5', fn($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_6', fn($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_7', fn($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_8', fn($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_9', fn($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_10', fn($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_11', fn($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
-                ->editColumn('bulan_12', fn($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
-                ->addColumn('total', function($row) {
+                ->editColumn('bulan_1', fn ($row) => number_format($row->bulan_1 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_2', fn ($row) => number_format($row->bulan_2 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_3', fn ($row) => number_format($row->bulan_3 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_4', fn ($row) => number_format($row->bulan_4 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_5', fn ($row) => number_format($row->bulan_5 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_6', fn ($row) => number_format($row->bulan_6 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_7', fn ($row) => number_format($row->bulan_7 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_8', fn ($row) => number_format($row->bulan_8 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_9', fn ($row) => number_format($row->bulan_9 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_10', fn ($row) => number_format($row->bulan_10 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_11', fn ($row) => number_format($row->bulan_11 ?? 0, 0, ',', '.'))
+                ->editColumn('bulan_12', fn ($row) => number_format($row->bulan_12 ?? 0, 0, ',', '.'))
+                ->addColumn('total', function ($row) {
                     return '<strong>'.number_format($row->total_setahun ?? 0, 0, ',', '.').'</strong>';
                 })
                 ->rawColumns(['total'])
-                ->filterColumn('nama', function($q, $keyword) {
+                ->filterColumn('nama', function ($q, $keyword) {
                     $q->where('konsumens.nama', 'like', "%{$keyword}%");
                 })
                 ->make(true);
@@ -1198,9 +1130,10 @@ class SalesController extends Controller
         $units = BarangUnit::select('id', 'nama')->orderBy('nama')->get();
         $kodeTokos = KodeToko::select('id', 'kode')->get();
         $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->where('id', Auth::user()->karyawan_id)->get();
+            $query->where('is_sales', 1);
+        })->select('id', 'nama')->where('id', Auth::user()->karyawan_id)->get();
         $kabupatenKota = Wilayah::where('id_level_wilayah', 2)->get();
+
         // $kecamatan = Wilayah::where('id_level_wilayah', 3)->get();
         return view('sales.omset-bulanan-konsumen.index', compact('units', 'kodeTokos', 'sales', 'kabupatenKota'));
     }
@@ -1251,33 +1184,33 @@ class SalesController extends Controller
         // [BARU] Tangkap array bulan
         $bulan = $request->input('bulan', []);
 
-        $fileName = 'Omset_Konsumen_' . $tahun . '.csv';
+        $fileName = 'Omset_Konsumen_'.$tahun.'.csv';
 
         $headers = [
-            'Content-type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=' . $fileName,
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename='.$fileName,
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
         // [MODIFIKASI] Gunakan 'use ($bulan)' pada callback
-        $callback = function() use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan) {
+        $callback = function () use ($tahun, $unitId, $kodeTokoId, $statusOmset, $salesId, $kabupatenKotaId, $kecamatanId, $statusInvoice, $bulan) {
             $file = fopen('php://output', 'w');
 
             // 1. Susun Header Excel Secara Dinamis
             $csvHeaders = [
-                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko','Kab/Kota','Kecamatan', 'Sales Area'
+                'No', 'Kode Konsumen', 'Kode Toko', 'Nama Toko', 'Kab/Kota', 'Kecamatan', 'Sales Area',
             ];
 
             $namaBulan = [
                 1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
-                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
             ];
 
             // Looping header bulan (tambahkan hanya jika bulan tidak difilter atau termasuk yang dipilih)
             for ($i = 1; $i <= 12; $i++) {
-                if (empty($bulan) || in_array((string)$i, $bulan)) {
+                if (empty($bulan) || in_array((string) $i, $bulan)) {
                     $csvHeaders[] = $namaBulan[$i];
                 }
             }
@@ -1293,7 +1226,7 @@ class SalesController extends Controller
 
             // 3. CHUNKING
             $no = 1;
-            $query->chunk(500, function($konsumens) use ($file, &$no, $bulan) { // [MODIFIKASI] use $bulan
+            $query->chunk(500, function ($konsumens) use ($file, &$no, $bulan) { // [MODIFIKASI] use $bulan
                 foreach ($konsumens as $row) {
                     // Siapkan baris data awal
                     $csvRow = [
@@ -1303,13 +1236,13 @@ class SalesController extends Controller
                         $row->nama,
                         str_replace(['Kab. ', 'Kota '], '', $row->kabupaten_kota?->nama_wilayah) ?? '-',
                         str_replace(['Kec. '], '', $row->kecamatan?->nama_wilayah) ?? '-',
-                        $row->karyawan?->nama ?? '-'
+                        $row->karyawan?->nama ?? '-',
                     ];
 
                     // Looping nilai per bulan secara dinamis
                     for ($i = 1; $i <= 12; $i++) {
-                        if (empty($bulan) || in_array((string)$i, $bulan)) {
-                            $kolomBulan = 'bulan_' . $i;
+                        if (empty($bulan) || in_array((string) $i, $bulan)) {
+                            $kolomBulan = 'bulan_'.$i;
                             $csvRow[] = $row->$kolomBulan ?? 0;
                         }
                     }
@@ -1335,7 +1268,9 @@ class SalesController extends Controller
 
         // 1. Ambil Data Konsumen
         $konsumen = Konsumen::with('kode_toko')->where('id', $konsumenId)->select('nama', 'kode', 'kode_toko_id')->first();
-        if (!$konsumen) abort(404, 'Konsumen tidak ditemukan');
+        if (! $konsumen) {
+            abort(404, 'Konsumen tidak ditemukan');
+        }
 
         // 2. Query Detail Transaksi
         $query = DB::table('invoice_jual_details as d')
@@ -1353,21 +1288,21 @@ class SalesController extends Controller
                 'd.harga_satuan',
                 'd.diskon',
                 'd.ppn',
-                'd.total'
+                'd.total',
             ])
             ->where('i.konsumen_id', $konsumenId)
             ->where('i.void', 0) // Pastikan tidak mengambil nota void
             ->whereYear('i.created_at', $tahun);
 
         // Filter Bulan (Jika bukan 'total', filter per bulan)
-       if ($bulan !== 'total') {
+        if ($bulan !== 'total') {
             $query->whereMonth('i.created_at', $bulan);
 
             // Fix: Gunakan createFromDate, paksa (int), dan set tanggal ke 1 agar aman
-            $namaBulan = \Carbon\Carbon::createFromDate($tahun, (int)$bulan, 1)->isoFormat('MMMM');
+            $namaBulan = Carbon::createFromDate($tahun, (int) $bulan, 1)->isoFormat('MMMM');
         } else {
-           // Jika klik pada kolom "Total" di ujung kanan
-            if (!empty($bulanFilter)) {
+            // Jika klik pada kolom "Total" di ujung kanan
+            if (! empty($bulanFilter)) {
                 $arrayBulan = explode(',', $bulanFilter); // Ubah string "1,2" jadi array [1, 2]
 
                 // Gunakan DB::raw untuk filter array bulan
@@ -1375,12 +1310,12 @@ class SalesController extends Controller
 
                 // Menyusun nama bulan dinamis untuk judul (misal: "Januari, Maret, Desember")
                 $namaBulanArray = [];
-                foreach($arrayBulan as $b) {
-                    $namaBulanArray[] = \Carbon\Carbon::createFromDate($tahun, (int)$b, 1)->isoFormat('MMMM');
+                foreach ($arrayBulan as $b) {
+                    $namaBulanArray[] = Carbon::createFromDate($tahun, (int) $b, 1)->isoFormat('MMMM');
                 }
                 $namaBulan = implode(', ', $namaBulanArray);
             } else {
-                $namaBulan = "Setahun (Jan - Des)";
+                $namaBulan = 'Setahun (Jan - Des)';
             }
         }
 
@@ -1403,6 +1338,4 @@ class SalesController extends Controller
             'details', 'konsumen', 'bulan', 'namaBulan', 'tahun', 'unitId'
         ));
     }
-
-
 }

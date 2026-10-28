@@ -498,7 +498,7 @@ class KasbonTest extends TestCase
     {
         $employee = KaryawanFactory::new()->create(['apa_bpjs_tk' => 1, 'apa_bpjs_kes' => 1]);
         $this->fund();
-        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => now()->format('Y-m'), 'total' => 1])->assertRedirect(route('billing.form-cost-operational'));
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => now()->format('Y-m'), 'total' => 1])->assertRedirect(route('billing'));
         $this->assertEquals(3880000, RekapGaji::sole()->total);
         $detail = RekapGajiDetail::sole();
         $this->assertEquals(195600, $detail->bpjs_tk);
@@ -608,12 +608,14 @@ class KasbonTest extends TestCase
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => '4.00']);
         $staff = KaryawanFactory::new()->create(['persen_komisi' => '99.00']);
         $this->fund();
-        foreach ([['2026-09-26 00:00:00', 1000000, []], ['2026-10-25 23:59:59', 2000000, []],
+        foreach ([['2026-08-01 00:00:00', 1000000, ['updated_at' => '2026-09-26 00:00:00']], ['2026-10-25 23:59:59', 1500000, []],
             ['2026-09-25 23:59:59', 9000000, []], ['2026-10-26 00:00:00', 8000000, []],
             ['2026-10-05 12:00:00', 7000000, ['titipan' => true]],
+            ['2026-10-05 12:00:00', 6000000, ['lunas' => false]],
+            ['2026-10-05 12:00:00', 5000000, ['updated_at' => '2026-10-26 00:00:00']],
             ['2026-08-01 12:00:00', 500000, ['void' => true, 'updated_at' => '2026-10-10 12:00:00']],
             ['2026-10-05 12:00:00', 400000, ['void' => true]]] as [$date, $amount, $extra]) {
-            DB::table('invoice_juals')->insert(array_replace(['karyawan_id' => $sales->id, 'grand_total' => $amount, 'created_at' => $date, 'updated_at' => $date], $extra));
+            DB::table('invoice_juals')->insert(array_replace(['karyawan_id' => $sales->id, 'lunas' => true, 'grand_total' => $amount, 'created_at' => $date, 'updated_at' => $date], $extra));
         }
         DB::table('invoice_juals')->insert(['karyawan_id' => $staff->id, 'grand_total' => 9000000, 'created_at' => '2026-10-05 12:00:00', 'updated_at' => '2026-10-05 12:00:00']);
         $payroll = app(EmployeePayrollService::class);
@@ -627,7 +629,7 @@ class KasbonTest extends TestCase
         $this->get(route('billing.form-cost-operational.gaji'))->assertOk()->assertSee('Lihat rincian komisi '.$sales->nama)
             ->assertSee('data-bs-target="#payroll-commission"', false)->assertDontSee('Omset bersih × persentase komisi');
         $this->getJson(route('billing.form-cost-operational.gaji.komisi', ['karyawan_id' => $sales->id, 'periode' => '2026-10']))->assertOk()
-            ->assertJsonPath('title', 'Komisi '.$sales->nama);
+            ->assertJsonPath('title', 'Komisi '.$sales->nama)->assertJsonPath('html', fn ($html): bool => str_contains($html, 'mode=paid'));
         $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10', 'komisi' => 999999999])->assertSessionHasNoErrors();
         $record = RekapGajiDetail::where('nama', $sales->nama)->sole();
         $this->assertEquals(8100000, RekapGaji::sole()->total);
@@ -635,7 +637,8 @@ class KasbonTest extends TestCase
         $this->assertEquals(2500000, $record->omset_komisi);
         $this->assertEquals(4, $record->persen_komisi);
         $this->assertCount(30, $record->rincian_komisi['harian']);
-        $this->assertSame(900000, $record->rincian_komisi['void']);
+        $this->assertSame(0, $record->rincian_komisi['void']);
+        $this->assertSame('paid', $record->rincian_komisi['mode']);
         $this->assertEquals(11900000, KasBesar::latest('id')->first()->saldo);
         $sales->update(['persen_komisi' => 10]);
         DB::table('invoice_juals')->update(['grand_total' => 1]);
@@ -647,19 +650,19 @@ class KasbonTest extends TestCase
         $this->assertEquals(100000, $record->fresh()->komisi);
     }
 
-    public function test_commission_rounds_monthly_total_and_can_include_negative_void_corrections(): void
+    public function test_commission_rounds_paid_total_and_excludes_void_invoices(): void
     {
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'persen_komisi' => '2.55']);
-        DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'grand_total' => 101, 'created_at' => '2026-10-01', 'updated_at' => '2026-10-01']);
+        DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'lunas' => true, 'grand_total' => 101, 'created_at' => '2026-10-01', 'updated_at' => '2026-10-01']);
         $payroll = app(EmployeePayrollService::class);
         $this->assertSame(3, $payroll->amounts($sales, now())['komisi']);
         DB::table('invoice_juals')->update(['created_at' => '2026-08-01', 'void' => true]);
         $this->fund();
         $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
         $record = RekapGajiDetail::sole();
-        $this->assertEquals(-3, $record->komisi);
-        $this->assertEquals(-101, $record->omset_komisi);
-        $this->assertEquals(3999997, $record->sisa_gaji_dibayar);
+        $this->assertEquals(0, $record->komisi);
+        $this->assertEquals(0, $record->omset_komisi);
+        $this->assertEquals(4000000, $record->sisa_gaji_dibayar);
     }
 
     public function test_payroll_preview_reads_missing_attendance_period_only_once(): void
@@ -700,7 +703,7 @@ class KasbonTest extends TestCase
             ->assertViewHas('data', fn ($people): bool => ! array_key_exists('alamat', $people->first()->getAttributes()))
             ->assertDontSee('Omset bersih × persentase komisi');
         $this->assertCount(1, $previewQueries->filter(fn ($query): bool => str_contains($query['query'], 'from "kasbons"')));
-        $this->assertCount(2, $previewQueries->filter(fn ($query): bool => str_contains($query['query'], 'from "invoice_juals"')));
+        $this->assertCount(1, $previewQueries->filter(fn ($query): bool => str_contains($query['query'], 'from "invoice_juals"')));
 
         DB::enableQueryLog();
         DB::flushQueryLog();

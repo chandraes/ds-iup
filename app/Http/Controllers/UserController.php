@@ -12,16 +12,15 @@ use App\Models\db\KodeToko;
 use App\Models\db\Konsumen;
 use App\Models\db\KonsumenDoc;
 use App\Models\Wilayah;
+use App\Services\CustomerFileService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
     public function stok_all(Request $request)
     {
-         $kategori = BarangKategori::with(['barang_nama'])->get();
+        $kategori = BarangKategori::with(['barang_nama'])->get();
         $type = BarangType::with(['unit', 'barangs'])->get();
 
         $unitFilter = $request->input('unit');
@@ -50,7 +49,7 @@ class UserController extends Controller
             $selectBarangNama = BarangNama::select('id', 'nama')->distinct()->orderBy('id')->get();
         }
 
-        $db = new BarangStokHarga();
+        $db = new BarangStokHarga;
 
         $data = $db->barangStokAll($unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
         $units = BarangUnit::all();
@@ -77,8 +76,8 @@ class UserController extends Controller
         $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
         $data = Konsumen::query()->with(['kode_toko', 'provinsi', 'kabupaten_kota', 'kecamatan', 'karyawan'])
-                ->withCount('docs')
-                ->filter($filters);
+            ->withCount('docs')
+            ->filter($filters);
 
         // Ambil semua no_hp yang duplikat sekaligus
         $duplicateNoHp = Konsumen::select('no_hp')
@@ -88,30 +87,25 @@ class UserController extends Controller
             ->toArray();
 
         return DataTables::of($data)
-            ->addColumn('full_kode', fn($d) => $d->full_kode)
-            ->addColumn('limit_plafon', fn($d) => $d->nf_plafon)
-            ->addColumn('kode_toko', fn($d) => $d->kode_toko->kode ?? '')
+            ->addColumn('full_kode', fn ($d) => $d->full_kode)
+            ->addColumn('limit_plafon', fn ($d) => $d->nf_plafon)
+            ->addColumn('kode_toko', fn ($d) => $d->kode_toko->kode ?? '')
             // ->addColumn('nama', fn($d) => $d->nama)
             ->addColumn('cp', function ($d) use ($duplicateNoHp) {
                 $noHpWarning = (substr_count($d->no_hp, ' ') > 0 || in_array($d->no_hp, $duplicateNoHp)) ? 'text-danger' : '';
-                return "
-                    <ul>
-                        <li>CP : $d->cp</li>
-                        <li class='$noHpWarning'>No.HP : $d->no_hp</li>
-                        <li>No.Kantor : $d->no_kantor</li>
-                    </ul>
-                ";
+
+                return '<ul><li>CP: '.e($d->cp).'</li><li class="'.$noHpWarning.'">No.HP: '.e($d->no_hp).'</li><li>No.Kantor: '.e($d->no_kantor ?? '-').'</li></ul>';
             })
-            ->addColumn('pembayaran_raw', function ($d){
+            ->addColumn('pembayaran_raw', function ($d) {
                 return "
                     $d->sistem_pembayaran <br>
-                    (".($d->pembayaran == 2 ? $d->tempo_hari. ' Hari' : '').")
-                ";
+                    (".($d->pembayaran == 2 ? $d->tempo_hari.' Hari' : '').')
+                ';
             })
             ->addColumn('ktp', function ($d) {
                 return view('user.konsumen._ktp', compact('d'))->render();
             })
-            ->addColumn('diskon', function ($d){
+            ->addColumn('diskon', function ($d) {
                 return view('user.konsumen._diskon', compact('d'))->render();
             })
             ->addColumn('dokumen', function ($d) {
@@ -123,9 +117,10 @@ class UserController extends Controller
 
     public function konsumen_dokumen(Request $request)
     {
-        $konsumen = Konsumen::withCount('docs')->find($request->konsumen_id);
+        $input = $request->validate(['konsumen_id' => ['required', 'integer']]);
+        $konsumen = Konsumen::withCount('docs')->find($input['konsumen_id']);
 
-        if (!$konsumen) {
+        if (! $konsumen) {
             return response()->json(['status' => 'error', 'message' => 'Konsumen tidak ditemukan'], 404);
         }
 
@@ -138,59 +133,37 @@ class UserController extends Controller
         ]);
     }
 
-    public function konsumen_dokumen_destroy(KonsumenDoc $dokumen)
+    public function konsumen_dokumen_destroy(KonsumenDoc $dokumen, CustomerFileService $files)
     {
         try {
-            DB::beginTransaction();
-
-            if (Storage::disk('public')->exists($dokumen->file_path)) {
-                Storage::disk('public')->delete($dokumen->file_path);
-            }
-
-            $dokumen->delete();
-
-            DB::commit();
+            $files->deleteDocument($dokumen);
 
             return response()->json(['status' => 'success', 'message' => 'Dokumen berhasil dihapus']);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $exception) {
+            report($exception);
 
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menghapus dokumen. '. $e->getMessage() ], 500);
+            return response()->json(['status' => 'error', 'message' => 'Dokumen belum dapat dihapus. Silakan coba lagi.'], 500);
         }
     }
 
-    public function konsumen_dokumen_store(Request $request)
+    public function konsumen_dokumen_store(Request $request, CustomerFileService $files)
     {
         $data = $request->validate([
-            'konsumen_id' => 'required|exists:konsumens,id',
+            'konsumen_id' => 'required|integer|exists:konsumens,id',
             'nama' => 'required|string|max:255',
-            'barang_unit_id' => 'nullable|exists:barang_units,id',
+            'barang_unit_id' => 'nullable|integer|exists:barang_units,id',
             'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120', // Maks 5MB
         ]);
 
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $filename = $data['konsumen_id'].'_'.$data['nama'].'_'.time().'.'.$file->getClientOriginalExtension();
-
-            if (!Storage::disk('public')->exists('konsumen_docs')) {
-                Storage::disk('public')->makeDirectory('konsumen_docs');
-            }
-
-            $path = $file->storeAs('konsumen_docs', $filename, 'public');
-            $data['file_path'] = $path;
-            unset($data['file']);
-        }
-
-        DB::beginTransaction();
+        unset($data['file']);
         try {
-            KonsumenDoc::create($data);
-            DB::commit();
+            $files->storeDocument($data, $request->file('file'));
 
             return response()->json(['status' => 'success', 'message' => 'Dokumen berhasil diunggah']);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $exception) {
+            report($exception);
 
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menyimpan dokumen. '. $e->getMessage() ], 500);
+            return response()->json(['status' => 'error', 'message' => 'Dokumen belum dapat disimpan. Silakan coba lagi.'], 500);
         }
     }
 

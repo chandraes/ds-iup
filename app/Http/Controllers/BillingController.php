@@ -290,7 +290,7 @@ class BillingController extends Controller
             report($exception);
         }
 
-        return redirect()->route('billing.form-cost-operational')->with('success', 'Form Gaji Berhasil Dibuat');
+        return redirect()->route('billing')->with('success', 'Form Gaji Berhasil Dibuat');
     }
 
     public function form_inventaris()

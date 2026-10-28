@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendanceIntegrationController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BpjsHealthMinimumController;
+use App\Http\Controllers\CustomerFileController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\FormBeliController;
@@ -61,6 +62,9 @@ Auth::routes([
 ]);
 
 Route::group(['middleware' => ['auth']], function () {
+    Route::get('/customer-files/ktp/{konsumen}', [CustomerFileController::class, 'ktp'])->middleware('role:su,admin,user')->name('customer-files.ktp');
+    Route::get('/customer-files/document/{dokumen}', [CustomerFileController::class, 'document'])->middleware('role:su,admin,user')->name('customer-files.document');
+
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::prefix('universal')->group(function () {
@@ -245,8 +249,8 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             Route::prefix('omset-harian')->group(function () {
-                Route::get('/', [SalesController::class, 'omset_harian'])->name('sales.omset-harian');
-                Route::get('/detail', [SalesController::class, 'omset_harian_detail'])->name('sales.omset-harian.detail');
+                Route::get('/', [StatistikController::class, 'omset_harian_sales'])->name('sales.omset-harian');
+                Route::get('/detail', [StatistikController::class, 'omset_harian_sales_detail'])->name('sales.omset-harian.detail');
                 Route::get('/detail/invoice/{invoice}', [SalesController::class, 'omset_harian_detail_invoice'])->name('sales.omset-harian.detail.invoice');
             });
 
@@ -348,6 +352,8 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('konsumen')->group(function () {
                 Route::get('/', [DatabaseController::class, 'konsumen'])->name('db.konsumen');
                 Route::get('/data', [DatabaseController::class, 'konsumen_data'])->name('db.konsumen.data');
+                Route::patch('/{konsumen}/update-sales', [DatabaseController::class, 'update_customer_sales'])->name('db.konsumen.update_sales');
+                Route::get('/{konsumen}/histori-sales', [DatabaseController::class, 'histori_sales'])->name('db.konsumen.histori_sales');
                 Route::get('/{id}/histori-plafon', [DatabaseController::class, 'histori_plafon'])->name('db.konsumen.histori_plafon');
                 Route::post('/{id}/update-plafon', [DatabaseController::class, 'update_plafon'])->name('db.konsumen.update_plafon');
                 Route::post('/{id}/toggle-checklist', [DatabaseController::class, 'toggleChecklist'])->name('db.konsumen.toggle-checklist');

@@ -26,6 +26,6 @@ class KonsumenDoc extends Model
 
     public function getFileUrlAttribute()
     {
-        return asset('storage/' . $this->file_path);
+        return route('customer-files.document', $this->id);
     }
 }

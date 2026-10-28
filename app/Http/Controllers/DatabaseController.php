@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CustomerBiodataRequest;
+use App\Http\Requests\UpdateCustomerSalesRequest;
 use App\Models\Config;
 use App\Models\db\Barang\Barang;
 use App\Models\db\Barang\BarangKategori;
@@ -26,13 +28,20 @@ use App\Models\db\Satuan;
 use App\Models\db\Supplier;
 use App\Models\MetodeBayar;
 use App\Models\Pengelola;
+use App\Models\User;
 use App\Models\Wilayah;
+use App\Services\CustomerFileService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Ramsey\Uuid\Uuid;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -537,7 +546,7 @@ class DatabaseController extends Controller
     public function kode_toko_store(Request $request)
     {
         $data = $request->validate([
-            'kode' => 'required|unique:kode_tokos,kode',
+            'kode' => ['required', 'string', 'max:255', 'not_regex:/[<>]/', Rule::unique('kode_tokos', 'kode')],
         ]);
 
         KodeToko::create($data);
@@ -548,7 +557,7 @@ class DatabaseController extends Controller
     public function kode_toko_update(KodeToko $kode, Request $request)
     {
         $data = $request->validate([
-            'kode' => 'required|unique:kode_tokos,kode,'.$kode->id,
+            'kode' => ['required', 'string', 'max:255', 'not_regex:/[<>]/', Rule::unique('kode_tokos', 'kode')->ignore($kode->id)],
         ]);
 
         $kode->update($data);
@@ -556,19 +565,17 @@ class DatabaseController extends Controller
         return response()->json(['message' => 'Data berhasil diubah']);
     }
 
-    public function kode_toko_delete(KodeToko $kode)
+    public function kode_toko_delete(KodeToko $kode): JsonResponse
     {
-        try {
-            DB::beginTransaction();
-            $kode->delete();
-            DB::commit();
+        DB::transaction(function () use ($kode): void {
+            $locked = KodeToko::whereKey($kode->id)->lockForUpdate()->firstOrFail();
+            if ($locked->konsumen()->exists()) {
+                throw ValidationException::withMessages(['kode' => 'Kode toko masih digunakan konsumen dan tidak dapat dihapus.']);
+            }
+            $locked->delete();
+        }, 3);
 
-            return response()->json(['message' => 'Data berhasil dihapus']);
-        } catch (\Throwable $th) {
-            DB::rollBack();
-
-            return response()->json(['error' => $th->getMessage()], 500);
-        }
+        return response()->json(['message' => 'Data berhasil dihapus']);
     }
 
     public function sales_area(Request $request)
@@ -623,7 +630,7 @@ class DatabaseController extends Controller
 
         $provinsi = Wilayah::where('id_level_wilayah', 1)->get();
 
-        $sales_area = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
+        $sales_area = Karyawan::where('status', 1)->whereHas('jabatan', function ($query) {
             $query->where('is_sales', 1);
         })->select('id', 'nama')->get();
 
@@ -643,28 +650,19 @@ class DatabaseController extends Controller
             ->withCount('docs')
             ->filter($filters);
 
-        // Ambil semua no_hp yang duplikat sekaligus
-        $duplicateNoHp = Konsumen::select('no_hp')
-            ->groupBy('no_hp')
-            ->havingRaw('COUNT(*) > 1')
-            ->pluck('no_hp')
-            ->toArray();
+        $data->selectSub(function ($query): void {
+            $query->from('konsumens as duplicate')->selectRaw('COUNT(*)')->whereColumn('duplicate.no_hp', 'konsumens.no_hp');
+        }, 'phone_matches');
 
         return DataTables::of($data)
             ->addColumn('full_kode', fn ($d) => $d->full_kode)
             ->addColumn('limit_plafon', fn ($d) => $d->nf_plafon)
             ->addColumn('kode_toko', fn ($d) => $d->kode_toko->kode ?? '')
             // ->addColumn('nama', fn($d) => $d->nama)
-            ->addColumn('cp', function ($d) use ($duplicateNoHp) {
-                $noHpWarning = (substr_count($d->no_hp, ' ') > 0 || in_array($d->no_hp, $duplicateNoHp)) ? 'text-danger' : '';
+            ->addColumn('cp', function ($d) {
+                $noHpWarning = (substr_count($d->no_hp, ' ') > 0 || $d->phone_matches > 1) ? 'text-danger' : '';
 
-                return "
-                    <ul>
-                        <li>CP : $d->cp</li>
-                        <li class='$noHpWarning'>No.HP : $d->no_hp</li>
-                        <li>No.Kantor : $d->no_kantor</li>
-                    </ul>
-                ";
+                return '<ul class="customer-contact"><li>CP: '.e($d->cp).'</li><li class="'.$noHpWarning.'">HP: '.e($d->no_hp).'</li><li>Telepon: '.e($d->no_kantor ?? '-').'</li></ul>';
             })
             ->filterColumn('cp', function ($query, $keyword) {
                 // Gunakan where() dengan closure agar kueri dikelompokkan dengan tanda kurung (...)
@@ -681,6 +679,7 @@ class DatabaseController extends Controller
                     (".($d->pembayaran == 2 ? $d->tempo_hari.' Hari' : '').')
                 ';
             })
+            ->addColumn('sales_area', fn ($d) => '<button type="button" class="btn btn-link customer-sales-history" data-sales-id="'.$d->karyawan_id.'" data-sales-name="'.e($d->karyawan?->nama ?? 'Belum ditentukan').'" data-id="'.$d->id.'" data-name="'.e($d->nama).'">'.e($d->karyawan?->nama ?? 'Belum ditentukan').' <i class="fa fa-history" aria-hidden="true"></i></button>')
             ->addColumn('ktp', function ($d) {
                 return view('db.konsumen._ktp', compact('d'))->render();
             })
@@ -694,14 +693,7 @@ class DatabaseController extends Controller
                 return view('db.konsumen._dokumen', compact('d'))->render();
             })
             ->addColumn('limit_plafon', function ($d) {
-                // Kita passing ID, Nama, dan nilai plafon raw (tanpa format) untuk dimasukkan ke input
-                return '
-                    <a href="javascript:void(0)"
-                    class="text-primary fw-bold text-decoration-none"
-                    onclick="openPlafonModal('.$d->id.', \''.addslashes($d->nama).'\', '.$d->plafon.')">
-                    '.$d->nf_plafon.' <i class="fa fa-edit ms-1"></i>
-                    </a>
-                ';
+                return '<button type="button" class="btn btn-link customer-plafon" data-id="'.$d->id.'" data-name="'.e($d->nama).'" data-limit="'.(int) $d->plafon.'">'.$d->nf_plafon.' <i class="fa fa-pencil" aria-hidden="true"></i></button>';
             })
             ->addColumn('checklist_kunjungan', function ($d) {
                 $checked = $d->checklist_kunjungan ? 'checked' : '';
@@ -725,7 +717,7 @@ class DatabaseController extends Controller
                     </div>
                 ';
             })
-            ->rawColumns(['cp', 'ktp', 'aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon', 'notif'])
+            ->rawColumns(['sales_area', 'cp', 'ktp', 'aksi', 'pembayaran_raw', 'diskon', 'dokumen', 'checklist_kunjungan', 'limit_plafon', 'notif'])->removeColumn('phone_matches')
             ->make(true);
     }
 
@@ -752,63 +744,30 @@ class DatabaseController extends Controller
             ->make(true);
     }
 
-    public function update_plafon(Request $request, $id)
+    public function update_plafon(Request $request, int $id): JsonResponse
     {
-        $request->validate([
-            'plafon' => 'required',
-            // 'keterangan' => 'nullable|string|max:255',
-        ]);
-
-        // Bersihkan format titik dari Cleave.js (contoh: 1.000.000 -> 1000000)
-        $plafonBaru = str_replace('.', '', $request->plafon);
-
-        DB::beginTransaction();
-        try {
-            $konsumen = Konsumen::findOrFail($id);
-            $plafonLama = $konsumen->plafon;
-
-            if ($plafonLama == $plafonBaru) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Nilai plafon sama.',
-                ]);
+        $data = $request->validate(['plafon' => 'required|integer|min:0|max:2147483647', 'keterangan' => 'nullable|string|max:500']);
+        $changed = DB::transaction(function () use ($data, $id): bool {
+            $customer = Konsumen::whereKey($id)->lockForUpdate()->firstOrFail();
+            $old = (int) $customer->plafon;
+            $new = (int) $data['plafon'];
+            if ($old === $new) {
+                return false;
             }
+            $customer->update(['plafon' => $new]);
+            KonsumenPlafonHistory::create(['konsumen_id' => $id, 'nominal_lama' => $old, 'nominal_baru' => $new, 'updated_by' => Auth::id(), 'keterangan' => $data['keterangan'] ?? null]);
 
-            // 1. Update plafon di tabel konsumen
-            $konsumen->update([
-                'plafon' => $plafonBaru,
-            ]);
+            return true;
+        }, 3);
 
-            // 2. Simpan ke tabel histori
-            KonsumenPlafonHistory::create([
-                'konsumen_id' => $id,
-                'nominal_lama' => $plafonLama,
-                'nominal_baru' => $plafonBaru,
-                // 'keterangan' => $request->keterangan ?? 'Perubahan limit plafon',
-                'updated_by' => Auth::id(), // Mencatat siapa yang mengubah
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Limit plafon berhasil diperbarui.',
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json(['status' => 'success', 'message' => $changed ? 'Limit plafon berhasil diperbarui.' : 'Nilai plafon tidak berubah.']);
     }
 
     public function toggleChecklist(Request $request, $id)
     {
         $konsumen = Konsumen::findOrFail($id);
-        $konsumen->checklist_kunjungan = filter_var($request->status, FILTER_VALIDATE_BOOLEAN);
+        $data = $request->validate(['status' => 'required|boolean']);
+        $konsumen->checklist_kunjungan = (bool) $data['status'];
         $konsumen->save();
 
         return response()->json([
@@ -820,7 +779,8 @@ class DatabaseController extends Controller
     public function toggleNotif(Request $request, $id)
     {
         $konsumen = Konsumen::findOrFail($id);
-        $konsumen->wa_notif = filter_var($request->status, FILTER_VALIDATE_BOOLEAN);
+        $data = $request->validate(['status' => 'required|boolean']);
+        $konsumen->wa_notif = (bool) $data['status'];
         $konsumen->save();
 
         return response()->json([
@@ -831,7 +791,8 @@ class DatabaseController extends Controller
 
     public function konsumen_dokumen(Request $request)
     {
-        $konsumen = Konsumen::withCount('docs')->find($request->konsumen_id);
+        $input = $request->validate(['konsumen_id' => ['required', 'integer']]);
+        $konsumen = Konsumen::withCount('docs')->find($input['konsumen_id']);
 
         if (! $konsumen) {
             return response()->json(['status' => 'error', 'message' => 'Konsumen tidak ditemukan'], 404);
@@ -846,59 +807,37 @@ class DatabaseController extends Controller
         ]);
     }
 
-    public function konsumen_dokumen_destroy(KonsumenDoc $dokumen)
+    public function konsumen_dokumen_destroy(KonsumenDoc $dokumen, CustomerFileService $files)
     {
         try {
-            DB::beginTransaction();
-
-            if (Storage::disk('public')->exists($dokumen->file_path)) {
-                Storage::disk('public')->delete($dokumen->file_path);
-            }
-
-            $dokumen->delete();
-
-            DB::commit();
+            $files->deleteDocument($dokumen);
 
             return response()->json(['status' => 'success', 'message' => 'Dokumen berhasil dihapus']);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $exception) {
+            report($exception);
 
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menghapus dokumen. '.$e->getMessage()], 500);
+            return response()->json(['status' => 'error', 'message' => 'Dokumen belum dapat dihapus. Silakan coba lagi.'], 500);
         }
     }
 
-    public function konsumen_dokumen_store(Request $request)
+    public function konsumen_dokumen_store(Request $request, CustomerFileService $files)
     {
         $data = $request->validate([
-            'konsumen_id' => 'required|exists:konsumens,id',
+            'konsumen_id' => 'required|integer|exists:konsumens,id',
             'nama' => 'required|string|max:255',
-            'barang_unit_id' => 'nullable|exists:barang_units,id',
+            'barang_unit_id' => 'nullable|integer|exists:barang_units,id',
             'file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120', // Maks 5MB
         ]);
 
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $filename = $data['konsumen_id'].'_'.$data['nama'].'_'.time().'.'.$file->getClientOriginalExtension();
-
-            if (! Storage::disk('public')->exists('konsumen_docs')) {
-                Storage::disk('public')->makeDirectory('konsumen_docs');
-            }
-
-            $path = $file->storeAs('konsumen_docs', $filename, 'public');
-            $data['file_path'] = $path;
-            unset($data['file']);
-        }
-
-        DB::beginTransaction();
+        unset($data['file']);
         try {
-            KonsumenDoc::create($data);
-            DB::commit();
+            $files->storeDocument($data, $request->file('file'));
 
             return response()->json(['status' => 'success', 'message' => 'Dokumen berhasil diunggah']);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $exception) {
+            report($exception);
 
-            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan saat menyimpan dokumen. '.$e->getMessage()], 500);
+            return response()->json(['status' => 'error', 'message' => 'Dokumen belum dapat disimpan. Silakan coba lagi.'], 500);
         }
     }
 
@@ -915,29 +854,12 @@ class DatabaseController extends Controller
         return redirect()->back()->with('success', 'Diskon khusus berhasil diubah!');
     }
 
-    public function konsumen_upload_ktp(Request $request, Konsumen $konsumen)
+    public function konsumen_upload_ktp(Request $request, Konsumen $konsumen, CustomerFileService $files): RedirectResponse
     {
-        $data = $request->validate([
-            'upload_ktp' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:512',
-        ]);
+        $request->validate(['upload_ktp' => 'required|image|mimes:jpeg,png,jpg|max:512']);
+        $files->replaceKtp($konsumen, $request->file('upload_ktp'));
 
-        if ($konsumen->upload_ktp && Storage::disk('public')->exists($konsumen->upload_ktp)) {
-            Storage::disk('public')->delete($konsumen->upload_ktp);
-        }
-
-        $file = $request->file('upload_ktp');
-        $filename = $konsumen->id.'_KTP'.'_'.time().'.'.$file->getClientOriginalExtension();
-
-        if (! Storage::disk('public')->exists('konsumen')) {
-            Storage::disk('public')->makeDirectory('konsumen');
-        }
-
-        $path = $file->storeAs('konsumen', $filename, 'public');
-        $data['upload_ktp'] = $path;
-
-        $konsumen->update($data);
-
-        return redirect()->back()->with('success', 'Berhasil mengubah KTP Konsumen!');
+        return back()->with('success', 'KTP konsumen berhasil diperbarui.');
     }
 
     public function konsumen_daftar_kunjungan(Konsumen $konsumen)
@@ -954,76 +876,105 @@ class DatabaseController extends Controller
         return $pdf->stream('Daftar Kunjungan - '.$konsumen->nama.' - '.$tahun.'.pdf');
     }
 
-    public function konsumen_store(Request $request)
+    public function konsumen_store(CustomerBiodataRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'kode_toko_id' => 'required|exists:kode_tokos,id',
-            'nik' => 'nullable',
-            'nama' => 'required',
-            'cp' => 'required',
-            'no_hp' => 'required',
-            'no_kantor' => 'nullable',
-            'npwp' => 'required',
-            'provinsi_id' => 'required',
-            'kabupaten_kota_id' => 'required',
-            'kecamatan_id' => 'nullable',
-            'alamat' => 'required',
-            'pembayaran' => 'required',
-            'plafon' => 'required_if:pembayaran,1',
-            'tempo_hari' => 'required_if:pembayaran,1',
-            'karyawan_id' => 'required|exists:karyawans,id',
-        ]);
+        $data = $request->validated();
+        if ((int) $data['pembayaran'] === 1) {
+            $data['plafon'] = 0;
+            $data['tempo_hari'] = 0;
+        }
+        DB::transaction(function () use ($data): void {
+            $last = Konsumen::orderByDesc('kode')->lockForUpdate()->first(['kode']);
+            $data['kode'] = ($last?->kode ?? 0) + 1;
+            Konsumen::create($data);
+        }, 3);
 
-        $db = new Konsumen;
-
-        $data['plafon'] = str_replace('.', '', $data['plafon']);
-
-        $data['kode'] = $db->generateKode();
-
-        $db->create($data);
-
-        return redirect()->route('db.konsumen')->with('success', 'Data berhasil ditambahkan');
+        return to_route('db.konsumen')->with('success', 'Konsumen berhasil ditambahkan.');
     }
 
-    public function konsumen_update(Konsumen $konsumen, Request $request)
+    public function histori_sales(Konsumen $konsumen): JsonResponse
     {
-        $data = $request->validate([
-            'kode_toko_id' => 'required|exists:kode_tokos,id',
-            'nik' => 'nullable',
-            'nama' => 'required',
-            'cp' => 'required',
-            'no_hp' => 'required',
-            'no_kantor' => 'nullable',
-            'npwp' => 'required',
-            'provinsi_id' => 'required',
-            'kabupaten_kota_id' => 'required',
-            'kecamatan_id' => 'nullable',
-            'alamat' => 'required',
-            'pembayaran' => 'required',
-            // 'plafon' => 'required',
-            'tempo_hari' => 'required',
-            'karyawan_id' => 'required|exists:karyawans,id',
-        ]);
-
-        // $data['plafon'] = str_replace('.', '', $data['plafon']);
-        $konsumen->update($data);
-
-        return redirect()->route('db.konsumen')->with('success', 'Data berhasil diupdate');
+        return DataTables::of(DB::table('konsumen_sales_histories')->where('konsumen_id', $konsumen->id))
+            ->editColumn('created_at', fn ($history) => Carbon::parse($history->created_at)->format('d/m/Y H:i'))
+            ->toJson();
     }
 
-    public function konsumen_delete(Konsumen $konsumen, Request $request)
+    public function konsumen_update(Konsumen $konsumen, CustomerBiodataRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'alasan' => 'required_if:status,1',
-        ]);
+        $data = $request->validated();
+        if ((int) $data['pembayaran'] === 1) {
+            $data['tempo_hari'] = 0;
+        }
+        $reason = $data['sales_change_reason'] ?? null;
+        $expectedSales = $data['_original_sales_id'];
+        unset($data['sales_change_reason'], $data['_original_sales_id']);
+        DB::transaction(function () use ($konsumen, $request, $data, $reason, $expectedSales): void {
+            $customer = Konsumen::whereKey($konsumen->id)->lockForUpdate()->firstOrFail();
+            $this->ensureCustomerSalesUnchanged($customer, $expectedSales);
+            $this->applyCustomerSalesChange($customer, (int) $data['karyawan_id'], $reason, $request->user());
+            $customer->update($data);
+        }, 3);
 
-        $konsumen->update([
-            'active' => ! $konsumen->active,
-            'checklist_kunjungan' => ! $konsumen->checlist_kunjungan,
-            'alasan' => $data['alasan'] ?? null,
-        ]);
+        return to_route('db.konsumen')->with('success', 'Biodata konsumen berhasil diperbarui.');
+    }
 
-        return redirect()->route('db.konsumen')->with('success', 'Data berhasil Di Nonaktifkan');
+    public function update_customer_sales(Konsumen $konsumen, UpdateCustomerSalesRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        DB::transaction(function () use ($konsumen, $request, $data): void {
+            $customer = Konsumen::whereKey($konsumen->id)->lockForUpdate()->firstOrFail();
+            $this->ensureCustomerSalesUnchanged($customer, $data['_original_sales_id']);
+            $this->applyCustomerSalesChange($customer, (int) $data['karyawan_id'], $data['sales_change_reason'] ?? null, $request->user());
+            $customer->update(['karyawan_id' => $data['karyawan_id']]);
+        }, 3);
+
+        return response()->json(['status' => 'success', 'message' => 'Sales penanggung jawab berhasil disimpan.']);
+    }
+
+    private function ensureCustomerSalesUnchanged(Konsumen $customer, int|string|null $expectedSales): void
+    {
+        if ((int) $customer->karyawan_id !== (int) $expectedSales) {
+            throw ValidationException::withMessages(['karyawan_id' => 'Sales penanggung jawab telah berubah. Muat ulang halaman sebelum menyimpan kembali.']);
+        }
+    }
+
+    private function applyCustomerSalesChange(Konsumen $customer, int $salesId, ?string $reason, User $user): void
+    {
+        if ((int) $customer->karyawan_id !== $salesId) {
+            DB::table('invoice_juals')
+                ->where('konsumen_id', $customer->id)
+                ->where('lunas', 0)
+                ->where('void', 0)
+                ->update(['karyawan_id' => $salesId, 'updated_at' => now()]);
+            $names = Karyawan::whereIn('id', array_filter([$customer->karyawan_id, $salesId]))->pluck('nama', 'id');
+            DB::table('konsumen_sales_histories')->insert([
+                'konsumen_id' => $customer->id,
+                'sales_lama_id' => $customer->karyawan_id,
+                'sales_baru_id' => $salesId,
+                'sales_lama' => $names[$customer->karyawan_id] ?? null,
+                'sales_baru' => $names[$salesId],
+                'updated_by' => $user->id,
+                'updated_by_name' => $user->name ?? '-',
+                'keterangan' => $reason,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+    }
+
+    public function konsumen_delete(Konsumen $konsumen, Request $request): RedirectResponse
+    {
+        $data = $request->validate(['active' => ['required', 'boolean']]);
+        $active = (bool) $data['active'];
+        DB::transaction(function () use ($konsumen, $request, $active): void {
+            $customer = Konsumen::whereKey($konsumen->id)->lockForUpdate()->firstOrFail();
+            if ((bool) $customer->active === $active) {
+                return;
+            }
+            $data = $request->validate(['alasan' => [$active ? 'nullable' : 'required', 'string', 'max:1000']]);
+            $customer->update(['active' => $active, 'checklist_kunjungan' => $active, 'alasan' => $active ? null : $data['alasan']]);
+        }, 3);
+
+        return to_route('db.konsumen')->with('success', 'Status konsumen berhasil diperbarui.');
     }
 
     public function supplier()
