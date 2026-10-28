@@ -27,6 +27,7 @@ use App\Http\Controllers\LegalitasController;
 use App\Http\Controllers\PajakController;
 use App\Http\Controllers\PayrollAttendanceController;
 use App\Http\Controllers\PayrollCommissionController;
+use App\Http\Controllers\PayrollPreviewController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\PerusahaanController;
 use App\Http\Controllers\PoController;
@@ -1019,6 +1020,8 @@ Route::group(['middleware' => ['auth']], function () {
                 });
 
                 Route::prefix('form-gaji')->group(function () {
+                    Route::get('/preview-pdf', [PayrollPreviewController::class, 'download'])->defaults('format', 'pdf')->name('billing.form-cost-operational.gaji.preview-pdf');
+                    Route::get('/preview-excel', [PayrollPreviewController::class, 'download'])->defaults('format', 'excel')->name('billing.form-cost-operational.gaji.preview-excel');
                     Route::post('/absensi/perbarui', [PayrollAttendanceController::class, 'refresh'])->middleware('role:su,admin')->name('billing.form-cost-operational.gaji.absensi.refresh');
                     Route::get('/absensi', [PayrollAttendanceController::class, 'preview'])->name('billing.form-cost-operational.gaji.absensi.detail');
                     Route::get('/komisi', [PayrollCommissionController::class, 'preview'])->name('billing.form-cost-operational.gaji.komisi');

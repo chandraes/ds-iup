@@ -16,12 +16,14 @@ use App\Services\EmployeePayrollService;
 use App\Services\KasbonMessage;
 use App\Services\KasbonService;
 use App\Services\PayrollAttendanceService;
+use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Database\Factories\KaryawanFactory;
 use Database\Factories\KasbonFactory;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Client\Factory;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
@@ -30,6 +32,7 @@ use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\TestWith;
+use Spatie\SimpleExcel\SimpleExcelReader;
 use Tests\TestCase;
 
 class KasbonTest extends TestCase
@@ -91,6 +94,7 @@ class KasbonTest extends TestCase
         (require database_path('migrations/2026_10_24_153457_add_commission_calculation_snapshot_to_rekap_gaji_details_table.php'))->up();
         (require database_path('migrations/2026_10_24_214601_add_attendance_calculations_to_payroll_tables.php'))->up();
         (require database_path('migrations/2026_10_16_202122_create_attendance_employee_syncs_table.php'))->up();
+        (require glob(database_path('migrations/*_add_sync_monitoring_to_payroll_attendance_periods_table.php'))[0])->up();
         Schema::create('invoice_juals', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('karyawan_id')->nullable();
@@ -1159,7 +1163,9 @@ class KasbonTest extends TestCase
         $snapshot['employees'][0]['source_employee_id'] = '999999';
         $this->fakeAttendance($snapshot);
         $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasErrors('attendance');
-        $this->assertSame(0, DB::table('payroll_attendance_periods')->count());
+        $this->assertNull(DB::table('payroll_attendance_periods')->value('snapshot'));
+        $this->assertSame(1, DB::table('payroll_attendance_periods')->value('sync_failures'));
+        $this->assertNotNull(DB::table('payroll_attendance_periods')->value('sync_last_error'));
         $reader = new User(['name' => 'Reader', 'role' => 'sales']);
         $reader->id = 998;
         $this->actingAs($reader)->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertForbidden();
@@ -1199,5 +1205,164 @@ class KasbonTest extends TestCase
     {
         DB::purge('kasbon_test');
         parent::tearDown();
+    }
+
+    public function test_payroll_preview_downloads_keep_iup_sales_commission_bbm_and_staff_deductions_without_processing(): void
+    {
+        $staff = KaryawanFactory::new()->create(['nama' => 'Staff Preview']);
+        $sales = KaryawanFactory::new()->create(['nama' => 'Sales Preview', 'jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'gaji_pokok' => 0, 'tunjangan_jabatan' => 0, 'tunjangan_keluarga' => 0, 'tunjangan_bbm' => 30000, 'persen_komisi' => 5]);
+        DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'grand_total' => 1000000, 'lunas' => true, 'void' => false, 'created_at' => '2026-09-01', 'updated_at' => '2026-10-01']);
+        $snapshot = $this->attendanceSnapshot([$staff, $sales], [$staff->id => ['2026-10-01' => $this->attendanceDay('absent')], $sales->id => ['2026-10-01' => $this->attendanceDay('present', 48)]]);
+        $this->fakeAttendance($snapshot);
+        app(PayrollAttendanceService::class)->refresh(Carbon::parse('2026-10-01'), [(string) $staff->id, (string) $sales->id]);
+        $cash = $this->fund();
+        $expected = app(EmployeePayrollService::class)->previewRows(app(EmployeePayrollService::class)->employees(), Carbon::parse('2026-10-01'));
+        $url = 'billing.form-cost-operational.gaji.preview-';
+        $excel = $this->get(route($url.'excel', ['periode' => '2026-10']))->assertOk()->assertDownload('Preview_Gaji_IUP_2026_10.xlsx');
+        $path = $excel->baseResponse->getFile()->getPathname();
+        try {
+            $rows = SimpleExcelReader::create($path, 'xlsx')->getRows()->collect();
+            $this->assertCount(3, $rows);
+            $this->assertEquals(50000, $rows[1]['Komisi']);
+            $this->assertEquals(27000, $rows[1]['Tunjangan BBM']);
+            $this->assertEquals(0, $rows[1]['Potongan Absensi']);
+            $this->assertEquals(160000, $rows[0]['Potongan Absensi']);
+            $this->assertEquals($expected->sum('sisa_gaji_dibayar'), $rows[2]['Sisa Gaji Dibayar']);
+        } finally {
+            unlink($path);
+        }
+        $pdf = \Mockery::mock(PDF::class);
+        $pdf->shouldReceive('setPaper')->once()->with('a3', 'landscape')->andReturnSelf();
+        $pdf->shouldReceive('download')->once()->with('Preview_Gaji_IUP_2026_10.pdf')->andReturn(response('pdf', 200, ['Content-Type' => 'application/pdf']));
+        \Barryvdh\DomPDF\Facade\Pdf::shouldReceive('loadView')->once()->withArgs(function ($view, $data) use ($expected): bool {
+            $this->assertSame('billing.form-cost-operational.form-gaji.preview-pdf', $view);
+            $this->assertSame($expected->toArray(), $data['rows']->toArray());
+            $html = view($view, $data)->render();
+            $this->assertStringContainsString('DRAFT', $html);
+            $this->assertStringContainsString('Tunjangan BBM', $html);
+            $this->assertStringContainsString('77.000', $html);
+
+            return true;
+        })->andReturn($pdf);
+        $this->get(route($url.'pdf', ['periode' => '2026-10']))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertSame(0, RekapGaji::count());
+        $this->assertEquals(20000000, $cash->fresh()->saldo);
+        $this->assertNull(DB::table('payroll_attendance_periods')->value('remote_locked_at'));
+        Http::assertSentCount(1);
+    }
+
+    #[TestWith(['pdf'])]
+    #[TestWith(['excel'])]
+    public function test_payroll_preview_rejects_stale_period_and_sales_access(string $format): void
+    {
+        KaryawanFactory::new()->create();
+        $route = 'billing.form-cost-operational.gaji.preview-'.$format;
+        $this->getJson(route($route, ['periode' => '2026-09']))->assertUnprocessable()->assertJsonValidationErrors('periode');
+        $this->getJson(route($route, ['periode' => 'invalid']))->assertUnprocessable()->assertJsonValidationErrors('periode');
+        $sales = new User(['name' => 'Sales', 'role' => 'sales']);
+        $sales->id = 998;
+        $this->actingAs($sales)->getJson(route($route, ['periode' => '2026-10']))->assertForbidden();
+        $this->app['auth']->forgetGuards();
+        $this->getJson(route($route, ['periode' => '2026-10']))->assertUnauthorized();
+        Http::assertNothingSent();
+    }
+
+    public function test_preview_excel_marks_incomplete_configuration_and_escapes_formula_names(): void
+    {
+        KaryawanFactory::new()->create(['nama' => '=1+1']);
+        DB::table('bpjs_health_minimums')->where('year', 2026)->delete();
+        $response = $this->get(route('billing.form-cost-operational.gaji.preview-excel', ['periode' => '2026-10']))->assertOk();
+        $path = $response->baseResponse->getFile()->getPathname();
+        try {
+            $reader = SimpleExcelReader::create($path, 'xlsx');
+            $this->assertSame("'=1+1", $reader->getRows()->first()['Nama Pegawai']);
+            $info = SimpleExcelReader::create($path, 'xlsx')->fromSheetName('Informasi')->getRows()->collect()->pluck('Nilai', 'Keterangan');
+            $this->assertStringContainsString('DRAFT', $info['Status']);
+            $this->assertStringContainsString('Integrasi absensi nonaktif', $info['Kesiapan data']);
+            $this->assertStringContainsString('BPJS Kesehatan tahun ini belum diatur', $info['Kesiapan data']);
+        } finally {
+            unlink($path);
+        }
+        $this->assertSame(0, RekapGaji::count());
+        Http::assertNothingSent();
+    }
+
+    public function test_automatic_payroll_snapshot_refresh_runs_only_when_due_and_manual_remains_available(): void
+    {
+        config(['attendance.payroll_auto_sync' => true]);
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        $row = DB::table('payroll_attendance_periods')->sole();
+        $this->assertSame('automatic', $row->sync_source);
+        $this->assertNotNull($row->sync_duration_ms);
+        $this->assertSame(0, $row->sync_failures);
+        $this->assertSame(1, DB::table('payroll_attendance_periods')->count());
+        $this->assertNull($row->remote_locked_at);
+        $this->assertSame(0, RekapGaji::count());
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(1);
+        $this->travel(15)->minutes();
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(2);
+        config(['attendance.payroll_auto_sync' => false]);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        Http::assertSentCount(3);
+        $this->assertSame('manual', DB::table('payroll_attendance_periods')->value('sync_source'));
+    }
+
+    public function test_automatic_snapshot_failure_preserves_previous_data_and_retries_after_backoff(): void
+    {
+        config(['attendance.payroll_auto_sync' => true]);
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        $before = DB::table('payroll_attendance_periods')->sole();
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://attendance.test/api/v1/integration/payroll-snapshot' => Http::response([], 500)]);
+        $this->travel(15)->minutes();
+        $this->artisan('attendance:refresh-payroll')->assertFailed();
+        $failed = DB::table('payroll_attendance_periods')->sole();
+        $this->assertSame($before->snapshot, $failed->snapshot);
+        $this->assertSame($before->fetched_at, $failed->fetched_at);
+        $this->assertSame(1, $failed->sync_failures);
+        $this->assertNotNull($failed->sync_last_error);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(1);
+        $this->fakeAttendance($snapshot);
+        $this->travel(5)->minutes();
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        $retried = DB::table('payroll_attendance_periods')->sole();
+        $this->assertSame(0, $retried->sync_failures);
+        $this->assertNull($retried->sync_last_error);
+        $this->assertSame(1, DB::table('payroll_attendance_periods')->count());
+        Http::assertSentCount(1);
+    }
+
+    public function test_snapshot_refresh_uses_shared_lock_and_skips_locked_or_disabled_periods(): void
+    {
+        config(['attendance.payroll_auto_sync' => true]);
+        $employee = KaryawanFactory::new()->create();
+        $snapshot = $this->attendanceSnapshot([$employee]);
+        $this->fakeAttendance($snapshot);
+        $lock = Cache::lock('payroll-attendance-refresh:2026-10', 120);
+        $this->assertTrue($lock->get());
+        try {
+            $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasErrors('attendance');
+            $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+            Http::assertNothingSent();
+        } finally {
+            $lock->release();
+        }
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        DB::table('payroll_attendance_periods')->update(['lock_attempted_at' => now(), 'next_sync_at' => null]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(1);
+        config(['attendance.enabled' => false]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(1);
     }
 }

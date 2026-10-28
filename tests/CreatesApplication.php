@@ -17,7 +17,7 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
-        config(['attendance.enabled' => false, 'attendance.url' => 'https://attendance.test',
+        config(['attendance.payroll_auto_sync' => false, 'attendance.enabled' => false, 'attendance.url' => 'https://attendance.test',
             'attendance.token' => '', 'attendance.send_immediately' => false]);
         Http::preventStrayRequests();
 

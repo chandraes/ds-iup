@@ -68,3 +68,20 @@ UI diseragamkan pada SAIND/IUP: ringkasan tarif, form tahun, status tersimpan, t
 Pengujian menonaktifkan integrasi secara default, menghapus kredensial nyata dari konfigurasi tes, menggunakan target `https://attendance.test`, dan menolak HTTP tanpa fake. Tes konektor tetap dapat mengaktifkan integrasi menggunakan endpoint serta respons tiruan eksplisit.
 
 IUP lokal diarahkan ke `https://absensi-holding.test` dengan token khusus lokal; token production tidak digunakan. Data uji yang terkirim tanpa sengaja ke VPS (pegawai IUP ID 100) telah dibersihkan dengan pemeriksaan relasi, backup privat, dan audit.
+
+
+### 2026-10-28 — Preview gaji PDF dan Excel
+
+Form gaji menyediakan unduhan PDF landscape dan Excel `.xlsx` berstatus DRAFT. Keduanya menggunakan `EmployeePayrollService::previewRows()` IUP, termasuk komisi invoice lunas, BBM sales, BPJS, kasbon, serta potongan absensi non-sales. Seluruh pegawai aktif disertakan. Preview tidak menarik ulang, mengunci absensi, atau membayar gaji; periode usang ditolak. Excel menyertakan lembar Informasi kesiapan data dan file sementara privat dihapus setelah dikirim. Tidak menambah dependensi.
+
+
+### 2026-10-28 — Pembaruan snapshot absensi otomatis dan manual
+
+- `ATTENDANCE_ENABLED=true` dan `ATTENDANCE_PAYROLL_AUTO_SYNC=true` mengaktifkan command `attendance:refresh-payroll` melalui scheduler setiap menit. HTTP normal dilakukan setiap 15 menit, hanya untuk periode yang sedang ditawarkan form gaji dan pegawai aktif. Periode lain/riwayat tidak dipindai. Default otomatis nonaktif.
+- Scheduler command berjalan di background dengan `withoutOverlapping(5)`; tidak memerlukan queue worker baru. Refresh manual dan otomatis berbagi cache lock per periode (120 detik; timeout HTTP 30 detik). Gunakan cache persisten yang sama antara CLI dan PHP-FPM. Pada satu VPS, driver file sudah didukung; jangan gunakan array/null pada production.
+- Retry kegagalan: 5 menit, 10 menit, kemudian maksimal 15 menit. Snapshot terakhir dipertahankan; manual dapat mencoba lebih cepat. Status, waktu percobaan, sumber, durasi, kegagalan beruntun, dan jadwal berikutnya tersimpan di `payroll_attendance_periods`. Tidak mencatat token/payload pada log kegagalan baru.
+- Periode yang sedang/sudah dikunci atau dibayarkan dilewati. Pemeriksaan revision dan penguncian sebelum pembayaran tetap dipakai. Refresh otomatis tidak membayar gaji. Tampilan form memerlukan muat ulang untuk melihat hasil background terbaru.
+
+Penerapan production IUP (`/var/www/iup_distributor`): backup dahulu, pasang kode, lalu jalankan `php artisan migrate --force` sebagai pengguna aplikasi sesuai proses deploy. Pastikan migrasi `2026_10_28_215624_add_sync_monitoring_to_payroll_attendance_periods_table` berhasil sebelum mengaktifkan otomatis. Atur kedua flag di atas, jalankan `php artisan config:cache`, dan periksa `php artisan schedule:list`. Cron `schedule:run` IUP yang sudah ada tetap digunakan; jangan membuat cron kedua. Uji `sudo -u www-data /usr/bin/php /var/www/iup_distributor/artisan attendance:refresh-payroll`, lalu lihat status waktu/sumber di form. Eksekusi kedua sebelum 15 menit harus dilewati. Pastikan www-data dapat menulis storage/cache dan CLI memakai konfigurasi yang sama dengan web. Tidak memerlukan deploy mobile atau perubahan backend absensi.
+
+Menonaktifkan otomatis: ubah `ATTENDANCE_PAYROLL_AUTO_SYNC=false`, lalu `php artisan config:cache`; tombol manual tetap tersedia. Tidak perlu menghapus snapshot atau menjalankan ulang migrasi. Local tidak otomatis berjalan tanpa `schedule:run`/scheduler yang dioperasikan pengembang; jangan arahkan token/URL lokal ke production untuk tes.

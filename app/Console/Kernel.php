@@ -12,6 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        $schedule->command('attendance:refresh-payroll')->everyMinute()->withoutOverlapping(5)->runInBackground()->when(fn (): bool => (bool) config('attendance.enabled') && (bool) config('attendance.payroll_auto_sync'));
         $schedule->command('attendance:flush')->everyMinute()->withoutOverlapping(5)->when(fn (): bool => (bool) config('attendance.enabled'));
         $schedule->command('attendance:sync-employees')->everyFiveMinutes()->withoutOverlapping(5)->when(fn (): bool => (bool) config('attendance.enabled'));
     }

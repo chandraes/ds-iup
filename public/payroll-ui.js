@@ -77,6 +77,37 @@
             } catch (error) { button.disabled = false; throw error; }
         });
     }
+    document.querySelectorAll('[data-payroll-download]').forEach(link => {
+        link.addEventListener('click', async event => {
+            event.preventDefault();
+            if (link.getAttribute('aria-disabled') === 'true') return;
+            const links = document.querySelectorAll('[data-payroll-download]');
+            links.forEach(item => item.setAttribute('aria-disabled', 'true'));
+            Swal.fire({title: 'Menyiapkan preview…', text: 'Menggunakan perhitungan IUP. Gaji tidak diproses.', allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading()});
+            try {
+                const response = await fetch(link.href, {headers: {Accept: 'application/json'}});
+                if (!response.ok || response.redirected) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.errors ? Object.values(error.errors).flat().join(' ') : 'Preview belum dapat diunduh. Muat ulang halaman dan coba kembali.');
+                }
+                const blob = await response.blob();
+                const expected = link.href.includes('preview-pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                if (!blob.type.startsWith(expected)) throw new Error('Format unduhan tidak sesuai. Muat ulang halaman dan coba kembali.');
+                const url = URL.createObjectURL(blob);
+                const download = document.createElement('a');
+                download.href = url;
+                download.download = (response.headers.get('Content-Disposition') || '').match(/filename="?([^";]+)"?/)?.[1] || 'Preview_Gaji_IUP';
+                document.body.appendChild(download);
+                download.click(); download.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+                Swal.fire({icon: 'success', title: 'Preview siap', text: 'File telah dikirim ke unduhan browser.'});
+            } catch (error) {
+                Swal.fire({icon: 'error', title: 'Unduhan belum berhasil', text: error.message});
+            } finally {
+                links.forEach(item => item.removeAttribute('aria-disabled'));
+            }
+        });
+    });
     const form = document.getElementById('lanjutForm');
     if (!form) return;
     form.addEventListener('submit', async function (event) {

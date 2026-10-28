@@ -19,6 +19,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing" force="true"/>
+        <env name="ATTENDANCE_PAYROLL_AUTO_SYNC" value="false" force="true"/>
         <env name="ATTENDANCE_ENABLED" value="false" force="true"/>
         <env name="ATTENDANCE_URL" value="https://attendance.test" force="true"/>
         <env name="ATTENDANCE_TOKEN" value="" force="true"/>

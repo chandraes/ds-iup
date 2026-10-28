@@ -7,11 +7,14 @@ use App\Models\RekapGaji;
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class PayrollAttendanceService
 {
@@ -141,7 +144,62 @@ class PayrollAttendanceService
         return $snapshot;
     }
 
-    public function refresh(Carbon $date, array $sources): void
+    public function refresh(Carbon $date, array $sources, string $source = 'manual'): bool
+    {
+        $automatic = $source === 'automatic';
+        if (! $this->enabled()) {
+            $this->fail('Integrasi absensi sedang dinonaktifkan.');
+        }
+        $lock = Cache::lock('payroll-attendance-refresh:'.$date->format('Y-m'), 120);
+        if (! $lock->get()) {
+            if ($automatic) {
+                return false;
+            }
+            $this->fail('Data absensi sedang diperbarui. Tunggu sebentar lalu muat ulang halaman.');
+        }
+        try {
+            $this->clear();
+            $period = $this->period($date);
+            if ($period?->sealed_at || $period?->lock_attempted_at || $period?->remote_locked_at || RekapGaji::where('tahun', $date->year)->where('bulan', $date->month)->exists()) {
+                if ($automatic) {
+                    return false;
+                }
+                $this->fail('Periode sudah dikunci/diproses. Data absensi tidak dapat diganti.');
+            }
+            if ($automatic) {
+                if (! config('attendance.payroll_auto_sync')) {
+                    return false;
+                }
+                $due = $period?->next_sync_at ?? ($period?->fetched_at ? Carbon::parse($period->fetched_at)->addMinutes(15) : null);
+                if ($due && Carbon::parse($due)->isFuture()) {
+                    return false;
+                }
+            }
+            $dates = $this->dates($date);
+            DB::table('payroll_attendance_periods')->insertOrIgnore(['year' => $date->year, 'month' => $date->month, 'from_date' => $dates['from'], 'to_date' => $dates['to'], 'request_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
+            $query = fn () => DB::table('payroll_attendance_periods')->where('year', $date->year)->where('month', $date->month)->whereNull('sealed_at')->whereNull('remote_locked_at')->whereNull('lock_attempted_at');
+            $query()->update(['sync_attempted_at' => now(), 'sync_source' => $source]);
+            $started = hrtime(true);
+            try {
+                $this->refreshSnapshot($date, $sources);
+                $query()->update(['sync_failures' => 0, 'sync_last_error' => null, 'sync_duration_ms' => (int) round((hrtime(true) - $started) / 1000000), 'next_sync_at' => now()->addMinutes(15)]);
+            } catch (Throwable $exception) {
+                $failures = min(30, (int) ($query()->value('sync_failures') ?? 0) + 1);
+                $message = $exception instanceof ValidationException ? $exception->validator->errors()->first() : 'Pembaruan gagal karena gangguan internal. Hubungi pengembang.';
+                $query()->update(['sync_failures' => $failures, 'sync_failed_at' => now(), 'sync_last_error' => mb_substr($message, 0, 500), 'sync_duration_ms' => (int) round((hrtime(true) - $started) / 1000000), 'next_sync_at' => now()->addMinutes(min(15, 5 * 2 ** min(2, $failures - 1)))]);
+                Log::warning('Pembaruan snapshot gaji gagal; data terakhir dipertahankan.', ['period' => $date->format('Y-m'), 'source' => $source, 'exception_type' => $exception::class, 'attempts' => $failures]);
+                throw $exception;
+            } finally {
+                $this->clear();
+            }
+
+            return true;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function refreshSnapshot(Carbon $date, array $sources): void
     {
         if (! Schema::hasTable('payroll_attendance_periods')) {
             $this->fail('Migrasi integrasi penggajian belum dijalankan.');
