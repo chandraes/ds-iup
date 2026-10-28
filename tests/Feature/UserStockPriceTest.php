@@ -31,7 +31,7 @@ class UserStockPriceTest extends TestCase
             $stock->$attribute = 1;
         }
 
-        $view = $this->view('user.stok-all.index', [
+        $view = $this->view('user.stok-all.classic', [
             'data' => [[[[[collect([$stock])]]]]], 'units' => [], 'selectType' => [],
             'selectKategori' => [], 'selectBarangNama' => [], 'ppnRate' => 11, 'errors' => new ViewErrorBag,
         ]);

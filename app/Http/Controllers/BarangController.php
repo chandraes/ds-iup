@@ -13,9 +13,10 @@ use App\Models\db\Barang\Subpg;
 use App\Models\db\Karyawan;
 use App\Models\db\Pajak;
 use App\Models\db\Satuan;
-use App\Models\GantiRugi;
 use App\Models\HargaSubmission;
+use App\Services\StockMutationService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -213,8 +214,8 @@ class BarangController extends Controller
             'barang_id' => 'required|exists:barangs,id',
         ]);
 
-        $grosir = BarangGrosir::with(['barang.satuan','satuan'])->where('barang_id',$data['barang_id'])
-                    ->orderBy('qty')->get();
+        $grosir = BarangGrosir::with(['barang.satuan', 'satuan'])->where('barang_id', $data['barang_id'])
+            ->orderBy('qty')->get();
 
         // distinc satuan_id
         $satuanIds = $grosir->pluck('satuan_id')->unique();
@@ -266,7 +267,7 @@ class BarangController extends Controller
 
     public function barang_grosir_store(Request $request)
     {
-    //    using ajax
+        //    using ajax
         $data = $request->validate([
             'barang_id' => 'required|exists:barangs,id',
             'qty' => 'required|integer|min:1',
@@ -283,7 +284,6 @@ class BarangController extends Controller
             $barang->is_grosir = true;
             $barang->save();
 
-
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -299,7 +299,6 @@ class BarangController extends Controller
             'message' => 'Data grosir berhasil ditambahkan',
         ]);
 
-
     }
 
     public function barang_data(Request $request)
@@ -307,15 +306,15 @@ class BarangController extends Controller
         $filters = $request->only(['barang_nama', 'kategori', 'jenis', 'type', 'unit', 'status']); // Ambil filter dari request
 
         $data = Barang::query()->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan', 'subpg'])
-                ->filter($filters)
-                ->limit(10);
+            ->filter($filters)
+            ->limit(10);
 
         return DataTables::of($data)
             // add unique barang_unit_id becouse its ambiguous
             ->addColumn('unit', function ($d) {
                 // Use the relation if loaded, fallback to direct attribute if not
                 return $d->unit ? $d->unit->nama : $d->barang_unit_id;
-            })->addColumn('subpg_view', function ($d){
+            })->addColumn('subpg_view', function ($d) {
                 return $d->subpg?->nama;
             })
             ->orderColumn('subpg_view', function ($query, $direction) {
@@ -327,10 +326,10 @@ class BarangController extends Controller
             ->addColumn('upload_barang', function ($d) {
                 return view('db.barang._upload-foto', compact('d'))->render();
             })
-            ->addColumn('diskon_view', function ($d){
+            ->addColumn('diskon_view', function ($d) {
                 return view('db.barang._diskon', compact('d'))->render();
             })
-            ->addColumn('grosir_view', function ($d){
+            ->addColumn('grosir_view', function ($d) {
                 return view('db.barang._grosir', compact('d'))->render();
             })
             ->addColumn('aksi', function ($d) {
@@ -339,7 +338,7 @@ class BarangController extends Controller
             ->addColumn('satuan_view', function ($d) {
                 return view('db.barang._satuan', compact('d'))->render();
             })
-           ->addColumn('status', function ($d) {
+            ->addColumn('status', function ($d) {
                 // Tentukan variabel awal berdasarkan status database
                 $isActive = $d->is_active;
                 $icon = $isActive ? 'fa-toggle-on' : 'fa-toggle-off';
@@ -358,20 +357,20 @@ class BarangController extends Controller
                     </span>
                 </div>';
             })
-            ->rawColumns(['foto', 'diskon_view','aksi', 'upload_barang', 'satuan_view', 'grosir_view', 'status'])
+            ->rawColumns(['foto', 'diskon_view', 'aksi', 'upload_barang', 'satuan_view', 'grosir_view', 'status'])
             ->make(true);
     }
 
     public function toggle_status($id)
     {
         $barang = Barang::findOrFail($id);
-        $barang->is_active = !$barang->is_active; // Balik status
+        $barang->is_active = ! $barang->is_active; // Balik status
         $barang->save();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Status berhasil diubah',
-            'new_status' => $barang->is_active // return boolean baru
+            'new_status' => $barang->is_active, // return boolean baru
         ]);
     }
 
@@ -460,7 +459,7 @@ class BarangController extends Controller
 
         $pagination = $request->input('pagination', 10);
 
-        $db = new Barang();
+        $db = new Barang;
         $kategoriDb = new BarangKategori;
         $unitFilter = $request->input('unit');
         $typeFilter = $request->input('type');
@@ -566,7 +565,7 @@ class BarangController extends Controller
                 $file = $request->file('foto');
                 $filename = 'new'.'_'.time().'.'.$file->getClientOriginalExtension();
 
-                if (!Storage::disk('public')->exists('barang')) {
+                if (! Storage::disk('public')->exists('barang')) {
                     Storage::disk('public')->makeDirectory('barang');
                 }
 
@@ -642,7 +641,7 @@ class BarangController extends Controller
                 $file = $request->file('foto');
                 $filename = $barang->id.'_'.time().'.'.$file->getClientOriginalExtension();
 
-                if (!Storage::disk('public')->exists('barang')) {
+                if (! Storage::disk('public')->exists('barang')) {
                     Storage::disk('public')->makeDirectory('barang');
                 }
 
@@ -686,7 +685,6 @@ class BarangController extends Controller
             'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:512',
         ]);
 
-
         if ($barang->foto && Storage::disk('public')->exists($barang->foto)) {
             Storage::disk('public')->delete($barang->foto);
         }
@@ -694,7 +692,7 @@ class BarangController extends Controller
         $file = $request->file('foto');
         $filename = $barang->id.'_'.time().'.'.$file->getClientOriginalExtension();
 
-        if (!Storage::disk('public')->exists('barang')) {
+        if (! Storage::disk('public')->exists('barang')) {
             Storage::disk('public')->makeDirectory('barang');
         }
 
@@ -835,43 +833,9 @@ class BarangController extends Controller
         ]);
     }
 
-   public function edit_stok_su(BarangStokHarga $stok, Request $request)
+    public function edit_stok_su(BarangStokHarga $stok, Request $request)
     {
-        if (Auth::user()->role !== 'su') {
-            return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk eksekusi ini!!');
-        }
-
-        $validatedData = $request->validate([
-            'stok_awal'  => 'required|numeric',
-            'stok'       => 'required|numeric',
-            'harga_beli' => 'required|numeric'
-        ]);
-
-        try {
-            // KARENA KITA PAKAI LOCK, KITA WAJIB MENGGUNAKAN TRANSACTION LAGI
-            DB::beginTransaction();
-
-            // 1. Ambil ulang baris spesifik ini dan KUNCI (Lock)
-            // Proses lain yang mencoba mengubah baris dengan ID ini akan disuruh antre
-            // sampai DB::commit() di bawah dipanggil.
-            $stokDikunci = BarangStokHarga::where('id', $stok->id)
-                                ->lockForUpdate()
-                                ->first();
-
-            // 2. Lakukan update pada baris yang sudah dikunci
-            $stokDikunci->update($validatedData);
-
-            // 3. Simpan perubahan dan LEPASKAN KUNCI (Unlock)
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Data Berhasil Diupdate dan aman dari bentrokan!!');
-
-        } catch (\Exception $e) {
-            // Jika terjadi error, batalkan semua dan lepaskan kunci
-            DB::rollBack();
-
-            return redirect()->back()->with('error', 'Terjadi Kesalahan pada sistem.');
-        }
+        return $this->applyStockChange($request, $stok, 'correct');
     }
 
     public function stok_data(Request $request)
@@ -879,8 +843,8 @@ class BarangController extends Controller
         // $filters = $request->only(['area', 'kecamatan', 'kode_toko', 'status']); // Ambil filter dari request
 
         $data = BarangStokHarga::query()->with(['barang' => function ($query) {
-                $query->with(['type', 'kategori', 'barang_nama', 'satuan', 'unit']);
-            }])
+            $query->with(['type', 'kategori', 'barang_nama', 'satuan', 'unit']);
+        }])
             ->where('hide', 0)
             ->orderBy('barang_unit_id')
             ->orderBy('barang_type_id')
@@ -953,28 +917,7 @@ class BarangController extends Controller
 
     public function stok_harga_update(Request $request, BarangStokHarga $barang)
     {
-        $data = $request->validate([
-            'harga' => 'required',
-            'min_jual' => 'required',
-        ]);
-
-        $data['harga'] = str_replace('.', '', $data['harga']);
-        $data['min_jual'] = str_replace('.', '', $data['min_jual']);
-
-        if (Auth::user()->role != 'su') {
-           if ($data['harga'] < $barang->harga_beli) {
-                return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
-            }
-        }
-
-
-        if ($data['min_jual'] <= 0) {
-            return redirect()->back()->with('error', 'Minimum kelipatan jual tidak boleh dibawah 1 !');
-        }
-
-        $barang->update($data);
-
-        return redirect()->back()->with('success', 'Berhasil mengubah data harga!');
+        return $this->applyStockChange($request, $barang, 'price');
     }
 
     public function stok_non_ppn(Request $request)
@@ -1072,7 +1015,7 @@ class BarangController extends Controller
 
         $data = $db->barangStokPdf($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
-        $pdf = PDF::loadview('db.stok-ppn.pdf', [
+        $pdf = Pdf::loadview('db.stok-ppn.pdf', [
             'data' => $data,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
@@ -1128,7 +1071,7 @@ class BarangController extends Controller
 
         $data = $db->barangStokPdf($jenis, $unitFilter, $typeFilter, $kategoriFilter, $barangNamaFilter);
 
-        $pdf = PDF::loadview('db.stok-non-ppn.pdf', [
+        $pdf = Pdf::loadview('db.stok-non-ppn.pdf', [
             'data' => $data,
             'unitFilter' => $unitFilter,
             'typeFilter' => $typeFilter,
@@ -1147,45 +1090,12 @@ class BarangController extends Controller
 
     public function ganti_rugi(BarangStokHarga $stok, Request $request)
     {
-        ini_set('max_execution_time', 300);
-        ini_set('memory_limit', '512M');
-
-        $data = $request->validate([
-            'harga_beli_dpp_act' => 'required',
-            'karyawan_id' => 'required|exists:karyawans,id',
-            'kas_ppn' => 'required|in:0,1',
-            'jumlah_hilang' => 'required',
-            'aksi' => 'required|in:1,2',
-        ]);
-
-        if ($data['jumlah_hilang'] <= 0 || $data['jumlah_hilang'] > $stok->stok) {
-            $errorMessage = $data['jumlah_hilang'] <= 0 ? 'Jumlah hilang tidak boleh kurang dari atau sama dengan 0!' : 'Jumlah hilang tidak boleh lebih besar dari stok!';
-
-            return redirect()->back()->with('error', $errorMessage);
-        }
-
-        $data['jumlah'] = str_replace('.', '', $data['jumlah_hilang']);
-        $data['harga'] = str_replace('.', '', $data['harga_beli_dpp_act']);
-        $data['total'] = $data['jumlah'] * $data['harga'];
-        $data['lunas'] = $data['aksi'] == 1 ? 1 : 0;
-        $data['total_bayar'] = $data['lunas'] == 1 ? $data['total'] : 0;
-        $data['sisa'] = $data['lunas'] == 1 ? 0 : $data['total'];
-        $data['barang_stok_harga_id'] = $stok->id;
-        $data['barang_id'] = $stok->barang_id;
-
-        unset($data['jumlah_hilang'], $data['harga_beli_dpp_act'], $data['aksi']);
-
-        $db = new GantiRugi;
-
-        $res = $db->ganti_rugi($data);
-
-        return redirect()->back()->with($res['status'], $res['message']);
-
+        return $this->applyStockChange($request, $stok, 'loss');
     }
 
     public function stok_history(Request $request)
     {
-        $barang = Barang::with('barang_nama')->where('id',$request->barang)->first();
+        $barang = Barang::with('barang_nama')->where('id', $request->barang)->first();
 
         $data = BarangStokHarga::with(['barang.satuan'])->where('barang_id', $barang->id)->orderBy('created_at', 'desc')->get();
 
@@ -1204,24 +1114,9 @@ class BarangController extends Controller
         ]);
     }
 
-    public function hide_stok(BarangStokHarga $barang)
+    public function hide_stok(BarangStokHarga $barang, Request $request)
     {
-        // check if there is minimum 1 barang->barang_id that hide = 0
-        $barangCheck = BarangStokHarga::where('barang_id', $barang->barang_id)->where('hide', 0)->count();
-
-        if ($barangCheck == 1) {
-            return redirect()->back()->with('error', 'Data stok tidak bisa disembunyikan karena minimal harus ada 1 data stok yang tidak disembunyikan!');
-        }
-
-        if ($barang->stok > 0) {
-            return redirect()->back()->with('error', 'Data stok tidak bisa disembunyikan karena masih memiliki stok!');
-        }
-
-        $barang->update([
-            'hide' => 1,
-        ]);
-
-        return redirect()->back()->with('success', 'Berhasil menyembunyikan data stok!');
+        return $this->applyStockChange($request, $barang, 'hide');
     }
 
     public function subpg(Request $request)
@@ -1306,7 +1201,7 @@ class BarangController extends Controller
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
-        return view('db.stok-all.index', [
+        return view('db.stok-all.classic', [
             'data' => $data,
             'kategori' => $kategori,
             'units' => $units,
@@ -1325,87 +1220,18 @@ class BarangController extends Controller
 
     public function harga_ajuan_store(Request $request, BarangStokHarga $barang)
     {
-        $data = $request->validate([
-            'harga_ajuan' => 'required',
-            'min_jual_ajuan' => 'required'
-        ]);
-
-        $data['harga_ajuan'] = str_replace('.', '', $data['harga_ajuan']);
-        $data['min_jual_ajuan'] = str_replace('.', '', $data['min_jual_ajuan']);
-
-        if (Auth::user()->role != 'su') {
-           if ($data['harga_ajuan'] < $barang->harga_beli) {
-                return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
-            }
-        }
-
-        if ($data['min_jual_ajuan'] <= 0) {
-            return redirect()->back()->with('error', 'Minimum kelipatan jual tidak boleh dibawah 1 !');
-        }
-
-        $item = HargaSubmission::where('barang_stok_harga_id', $barang->id)->first();
-
-        if (!$item) {
-            HargaSubmission::create([
-                'barang_stok_harga_id' => $barang->id,
-                'user_id' => Auth::user()->id,
-                'harga_ajuan' => $data['harga_ajuan'],
-                'min_jual_ajuan' => $data['min_jual_ajuan'],
-                'status' => 1
-            ]);
-        } else {
-            $item->update([
-                'harga_ajuan' => $data['harga_ajuan'],
-                'min_jual_ajuan' => $data['min_jual_ajuan'],
-                'status' => 1
-            ]);
-        }
-
-
-        return redirect()->back()->with('success', 'Berhasil menyimpan data ajuan Harga!');
-
+        return $this->applyStockChange($request, $barang, 'propose');
     }
 
     public function harga_ajuan_approve(Request $request, HargaSubmission $harga)
     {
-        $data = $request->validate([
-            'harga_ajuan' => 'required',
-            'min_jual_ajuan' => 'required'
-        ]);
+        return $this->applyStockChange($request, BarangStokHarga::findOrFail($harga->barang_stok_harga_id), 'approve');
+    }
 
-        $item = BarangStokHarga::find($harga->barang_stok_harga_id);
-        $data['harga_ajuan'] = str_replace('.', '', $data['harga_ajuan']);
-        $data['min_jual_ajuan'] = str_replace('.', '', $data['min_jual_ajuan']);
+    private function applyStockChange(Request $request, BarangStokHarga $stock, string $action): RedirectResponse
+    {
+        $result = app(StockMutationService::class)->mutate($request->user(), $stock->id, $action, $request->all());
 
-        if (Auth::user()->role != 'su') {
-           if ($data['harga_ajuan'] < $item->harga_beli) {
-                return redirect()->back()->with('error', 'Harga jual tidak boleh lebih kecil dari harga beli!');
-            }
-        }
-
-        if ($data['min_jual_ajuan'] <= 0) {
-            return redirect()->back()->with('error', 'Minimum kelipatan jual tidak boleh dibawah 1 !');
-        }
-
-        try {
-            DB::beginTransaction();
-             $item->update([
-                'harga' => $data['harga_ajuan'],
-                'min_jual' => $data['min_jual_ajuan']
-            ]);
-
-            $harga->update(['status' => 2]);
-
-            DB::commit();
-
-        } catch (\Throwable $th) {
-            //throw $th;
-            DB::rollBack();
-
-            return redirect()->back()->with('error', 'Terjadi Kesalahan!! '.$th->getMessage());
-        }
-
-        return redirect()->back()->with('success', 'Berhasil menyetujui data ajuan Harga!');
-
+        return redirect()->back()->with($result['status'], $result['message']);
     }
 }

@@ -66,22 +66,27 @@ class GantiRugi extends Model
     {
         try {
             DB::beginTransaction();
-            $barang = BarangStokHarga::find($data['barang_stok_harga_id']);
+            $barang = BarangStokHarga::whereKey($data['barang_stok_harga_id'])->lockForUpdate()->firstOrFail();
+            if ($data['jumlah'] <= 0 || $data['jumlah'] > $barang->stok) {
+                throw new \RuntimeException('Jumlah hilang melebihi stok terbaru atau tidak valid.');
+            }
 
-            $db = new KasBesar;
+            $db = app(KasBesar::class);
             $untuk = $data['kas_ppn'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
-            $rekening = Rekening::where('untuk', $untuk)->first();
+            $rekening = Rekening::where('untuk', $untuk)->lockForUpdate()->firstOrFail();
+            $saldo = fn () => (float) (KasBesar::where('ppn_kas', $data['kas_ppn'])->orderByDesc('id')->lockForUpdate()->value('saldo') ?? 0);
+            $modal = fn () => (float) (KasBesar::where('ppn_kas', $data['kas_ppn'])->orderByDesc('id')->lockForUpdate()->value('modal_investor_terakhir') ?? 0);
 
             $store = $db->create([
                 'ppn_kas' => $data['kas_ppn'],
                 'uraian' => 'Ganti Rugi '.$barang->barang_nama->nama,
                 'jenis' => 1,
                 'nominal' => $data['total'],
-                'saldo' => $db->saldoTerakhir($data['kas_ppn']) + $data['total'],
+                'saldo' => $saldo() + $data['total'],
                 'no_rek' => $rekening->no_rek,
                 'nama_rek' => $rekening->nama_rek,
                 'bank' => $rekening->bank,
-                'modal_investor_terakhir' => $db->modalInvestorTerakhir($data['kas_ppn']),
+                'modal_investor_terakhir' => $modal(),
             ]);
 
             $this->create($data);
@@ -111,15 +116,21 @@ class GantiRugi extends Model
                     "==========================\n";
             $textKas = $data['kas_ppn'] == 1 ? 'PPN' : 'Non PPN';
             $sisaSaldoKas = 'Sisa Saldo Kas Besar '.$textKas.": \n".
-                            'Rp. '.number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.')."\n\n";
+                            'Rp. '.number_format($saldo(), 0, ',', '.')."\n\n";
 
             $totalModalInvestor = 'Total Modal Investor '.$textKas.": \n".
-                                    'Rp. '.number_format($db->modalInvestorTerakhir($data['kas_ppn']), 0, ',', '.')."\n\n";
+                                    'Rp. '.number_format($modal(), 0, ',', '.')."\n\n";
 
             $pesan .= $sisaSaldoKas.$totalModalInvestor."Terima kasih 🙏🙏🙏\n";
 
             $group = GroupWa::where('untuk', $untuk)->first()->nama_group;
-            $db->sendWa($group, $pesan);
+            DB::afterCommit(function () use ($db, $group, $pesan): void {
+                try {
+                    $db->sendWa($group, $pesan);
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            });
 
             if ($data['lunas'] == 0) {
 
@@ -128,11 +139,11 @@ class GantiRugi extends Model
                     'uraian' => 'Kasbon Ganti Rugi '.$barang->barang_nama->nama,
                     'jenis' => 0,
                     'nominal' => $data['total'],
-                    'saldo' => $db->saldoTerakhir($data['kas_ppn']) - $data['total'],
+                    'saldo' => $saldo() - $data['total'],
                     'no_rek' => '-',
                     'nama_rek' => '-',
                     'bank' => '-',
-                    'modal_investor_terakhir' => $db->modalInvestorTerakhir($data['kas_ppn']),
+                    'modal_investor_terakhir' => $modal(),
                 ]);
 
                 $pesanKasBon = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -152,14 +163,20 @@ class GantiRugi extends Model
 
                 $textKas = $data['kas_ppn'] == 1 ? 'PPN' : 'Non PPN';
                 $sk = 'Sisa Saldo Kas Besar '.$textKas.": \n".
-                                'Rp. '.number_format($db->saldoTerakhir($data['kas_ppn']), 0, ',', '.')."\n\n";
+                                'Rp. '.number_format($saldo(), 0, ',', '.')."\n\n";
 
                 $tm = 'Total Modal Investor '.$textKas.": \n".
-                                    'Rp. '.number_format($db->modalInvestorTerakhir($data['kas_ppn']), 0, ',', '.')."\n\n";
+                                    'Rp. '.number_format($modal(), 0, ',', '.')."\n\n";
 
                 $pesanKasBon .= $sk.$tm."Terima kasih 🙏🙏🙏\n";
 
-                $db->sendWa($group, $pesanKasBon);
+                DB::afterCommit(function () use ($db, $group, $pesanKasBon): void {
+                    try {
+                        $db->sendWa($group, $pesanKasBon);
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                    }
+                });
             }
 
             DB::commit();

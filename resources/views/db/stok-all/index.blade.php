@@ -1,557 +1,72 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1><u>STOK & HARGA JUAL BARANG ALL</u></h1>
+<div class="container-fluid stock-page">
+    <header class="stock-header">
+        <div><span class="stock-eyebrow">Inventori</span><h1>Stok & Harga Jual Barang</h1><p>Stok, valuasi, dan pengelolaan harga seluruh perusahaan. Gulir tabel untuk memuat baris berikutnya.</p></div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary" href="{{ route('home') }}"><i class="fa fa-arrow-left" aria-hidden="true"></i> Dashboard</a>
+            @unless($assistant)<a class="btn btn-outline-secondary" href="{{ route('db') }}">Database</a>@endunless
+            <a class="btn btn-outline-success" href="{{ route('db.stok-all', array_merge($filters, ['mode' => 'classic'])) }}">Tampilan lama</a>
         </div>
-    </div>
-    @include('swal')
-    @if (auth()->user()->role != 'asisten-admin')
-    @include('db.stok-ppn.edit')
-    @include('db.stok-ppn.action')
-    @include('db.stok-ppn.histori')
-    @include('db.stok-ppn.edit-stok')
-    @include('db.stok-all.modal-approve')
-    @endif
-    @if (auth()->user()->role == 'asisten-admin')
-    @include('db.stok-all.modal-asisten-adm')
-    @endif
-    <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-12">
-            <table class="table">
-                <tr class="text-center">
-                    <td class="text-center align-middle"><a href="{{route('home')}}"><img
-                                src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30"> Dashboard</a></td>
-                    @if (auth()->user()->role != 'asisten-admin')
-                    <td class="text-center align-middle"><a href="{{route('db')}}"><img
-                                src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
-                            Database</a></td>
-                    @endif
-
-                    <td class="text-center align-middle">
-                        <form action="{{route('db.stok-ppn.download')}}" method="get" target="_blank">
-                            {{-- <input type="hidden" name="unit" value="{{request('unit')}}"> --}}
-                            <input type="hidden" name="type" value="{{request('type')}}">
-                            <input type="hidden" name="kategori" value="{{request('kategori')}}">
-                            <input type="hidden" name="barang_nama" value="{{request('barang_nama')}}">
-                            {{-- <div class="row">
-                                <button type="submit" class="btn"><img src="{{asset('images/print.svg')}}" alt="dokumen"
-                                        width="30">
-                                    PDF</button>
-                            </div> --}}
-
-                        </form>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-<style>
-    .table-container {
-        max-height: 500px;
-        overflow-y: auto;
-    }
-
-    thead th {
-        position: sticky;
-        top: 0;
-        background: white;
-        z-index: 1;
-    }
-</style>
-<div class="container-fluid mt-3 table-responsive ">
-    <form method="GET" action="{{url()->current()}}" class="mt-3 mb-5">
-        <div class="row">
-            <div class="col-md-12 mb-2">
-                <label for="unit">Perusahaan</label>
-                <select name="unit[]" id="unit" class="form-select form-select-sm" multiple>
-                    <option value=""> ---------- </option>
-                    @foreach($units as $unit)
-                    <option value="{{ $unit->id }}" {{ (is_array(request('unit')) && in_array($unit->id,
-                        request('unit'))) ? 'selected' : '' }}>
-                        {{ $unit->nama }}
-                    </option>
-                    @endforeach
-                </select>
+    </header>
+    <section class="stock-panel" aria-label="Filter stok barang">
+        <form method="get" action="{{ route('db.stok-all') }}" id="stock-filters">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-3 col-md-6"><label class="form-label" for="unit">Perusahaan</label><select class="form-select" name="unit[]" id="unit" multiple>
+                    @foreach($units as $unit)<option value="{{ $unit->id }}" @selected(in_array($unit->id, $filters['unit'] ?? []))>{{ $unit->nama }}</option>@endforeach
+                </select></div>
+                <div class="col-lg-2 col-md-6"><label class="form-label" for="type">Bidang</label><select class="form-select" name="type" id="type"><option value="">Semua bidang</option>
+                    @foreach($selectType as $item)<option value="{{ $item->id }}" @selected(($filters['type'] ?? null) == $item->id)>{{ $item->nama }}</option>@endforeach
+                </select></div>
+                <div class="col-lg-2 col-md-6"><label class="form-label" for="kategori">Kelompok barang</label><select class="form-select" name="kategori" id="kategori"><option value="">Semua kelompok</option>
+                    @foreach($selectKategori as $item)<option value="{{ $item->id }}" @selected(($filters['kategori'] ?? null) == $item->id)>{{ $item->nama }}</option>@endforeach
+                </select></div>
+                <div class="col-lg-3 col-md-6"><label class="form-label" for="filter_barang_nama">Nama barang</label><select class="form-select" name="barang_nama" id="filter_barang_nama"><option value="">Semua barang</option>
+                    @foreach($selectBarangNama as $item)<option value="{{ $item->id }}" @selected(($filters['barang_nama'] ?? null) == $item->id)>{{ $item->nama }}</option>@endforeach
+                </select></div>
+                @unless($assistant)
+                <div class="col-lg-2 col-md-6"><label class="form-label" for="filter_harga">Harga jual</label><select name="filter_harga" id="filter_harga" class="form-select"><option value="">Semua stok</option><option value="1" @selected(!empty($filters['filter_harga']))>Harga jual nol</option></select></div>
+                @endunless
+                <div class="col-lg-2 d-flex gap-2"><button class="btn btn-success" type="submit">Terapkan</button><a class="btn btn-outline-secondary" href="{{ route('db.stok-all') }}">Reset</a></div>
             </div>
-            <div class="col-md-2">
-                <label for="type">Bidang</label>
-                <select name="type" id="type" class="form-select form-select-sm">
-                    <option value=""> ---------- </option>
-                    @foreach($selectType as $type)
-                    <option value="{{ $type->id }}" {{ request('type')==$type->id ? 'selected' : '' }}>
-                        {{ $type->nama }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="kategori">Kelompok Barang</label>
-                <select name="kategori" id="kategori" class="form-select form-select-sm">
-                    <option value=""> ---------- </option>
-                    @foreach($selectKategori as $kat)
-                    <option value="{{ $kat->id }}" {{ request('kategori')==$kat->id ? 'selected' : '' }}>
-                        {{ $kat->nama }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="nama">Nama Barang</label>
-                <select class="form-select form-select-sm" name="barang_nama" id="filter_barang_nama">
-                    <option value=""> ---------- </option>
-                    @foreach ($selectBarangNama as $bn)
-                    <option value="{{ $bn->id }}" {{ request('barang_nama')==$bn->id ? 'selected' : '' }}>
-                        {{ $bn->nama }}
-                        @endforeach
-                </select>
-            </div>
-            @if (auth()->user()->role != 'asisten-admin')
-            <div class="col-md-2">
-                <label for="nama">Filter Harga Jual</label>
-                <select class="form-select form-select-sm" name="filter_harga" id="filter_harga">
-                    <option value=""> Semua Stok</option>
-                    <option value="1" {{ request('filter_harga')=='1' ? 'selected' : '' }}> Stok Harga Jual 0</option>
-
-                </select>
-            </div>
-            @endif
-            <div class="col-md-2">
-                <label for="nama">
-                    ---------------
-                </label>
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary btn-sm">Apply Filter</button>
-                    {{-- reset filter button --}}
-                    <a href="{{route('db.stok-all')}}" class="btn btn-danger btn-sm">Reset Filter</a>
-                </div>
-
-            </div>
-
-        </div>
-
-    </form>
-    <div class="table-container mt-4">
-        <table class="table table-bordered" id="dataTable">
-            <thead class="table-success">
-                <tr>
-                    <th class="text-center align-middle" style="width: 15px">No</th>
-                    <th class="text-center align-middle">Perusahaan</th>
-                    <th class="text-center align-middle">Bidang</th>
-                    <th class="text-center align-middle">Kelompok<br>Barang</th>
-                    <th class="text-center align-middle">Nama<br>Barang</th>
-                    <th class="text-center align-middle">Kode<br>Barang</th>
-                    <th class="text-center align-middle">Merk<br>Barang</th>
-                    <th class="text-center align-middle">Stok<br>Awal</th>
-                    <th class="text-center align-middle">Stok<br>Barang</th>
-                    <th class="text-center align-middle">Satuan<br>Barang</th>
-                    <th class="text-center align-middle">PPN</th>
-                    <th class="text-center align-middle">NON PPN</th>
-                    <th class="text-center align-middle">Harga DPP<br>Beli Barang</th>
-                    <th class="text-center align-middle">Harga+PPN<br>Beli Barang</th>
-                    <th class="text-center align-middle" style="width: 20px">Harga DPP<br>Jual Barang</th>
-                    <th class="text-center align-middle" style="width: 20px">Kelipatan Jual Min</th>
-                    <th class="text-center align-middle">Harga+PPN<br>Jual Barang</th>
-                    <th class="text-center align-middle">Total Harga+PPN<br>Beli Barang</th>
-                    <th class="text-center align-middle">Total Harga+PPN<br>Jual Barang</th>
-                    <th class="text-center align-middle">Margin<br>Profit</th>
-                    <th class="text-center align-middle">ACT</th>
-
-                </tr>
-            </thead>
-            @php
-            $number = 1;
-            $sumTotalHargaBeli = 0;
-            $sumTotalHargaJual = 0;
-            @endphp
-
-            <tbody>
-                @foreach ($data as $unitId => $types)
-                @php $unitDisplayed = false; @endphp
-                @foreach ($types as $typeId => $categories)
-                @php $typeDisplayed = false; @endphp
-                @foreach ($categories as $kategoriId => $barangs)
-                @php $kategoriDisplayed = false; @endphp
-                @foreach ($barangs as $namaId => $items)
-                @php $namaDisplayed = false; @endphp
-                @foreach ($items as $barangId => $stokHargas)
-                @php $barangDisplayed = false; @endphp
-                @foreach ($stokHargas as $stokHarga)
-                {{-- @if ($stokHarga->stok > 0) --}}
-                <tr>
-                    @if (!$unitDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->unitRowspan }}">{{ $number++ }}</td>
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->unitRowspan }}">{{
-                        $stokHarga->unit->nama }}</td>
-                    @php $unitDisplayed = true; @endphp
-                    @endif
-                    @if (!$typeDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->typeRowspan }}">{{
-                        $stokHarga->type->nama }}</td>
-                    @php $typeDisplayed = true; @endphp
-                    @endif
-                    @if (!$kategoriDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->kategoriRowspan }}">{{
-                        $stokHarga->kategori->nama }}</td>
-                    @php $kategoriDisplayed = true; @endphp
-                    @endif
-                    @if (!$namaDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->namaRowspan }}">
-                        {{$stokHarga->barang_nama->nama }}</a>
-                    </td>
-                    @php $namaDisplayed = true; @endphp
-                    @endif
-                    @if (!$barangDisplayed)
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
-                        @if (auth()->user()->role != 'asisten-admin')
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
-                            onclick="getHistori({{$stokHarga->barang->id}})">
-                            @endif
-                            {{ $stokHarga->barang->kode }}
-
-                    </td>
-                    <td class="text-center align-middle" rowspan="{{ $stokHarga->barangRowspan }}">
-                        @if (auth()->user()->role != 'asisten-admin')
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalHistori"
-                            onclick="getHistori({{$stokHarga->barang->id}})">
-                            @endif
-                            {{ $stokHarga->barang->merk }}
-
-                    </td>
-                    @php $barangDisplayed = true; @endphp
-                    @endif
-                    <td class="text-center align-middle">
-                        @if (auth()->user()->role == 'su')
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#eModal"
-                            onclick="editStok({{$stokHarga}})">{{ $stokHarga->nf_stok_awal }}</a>
-                        @else
-                        {{ $stokHarga->nf_stok_awal }}
-                        @endif
-                    </td>
-                    <td class="text-center align-middle">
-                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
-                            onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a> --}}
-                        @if ($stokHarga->stok > 0 && auth()->user()->role != 'asisten-admin')
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#actionModal"
-                            onclick="actionFun({{$stokHarga}})">{{ $stokHarga->nf_stok }}</a>
-                        @else
-                        {{ $stokHarga->nf_stok }}
-                        @endif
-                    </td>
-                    <td class="text-center align-middle">{{ $stokHarga->barang->satuan ?
-                        $stokHarga->barang->satuan->nama : '-' }}</td>
-                    <td class="text-center align-middle">
-                        @if ($stokHarga->barang->jenis == 1)
-                        <i class="fa fa-check"></i>
-                        @endif
-                    </td>
-                    <td class="text-center align-middle">
-                        @if ($stokHarga->barang->jenis == 2)
-                        <i class="fa fa-check"></i>
-                        @endif
-                    </td>
-                    @php
-
-                    $hargaTemp = $stokHarga->harga_temp ? $stokHarga->harga_temp->harga_ajuan : $stokHarga->harga;
-                    $totalHargaBeli = $stokHarga->barang->jenis == 1 ? ($stokHarga->harga_beli + ($stokHarga->harga_beli
-                    * $ppnRate / 100)) * $stokHarga->stok : $stokHarga->harga_beli * $stokHarga->stok;
-                    $totalHargaJual = $stokHarga->barang->jenis == 1 ? ($hargaTemp + ($hargaTemp * $ppnRate / 100)) *
-                    $stokHarga->stok : $hargaTemp * $stokHarga->stok;
-                    $sumTotalHargaJual += $totalHargaJual;
-                    $sumTotalHargaBeli += $totalHargaBeli;
-                    if ($stokHarga->harga_beli == 0) {
-                    $margin = '-';
-                    } else {
-                    $margin = ($hargaTemp - $stokHarga->harga_beli) / $stokHarga->harga_beli * 100;
-
-                    }
-
-                    @endphp
-                    <td class="text-center align-middle">{{ $stokHarga->nf_harga_beli }}</td>
-                    <td class="text-center align-middle">{{ $stokHarga->barang->jenis == 1 ?
-                        number_format(($stokHarga->harga_beli +
-                        ($stokHarga->harga_beli * $ppnRate / 100)), 0, ',', '.') : number_format($stokHarga->harga_beli,
-                        0, ',', '.')}}</td>
-                    <td
-                        class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
-                        @if (auth()->user()->role != 'asisten-admin')
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#editModal"
-                            onclick="editFun({{$stokHarga}})">
-                            @endif
-                            @if (auth()->user()->role == 'asisten-admin' && $stokHarga->harga == 0)
-                            <button class="btn btn-outline-primary btn-sm" href="#" data-bs-toggle="modal"
-                                data-bs-target="#modAsAdm" onclick="asistenAdmFun({{$stokHarga}})">
-                                @endif
-                                {{ $stokHarga->nf_harga }}
-                            </button>
-                            <br>
-                            @if ($stokHarga->harga_temp)
-                            <small>Ajuan</small>: <br>
-                            @if (auth()->user()->role != 'asisten-admin')
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#modApproveAdm"
-                                onclick="approveAdmFun({{$stokHarga}})">
-                                @endif
-                                {{$stokHarga->harga_temp->nf_harga_ajuan}}
-                                @endif
-                    </td>
-                    <td
-                        class="text-end align-middle @if ($stokHarga->stok > 0 && $stokHarga->min_jual == null) table-danger @endif ">
-
-                        {{ $stokHarga->min_jual }}
-                        @if ($stokHarga->harga_temp)
-                        <small>Ajuan</small>: <br>{{$stokHarga->harga_temp->nf_min_jual_ajuan}}
-                        @endif
-                    </td>
-                    <td class="text-end align-middle">
-                        {{ $stokHarga->barang->jenis == 1 ? number_format($hargaTemp+($hargaTemp*$ppnRate/100), 0,
-                        ',','.') : number_format($hargaTemp, 0, ',','.') }}
-                    </td>
-
-                    <td class="text-center align-middle">{{ number_format($totalHargaBeli, 0, ',','.') }}</td>
-                    <td class="text-center align-middle">{{ number_format($totalHargaJual, 0, ',','.') }}</td>
-                    <td class="text-end align-middle @if ($margin == '-')
-                    table-warning
-                    @else
-                    @if ($margin < 10.01) table-danger @endif
-                    @endif">
-                        @if ($margin == '-')
-                        {{$margin}}
-                        @else
-                        {{number_format($margin, 2, '.',',')}}%
-                        @endif
-                    </td>
-                    <td class="text-center align-middle">
-                        @if ($stokHarga->stok == 0 && auth()->user()->role != 'asisten-admin')
-                        <form action="{{route('db.hide', ['barang' => $stokHarga->id])}}" method="post"
-                            id="deleteForm{{ $stokHarga->id }}" data-id="{{ $stokHarga->id }}"
-                            class="d-inline delete-form">
-                            @csrf
-                            <div class="row px-3">
-                                <button type="submit" class="btn btn-sm btn-danger"><i
-                                        class="fa fa-eye-slash"></i></button>
-                            </div>
-                        </form>
-                        @endif
-                    </td>
-                </tr>
-                {{-- @endif --}}
-                @endforeach
-                @endforeach
-                @endforeach
-                @endforeach
-                @endforeach
-                @if (!$loop->last)
-                <tr>
-                    <td colspan="17"
-                        style="border: none; background-color:transparent; border-bottom-color:transparent">
-                    </td>
-                </tr>
-                @endif
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="17" class="text-end align-middle">Grand Total</th>
-                    <th class="text-end align-middle">{{number_format($sumTotalHargaBeli, 0 ,',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($sumTotalHargaJual, 0 ,',','.')}}</th>
-                    <th class="text-end align-middle" colspan="2"></th>
-                </tr>
-                <tr>
-                    <th colspan="17" class="text-end align-middle">Estimasi Profit</th>
-                    <th class="text-end align-middle" colspan="2">{{number_format($sumTotalHargaJual-$sumTotalHargaBeli,
-                        0 ,',','.')}}</th>
-                    <th class="text-end align-middle" colspan="2"></th>
-                </tr>
-            </tfoot>
+        </form>
+    </section>
+    <section class="stock-panel mt-3" aria-label="Daftar stok barang">
+        <div class="stock-table-heading"><div><h2>Daftar stok</h2><p>Nominal dalam rupiah. Harga ajuan aktif ikut digunakan pada valuasi dan margin.</p></div><button type="button" class="btn btn-outline-success" id="stock-reload"><i class="fa fa-refresh" aria-hidden="true"></i> Muat ulang data</button></div>
+        <div id="stock-error" class="alert alert-danger" role="alert" hidden>Data stok gagal dimuat. Gunakan tombol Muat ulang data untuk mencoba kembali.</div>
+        <table id="admin-stock-table" class="table table-bordered table-hover w-100 stock-table">
+            <thead class="table-success"><tr>
+                <th>No</th><th>Perusahaan</th><th>Bidang</th><th>Kelompok barang</th><th>Nama barang</th><th>Kode barang</th><th>Merk barang</th><th>Stok awal</th><th>Stok barang</th><th>Satuan barang</th><th>PPN</th><th>NON PPN</th><th>Harga DPP beli</th><th>Harga + PPN beli</th><th>Harga DPP jual</th><th>Kelipatan jual min.</th><th>Harga + PPN jual</th><th>Total beli + PPN</th><th>Total jual + PPN</th><th>Margin</th><th>Aksi</th>
+            </tr></thead><tbody></tbody>
         </table>
-    </div>
-
+        <div class="row g-3 mt-2 stock-totals"><div class="col-md-4"><small>Total harga beli + PPN</small><strong id="total-beli">—</strong></div><div class="col-md-4"><small>Total harga jual + PPN</small><strong id="total-jual">—</strong></div><div class="col-md-4"><small>Estimasi profit</small><strong id="total-profit">—</strong></div></div>
+        <p class="stock-note">Total menghitung seluruh hasil filter dan pencarian, bukan hanya baris yang dimuat.</p>
+        <p class="stock-note mb-0">Data dibaca saat baris dimuat. Jika stok atau daftar barang berubah selama halaman terbuka, muat ulang data untuk menyegarkan tabel dari awal.</p>
+    </section>
 </div>
-
+@include('db.stok-all.modals')
 @endsection
+
 @push('css')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
-<link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.bootstrap5.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/plugins/datatable/scroller.bootstrap5.min.css') }}">
+<link rel="stylesheet" href="{{ asset('stock-table.css').'?v='.filemtime(public_path('stock-table.css')) }}">
+@endpush
+
+
+@push('css')
+<style>
+#admin-stock-table_wrapper table{min-width:1900px}.stock-action{padding:0;border:0;background:none;color:#146c43;text-decoration:underline;text-underline-offset:3px}.stock-action:hover{color:#0a3622}.stock-action:focus-visible{outline:2px solid #28704f;outline-offset:3px}.stock-totals small,.stock-totals strong{display:block}.stock-totals strong{font-size:1.1rem;margin-top:.25rem}.stock-warning{background:#fff3cd!important}.stock-danger{background:#f8d7da!important}.stock-proposal{display:block;font-size:.78rem;margin-top:.3rem}.stock-amount{white-space:nowrap}
+</style>
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
+<script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
+<script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script>
+<script src="{{ asset('stock-table.js').'?v='.filemtime(public_path('stock-table.js')) }}"></script>
 <script>
-    $('#filter_barang_nama').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
-
-     $('#kategori').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
-
-      $('#type').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-    });
-
-     $('#unit').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: "-- Semua Perusahaan --",
-        multiple: true,
-    });
-
-    $('#karyawan_id').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        dropdownParent: $('#actionModal')
-    });
-
-    function asistenAdmFun(data)
-    {
-        document.getElementById('asistenForm').reset();
-        $('#viewNamaBarang').text(data.barang_nama.nama);
-        $('#viewKode').text(data.barang.kode);
-        $('#viewMerk').text(data.barang.merk);
-        $('#satuan_edit').text(data.barang.satuan.nama);
-        if (data.harga_temp) {
-            $('#harga_ajuan').val(data.harga_temp.nf_harga_ajuan);
-            $('#min_jual_ajuan').val(data.harga_temp.nf_min_jual_ajuan);
-        }
-
-        document.getElementById('asistenForm').action = `{{route('db.stok-all.harga-ajuan-store', ':id')}}`.replace(':id', data.id);
-    }
-
-    function approveAdmFun(data)
-    {
-
-        document.getElementById('approvalForm').reset();
-        $('#viewNamaBarang_app').text(data.barang_nama.nama);
-        $('#viewKode_app').text(data.barang.kode);
-        $('#viewMerk_app').text(data.barang.merk);
-        $('#satuan_edit_app').text(data.barang.satuan.nama);
-        if (data.harga_temp) {
-            $('#harga_ajuan_app').val(data.harga_temp.nf_harga_ajuan);
-            $('#min_jual_ajuan_app').val(data.harga_temp.nf_min_jual_ajuan);
-        }
-        document.getElementById('approvalForm').action = `{{route('db.harga-ajuan-approve', ':id')}}`.replace(':id', data.harga_temp.id);
-    }
-
-    function editStok(data)
-    {
-        console.log(data);
-        document.getElementById('e_stok_awal').value = data.stok_awal;
-        document.getElementById('e_stok').value = data.stok ?? '';
-        document.getElementById('e_harga_beli').value = data.harga_beli;
-
-        // document.getElementById('harga').value = data.stok_ppn.nf_harga;
-        document.getElementById('eForm').action = `{{route('db.stok.edit-stok-su', ':id')}}`.replace(':id', data.id);
-    }
-
-    function editFun(data)
-    {
-
-        document.getElementById('harga').value = data.nf_harga;
-        document.getElementById('min_jual').value = data.min_jual ?? '';
-        document.getElementById('satuan_edit').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
-
-        // document.getElementById('harga').value = data.stok_ppn.nf_harga;
-        document.getElementById('editForm').action = `{{route('db.stok-ppn.store', ':id')}}`.replace(':id', data.id);
-    }
-
-    function actionFun(data)
-    {
-        var harga_beli_ppn = data.harga_beli + (data.harga_beli * {{$ppnRate}} / 100);
-        // make harga_beli_ppn to number format
-        var formatted_harga_beli_ppn = harga_beli_ppn.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-        document.getElementById('harga_beli_dpp_act').value = formatted_harga_beli_ppn;
-        document.getElementById('stok_act').value = data.nf_stok;
-        document.getElementById('stok_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
-        document.getElementById('hilang_satuan').innerHTML = data.barang.satuan ? data.barang.satuan.nama : '-';
-
-        document.getElementById('actionForm').action = `{{route('db.stok-hilang', ':id')}}`.replace(':id', data.id);
-    }
-    confirmAndSubmit("#actionForm", "Apakah anda yakin?");
-    confirmAndSubmit("#editForm", "Apakah anda yakin untuk mengubah data ini?");
-    confirmAndSubmit("#eForm", "Apakah anda yakin untuk mengubah data ini?");
-    confirmAndSubmit("#asistenForm", "Apakah anda yakin dengan data ini?");
-    confirmAndSubmit("#approvalForm", "Apakah anda yakin menyetujui ajuan ini?");
-
-    function toggleNamaJabatan(id) {
-
-        // check if input is readonly
-        if ($('#nama_jabatan-'+id).attr('readonly')) {
-            // remove readonly
-            $('#nama_jabatan-'+id).removeAttr('readonly');
-            // show button
-            $('#buttonJabatan-'+id).removeAttr('hidden');
-        } else {
-            // add readonly
-            $('#nama_jabatan-'+id).attr('readonly', true);
-            // hide button
-            $('#buttonJabatan-'+id).attr('hidden', true);
-        }
-    }
-
-    $('.delete-form').submit(function(e){
-        e.preventDefault();
-        var formId = $(this).data('id');
-        Swal.fire({
-            title: 'Apakah Anda Yakin?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, simpan!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $(`#deleteForm${formId}`).unbind('submit').submit();
-                $('#spinner').show();
-            }
-        });
-    });
-
-    function getHistori(data)
-    {
-
-        // ajax request
-        $.ajax({
-            url: `{{route('db.stok-ppn.history')}}`,
-            type: 'GET',
-            data: {
-                barang: data
-            },
-            success: function(response) {
-                console.log(response);
-                $('#historiTable tbody').empty();
-
-                if (response.status == 0) {
-                    $('#historiTable tbody').append(`
-                        <tr>
-                            <td colspan="4" class="text-center">${response.message}</td>
-                        </tr>
-                    `);
-                    return;
-                }
-
-                document.getElementById('historiKeterangan').innerHTML = response.keterangan ?? '-';
-                document.getElementById('nm_barang_merk_retail').value = response.barang.barang_nama.nama + ', ' + response.barang.kode + ', ' + response.barang.merk;
-                response.data.forEach((item, index) => {
-                    $('#historiTable tbody').append(`
-                        <tr>
-                            <td class="text-center align-middle">${index+1}</td>
-                            <td>${item.tanggal}</td>
-                            <td>${item.nf_stok_awal}</td>
-                            <td>${item.barang.satuan.nama}</td>
-                            <td class="text-end align-middle">${item.nf_harga_beli}</td>
-                            <td class="text-end align-middle">${item.nf_harga}</td>
-                        </tr>
-                    `);
-                });
-            }
-        });
-    }
+window.adminStockConfig = @json($stockConfig);
 </script>
+<script src="{{ asset('admin-stock.js').'?v='.filemtime(public_path('admin-stock.js')) }}"></script>
 @endpush

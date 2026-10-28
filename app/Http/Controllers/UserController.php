@@ -14,12 +14,59 @@ use App\Models\db\KonsumenDoc;
 use App\Models\db\Pajak;
 use App\Models\Wilayah;
 use App\Services\CustomerFileService;
+use App\Services\StockTableService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
-    public function stok_all(Request $request)
+    public function stok_all(Request $request, StockTableService $table): View
+    {
+        $filters = $this->stockFilters($request);
+        $request->validate(['mode' => ['nullable', Rule::in(['scroller', 'classic'])]]);
+        if ($request->input('mode') === 'classic') {
+            return $this->stockLegacy($request);
+        }
+
+        return view('user.stok-all.index', $table->filterOptions($filters) + compact('filters'));
+
+    }
+
+    public function stockData(Request $request, StockTableService $table): JsonResponse
+    {
+        $filters = $this->stockFilters($request);
+        $input = $request->validate([
+            'draw' => ['nullable', 'integer', 'min:0', 'max:2147483647'],
+            'start' => ['nullable', 'integer', 'min:0', 'max:2147483647'],
+            'length' => ['nullable', 'integer', 'between:1,500'],
+            'search' => ['nullable', 'array'], 'search.value' => ['nullable', 'string', 'max:100'],
+        ]);
+        $request->merge(['start' => $input['start'] ?? 0, 'length' => $input['length'] ?? 50, 'columns' => [], 'order' => []]);
+
+        return DB::transaction(function () use ($filters, $input, $table): JsonResponse {
+            $ppnRate = (float) Pajak::where('untuk', 'ppn')->firstOrFail()->persen;
+
+            return DataTables::of($table->query($filters, $ppnRate))
+                ->filter(fn ($query) => $table->search($query, (string) ($input['search']['value'] ?? '')))
+                ->order(fn ($query) => $table->order($query))
+                ->toJson()->header('Cache-Control', 'no-store, private');
+        });
+    }
+
+    private function stockFilters(Request $request): array
+    {
+        return $request->validate([
+            'unit' => ['nullable', 'array', 'max:100'], 'unit.*' => ['required', 'integer', 'min:1', 'distinct'],
+            'type' => ['nullable', 'integer', 'min:1'], 'kategori' => ['nullable', 'integer', 'min:1'],
+            'barang_nama' => ['nullable', 'integer', 'min:1'],
+        ]);
+    }
+
+    private function stockLegacy(Request $request): View
     {
         $kategori = BarangKategori::with(['barang_nama'])->get();
         $type = BarangType::with(['unit', 'barangs'])->get();
@@ -57,7 +104,7 @@ class UserController extends Controller
         $units = BarangUnit::all();
         $karyawan = Karyawan::where('status', 1)->get();
 
-        return view('user.stok-all.index', [
+        return view('user.stok-all.classic', [
             'data' => $data,
             'ppnRate' => $ppnRate,
             'kategori' => $kategori,

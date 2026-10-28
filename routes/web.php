@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminStockController;
 use App\Http\Controllers\AttendanceIntegrationController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BillingController;
@@ -90,6 +91,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['role:user']], function () {
         Route::prefix('user')->group(function () {
             Route::get('/stok-all', [UserController::class, 'stok_all'])->name('user.stok-all');
+            Route::get('/stok-all/data', [UserController::class, 'stockData'])->name('user.stok-all.data');
 
             Route::prefix('konsumen')->group(function () {
                 Route::get('/', [UserController::class, 'konsumen'])->name('user.konsumen');
@@ -677,8 +679,15 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/db/barang-unit/getType', [BarangController::class, 'get_type'])->name('db.barang.get-type');
 
         Route::prefix('db')->group(function () {
-            Route::prefix('stok-all')->group(function () {
-                Route::get('/', [BarangController::class, 'stok_all'])->name('db.stok-all');
+            Route::prefix('stok-all')->middleware('role:su,admin,asisten-admin')->group(function () {
+                Route::get('/', [AdminStockController::class, 'index'])->name('db.stok-all');
+                Route::get('/data', [AdminStockController::class, 'data'])->name('db.stok-all.data');
+                Route::get('/detail/{stock}', [AdminStockController::class, 'detail'])->name('db.stok-all.detail');
+                Route::get('/history/{product}', [AdminStockController::class, 'history'])->middleware('role:su,admin')->name('db.stok-all.history');
+                Route::get('/employees', [AdminStockController::class, 'employees'])->middleware('role:su,admin')->name('db.stok-all.employees');
+                foreach (['price', 'propose', 'approve', 'correct', 'hide', 'loss'] as $action) {
+                    Route::post('/'.$action.'/{stock}', [AdminStockController::class, 'mutate'])->defaults('action', $action)->name('db.stok-all.'.$action);
+                }
                 Route::post('/harga-ajuan/{barang}', [BarangController::class, 'harga_ajuan_store'])->name('db.stok-all.harga-ajuan-store');
             });
 
