@@ -679,7 +679,7 @@ class DatabaseController extends Controller
                     (".($d->pembayaran == 2 ? $d->tempo_hari.' Hari' : '').')
                 ';
             })
-            ->addColumn('sales_area', fn ($d) => '<button type="button" class="btn btn-link customer-sales-history" data-sales-id="'.$d->karyawan_id.'" data-sales-name="'.e($d->karyawan?->nama ?? 'Belum ditentukan').'" data-id="'.$d->id.'" data-name="'.e($d->nama).'">'.e($d->karyawan?->nama ?? 'Belum ditentukan').' <i class="fa fa-history" aria-hidden="true"></i></button>')
+            ->addColumn('sales_area', fn ($d) => '<button type="button" class="btn btn-link customer-sales-history" data-sales-id="'.$d->karyawan_id.'" data-sales-name="'.e($d->karyawan?->nama ?? 'Belum ditentukan').'" data-id="'.$d->id.'" data-name="'.e(trim(($d->kode_toko?->kode ?? '').' '.$d->nama).' ('.$d->full_kode.')').'">'.e($d->karyawan?->nama ?? 'Belum ditentukan').' <i class="fa fa-history" aria-hidden="true"></i></button>')
             ->addColumn('ktp', function ($d) {
                 return view('db.konsumen._ktp', compact('d'))->render();
             })
