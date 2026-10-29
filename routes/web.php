@@ -646,11 +646,6 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/{jenis}', [RekapController::class, 'inventaris_detail'])->name('rekap.inventaris.detail');
             });
 
-            Route::prefix('invoice-penjualan')->group(function () {
-                Route::get('/', [RekapController::class, 'invoice_penjualan'])->name('rekap.invoice-penjualan');
-                Route::get('/detail/{invoice}', [RekapController::class, 'invoice_penjualan_detail'])->name('rekap.invoice-penjualan.detail');
-            });
-
             Route::prefix('invoice-pembelian')->group(function () {
                 Route::get('/', [RekapController::class, 'invoice_pembelian'])->name('rekap.invoice-pembelian');
                 Route::get('/pdf', [RekapController::class, 'invoice_pembelian_download'])->name('rekap.invoice-pembelian.pdf');
@@ -916,7 +911,6 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/detail/{retur}/preview', [BillingController::class, 'form_barang_retur_detail_preview'])->name('billing.form-barang-retur.detail.preview');
                 Route::post('/detail/preview/delete', [BillingController::class, 'form_barang_retur_detail_preview_delete'])->name('billing.form-barang-retur.detail.preview.delete');
 
-                Route::delete('/delete/{retur}', [BillingController::class, 'form_barang_retur_delete'])->name('billing.form-barang-retur.delete');
             });
 
             Route::prefix('barang-retur')->group(function () {
