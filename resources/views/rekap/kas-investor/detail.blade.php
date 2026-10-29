@@ -86,7 +86,7 @@
                         return data == 1 ? 'PPN' : 'Non PPN';
                     }
                 },
-                { data: 'uraian', name: 'uraian' },
+                { data: 'uraian', name: 'uraian', render: $.fn.dataTable.render.text() },
                 {
                     data: 'nominal',
                     name: 'nominal',

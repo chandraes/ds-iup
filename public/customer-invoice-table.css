@@ -1,0 +1,38 @@
+.invoice-table-ui { --invoice-row-height: 144px; }
+.invoice-table-ui table { font-size: clamp(.68rem, .59rem + .12vw, .8rem); table-layout: fixed; min-width: 1200px; }
+.invoice-table-ui thead th { text-align: center !important; vertical-align: middle; white-space: normal; padding: .45rem .25rem; overflow-wrap: anywhere; }
+.invoice-table-ui tbody tr { height: var(--invoice-row-height); }
+.invoice-table-ui td { vertical-align: middle; overflow-wrap: anywhere; padding: .4rem .25rem; }
+.invoice-table-ui .invoice-cell { white-space: normal; }
+.invoice-table-ui .invoice-numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.invoice-table-ui .invoice-components { white-space: normal; }
+.invoice-table-ui .invoice-actions { display: grid; gap: .25rem; }
+.invoice-table-ui .invoice-actions .btn { width: 100%; padding: .2rem .15rem; font-size: inherit; }
+.invoice-table-ui tfoot th { vertical-align: middle; overflow-wrap: anywhere; }
+.invoice-table-ui button.btn-link { padding: 0; font-size: inherit; text-align: right; }
+.invoice-table-ui .dataTables_scrollHead table, .invoice-table-ui .dataTables_scrollBody table, .invoice-table-ui .dataTables_scrollFoot table { border-collapse: separate; border-spacing: 0; }
+.invoice-table-ui .invoice-actions .btn { border-radius: .45rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: .3rem; }
+.invoice-table-ui .invoice-actions .btn i { font-size: .9em; }
+.invoice-modern-modal .modal-content { border: 0; border-radius: 1rem; overflow: hidden; box-shadow: 0 1rem 3rem #12291e26; }
+.invoice-modern-modal .modal-header { background: #edf7f1; padding: 1.15rem 1.4rem; border-bottom: 1px solid #dcebe2; }
+.invoice-modern-modal .modal-title { font-size: 1.1rem; font-weight: 700; color: #194b32; overflow-wrap: anywhere; }
+.invoice-modern-modal .modal-body { padding: 1.25rem 1.4rem; }
+.invoice-modern-modal .form-label { color: #52655a; font-size: .8rem; font-weight: 600; }
+.invoice-modern-modal .form-control, .invoice-modern-modal .input-group-text { border-color: #d8e2dc; }
+.invoice-modern-modal .form-control:disabled { background: #f4f7f5; color: #253e30; opacity: 1; }
+.invoice-modern-modal .input-group-text { background: #f4f7f5; color: #52655a; }
+.invoice-modern-modal .modal-footer { padding: 1rem 1.4rem; background: #fafcfb; border-top: 1px solid #e5ece7; gap: .4rem; }
+.invoice-modern-modal .modal-footer .btn { border-radius: .55rem; padding: .55rem 1rem; font-weight: 600; }
+.invoice-modern-modal table th { text-align: center; font-size: .85rem; }
+.invoice-modern-modal table td { font-size: .9rem; font-variant-numeric: tabular-nums; }
+.invoice-modern-modal table td:not(:first-child) { text-align: right; }
+@media(max-width: 575.98px) {
+    .invoice-modern-modal .modal-header, .invoice-modern-modal .modal-body, .invoice-modern-modal .modal-footer { padding: 1rem; }
+    .invoice-modern-modal .modal-footer .btn { flex: 1; }
+}
+.invoice-table-ui tfoot th {
+    background-color: #e8f3ed !important;
+    color: #194b32;
+    border-top: 2px solid #b9d7c5;
+    font-weight: 700;
+}

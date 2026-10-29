@@ -7,9 +7,9 @@ use App\Models\db\Karyawan;
 use App\Models\db\Konsumen;
 use App\Models\db\Pajak;
 use App\Models\db\Supplier;
+use App\Models\KasKonsumen;
 use App\Models\transaksi\InvoiceBelanja;
 use App\Models\transaksi\InvoiceJual;
-use App\Models\KasKonsumen;
 use App\Models\Wilayah;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
@@ -227,36 +227,35 @@ class InvoiceController extends Controller
 
     public function invoice_konsumen_all(Request $request)
     {
-        $filters = $request->only(['expired', 'apa_ppn', 'karyawan_id', 'konsumen_id', 'kecamatan_id', 'kabupaten_id']);
-        $data = InvoiceJual::gabung($filters);
-        $ppn = Pajak::where('untuk', 'ppn')->first()->persen;
-        $sales = Karyawan::with('jabatan')->whereHas('jabatan', function ($query) {
-                    $query->where('is_sales', 1);
-                })->select('id', 'nama')->get();
-
-        // Get unique kecamatan_id and kabupaten_kota_id directly as arrays to minimize memory usage
-        $kecamatanIds = Konsumen::distinct()->pluck('kecamatan_id')->filter()->all();
-        $kabupatenIds = Konsumen::distinct()->pluck('kabupaten_kota_id')->filter()->all();
-
-        // Fetch only needed Wilayah records
-        $kabupaten = Wilayah::whereIn('id', $kabupatenIds)->get();
-        $kecamatan = Wilayah::whereIn('id', $kecamatanIds)
-                    ->when(
-                        ($request->has('kabupaten_id') && $request->kabupaten_id != ''),
-                        function ($query) use ($request) {
-                            $wilayah = Wilayah::find($request->kabupaten_id)->id_wilayah;
-                            return $query->where('id_induk_wilayah', $wilayah);
-                        }
-                    )->get();
-
-
-        return view('billing.invoice-konsumen.all', [
-            'data' => $data,
-            'ppn' => $ppn,
-            'sales' => $sales,
-            'kecamatan' => $kecamatan,
-            'kabupaten' => $kabupaten,
+        $filters = $request->validate([
+            'expired' => ['nullable', 'in:yes,no'], 'apa_ppn' => ['nullable', 'in:yes,no'],
+            'karyawan_id' => ['nullable', 'integer', 'min:1'], 'konsumen_id' => ['nullable', 'integer', 'min:1'],
+            'kecamatan_id' => ['nullable', 'string', 'max:255'], 'kabupaten_id' => ['nullable', 'string', 'max:255'],
         ]);
+        $ppn = Pajak::where('untuk', 'ppn')->firstOrFail()->persen;
+        $sales = Karyawan::whereHas('jabatan', fn ($query) => $query->where('is_sales', 1))->get(['id', 'nama']);
+        $kabupaten = Wilayah::whereIn('id', Konsumen::select('kabupaten_kota_id')->whereNotNull('kabupaten_kota_id'))
+            ->get(['id', 'nama_wilayah']);
+        $kecamatan = Wilayah::whereIn('id', Konsumen::select('kecamatan_id')->whereNotNull('kecamatan_id'))
+            ->when(! empty($filters['kabupaten_id']), function ($query) use ($filters): void {
+                $query->whereIn('id_induk_wilayah', Wilayah::select('id_wilayah')->where('id', $filters['kabupaten_id']));
+            })->get(['id', 'nama_wilayah']);
+        $invoiceTableConfig = [
+            'data' => route('billing.invoice-konsumen.all.data'),
+            'paymentData' => route('billing.invoice-konsumen.all.payment-data', ':id'),
+            'history' => route('billing.invoice-konsumen.all.history', ':id'),
+            'detail' => route('billing.invoice-konsumen.detail', ':id'),
+            'print' => route('billing.form-jual.invoice', ['invoice' => ':id', 'reprint' => 1]),
+            'pay' => route('billing.invoice-konsumen.bayar', ':id'),
+            'void' => route('billing.invoice-konsumen.void', ':id'),
+            'installment' => route('billing.invoice-konsumen.cicil', ':id'),
+            'passwordCheck' => route('pengaturan.password-konfirmasi-cek'),
+            'privileged' => in_array($request->user()->role, ['su', 'admin'], true),
+            'filters' => $filters,
+        ];
+
+        return response()->view('billing.invoice-konsumen.all', compact('ppn', 'sales', 'kecamatan', 'kabupaten', 'invoiceTableConfig'))
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function invoice_konsumen_all_download(Request $request)
@@ -325,15 +324,15 @@ class InvoiceController extends Controller
 
                 // Cari data record stok TERBARU di gudang untuk barang_id ini
                 $stokTerbaru = BarangStokHarga::where('barang_id', $detail->barang_id)
-                                            ->where('hide', 0)
-                                            ->latest('id')
-                                            ->lockForUpdate()
-                                            ->first();
+                    ->where('hide', 0)
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
 
                 // -------------------------------------------------------------
                 // KONDISI A: BARANG DIHAPUS TOTAL OLEH USER
                 // -------------------------------------------------------------
-                if (!in_array($detail->id, $submittedDetailIds)) {
+                if (! in_array($detail->id, $submittedDetailIds)) {
                     if ($stokTerbaru) {
                         // Semua barang dikembalikan ke record stok TERBARU
                         $stokTerbaru->stok += $detail->jumlah;
@@ -341,6 +340,7 @@ class InvoiceController extends Controller
                     }
 
                     $detail->delete();
+
                     continue;
                 }
 
@@ -354,6 +354,7 @@ class InvoiceController extends Controller
                 // Proteksi Back-end
                 if ($selisihQty > 0) {
                     DB::rollBack();
+
                     return redirect()->back()->with('error', 'Gagal update! Anda tidak diperbolehkan menambah jumlah barang pada mode edit ini.');
                 }
 
@@ -431,18 +432,17 @@ class InvoiceController extends Controller
                 $sisaTerakhir = $dbKas->sisaTerakhir($konsumenId);
                 $penguranganSisa = $sisaTerakhir - $selisihTagihan;
 
-                if($penguranganSisa < 0) {
+                if ($penguranganSisa < 0) {
                     $penguranganSisa = 0; // Pastikan tidak menjadi negatif
                 }
 
                 $dbKas->create([
                     'konsumen_id' => $konsumenId,
                     'invoice_jual_id' => $invoice->id,
-                    'uraian' => 'Update Invoice - ' . $invoice->full_kode,
+                    'uraian' => 'Update Invoice - '.$invoice->full_kode,
                     'bayar' => $selisihTagihan,
                     'sisa' => $penguranganSisa,
                 ]);
-
 
             }
             // -------------------------------------------------------------
@@ -457,11 +457,12 @@ class InvoiceController extends Controller
             DB::commit();
 
             return redirect()->route('billing.invoice-konsumen.detail', $invoice->id)
-                            ->with('success', 'Isi Invoice Berhasil Dikurangi & Stok Gudang Terbaru Telah Diperbarui!');
+                ->with('success', 'Isi Invoice Berhasil Dikurangi & Stok Gudang Terbaru Telah Diperbarui!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses data: '.$e->getMessage());
         }
     }
 }

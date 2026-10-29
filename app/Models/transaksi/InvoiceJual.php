@@ -39,12 +39,18 @@ class InvoiceJual extends Model
 
     public function getTotalCicilanAttribute()
     {
-        return $this->invoice_jual_cicil ? number_format($this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn'), 0, ',', '.') : 0;
+        return number_format($this->raw_total_cicilan, 0, ',', '.');
     }
 
     public function getRawTotalCicilanAttribute()
     {
-        return $this->invoice_jual_cicil ? $this->invoice_jual_cicil()->sum('nominal') + $this->invoice_jual_cicil()->sum('ppn') : 0;
+        if ($this->relationLoaded('invoice_jual_cicil')) {
+            return $this->invoice_jual_cicil->sum('nominal') + $this->invoice_jual_cicil->sum('ppn');
+        }
+
+        $totals = $this->invoice_jual_cicil()->selectRaw('COALESCE(SUM(nominal), 0) + COALESCE(SUM(ppn), 0) as amount')->first();
+
+        return $totals?->getRawOriginal('amount') ?? 0;
     }
 
     public function dataTahun(?int $employeeId = null)

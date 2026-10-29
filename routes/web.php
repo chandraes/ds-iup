@@ -6,6 +6,7 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BpjsHealthMinimumController;
 use App\Http\Controllers\CustomerFileController;
+use App\Http\Controllers\CustomerInvoiceTableController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\FormBeliController;
@@ -1101,6 +1102,9 @@ Route::group(['middleware' => ['auth']], function () {
 
                 Route::post('/cicil/{invoice}', [InvoiceController::class, 'invoice_konsumen_cicil'])->name('billing.invoice-konsumen.cicil');
 
+                Route::get('/all/data', [CustomerInvoiceTableController::class, 'data'])->name('billing.invoice-konsumen.all.data');
+                Route::get('/all/{invoice}/payment-data', [CustomerInvoiceTableController::class, 'paymentData'])->whereNumber('invoice')->name('billing.invoice-konsumen.all.payment-data');
+                Route::get('/all/{invoice}/history', [CustomerInvoiceTableController::class, 'history'])->whereNumber('invoice')->name('billing.invoice-konsumen.all.history');
                 Route::get('/all', [InvoiceController::class, 'invoice_konsumen_all'])->name('billing.invoice-konsumen.all');
 
                 Route::get('/pdf', [InvoiceController::class, 'invoice_konsumen_download'])->name('billing.invoice-konsumen.pdf');
