@@ -237,6 +237,7 @@ class KasbonTest extends TestCase
         $sender->shouldReceive('sendGroup')->once()->andReturn($sent);
 
         if ($operation === 'gaji') {
+            $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
             $response = $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-10']);
         } elseif ($operation === 'void') {
             $loan = KasbonFactory::new()->create(['karyawan_id' => $employee->id]);
@@ -385,8 +386,9 @@ class KasbonTest extends TestCase
 
     public function test_payroll_deducts_loans_and_final_rounding_once(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $employee = KaryawanFactory::new()->create();
-        $loan = KasbonFactory::new()->installment()->create(['karyawan_id' => $employee->id, 'nominal' => 1000000, 'sisa_kas' => 1000000, 'cicilan_nominal' => 333333]);
+        $loan = KasbonFactory::new()->installment()->create(['tanggal' => '2026-10-20', 'karyawan_id' => $employee->id, 'nominal' => 1000000, 'sisa_kas' => 1000000, 'cicilan_nominal' => 333333]);
         $this->fund();
         $payroll = app(EmployeePayrollService::class);
         $rekap = $payroll->store();
@@ -395,9 +397,9 @@ class KasbonTest extends TestCase
         $this->assertEquals(666667, $loan->fresh()->sisa_kas);
         $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => now()->format('Y-m'), 'total' => 1])->assertSessionHasErrors('total');
         $this->assertEquals(666667, $loan->fresh()->sisa_kas);
-        $this->travelTo(Carbon::parse('2026-11-20'));
+        $this->travelTo(Carbon::parse('2026-11-26'));
         $payroll->store();
-        $this->travelTo(Carbon::parse('2026-12-20'));
+        $this->travelTo(Carbon::parse('2026-12-26'));
         $payroll->store();
         $this->assertTrue($loan->fresh()->lunas);
         $this->assertEquals(1000000, $loan->fresh()->total_bayar);
@@ -408,6 +410,7 @@ class KasbonTest extends TestCase
     {
         $employee = KaryawanFactory::new()->create();
         $this->fund(100);
+        $this->travelTo(Carbon::parse('2026-10-25 10:00:00'));
         $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasErrors('nominal');
         $this->assertSame(0, Kasbon::count());
         $this->assertSame(1, KasBesar::count());
@@ -473,6 +476,7 @@ class KasbonTest extends TestCase
 
     public function test_missing_bpjs_year_blocks_payroll_without_remote_lock_or_cash_write(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         KaryawanFactory::new()->create();
         $cash = $this->fund();
         DB::table('bpjs_health_minimums')->where('year', 2026)->delete();
@@ -487,6 +491,7 @@ class KasbonTest extends TestCase
 
     public function test_salary_preview_and_storage_use_floor_for_payroll_year(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         KaryawanFactory::new()->create(['gaji_pokok' => 2000000, 'tunjangan_jabatan' => 500000, 'tunjangan_keluarga' => 500000, 'apa_bpjs_tk' => 1, 'apa_bpjs_kes' => 1]);
         $this->fund();
         DB::table('bpjs_health_minimums')->where('year', 2026)->update(['minimum_wage' => 4500000]);
@@ -502,6 +507,7 @@ class KasbonTest extends TestCase
 
     public function test_loan_cannot_be_added_after_payroll_and_payroll_ignores_client_total(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $employee = KaryawanFactory::new()->create(['apa_bpjs_tk' => 1, 'apa_bpjs_kes' => 1]);
         $this->fund();
         $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => now()->format('Y-m'), 'total' => 1])->assertRedirect(route('billing'));
@@ -514,6 +520,7 @@ class KasbonTest extends TestCase
         $employee->update(['tunjangan_jabatan' => 900000]);
         $this->assertEquals(195600, $detail->fresh()->bpjs_tk);
         $this->assertEquals(3880000, RekapGaji::sole()->total);
+        $this->travelTo(Carbon::parse('2026-10-25 10:00:00'));
         $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasErrors('nominal');
         $this->assertSame(0, Kasbon::count());
     }
@@ -611,6 +618,7 @@ class KasbonTest extends TestCase
 
     public function test_sales_commission_matches_turnover_and_is_saved_with_its_calculation(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => '4.00']);
         $staff = KaryawanFactory::new()->create(['persen_komisi' => '99.00']);
         $this->fund();
@@ -660,6 +668,7 @@ class KasbonTest extends TestCase
 
     public function test_commission_rounds_paid_total_and_excludes_void_invoices(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'persen_komisi' => '2.55']);
         DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'lunas' => true, 'grand_total' => 101, 'created_at' => '2026-10-01', 'updated_at' => '2026-10-01']);
         $payroll = app(EmployeePayrollService::class);
@@ -693,12 +702,13 @@ class KasbonTest extends TestCase
 
     public function test_payroll_batches_loan_reads_and_groups_sales_below_other_positions(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $salesJob = Jabatan::create(['nama' => 'Sales']);
         $adminJob = Jabatan::create(['nama' => 'Admin']);
         $driverJob = Jabatan::create(['nama' => 'Driver']);
         foreach ([['Sales Z', $salesJob], ['Admin Z', $adminJob], ['Sales A', $salesJob], ['Driver A', $driverJob], ['Admin A', $adminJob]] as [$name, $job]) {
             $employee = KaryawanFactory::new()->create(['nama' => $name, 'jabatan_id' => $job->id, 'persen_komisi' => $job->id === $salesJob->id ? 4 : null]);
-            KasbonFactory::new()->create(['karyawan_id' => $employee->id]);
+            KasbonFactory::new()->create(['tanggal' => '2026-10-20', 'karyawan_id' => $employee->id]);
         }
         $this->fund(30000000);
         DB::enableQueryLog();
@@ -727,6 +737,7 @@ class KasbonTest extends TestCase
 
     public function test_lazy_commission_endpoint_validates_period_employee_and_access(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'persen_komisi' => 4]);
         $staff = KaryawanFactory::new()->create();
         $url = route('billing.form-cost-operational.gaji.komisi');
@@ -753,6 +764,7 @@ class KasbonTest extends TestCase
     #[TestWith(['existing', false])]
     public function test_automatic_legacy_payroll_mapping_only_links_unique_strong_matches(string $scenario, bool $linked): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         Storage::fake('local');
         $employee = KaryawanFactory::new()->create(['nomor' => 7]);
         $this->fund();
@@ -786,6 +798,7 @@ class KasbonTest extends TestCase
 
     public function test_legacy_payroll_mapping_requires_approval_and_changes_only_employee_link(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         Storage::fake('local');
         $employee = KaryawanFactory::new()->create(['nomor' => 7]);
         $this->fund();
@@ -818,6 +831,7 @@ class KasbonTest extends TestCase
 
     public function test_legacy_payroll_mapping_rejects_changed_details_and_does_not_guess_missing_employee(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         Storage::fake('local');
         KaryawanFactory::new()->create(['nomor' => 7]);
         $this->fund();
@@ -874,9 +888,10 @@ class KasbonTest extends TestCase
 
     public function test_sales_payroll_uses_final_snapshot_and_cannot_be_opened_by_other_roles(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => 4]);
         DB::table('invoice_juals')->insert(['karyawan_id' => $sales->id, 'grand_total' => 1000000, 'lunas' => true, 'created_at' => '2026-01-01', 'updated_at' => '2026-10-01']);
-        KasbonFactory::new()->create(['karyawan_id' => $sales->id, 'nominal' => 100000, 'sisa_kas' => 100000]);
+        KasbonFactory::new()->create(['tanggal' => '2026-10-20', 'karyawan_id' => $sales->id, 'nominal' => 100000, 'sisa_kas' => 100000]);
         $this->fund();
         app(EmployeePayrollService::class)->store('2026-10');
         $sales->update(['persen_komisi' => 99]);
@@ -899,6 +914,7 @@ class KasbonTest extends TestCase
 
     public function test_sales_payroll_cell_details_are_scoped_and_use_final_commission_snapshot(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $job = Jabatan::create(['nama' => 'SALES']);
         $sales = KaryawanFactory::new()->create(['jabatan_id' => $job->id, 'persen_komisi' => 4]);
         $other = KaryawanFactory::new()->create(['jabatan_id' => $job->id, 'nama' => 'Rahasia Lain']);
@@ -952,6 +968,7 @@ class KasbonTest extends TestCase
 
     public function test_sales_payroll_displays_legacy_net_income_when_payable_is_not_recorded(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'persen_komisi' => 4]);
         $this->fund();
         app(EmployeePayrollService::class)->store('2026-10');
@@ -1146,6 +1163,7 @@ class KasbonTest extends TestCase
 
     public function test_disabled_attendance_does_not_contact_server_or_pay_configured_fuel_allowance(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
         $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'tunjangan_bbm' => 30000]);
         Http::preventStrayRequests();
         $this->fund();
@@ -1365,5 +1383,34 @@ class KasbonTest extends TestCase
         config(['attendance.enabled' => false]);
         $this->artisan('attendance:refresh-payroll')->assertSuccessful();
         Http::assertSentCount(1);
+    }
+
+    public function test_next_period_preview_opens_after_payment_but_cannot_be_processed_before_the_26th(): void
+    {
+        KaryawanFactory::new()->create();
+        $this->fund();
+        RekapGaji::create(['bulan' => 10, 'tahun' => 2026, 'uraian' => 'Oktober sudah diproses', 'total' => 0]);
+        $this->travelTo(Carbon::parse('2026-10-30 12:00:00'));
+        $this->get(route('billing.form-cost-operational.gaji'))->assertOk()->assertViewHas('period', fn (Carbon $period): bool => $period->format('Y-m') === '2026-11')->assertViewHas('payrollDateReady', false)->assertSee('26 November 2026');
+        $this->get(route('billing.form-cost-operational.gaji.preview-excel', ['periode' => '2026-11']))->assertOk()->assertDownload('Preview_Gaji_IUP_2026_11.xlsx');
+        $this->travelTo(Carbon::parse('2026-11-25 23:59:59'));
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-11'])->assertSessionHasErrors('total');
+        $this->assertSame(1, RekapGaji::count());
+        $this->assertSame(1, KasBesar::count());
+        Http::assertNothingSent();
+        $this->travelTo(Carbon::parse('2026-11-26 00:00:00'));
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2026-11'])->assertSessionHasNoErrors()->assertSessionHas('success');
+        $this->assertSame(2, RekapGaji::count());
+    }
+
+    public function test_january_preview_is_available_after_december_payroll(): void
+    {
+        KaryawanFactory::new()->create();
+        RekapGaji::create(['bulan' => 12, 'tahun' => 2026, 'uraian' => 'Desember sudah diproses', 'total' => 0]);
+        $this->travelTo(Carbon::parse('2026-12-30 12:00:00'));
+        $this->assertSame('2027-01', app(EmployeePayrollService::class)->nextPeriod()->format('Y-m'));
+        $this->get(route('billing.form-cost-operational.gaji'))->assertOk()->assertViewHas('payrollDateReady', false);
+        $this->post(route('billing.form-cost-operational.gaji.store'), ['periode' => '2027-01'])->assertSessionHasErrors('total');
+        Http::assertNothingSent();
     }
 }

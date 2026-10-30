@@ -41,6 +41,23 @@ class EmployeePayrollService
         })->values();
     }
 
+    public function processingStartsAt(Carbon $period): Carbon
+    {
+        return $period->copy()->timezone('Asia/Jakarta')->startOfMonth()->day(26)->startOfDay();
+    }
+
+    public function canProcess(Carbon $period): bool
+    {
+        return Carbon::now('Asia/Jakarta')->greaterThanOrEqualTo($this->processingStartsAt($period));
+    }
+
+    public function assertProcessable(Carbon $period): void
+    {
+        if (! $this->canProcess($period)) {
+            throw ValidationException::withMessages(['total' => 'Gaji periode '.$period->copy()->locale('id')->translatedFormat('F Y').' baru dapat diproses mulai '.$this->processingStartsAt($period)->locale('id')->translatedFormat('d F Y').' pukul 00.00 WIB. Preview tetap dapat dilihat.']);
+        }
+    }
+
     public function nextPeriod(bool $lock = false): ?Carbon
     {
         $query = RekapGaji::orderBy('tahun')->orderBy('bulan');
@@ -49,13 +66,14 @@ class EmployeePayrollService
         }
         $records = $query->get(['bulan', 'tahun']);
         $current = now()->startOfMonth();
+        $previewLimit = $current->copy()->addMonth();
         if ($records->isEmpty()) {
             return $current;
         }
         $paid = $records->mapWithKeys(fn (RekapGaji $record): array => [sprintf('%04d-%02d', $record->tahun, $record->bulan) => true]);
         $first = $records->first();
         $period = Carbon::create((int) $first->tahun, (int) $first->bulan, 1)->startOfDay();
-        while ($period->lte($current)) {
+        while ($period->lte($previewLimit)) {
             if (! $paid->has($period->format('Y-m'))) {
                 return $period;
             }
@@ -132,6 +150,7 @@ class EmployeePayrollService
         if (! $bpjsPeriod) {
             throw ValidationException::withMessages(['total' => 'Seluruh periode gaji sudah diproses.']);
         }
+        $this->assertProcessable($bpjsPeriod);
         $this->bpjs->requireConfigured($bpjsPeriod->year);
         $attendancePeriod = null;
         if ($this->attendance->enabled()) {
@@ -160,6 +179,7 @@ class EmployeePayrollService
             if (! $period || ($expectedPeriod !== null && $expectedPeriod !== $period->format('Y-m'))) {
                 throw ValidationException::withMessages(['total' => 'Periode gaji sudah diproses atau berubah. Muat ulang form sebelum melanjutkan.']);
             }
+            $this->assertProcessable($period);
             $this->bpjs->requireConfigured($period->year, true);
             if ($attendancePeriod) {
                 DB::table('payroll_attendance_periods')->where('id', $attendancePeriod->id)->lockForUpdate()->first();

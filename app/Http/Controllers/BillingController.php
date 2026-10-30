@@ -259,6 +259,8 @@ class BillingController extends Controller
             'month' => $month,
             'period' => $period,
             'payroll' => $payroll,
+            'payrollDateReady' => $payroll->canProcess($period),
+            'processingStartsAt' => $payroll->processingStartsAt($period),
             'bpjsSetting' => $payroll->bpjs->setting($period->year),
             'attendanceEnabled' => $attendance->enabled(),
             'attendancePeriod' => $attendancePeriod,
