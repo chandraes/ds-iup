@@ -12,9 +12,9 @@ class WaStatus
 
     public function __construct()
     {
-        $this->apiDevKey = env('STARSENDER_API_KEY');
-        $this->deviceId = env('STARSENDER_DEVICE_ID');
-        $this->apikey = env('STARSENDER_KEY');
+        $this->apiDevKey = config('services.starsender.api_key');
+        $this->deviceId = config('services.starsender.device_id');
+        $this->apikey = config('services.starsender.device_key');
     }
 
     public function getStatusWa()
