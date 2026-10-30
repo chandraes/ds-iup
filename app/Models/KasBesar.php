@@ -81,8 +81,8 @@ class KasBesar extends Model
     public function saldoTerakhir($ppn)
     {
         $lastRecord = $this->where('ppn_kas', $ppn)
-                        ->orderBy('id', 'desc')
-                        ->first();
+            ->orderBy('id', 'desc')
+            ->first();
 
         return $lastRecord->saldo ?? 0;
     }
@@ -90,8 +90,9 @@ class KasBesar extends Model
     public function modalInvestorTerakhir($ppn)
     {
         $lastRecord = $this->where('ppn_kas', $ppn)
-                        ->orderBy('id', 'desc')
-                        ->first();
+            ->orderBy('id', 'desc')
+            ->first();
+
         return $lastRecord->modal_investor_terakhir ?? 0;
     }
 
@@ -451,6 +452,7 @@ class KasBesar extends Model
     public function sendWa($tujuan, $pesan)
     {
         $storeWa = PesanWa::create([
+            'last_attempt_at' => now(),
             'pesan' => $pesan,
             'tujuan' => $tujuan,
             'status' => 0,
@@ -1185,10 +1187,10 @@ class KasBesar extends Model
             DB::beginTransaction();
 
             $data['nominal'] = str_replace('.', '', $data['nominal']);
-            $rek = Rekening::where('untuk', $data['ppn_kas'] == 1 ? "kas-besar-ppn": 'kas-besar-non-ppn')->first();
+            $rek = Rekening::where('untuk', $data['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn')->first();
 
             $store = $this->create([
-                'uraian' => "Uang Gantung Masuk",
+                'uraian' => 'Uang Gantung Masuk',
                 'nominal' => $data['nominal'],
                 'ppn_kas' => $data['ppn_kas'],
                 'jenis' => 1,
@@ -1236,7 +1238,7 @@ class KasBesar extends Model
 
             $uangGantung = UangGantung::find($id);
 
-            if (!$uangGantung) {
+            if (! $uangGantung) {
                 return [
                     'status' => 'error',
                     'message' => 'Data uang gantung tidak ditemukan',
@@ -1251,7 +1253,7 @@ class KasBesar extends Model
             }
 
             $store = $this->create([
-                'uraian' => "Uang Gantung Keluar",
+                'uraian' => 'Uang Gantung Keluar',
                 'nominal' => $uangGantung->nominal,
                 'ppn_kas' => $uangGantung->ppn_kas,
                 'jenis' => 0,
@@ -1274,7 +1276,7 @@ class KasBesar extends Model
                 'no_rek' => '-',
             ];
 
-             $dbWa = new GroupWa;
+            $dbWa = new GroupWa;
 
             $pesan = $dbWa->generateMessage(0, 'FORM UANG GANTUNG', $uangGantung['ppn_kas'], $store->uraian, $store->nominal, $rek);
             $kas = $uangGantung['ppn_kas'] == 1 ? 'kas-besar-ppn' : 'kas-besar-non-ppn';
@@ -1307,7 +1309,7 @@ class KasBesar extends Model
 
             $uangGantung = UangGantung::find($id);
 
-            if (!$uangGantung) {
+            if (! $uangGantung) {
                 return [
                     'status' => 'error',
                     'message' => 'Data uang gantung tidak ditemukan',
@@ -1322,7 +1324,7 @@ class KasBesar extends Model
             }
 
             $store = $this->create([
-                'uraian' => "Uang Gantung Void",
+                'uraian' => 'Uang Gantung Void',
                 'nominal' => $uangGantung->nominal,
                 'ppn_kas' => $uangGantung->ppn_kas,
                 'jenis' => 0,

@@ -82,6 +82,7 @@ class KasbonTest extends TestCase
             $table->string('untuk');
             $table->string('nama_group');
         });
+        (require glob(database_path('migrations/*_add_last_attempt_at_to_pesan_was_table.php'))[0])->up();
         Schema::create('password_konfirmasis', function (Blueprint $table): void {
             $table->id();
             $table->string('password');

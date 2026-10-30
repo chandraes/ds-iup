@@ -15,6 +15,7 @@ class GroupWa extends Model
     public function sendWa($tujuan, $pesan)
     {
         $storeWa = PesanWa::create([
+            'last_attempt_at' => now(),
             'pesan' => $pesan,
             'tujuan' => $tujuan,
             'status' => 0,
@@ -86,7 +87,6 @@ class GroupWa extends Model
             1 => "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n",
             2 => "🟡🟡🟡🟡🟡🟡🟡🟡🟡\n",
         ];
-
 
     }
 }

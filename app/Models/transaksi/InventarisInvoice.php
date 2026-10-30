@@ -334,12 +334,14 @@ class InventarisInvoice extends Model
 
     private function sendWa($tujuan, $pesan)
     {
+        $attemptedAt = now();
         $send = new StarSender($tujuan, $pesan);
         $res = $send->sendGroup();
 
         $status = ($res == 'true') ? 1 : 0;
 
         PesanWa::create([
+            'last_attempt_at' => $attemptedAt,
             'pesan' => $pesan,
             'tujuan' => $tujuan,
             'status' => $status,

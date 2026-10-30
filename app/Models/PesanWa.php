@@ -13,7 +13,13 @@ class PesanWa extends Model
         'pesan',
         'tujuan',
         'status',
+        'last_attempt_at',
     ];
+
+    protected function casts(): array
+    {
+        return ['last_attempt_at' => 'datetime'];
+    }
 
     public function short_pesan()
     {

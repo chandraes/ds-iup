@@ -30,15 +30,18 @@
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
+            <p class="small text-muted">Waktu dalam WIB. Percobaan kirim pesan lama yang belum dicatat ditampilkan sebagai “Belum tercatat”. Halaman tabel tetap dipertahankan saat kirim ulang.</p>
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle" id="data" style="width: 100%">
-                    <thead class="table-dark">
+                    <thead class="table-success">
                         <tr>
-                            <th class="text-center py-3" style="width: 5%">No</th>
-                            <th class="py-3" style="width: 45%">Cuplikan Pesan</th>
-                            <th class="text-center py-3" style="width: 20%">Tujuan (Group ID)</th>
-                            <th class="text-center py-3" style="width: 15%">Status</th>
-                            <th class="text-center py-3" style="width: 15%">Aksi</th>
+                            <th class="text-center py-3" style="width: 50px">No</th>
+                            <th class="py-3" style="min-width: 240px">Cuplikan Pesan</th>
+                            <th class="text-center py-3" style="min-width: 150px">Tujuan (Group ID)</th>
+                            <th class="text-center py-3 text-nowrap">Waktu Dibuat</th>
+                            <th class="text-center py-3 text-nowrap">Percobaan Kirim Terakhir</th>
+                            <th class="text-center py-3" style="min-width: 130px">Status</th>
+                            <th class="text-center py-3" style="min-width: 130px">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,12 +87,15 @@
         let table = $('#data').DataTable({
             processing: true,
             serverSide: true,
+            stateSave: true,
             ajax: "{{ route('histori-pesan') }}",
             columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center' },
                 { data: 'pesan', name: 'pesan' },
                 { data: 'group_id', name: 'group_was.group_id', className: 'text-center' },
-                { data: 'status', name: 'status', className: 'text-center' },
+                { data: 'created_at_display', name: 'pesan_was.created_at', searchable: false, className: 'text-center text-nowrap' },
+                { data: 'last_attempt_at_display', name: 'pesan_was.last_attempt_at', searchable: false, className: 'text-center text-nowrap' },
+                { data: 'status', name: 'pesan_was.status', className: 'text-center' },
                 { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center text-nowrap' },
             ],
             language: {
@@ -129,9 +135,12 @@
             })
         });
 
+        let resendBusy = false;
         // SweetAlert untuk Kirim Ulang Pesan (Event Delegation karena Datatables)
         $('#data').on('click', '.btn-resend', function(e) {
             e.preventDefault();
+            if (resendBusy) return;
+            resendBusy = true;
             let form = $(this).closest('form');
 
             Swal.fire({
@@ -144,10 +153,20 @@
                 confirmButtonText: 'Ya, Kirim!',
                 cancelButtonText: 'Batal',
                 reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    form.submit();
+            }).then(async (result) => {
+                if (!result.isConfirmed) { resendBusy = false; return; }
+                $('.btn-resend').prop('disabled', true);
+                Swal.fire({title: 'Mengirim ulang…', text: 'Tunggu sampai proses selesai.', allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading()});
+                try {
+                    const response = await $.ajax({url: form.attr('action'), method: 'POST', data: form.serialize(), headers: {Accept: 'application/json'}});
+                    await Swal.fire({icon: 'success', title: 'Berhasil', text: response.message});
+                } catch (xhr) {
+                    const message = xhr.status === 419 ? 'Sesi berakhir. Muat ulang halaman sebelum mencoba kembali.' : xhr.responseJSON?.message || 'Pengiriman belum dapat dikonfirmasi. Periksa status pesan sebelum mencoba kembali.';
+                    await Swal.fire({icon: 'error', title: 'Belum berhasil', text: message});
+                } finally {
+                    resendBusy = false;
+                    $('.btn-resend').prop('disabled', false);
+                    table.ajax.reload(null, false);
                 }
             });
         });

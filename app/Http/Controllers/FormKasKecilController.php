@@ -55,12 +55,14 @@ class FormKasKecilController extends Controller
                     'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
+        $attemptedAt = now();
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         $status = ($res == 'true') ? 1 : 0;
 
         PesanWa::create([
+            'last_attempt_at' => $attemptedAt,
             'pesan' => $pesan,
             'tujuan' => $group->nama_group,
             'status' => $status,
@@ -138,12 +140,14 @@ class FormKasKecilController extends Controller
                         "Terima kasih 🙏🙏🙏\n";
         }
 
+        $attemptedAt = now();
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         $status = ($res == 'true') ? 1 : 0;
 
         PesanWa::create([
+            'last_attempt_at' => $attemptedAt,
             'pesan' => $pesan,
             'tujuan' => $group->nama_group,
             'status' => $status,

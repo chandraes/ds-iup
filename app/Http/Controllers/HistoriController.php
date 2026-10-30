@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\PesanWa;
 use App\Services\StarSender;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class HistoriController extends Controller
 {
@@ -18,17 +22,20 @@ class HistoriController extends Controller
 
             return datatables()->of($data)
                 ->addIndexColumn()
+                ->addColumn('created_at_display', fn (PesanWa $row): string => $row->created_at ? $row->created_at->copy()->timezone('Asia/Jakarta')->format('d-m-Y H:i:s').' WIB' : 'Belum tercatat')
+                ->addColumn('last_attempt_at_display', fn (PesanWa $row): string => $row->last_attempt_at ? $row->last_attempt_at->copy()->timezone('Asia/Jakarta')->format('d-m-Y H:i:s').' WIB' : 'Belum tercatat')
                 ->editColumn('pesan', function ($row) {
                     // Potong pesan agar tabel tetap rapi
-                    return substr($row->pesan, 0, 60) . '...';
+                    return mb_strimwidth($row->pesan, 0, 60, '…');
                 })
                 ->addColumn('status', function ($row) {
                     if ($row->status == 0) {
                         return '<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm">Belum Terkirim</span>';
                     }
+
                     return '<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">Terkirim</span>';
                 })
-               ->addColumn('action', function ($row) {
+                ->addColumn('action', function ($row) {
                     $btn = '<div class="d-flex justify-content-center gap-2">';
 
                     // Gunakan htmlspecialchars agar karakter unik WA aman dimasukkan ke dalam atribut HTML
@@ -47,6 +54,7 @@ class HistoriController extends Controller
                     }
 
                     $btn .= '</div>';
+
                     return $btn;
                 })
                 ->rawColumns(['status', 'action'])
@@ -56,20 +64,42 @@ class HistoriController extends Controller
         return view('pengaturan.histori.index');
     }
 
-    public function resend(PesanWa $pesanWa)
+    public function resend(Request $request, PesanWa $pesanWa): JsonResponse|RedirectResponse
     {
-        $starSender = new StarSender($pesanWa->tujuan, $pesanWa->pesan);
-        $res = $starSender->sendGroup();
-
-        if ($res == 'true') {
-            $pesanWa->update([
-                'status' => 1,
-            ]);
-        } else {
-            return redirect()->back()->with('error', 'Gagal mengirim ulang pesan! Silahkan hubungi admin');
+        $lock = Cache::lock('whatsapp-resend:'.$pesanWa->id, 90);
+        if (! $lock->get()) {
+            return $this->resendResult($request, false, 'Pesan sedang diproses. Tunggu sampai proses selesai.', 409);
         }
+        try {
+            $pesanWa->refresh();
+            if ((int) $pesanWa->status === 1) {
+                return $this->resendResult($request, true, 'Pesan sudah tercatat terkirim; tidak dikirim ulang.');
+            }
+            $pesanWa->update(['last_attempt_at' => now()]);
+            try {
+                $starSender = app(StarSender::class, ['tujuan' => $pesanWa->tujuan, 'pesan' => $pesanWa->pesan]);
+                $sent = $starSender->sendGroup();
+            } catch (Throwable $exception) {
+                report($exception);
 
-        return redirect()->back()->with('success', 'Berhasil mengirim ulang pesan');
+                return $this->resendResult($request, false, 'Pengiriman belum berhasil. Periksa koneksi layanan WhatsApp sebelum mencoba kembali.', 502);
+            }
+            if (! $sent) {
+                return $this->resendResult($request, false, 'Layanan WhatsApp belum mengonfirmasi pengiriman. Silakan periksa kembali.', 422);
+            }
+            $pesanWa->update(['status' => 1]);
+
+            return $this->resendResult($request, true, 'Berhasil mengirim ulang pesan.');
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function resendResult(Request $request, bool $success, string $message, int $status = 200): JsonResponse|RedirectResponse
+    {
+        return $request->expectsJson()
+            ? response()->json(['success' => $success, 'message' => $message], $status)
+            : back()->with($success ? 'success' : 'error', $message);
     }
 
     public function delete_sended()

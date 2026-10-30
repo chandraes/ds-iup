@@ -90,3 +90,8 @@ Menonaktifkan otomatis: ubah `ATTENDANCE_PAYROLL_AUTO_SYNC=false`, lalu `php art
 ### 2026-10-30 — Perbaikan kredensial WhatsApp saat config cache aktif
 
 Kredensial StarSender dipetakan pada `config/services.php`; `StarSender` dan `WaStatus` membaca `config()` agar pengiriman, status perangkat, dan daftar grup tetap mendapatkan kredensial setelah `config:cache`. Nilai token tidak diubah. Tidak mengirim ulang pesan gagal otomatis. Deployment harus membangun ulang cache konfigurasi setelah memasang kode.
+
+
+### 2026-10-30 — Waktu histori pesan dan pagination kirim ulang
+
+Histori WA menampilkan waktu dibuat dan percobaan kirim terakhir (WIB). Migrasi nullable `last_attempt_at` tidak mengarang timestamp pesan lama. Pengiriman awal mencatat waktu proses, dan kirim ulang mencatat waktu sebelum menghubungi provider, termasuk jika gagal. Kirim ulang AJAX mempertahankan halaman/filter/jumlah baris DataTable dengan reload tanpa reset dan stateSave. Penguncian per pesan dan pemeriksaan status mencegah kirim ganda dari permintaan ulang yang sudah berhasil; pengiriman grup memiliki timeout koneksi 5 detik dan total 30 detik. Perubahan tidak mengirim ulang pesan lama otomatis.
