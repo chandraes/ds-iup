@@ -14,6 +14,12 @@ return [
     |
     */
 
+    'starsender' => [
+        'device_key' => env('STARSENDER_KEY'),
+        'api_key' => env('STARSENDER_API_KEY'),
+        'device_id' => env('STARSENDER_DEVICE_ID'),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

@@ -14,7 +14,7 @@ class StarSender
 
     public function __construct($tujuan, $pesan, $file = null)
     {
-        $this->apikey = env('STARSENDER_KEY');
+        $this->apikey = config('services.starsender.device_key');
         $this->tujuan = $tujuan;
         $this->pesan = $pesan;
         $this->file = $file;

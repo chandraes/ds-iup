@@ -85,3 +85,8 @@ Form gaji menyediakan unduhan PDF landscape dan Excel `.xlsx` berstatus DRAFT. K
 Penerapan production IUP (`/var/www/iup_distributor`): backup dahulu, pasang kode, lalu jalankan `php artisan migrate --force` sebagai pengguna aplikasi sesuai proses deploy. Pastikan migrasi `2026_10_28_215624_add_sync_monitoring_to_payroll_attendance_periods_table` berhasil sebelum mengaktifkan otomatis. Atur kedua flag di atas, jalankan `php artisan config:cache`, dan periksa `php artisan schedule:list`. Cron `schedule:run` IUP yang sudah ada tetap digunakan; jangan membuat cron kedua. Uji `sudo -u www-data /usr/bin/php /var/www/iup_distributor/artisan attendance:refresh-payroll`, lalu lihat status waktu/sumber di form. Eksekusi kedua sebelum 15 menit harus dilewati. Pastikan www-data dapat menulis storage/cache dan CLI memakai konfigurasi yang sama dengan web. Tidak memerlukan deploy mobile atau perubahan backend absensi.
 
 Menonaktifkan otomatis: ubah `ATTENDANCE_PAYROLL_AUTO_SYNC=false`, lalu `php artisan config:cache`; tombol manual tetap tersedia. Tidak perlu menghapus snapshot atau menjalankan ulang migrasi. Local tidak otomatis berjalan tanpa `schedule:run`/scheduler yang dioperasikan pengembang; jangan arahkan token/URL lokal ke production untuk tes.
+
+
+### 2026-10-30 — Perbaikan kredensial WhatsApp saat config cache aktif
+
+Kredensial StarSender dipetakan pada `config/services.php`; `StarSender` dan `WaStatus` membaca `config()` agar pengiriman, status perangkat, dan daftar grup tetap mendapatkan kredensial setelah `config:cache`. Nilai token tidak diubah. Tidak mengirim ulang pesan gagal otomatis. Deployment harus membangun ulang cache konfigurasi setelah memasang kode.
