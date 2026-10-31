@@ -285,7 +285,18 @@ class BillingController extends Controller
         try {
             $group = GroupWa::where('untuk', 'kas-besar-ppn')->first();
             if ($group) {
-                $message = '*FORM GAJI KARYAWAN*'."\n".$rekap->uraian."\nNilai: Rp ".number_format($rekap->total, 0, ',', '.');
+                $cash = $rekap->getRelation('cashDisbursement');
+                $heading = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n";
+                $message = $heading."*Form Gaji Karyawan*\n".$heading."\n".
+                    'Nilai :  *Rp. '.number_format($cash->nominal, 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Nama     : Masing2 Karyawan\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar PPN : \n".
+                    'Rp. '.number_format($cash->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor PPN : \n".
+                    'Rp. '.number_format($cash->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
                 (new KasBesar)->sendWa($group->nama_group, $message);
             }
         } catch (\Throwable $exception) {

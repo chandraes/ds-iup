@@ -216,10 +216,11 @@ class EmployeePayrollService
                 throw ValidationException::withMessages(['total' => 'Saldo Kas Besar PPN tidak mencukupi.']);
             }
             $rekap->update(['total' => $total]);
-            KasBesar::create(['ppn_kas' => 1, 'jenis' => 0, 'uraian' => $rekap->uraian, 'nominal' => $total,
+            $disbursement = KasBesar::create(['ppn_kas' => 1, 'jenis' => 0, 'uraian' => $rekap->uraian, 'nominal' => $total,
                 'saldo' => $cash->saldo - $total, 'modal_investor_terakhir' => $cash->modal_investor_terakhir,
                 'nama_rek' => 'Masing-masing karyawan', 'bank' => '-', 'no_rek' => '-']);
 
+            $rekap->setRelation('cashDisbursement', $disbursement);
             $this->attendance->seal($attendancePeriod, $rekap->id);
 
             return $rekap;

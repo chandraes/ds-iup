@@ -253,7 +253,21 @@ class KasbonTest extends TestCase
         $message = PesanWa::sole();
         $this->assertSame('Grup PPN Uji', $message->tujuan);
         $this->assertSame($sent ? 1 : 0, (int) $message->status);
-        $this->assertStringContainsString($operation === 'gaji' ? '*FORM GAJI KARYAWAN*' : ($operation === 'void' ? '*Form Void Kasbon Staff*' : '*Form Kasbon Staff*'), $message->pesan);
+        $this->assertStringContainsString($operation === 'gaji' ? '*Form Gaji Karyawan*' : ($operation === 'void' ? '*Form Void Kasbon Staff*' : '*Form Kasbon Staff*'), $message->pesan);
+        if ($operation === 'gaji') {
+            $cash = KasBesar::latest('id')->firstOrFail();
+            $heading = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n";
+            $expected = $heading."*Form Gaji Karyawan*\n".$heading."\n".
+                'Nilai :  *Rp. '.number_format($cash->nominal, 0, ',', '.')."*\n\n".
+                "Ditransfer ke rek:\n\nNama     : Masing2 Karyawan\n\n".
+                "==========================\nSisa Saldo Kas Besar PPN : \n".
+                'Rp. '.number_format($cash->saldo, 0, ',', '.')."\n\n".
+                "Total Modal Investor PPN : \n".
+                'Rp. '.number_format($cash->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Terima kasih 🙏🙏🙏\n";
+            $this->assertSame($expected, $message->pesan);
+            $this->assertSame(0, DB::transactionLevel());
+        }
     }
 
     public function test_billing_offers_forms_and_report_lives_under_rekap(): void
