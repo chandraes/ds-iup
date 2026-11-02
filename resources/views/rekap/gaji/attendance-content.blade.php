@@ -4,9 +4,10 @@
 @endphp
 <p class="payroll-footnote mt-0">Periode {{ $detail['from'] }}–{{ $detail['to'] }} · Waktu {{ $detail['timezone'] }}</p>
 <div class="payroll-commission-formula">
-    <span>{{ $fuel ? 'BBM berdasarkan absen masuk, dikurangi keterlambatan setelah toleransi' : 'Potongan berdasarkan pendapatan tetap ÷ 25, maksimum 25% per periode' }}</span>
+    <span>{{ $fuel ? 'BBM berdasarkan absen masuk, dikurangi keterlambatan setelah toleransi' : 'Potongan berdasarkan pendapatan tetap ÷ '.(array_key_exists('divisor', $detail) ? ($detail['divisor'] ?? 'belum ditentukan') : 25).', maksimum 25% per periode' }}</span>
     <strong>Rp {{ number_format($detail['amount'],0,',','.') }}</strong>
 </div>
+@if(($detail['pattern_ready'] ?? true) === false)<p class="text-danger">Pembagi pengupahan belum ditentukan. Periksa jadwal dan perbarui snapshot sebelum memproses gaji.</p>@endif
 <div class="payroll-commission-totals">
     <span>{{ $fuel ? 'Tarif BBM per hari' : 'Pendapatan per hari' }}<strong>Rp {{ number_format($detail['daily_rate'],0,',','.') }}</strong></span>
     @if($fuel)

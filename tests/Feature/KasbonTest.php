@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -1035,9 +1036,9 @@ class KasbonTest extends TestCase
                 $key = $date->toDateString();
                 $days[] = array_replace(['date' => $key, 'status' => 'off', 'schedule_mode' => 'weekly', 'schedule_name' => null, 'scheduled_minutes' => 0, 'break_minutes' => 0, 'late_minutes' => 0, 'early_minutes' => 0, 'check_in_late_minutes' => 0, 'check_in_at' => null, 'check_out_at' => null], $overrides[$employee->id][$key] ?? []);
             }
-            $people[] = ['source_employee_id' => (string) $employee->id, 'attendance_required' => true, 'days' => $days];
+            $people[] = ['payroll_work_pattern' => ['mode' => 'weekly', 'workdays' => 6, 'divisor' => 25], 'source_employee_id' => (string) $employee->id, 'attendance_required' => true, 'days' => $days];
         }
-        $snapshot = ['schema_version' => 1, 'monitoring_version' => 1, 'fuel_allowance_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => $sources, 'employees' => $people, 'issues' => $ready ? [] : ['Ada izin menunggu persetujuan.'], 'ready' => $ready, 'as_of' => now()->toIso8601String()];
+        $snapshot = ['payroll_work_pattern_version' => 1, 'schema_version' => 1, 'monitoring_version' => 1, 'fuel_allowance_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => $sources, 'employees' => $people, 'issues' => $ready ? [] : ['Ada izin menunggu persetujuan.'], 'ready' => $ready, 'as_of' => now()->toIso8601String()];
         $snapshot['revision'] = hash('sha256', json_encode($snapshot));
 
         return $snapshot;
@@ -1054,6 +1055,61 @@ class KasbonTest extends TestCase
     {
         return ['status' => $status, 'scheduled_minutes' => 540, 'break_minutes' => 60, 'late_minutes' => $status === 'present' ? $late : 0, 'early_minutes' => $early, 'check_in_late_minutes' => $late,
             'check_in_at' => in_array($status, ['present', 'half_day', 'in_progress'], true) ? '2026-10-01T09:00:00+07:00' : null];
+    }
+
+    public function test_five_day_divisor_changes_staff_deduction_but_not_daily_sales_bbm(): void
+    {
+        $staff = KaryawanFactory::new()->create(['gaji_pokok' => 4200000, 'tunjangan_jabatan' => 0, 'tunjangan_keluarga' => 0]);
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'tunjangan_bbm' => 30000]);
+        $snapshot = $this->attendanceSnapshot([$staff, $sales], [
+            $staff->id => ['2026-10-01' => $this->attendanceDay('absent')],
+            $sales->id => ['2026-10-01' => $this->attendanceDay('present', 48)],
+        ]);
+        foreach ($snapshot['employees'] as &$person) {
+            $person['payroll_work_pattern'] = ['mode' => 'weekly', 'workdays' => 5, 'divisor' => 21];
+        }
+        unset($person);
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $service = app(PayrollAttendanceService::class);
+        $staffDetail = $service->calculate($staff, Carbon::parse('2026-10-01'));
+        $this->assertSame(200000, $staffDetail['potongan_absensi']);
+        $this->assertSame(21, $staffDetail['rincian_absensi']['divisor']);
+        $this->assertSame(27000, $service->calculate($sales, Carbon::parse('2026-10-01'))['tunjangan_bbm']);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'shift', 'workdays' => null, 'divisor' => null];
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $this->expectException(ValidationException::class);
+        $service->assertReady(Carbon::parse('2026-10-01'), $snapshot['source_employee_ids'], $snapshot['revision']);
+    }
+
+    public function test_old_snapshot_blocks_new_staff_payroll_but_preserves_locked_divisor(): void
+    {
+        $staff = KaryawanFactory::new()->create(['gaji_pokok' => 4200000, 'tunjangan_jabatan' => 0, 'tunjangan_keluarga' => 0]);
+        $snapshot = $this->attendanceSnapshot([$staff], [$staff->id => ['2026-10-01' => $this->attendanceDay('absent')]]);
+        unset($snapshot['payroll_work_pattern_version'], $snapshot['employees'][0]['payroll_work_pattern']);
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $service = app(PayrollAttendanceService::class);
+        $this->assertFalse($service->workPatternsReady($snapshot));
+        DB::table('payroll_attendance_periods')->update(['lock_attempted_at' => now()]);
+        $service->clear();
+        $detail = $service->calculate($staff, Carbon::parse('2026-10-01'));
+        $this->assertSame(25, $detail['rincian_absensi']['divisor']);
+        $this->assertSame(168000, $detail['potongan_absensi']);
+        $this->assertNotNull($service->assertReady(Carbon::parse('2026-10-01'), $snapshot['source_employee_ids'], $snapshot['revision']));
+    }
+
+    public function test_sales_bbm_does_not_require_a_monthly_wage_divisor(): void
+    {
+        $sales = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'SALES'])->id, 'tunjangan_bbm' => 30000]);
+        $snapshot = $this->attendanceSnapshot([$sales], [$sales->id => ['2026-10-01' => $this->attendanceDay('present', 48)]]);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'shift', 'workdays' => null, 'divisor' => null];
+        $this->fakeAttendance($snapshot);
+        $this->post(route('billing.form-cost-operational.gaji.absensi.refresh'), ['periode' => '2026-10'])->assertSessionHasNoErrors();
+        $service = app(PayrollAttendanceService::class);
+        $this->assertSame(27000, $service->calculate($sales, Carbon::parse('2026-10-01'))['tunjangan_bbm']);
+        $this->assertNotNull($service->assertReady(Carbon::parse('2026-10-01'), $snapshot['source_employee_ids'], $snapshot['revision']));
     }
 
     public function test_attendance_calculates_non_sales_and_daily_sales_bbm_without_double_deductions(): void

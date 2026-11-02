@@ -254,6 +254,10 @@ class BillingController extends Controller
             return redirect()->back()->with('error', 'Data Staff/Direksi Kosong, Silahkan Tambahkan Data Terlebih Dahulu');
         }
 
+        if ($attendanceSnapshot && ! $attendance->workPatternsReady($attendanceSnapshot, $attendancePeriod, $data)) {
+            $attendanceSnapshot['issues'][] = 'Pembagi pengupahan belum ditentukan. Periksa jadwal mingguan pegawai, lalu perbarui snapshot absensi.';
+        }
+
         return view('billing.form-cost-operational.form-gaji.index', [
             'data' => $data,
             'month' => $month,
@@ -265,7 +269,7 @@ class BillingController extends Controller
             'attendanceEnabled' => $attendance->enabled(),
             'attendancePeriod' => $attendancePeriod,
             'attendanceSnapshot' => $attendanceSnapshot,
-            'attendanceReady' => ! $attendance->enabled() || (($attendanceSnapshot['ready'] ?? false) && ($attendanceSnapshot['source_employee_ids'] ?? []) === $attendance->sources($data)),
+            'attendanceReady' => ! $attendance->enabled() || (($attendanceSnapshot['ready'] ?? false) && $attendance->workPatternsReady($attendanceSnapshot, $attendancePeriod, $data) && ($attendanceSnapshot['source_employee_ids'] ?? []) === $attendance->sources($data)),
             'rows' => $payroll->previewRows($data, $period)->map(function (array $row) use ($period): array {
                 $row['commission_url'] = $row['rincian_komisi'] ? route('billing.form-cost-operational.gaji.komisi', [
                     'karyawan_id' => $row['rincian_komisi']['karyawan_id'], 'periode' => $period->format('Y-m'),

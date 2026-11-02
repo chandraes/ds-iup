@@ -232,6 +232,10 @@ class PayrollAttendanceService
             $this->fail('Perbarui data absensi dan selesaikan masalah/perubahan pegawai sebelum memproses gaji.');
         }
 
+        if (! $this->workPatternsReady($payload, $period)) {
+            $this->fail('Pembagi pengupahan belum ditentukan. Periksa jadwal mingguan pegawai, lalu perbarui snapshot absensi.');
+        }
+
         return $period;
     }
 
@@ -261,6 +265,44 @@ class PayrollAttendanceService
         }
     }
 
+    public function workPatternsReady(array $snapshot, ?object $period = null, ?iterable $employees = null): bool
+    {
+        $unconfigured = array_filter($snapshot['employees'] ?? [], fn (array $person): bool => ($person['attendance_required'] ?? true) && $this->workDivisor($snapshot, $person, $period) === null);
+        if ($unconfigured === []) {
+            return true;
+        }
+        $employees ??= Karyawan::whereIn('id', array_column($unconfigured, 'source_employee_id'))->with('jabatan')->get();
+        $sales = [];
+        foreach ($employees as $employee) {
+            if ($employee instanceof Karyawan && ($employee->jabatan?->isSales() ?? false)) {
+                $sales[(string) $employee->id] = true;
+            }
+        }
+        foreach ($unconfigured as $person) {
+            if (! isset($sales[(string) $person['source_employee_id']])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function workDivisor(array $snapshot, array $person, ?object $period): ?int
+    {
+        if (! isset($snapshot['payroll_work_pattern_version']) && ($period?->lock_attempted_at || $period?->remote_locked_at || $period?->sealed_at)) {
+            return 25;
+        }
+        $pattern = $person['payroll_work_pattern'] ?? [];
+        if (($snapshot['payroll_work_pattern_version'] ?? null) !== 1 || ($pattern['mode'] ?? null) !== 'weekly' || ! is_int($pattern['workdays'] ?? null)) {
+            return null;
+        }
+        $expected = match ($pattern['workdays']) {
+            5 => 21, 6, 7 => 25, default => null
+        };
+
+        return $expected !== null && ($pattern['divisor'] ?? null) === $expected ? $expected : null;
+    }
+
     public function calculate(Karyawan $employee, Carbon $date): array
     {
         $empty = ['potongan_absensi' => 0, 'tunjangan_bbm' => 0, 'rincian_absensi' => null, 'attendance_revision' => null];
@@ -279,7 +321,9 @@ class PayrollAttendanceService
         }
         $sales = $employee->jabatan?->isSales() ?? false;
         $base = (int) $employee->gaji_pokok + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga;
-        $daily = $sales ? max(0, (int) $employee->tunjangan_bbm) : (int) round($base / 25);
+        $divisor = $this->workDivisor($snapshot, $person, $period);
+        $patternReady = $sales || ! $person['attendance_required'] || $divisor !== null;
+        $daily = $sales ? max(0, (int) $employee->tunjangan_bbm) : ($divisor === null ? 0 : (int) round($base / $divisor));
         $cap = $sales ? null : intdiv($base, 4);
         $raw = 0;
         $gross = 0;
@@ -308,7 +352,7 @@ class PayrollAttendanceService
             }
             $days[] = $day + ['effective_minutes' => $effective, 'daily_rate' => $daily, 'deduction' => $amount, 'bbm_gross' => $entitled, 'bbm_received' => $sales ? $entitled - $amount : 0];
         }
-        $detail = ['kind' => $sales ? 'bbm' : 'deduction', 'from' => $snapshot['from'], 'to' => $snapshot['to'], 'timezone' => $snapshot['timezone'] ?? 'Asia/Jakarta', 'as_of' => $snapshot['as_of'] ?? $period->fetched_at, 'revision' => $snapshot['revision'], 'daily_rate' => $daily, 'base' => $base, 'divisor' => $sales ? null : 25, 'cap' => $cap, 'raw' => $raw, 'amount' => $sales ? $raw : min($cap, $raw), 'bbm_gross' => $gross, 'bbm_reduction' => $reduction, 'provisional' => ! $snapshot['ready'], 'days' => $days];
+        $detail = ['kind' => $sales ? 'bbm' : 'deduction', 'from' => $snapshot['from'], 'to' => $snapshot['to'], 'timezone' => $snapshot['timezone'] ?? 'Asia/Jakarta', 'as_of' => $snapshot['as_of'] ?? $period->fetched_at, 'revision' => $snapshot['revision'], 'daily_rate' => $daily, 'base' => $base, 'payroll_work_pattern' => $person['payroll_work_pattern'] ?? null, 'pattern_ready' => $patternReady, 'divisor' => $sales ? null : $divisor, 'cap' => $cap, 'raw' => $raw, 'amount' => $sales ? $raw : min($cap, $raw), 'bbm_gross' => $gross, 'bbm_reduction' => $reduction, 'provisional' => ! $snapshot['ready'] || ! $patternReady, 'days' => $days];
 
         return ['potongan_absensi' => $sales ? 0 : $detail['amount'], 'tunjangan_bbm' => $sales ? $raw : 0, 'rincian_absensi' => $detail, 'attendance_revision' => $snapshot['revision']];
     }
