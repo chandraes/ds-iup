@@ -3,6 +3,17 @@
     $labels = ['present'=>'Hadir','half_day'=>'Masuk tanpa pulang','absent'=>'Tidak masuk','excused'=>'Cuti / izin','exempt'=>'Tidak wajib absensi','before_tracking'=>'Sebelum pencatatan','off'=>'Libur jadwal','holiday'=>'Hari libur','pending'=>'Belum terjadwal','invalid'=>'Tidak valid','upcoming'=>'Belum berlangsung','in_progress'=>'Masih berlangsung','pending_leave'=>'Menunggu persetujuan cuti/izin'];
 @endphp
 <p class="payroll-footnote mt-0">Periode {{ $detail['from'] }}–{{ $detail['to'] }} · Waktu {{ $detail['timezone'] }}</p>
+@unless($fuel)
+<p class="payroll-footnote">Pola kerja pengupahan:
+@if(($detail['payroll_work_pattern']['mode'] ?? null) === 'weekly')
+Mingguan · {{ $detail['payroll_work_pattern']['workdays'] }} hari/minggu.
+@elseif(($detail['payroll_work_pattern']['mode'] ?? null) === 'shift')
+Shift.
+@else
+Belum tercatat pada rincian ini.
+@endif
+Pembagi upah harian: <strong>{{ array_key_exists('divisor', $detail) ? ($detail['divisor'] ?? 'belum ditentukan') : 25 }}</strong>.</p>
+@endunless
 <div class="payroll-commission-formula">
     <span>{{ $fuel ? 'BBM berdasarkan absen masuk, dikurangi keterlambatan setelah toleransi' : 'Potongan berdasarkan pendapatan tetap ÷ '.(array_key_exists('divisor', $detail) ? ($detail['divisor'] ?? 'belum ditentukan') : 25).', maksimum 25% per periode' }}</span>
     <strong>Rp {{ number_format($detail['amount'],0,',','.') }}</strong>
