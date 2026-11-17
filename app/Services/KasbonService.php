@@ -26,7 +26,7 @@ class KasbonService
         }
     }
 
-    /** @return array{income: int, ordinary_due: int, installment_due: int, ordinary_limit: int, ordinary_available: int, installment_limit: ?int, is_sales: bool, commission_as_of: string, ordinary_submitted: bool} */
+    /** @return array{income: int, ordinary_due: int, installment_due: int, ordinary_limit: int, ordinary_available: int, installment_limit: ?int, is_sales: bool, commission_as_of: string} */
     public function summary(Karyawan $employee, Carbon $period, bool $lock = false): array
     {
         $query = Kasbon::where('karyawan_id', $employee->id)->where('void', false)->where('lunas', false)->orderBy('id');
@@ -50,24 +50,17 @@ class KasbonService
         if ($isSales) {
             $start = $period->copy()->startOfMonth()->subMonth()->day(26);
             $end = $period->copy()->startOfMonth()->day(26)->min(today()->addDay());
-            $daily = $end->gt($start) ? (new InvoiceJual)->salesTurnoverByDay($start, $end, [$employee->id]) : [];
+            $daily = $end->gt($start) ? (new InvoiceJual)->salesTurnoverByDay($start, $end, [$employee->id], paidOnly: true) : [];
             $turnover = array_sum(array_column($daily[$employee->id] ?? [], 'omset'));
             $rate = (int) round((float) $employee->persen_komisi * 100);
             $income = intdiv($turnover, 10000) * $rate + (int) round(($turnover % 10000) * $rate / 10000);
         }
         $ordinaryLimit = $isSales ? max(0, intdiv(max(0, $income), 2) - $installments) : intdiv(max(0, $income - $installments) * 50, 100);
-        $submissionQuery = Kasbon::where('karyawan_id', $employee->id)->where('jenis', 'potong_gaji')->where('void', false)
-            ->where('mulai_periode', '>=', $period->copy()->startOfMonth()->toDateString())
-            ->where('mulai_periode', '<', $period->copy()->startOfMonth()->addMonth()->toDateString());
-        if ($lock) {
-            $submissionQuery->lockForUpdate();
-        }
-        $submitted = $submissionQuery->exists();
 
         return ['income' => $income, 'ordinary_due' => $ordinary, 'installment_due' => $installments,
             'ordinary_limit' => $ordinaryLimit, 'ordinary_available' => max(0, $ordinaryLimit - $ordinary),
             'installment_limit' => $isSales ? null : intdiv(max(0, $income - $ordinary) * 30, 100),
-            'is_sales' => $isSales, 'commission_as_of' => today()->toDateString(), 'ordinary_submitted' => $submitted];
+            'is_sales' => $isSales, 'commission_as_of' => today()->toDateString()];
     }
 
     public function monthlyPayment(Kasbon $loan): int
@@ -106,9 +99,6 @@ class KasbonService
                 throw ValidationException::withMessages(['karyawan_id' => 'Pegawai masih memiliki kasbon cicilan yang belum lunas.']);
             }
             $summary = $this->summary($employee, $period, true);
-            if (! $installment && $summary['ordinary_submitted']) {
-                throw ValidationException::withMessages(['karyawan_id' => 'Kasbon potong gaji hanya boleh satu kali per pegawai per periode, termasuk yang sudah lunas.']);
-            }
             $count = $installment ? (int) $data['cicil_kali'] : 1;
             $monthly = (int) ceil($data['nominal'] / $count);
             if ((! $installment && $data['nominal'] > $summary['ordinary_available']) || ($installment && $summary['installment_limit'] !== null && $monthly > $summary['installment_limit'])) {

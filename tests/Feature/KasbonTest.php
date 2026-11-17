@@ -159,19 +159,32 @@ class KasbonTest extends TestCase
 
     #[TestWith([false])]
     #[TestWith([true])]
-    public function test_ordinary_loan_is_once_per_employee_per_period_even_when_paid(bool $sales): void
+    public function test_ordinary_loans_can_be_repeated_until_the_cumulative_limit_is_reached(bool $sales): void
     {
         $employee = KaryawanFactory::new()->create();
+        $this->fund();
         if ($sales) {
             $employee->update(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'persen_komisi' => 4]);
+            DB::table('invoice_juals')->insert(['karyawan_id' => $employee->id, 'grand_total' => 100000000,
+                'lunas' => true, 'created_at' => '2026-09-01 09:00:00', 'updated_at' => '2026-10-20 09:00:00']);
         }
-        KasbonFactory::new()->create(['karyawan_id' => $employee->id, 'lunas' => true, 'sisa_kas' => 0, 'total_bayar' => 100000]);
-        $cashCount = KasBesar::count();
-
-        $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasErrors('karyawan_id');
-
+        $first = $this->payload($employee);
+        $this->post(route('billing.kasbon.store'), $first)->assertSessionHasNoErrors();
+        $this->post(route('billing.kasbon.store'), $first)->assertSessionHasNoErrors();
         $this->assertSame(1, Kasbon::count());
+        $this->assertSame(1000000, app(KasbonService::class)->summary($employee, now())['ordinary_available']);
+        $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasNoErrors();
+        $this->assertSame(2000000, (int) Kasbon::sum('nominal'));
+        $cashCount = KasBesar::count();
+        $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 1]))->assertSessionHasErrors('nominal');
+        $this->assertSame(2, Kasbon::count());
         $this->assertSame($cashCount, KasBesar::count());
+        $this->assertSame(0, app(KasbonService::class)->summary($employee, now())['ordinary_available']);
+        $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
+        $rekap = app(EmployeePayrollService::class)->store('2026-10');
+        $this->assertSame(2000000, (int) $rekap->details()->sole()->potongan_kasbon);
+        $this->assertSame(2, Kasbon::where('lunas', true)->count());
+        $this->assertSame(0, (int) Kasbon::sum('sisa_kas'));
     }
 
     public function test_void_ordinary_loan_can_be_replaced_and_next_period_is_independent(): void
@@ -180,31 +193,37 @@ class KasbonTest extends TestCase
         $this->fund();
         KasbonFactory::new()->create(['karyawan_id' => $employee->id, 'void' => true, 'sisa_kas' => 0]);
         $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasNoErrors();
-        $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasErrors('karyawan_id');
-
+        $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 1000001]))->assertSessionHasErrors('nominal');
         $this->travelTo(Carbon::parse('2026-10-26 10:00:00'));
+        app(EmployeePayrollService::class)->store('2026-10');
         $this->post(route('billing.kasbon.store'), $this->payload($employee))->assertSessionHasNoErrors();
         $this->assertSame('2026-11-01', Kasbon::latest('id')->first()->mulai_periode->toDateString());
         $this->assertSame(3, Kasbon::count());
     }
 
-    public function test_sales_ordinary_limit_uses_commission_to_today_minus_current_installment(): void
+    public function test_sales_ordinary_limit_uses_only_invoices_paid_in_period_to_today_minus_current_installment(): void
     {
         $employee = KaryawanFactory::new()->create(['jabatan_id' => Jabatan::create(['nama' => 'Sales'])->id, 'persen_komisi' => 4]);
         $this->fund();
-        foreach ([['2026-09-25', 99000000, false, false, '2026-09-25'], ['2026-09-26', 20000000, false, false, '2026-09-26'],
-            ['2026-10-20', 10000000, false, false, '2026-10-20'], ['2026-10-21', 99000000, false, false, '2026-10-21'],
-            ['2026-10-19', 99000000, true, false, '2026-10-19'], ['2026-09-01', 5000000, false, true, '2026-10-20']] as [$date, $total, $consignment, $void, $updated]) {
+        foreach ([['2026-09-01', '2026-09-25', 99000000, true, false, false],
+            ['2026-09-26', '2026-09-26', 20000000, true, false, false],
+            ['2026-10-20', '2026-10-20', 10000000, false, false, false],
+            ['2026-10-20', '2026-10-21', 99000000, true, false, false],
+            ['2026-10-19', '2026-10-19', 99000000, true, true, false],
+            ['2026-09-01', '2026-10-20', 5000000, true, false, true],
+            ['2026-09-01', '2026-10-20', 5000000, true, false, false]] as [$created, $paid, $total, $settled, $consignment, $void]) {
             DB::table('invoice_juals')->insert(['karyawan_id' => $employee->id, 'grand_total' => $total, 'titipan' => $consignment,
-                'void' => $void, 'created_at' => $date.' 09:00:00', 'updated_at' => $updated.' 09:00:00']);
+                'lunas' => $settled, 'void' => $void, 'created_at' => $created.' 09:00:00', 'updated_at' => $paid.' 09:00:00']);
         }
         KasbonFactory::new()->installment()->create(['karyawan_id' => $employee->id]);
         $this->get(route('billing.kasbon.create'))->assertOk()->assertSee($employee->nama);
         $this->getJson(route('billing.kasbon.summary', ['karyawan_id' => $employee->id, 'bulan' => 10, 'tahun' => 2026]))
             ->assertOk()->assertJsonPath('income', 1000000)->assertJsonPath('ordinary_available', 200000)->assertJsonPath('installment_limit', null);
         $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 200001]))->assertSessionHasErrors('nominal');
-        $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 200000]))->assertSessionHasNoErrors();
-        $this->assertSame(2, Kasbon::count());
+        $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 120000]))->assertSessionHasNoErrors();
+        $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 80000]))->assertSessionHasNoErrors();
+        $this->post(route('billing.kasbon.store'), $this->payload($employee, ['nominal' => 1]))->assertSessionHasErrors('nominal');
+        $this->assertSame(3, Kasbon::count());
     }
 
     public function test_sales_installment_has_no_income_cap_but_preserves_active_loan_and_cash_checks(): void

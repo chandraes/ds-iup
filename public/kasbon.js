@@ -76,10 +76,10 @@
             const rule = document.getElementById('loan-summary-rule');
             if (rule) rule.textContent = summary.dataset.type === 'cicilan'
                 ? (data.is_sales ? 'Cicilan Sales tanpa batas nominal berbasis penghasilan. Satu cicilan aktif per pegawai.' : 'Batas angsuran: 30% × (penghasilan − kasbon potong gaji belum lunas). Satu cicilan aktif per pegawai.')
-                : (data.is_sales ? 'Batas: (50% × komisi sampai tanggal proses) − angsuran periode ini − kasbon potong gaji belum lunas. ' : 'Batas: 50% × (penghasilan − angsuran berjalan), dikurangi kasbon potong gaji belum lunas. ') + 'Maksimal satu kali per pegawai per periode. ' + (data.ordinary_submitted ? 'Pegawai sudah mengajukan pada periode ini.' : 'Belum ada pengajuan pada periode ini.');
+                : (data.is_sales ? 'Batas: (50% × komisi invoice lunas sampai tanggal proses) − angsuran periode ini − kasbon potong gaji belum lunas. ' : 'Batas: 50% × (penghasilan − angsuran berjalan), dikurangi kasbon potong gaji belum lunas. ') + 'Pengajuan dapat dilakukan beberapa kali selama sisa batas masih tersedia.';
             simulate();
             summary.replaceChildren();
-            const rows = [[data.is_sales ? 'Komisi sampai ' + data.commission_as_of : 'Penghasilan acuan', data.income], ['Kasbon potong gaji belum lunas', data.ordinary_due], ['Angsuran berjalan', data.installment_due]];
+            const rows = [[data.is_sales ? 'Komisi invoice lunas sampai ' + data.commission_as_of : 'Penghasilan acuan', data.income], ['Kasbon potong gaji belum lunas', data.ordinary_due], ['Angsuran berjalan', data.installment_due]];
             rows.push(summary.dataset.type === 'cicilan' ? ['Batas angsuran bulanan', installmentUnlimited ? 'Tanpa batas berbasis penghasilan' : data.installment_limit] : ['Sisa batas pengajuan baru', data.ordinary_available]);
             for (const [label, value] of rows) {
                 const block = document.createElement('div'); block.className = 'loan-summary-row';
