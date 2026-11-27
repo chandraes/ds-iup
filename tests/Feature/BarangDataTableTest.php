@@ -67,6 +67,21 @@ class BarangDataTableTest extends TestCase
         $this->assertStringNotContainsString('barang/120.jpg', $isolasi['upload_barang']);
     }
 
+    public function test_filtering_by_kategori_while_sorted_by_nama_barang_does_not_fail_on_ambiguous_column(): void
+    {
+        Schema::table('barang_namas', fn (Blueprint $table) => $table->integer('barang_kategori_id')->nullable());
+        $columns = collect(['no', 'barang_nama.nama'])
+            ->map(fn ($name) => ['data' => $name, 'name' => $name, 'searchable' => 'true', 'orderable' => 'true', 'search' => ['value' => '']])
+            ->all();
+
+        $rows = $this->getJson(route('db.barang.data', ['draw' => 1, 'start' => 0, 'length' => 10, 'columns' => $columns, 'order' => [['column' => 1, 'dir' => 'asc']], 'kategori' => 120, 'jenis' => 1, 'status' => 1]))
+            ->assertOk()
+            ->assertJsonMissingPath('error')
+            ->json('data');
+
+        $this->assertSame([1568], array_column($rows, 'id'));
+    }
+
     public function test_row_buttons_escape_quotes_so_the_onclick_handler_still_runs(): void
     {
         DB::table('barangs')->where('id', 1568)->update(['merk' => "O'NEIL", 'kode' => null]);

@@ -132,27 +132,27 @@ class Barang extends Model
     {
 
         if (isset($filters['unit']) && $filters['unit'] != '') {
-            $query->where('barang_unit_id', $filters['unit']);
+            $query->where('barangs.barang_unit_id', $filters['unit']);
         }
 
         if (isset($filters['type']) && $filters['type'] != '') {
-            $query->where('barang_type_id', $filters['type']);
+            $query->where('barangs.barang_type_id', $filters['type']);
         }
 
-        if (isset($filters['barang_nama']) && $filters['barang_nama'] !='') {
-            $query->where('barang_nama_id', $filters['barang_nama']);
+        if (isset($filters['barang_nama']) && $filters['barang_nama'] != '') {
+            $query->where('barangs.barang_nama_id', $filters['barang_nama']);
         }
 
-        if (isset($filters['kategori']) && $filters['kategori'] !='') {
-            $query->where('barang_kategori_id', $filters['kategori']);
+        if (isset($filters['kategori']) && $filters['kategori'] != '') {
+            $query->where('barangs.barang_kategori_id', $filters['kategori']);
         }
 
-        if (isset($filters['jenis']) && $filters['jenis'] !='') {
-            $query->where('jenis', $filters['jenis']);
+        if (isset($filters['jenis']) && $filters['jenis'] != '') {
+            $query->where('barangs.jenis', $filters['jenis']);
         }
 
-        if (isset($filters['status'])  && $filters['status'] != 'all') {
-            $query->where('is_active', $filters['status']);
+        if (isset($filters['status']) && $filters['status'] != 'all') {
+            $query->where('barangs.is_active', $filters['status']);
         }
 
         return $query;
@@ -162,10 +162,10 @@ class Barang extends Model
     {
         return $query->addSelect(['hb_lama' => function ($subquery) {
             $subquery->select('harga_beli')
-                    ->from('barang_stok_hargas')
-                    ->whereColumn('barang_id', 'barangs.id')
-                    ->orderBy('created_at', 'desc')
-                    ->limit(1);
+                ->from('barang_stok_hargas')
+                ->whereColumn('barang_id', 'barangs.id')
+                ->orderBy('created_at', 'desc')
+                ->limit(1);
         }]);
     }
 }
