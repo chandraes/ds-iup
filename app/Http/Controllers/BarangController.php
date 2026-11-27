@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\db\Barang\Barang;
+use App\Models\db\Barang\BarangAuditLog;
 use App\Models\db\Barang\BarangGrosir;
 use App\Models\db\Barang\BarangKategori;
 use App\Models\db\Barang\BarangNama;
@@ -16,6 +17,7 @@ use App\Models\db\Satuan;
 use App\Models\HargaSubmission;
 use App\Services\StockMutationService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -239,6 +241,7 @@ class BarangController extends Controller
             $barang = Barang::findOrFail($grosir->barang_id);
 
             $grosir->delete();
+            BarangAuditLog::record('grosir_deleted', $barang->id, $grosir->getAttributes());
 
             // Cek apakah masih ada grosir lain untuk barang ini
             $hasGrosir = BarangGrosir::where('barang_id', $barang->id)->exists();
@@ -278,7 +281,8 @@ class BarangController extends Controller
 
         try {
             DB::beginTransaction();
-            BarangGrosir::create($data);
+            $grosir = BarangGrosir::create($data);
+            BarangAuditLog::record('grosir_created', $grosir->barang_id, [], $grosir->getAttributes());
 
             $barang = Barang::findOrFail($data['barang_id']);
             $barang->is_grosir = true;
@@ -305,7 +309,8 @@ class BarangController extends Controller
     {
         $filters = $request->only(['barang_nama', 'kategori', 'jenis', 'type', 'unit', 'status']); // Ambil filter dari request
 
-        $data = Barang::query()->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan', 'subpg'])
+        // select barangs.* : sorting by a relation column joins its table; without this its id/nama overwrite the barang's.
+        $data = Barang::query()->select('barangs.*')->with(['unit', 'type', 'kategori', 'barang_nama', 'satuan', 'subpg'])
             ->filter($filters)
             ->limit(10);
 
@@ -752,18 +757,42 @@ class BarangController extends Controller
 
     public function barang_delete(Barang $barang)
     {
-        $errorMessage = null;
-        if ($barang->stok_harga) {
-            $errorMessage = 'Data tidak bisa dihapus karena sudah memiliki transaksi!';
+        $stokHargaCount = $barang->stok_harga()->count();
+
+        if ($stokHargaCount > 0) {
+            BarangAuditLog::record('delete_rejected', $barang->id, $barang->getAttributes(), [], [
+                'reason' => "Memiliki {$stokHargaCount} data stok/harga",
+            ]);
+
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena sudah memiliki transaksi!');
         }
 
-        if ($errorMessage) {
-            return redirect()->back()->with('error', $errorMessage);
-        }
+        try {
+            $barang->delete();
+        } catch (QueryException $exception) {
+            BarangAuditLog::record('delete_rejected', $barang->id, $barang->getAttributes(), [], [
+                'reason' => 'Masih dipakai tabel lain: '.$exception->getMessage(),
+            ]);
 
-        $barang->delete();
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih dipakai di data lain (keranjang, invoice, inden, atau retur).');
+        }
 
         return redirect()->back()->with('success', 'Berhasil menghapus data barang!');
+    }
+
+    public function audit_log(Request $request)
+    {
+        $logs = BarangAuditLog::with('user:id,name')
+            ->when($request->filled('barang_id'), fn ($query) => $query->where('barang_id', $request->integer('barang_id')))
+            ->when($request->filled('action'), fn ($query) => $query->where('action', $request->input('action')))
+            ->latest('id')
+            ->paginate(50)
+            ->withQueryString();
+
+        return view('db.barang.audit-log', [
+            'logs' => $logs,
+            'barang' => $request->filled('barang_id') ? Barang::with('barang_nama')->find($request->integer('barang_id')) : null,
+        ]);
     }
 
     public function kategori_barang_store(Request $request)

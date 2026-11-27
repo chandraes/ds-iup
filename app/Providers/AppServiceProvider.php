@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\db\Barang\Barang;
 use App\Models\db\Karyawan;
+use App\Observers\BarangAuditObserver;
 use App\Observers\KaryawanAttendanceObserver;
 use App\Services\BpjsHealthMinimumService;
 use App\Services\PayrollAttendanceService;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Karyawan::observe(KaryawanAttendanceObserver::class);
+        Barang::observe(BarangAuditObserver::class);
         //
     }
 }

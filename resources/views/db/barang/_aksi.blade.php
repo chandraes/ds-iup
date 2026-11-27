@@ -6,3 +6,6 @@
     @method('delete')
     <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
 </form>
+@if (auth()->user()->role == 'su')
+<a href="{{ route('db.barang.audit-log', ['barang_id' => $d->id]) }}" class="btn btn-secondary m-2" title="Log Audit"><i class="fa fa-history"></i></a>
+@endif

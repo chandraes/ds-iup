@@ -4,14 +4,14 @@
     </a>
     <div class="row px-3 text-nowrap mt-1">
         <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal"
-            onclick="uploadFoto({{ $d->id }})" class="btn btn-success btn-sm">
+            onclick="uploadFoto({{ $d->id }}, @js($d->foto))" class="btn btn-success btn-sm">
             <i class="fa fa-upload"></i> Edit
         </button>
     </div>
 @else
     <div class="row px-3 text-nowrap">
         <button type="button" data-bs-toggle="modal" data-bs-target="#uploadFotoModal"
-            onclick="uploadFoto({{ $d->id }})" class="btn btn-primary btn-sm">
+            onclick="uploadFoto({{ $d->id }}, @js($d->foto))" class="btn btn-primary btn-sm">
             <i class="fa fa-upload"></i> Upload
         </button>
     </div>

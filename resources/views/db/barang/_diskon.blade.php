@@ -7,12 +7,12 @@
 </div>
 <br>
 <a href="#" data-bs-toggle="modal" data-bs-target="#diskonModal"
-    onclick="setDiskon({{ $d->id }}, {{ $d->diskon }}, '{{ $d->diskon_mulai ? $d->diskon_mulai : 'null' }}', '{{ $d->diskon_selesai ? $d->diskon_selesai : 'null' }}', '{{ $d->barang_nama->nama }}', '{{ $d->kode }}', '{{ $d->merk }}')">
+    onclick="setDiskon({{ $d->id }}, @js($d->diskon), @js($d->diskon_mulai), @js($d->diskon_selesai), @js($d->barang_nama->nama), @js($d->kode ?? ''), @js($d->merk))">
     <i class="fa fa-edit"></i> Edit Diskon
 </a>
 @else
 <a href="#" data-bs-toggle="modal" data-bs-target="#diskonModal"
-    onclick="setDiskon({{ $d->id }}, '{{ $d->diskon }}', '{{ $d->diskon_mulai ? $d->diskon_mulai : 'null' }}', '{{ $d->diskon_selesai ? $d->diskon_selesai : 'null' }}', '{{ $d->barang_nama->nama }}', '{{ $d->kode }}', '{{ $d->merk }}')">
+    onclick="setDiskon({{ $d->id }}, @js($d->diskon), @js($d->diskon_mulai), @js($d->diskon_selesai), @js($d->barang_nama->nama), @js($d->kode ?? ''), @js($d->merk))">
     <i class="fa fa-plus"></i> Tambah Diskon
 </a>
 @endif

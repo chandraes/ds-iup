@@ -111,7 +111,7 @@
         function getTypeEdit() {
             let unit_id = document.getElementById('edit_barang_unit_id').value;
             // ajax request
-            $.ajax({
+            return $.ajax({
                 url: `{{route('db.barang.get-type')}}`,
                 type: 'GET',
                 data: {
@@ -149,7 +149,7 @@
             // get barang_nama based on barang_kategori_id
             let kategori_id = document.getElementById('edit_barang_kategori_id').value;
             // find $kategori.barang_nama
-            $.ajax({
+            return $.ajax({
                 url: `{{route('db.barang.get-barang-nama')}}`,
                 type: 'GET',
                 data: {

@@ -498,6 +498,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::prefix('barang')->group(function () {
                 Route::get('/', [BarangController::class, 'barang'])->name('db.barang');
                 Route::get('/data', [BarangController::class, 'barang_data'])->name('db.barang.data');
+                Route::get('/audit-log', [BarangController::class, 'audit_log'])->name('db.barang.audit-log')->middleware('role:su');
                 Route::post('/toggle-status/{id}', [BarangController::class, 'toggle_status'])->name('db.barang.toggle-status');
 
                 Route::get('/get-grosir', [BarangController::class, 'barang_get_grosir'])->name('db.barang.get-grosir');

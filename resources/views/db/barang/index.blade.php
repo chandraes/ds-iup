@@ -30,6 +30,9 @@
                         </div>
 
                     </td>
+                    @if (auth()->user()->role == 'su')
+                    <td class="text-center align-middle"><a href="{{ route('db.barang.audit-log') }}"><i class="fa fa-history fa-2x align-middle"></i> Log Audit</a></td>
+                    @endif
                 </tr>
             </table>
         </div>
@@ -636,8 +639,10 @@ $(document).ready(function() {
         dropdownParent: $('#editModal')
     });
 
-    function uploadFoto(id) {
+    function uploadFoto(id, foto) {
         document.getElementById('uploadFotoForm').action = `{{route('db.barang.upload-image', ':id')}}`.replace(':id', id);
+        document.getElementById('edit_foto_preview').hidden = !foto;
+        document.getElementById('edit_foto_preview_img').src = foto ? "{{ asset('storage') }}/" + foto : '';
     }
 
     function formatDateForInput(dateStr) {
@@ -653,6 +658,7 @@ $(document).ready(function() {
     function setDiskon(id, diskon, diskon_mulai, diskon_selesai, nama_barang, kode, merk) {
         // reset diskon form
         document.getElementById('diskonForm').reset();
+        document.getElementById('diskonForm').action = `{{route('db.barang.diskon', ':id')}}`.replace(':id', id);
         document.getElementById('diskon').value = diskon;
         document.getElementById('nm_barang_merk_diskon').value = `${nama_barang}, ${kode}, ${merk}`;
 
@@ -664,7 +670,6 @@ $(document).ready(function() {
             dateFormat: "d-m-Y",
             defaultDate: diskon_selesai ? formatDateForInput(diskon_selesai) : ''
         });
-        document.getElementById('diskonForm').action = `{{route('db.barang.diskon', ':id')}}`.replace(':id', id);
 
         // Bind AJAX submit
         $('#diskonForm').off('submit').on('submit', function(e) {
@@ -712,52 +717,27 @@ $(document).ready(function() {
 
     function editFun(data, type, unit)
     {
-
+        // Set the target first so a later error can never submit to the previously edited barang.
+        document.getElementById('editForm').action = `{{route('db.barang.update', ':id')}}`.replace(':id', data.id);
         document.getElementById('edit_barang_unit_id').value = unit;
-        document.getElementById('edit_barang_type_id').value = type;
-
         document.getElementById('edit_jenis').value = data.jenis;
         document.getElementById('edit_barang_kategori_id').value = data.barang_kategori_id;
         document.getElementById('edit_kode').value = data.kode;
         document.getElementById('edit_merk').value = data.merk;
         document.getElementById('edit_keterangan').value = data.keterangan;
         document.getElementById('edit_satuan_id').value = data.satuan_id;
-        document.getElementById('edit_subpg_id').value = data.subpg_id;
+        $('#edit_subpg_id').val(data.subpg_id ?? '').trigger('change');
 
-        if (data.foto != null) {
-            document.getElementById('edit_foto_preview').hidden = false;
-            document.getElementById('edit_foto_preview_img').src = "{{ asset('storage') }}/" + data.foto;
-        } else {
-            document.getElementById('edit_foto_preview').hidden = true;
-        }
-
-
-        let kategoriSelect = document.getElementById('edit_barang_kategori_id');
-        kategoriSelect.onchange = () => {
-            getNamaBarangEdit();
-            setTimeout(() => {
-                document.getElementById('edit_barang_nama_id').value = data.barang_nama_id;
-            }, 500);
-        };
-
-        let unitSelect = document.getElementById('edit_barang_unit_id');
-        unitSelect.onchange = () => {
-            getTypeEdit();
-            setTimeout(() => {
-                document.getElementById('edit_barang_type_id').value = data.barang_type_id;
-                $('#edit_detail_type').val(null).trigger('change');
-                // Collect the IDs of the detail types to be selected
-                let selectedDetailTypeIds = data.detail_types.map(detailType => detailType.barang_type_id);
-                // Set the selected values
-                $('#edit_detail_type').val(selectedDetailTypeIds).trigger('change');
-            }, 500);
-
-        };
-        unitSelect.dispatchEvent(new Event('change'));
-        kategoriSelect.dispatchEvent(new Event('change'));
-
-
-        document.getElementById('editForm').action = `{{route('db.barang.update', ':id')}}`.replace(':id', data.id);
+        // Lock saving until bidang and nama barang of THIS barang are loaded and selected.
+        const submitButton = $('#editForm button[type="submit"]').prop('disabled', true);
+        $('#edit_barang_type_id, #edit_barang_nama_id').empty();
+        $.when(getTypeEdit(), getNamaBarangEdit()).done(function () {
+            document.getElementById('edit_barang_type_id').value = data.barang_type_id;
+            document.getElementById('edit_barang_nama_id').value = data.barang_nama_id;
+            submitButton.prop('disabled', false);
+        }).fail(function () {
+            Swal.fire({ icon: 'error', title: 'Gagal memuat data', text: 'Tutup lalu buka kembali form edit.' });
+        });
     }
 
     function showKeterangan(data) {
@@ -836,9 +816,10 @@ $(document).ready(function() {
         }
     }
 
-    $('.delete-form').submit(function(e){
+    // Delegated: rows are rendered by DataTables after page load.
+    $(document).on('submit', '.delete-form', function(e){
         e.preventDefault();
-        var formId = $(this).data('id');
+        const form = this;
         Swal.fire({
             title: 'Apakah Anda Yakin?',
             icon: 'warning',
@@ -848,7 +829,7 @@ $(document).ready(function() {
             confirmButtonText: 'Ya, simpan!'
         }).then((result) => {
             if (result.isConfirmed) {
-                $(`#deleteForm${formId}`).unbind('submit').submit();
+                form.submit();
                 $('#spinner').show();
             }
         });
