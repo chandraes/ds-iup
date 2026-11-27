@@ -1044,11 +1044,12 @@ class RekapController extends Controller
         if ($request->ajax()) {
             // PENTING: Filter ->where('tipe', 3) agar hanya memunculkan yang sudah Selesai
             $query = ReturSupplier::with(['barang_unit', 'user', 'details', 'receipts.details'])
+                ->select('retur_suppliers.*')
                 ->where('tipe', '>', 2);
 
             // Filter Tanggal jika diisi oleh user
             if ($request->filled('start_date') && $request->filled('end_date')) {
-                $query->whereBetween('created_at', [
+                $query->whereBetween('retur_suppliers.created_at', [
                     $request->start_date.' 00:00:00',
                     $request->end_date.' 23:59:59',
                 ]);

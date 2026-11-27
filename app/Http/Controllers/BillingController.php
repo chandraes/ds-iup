@@ -912,7 +912,7 @@ class BillingController extends Controller
     {
         $query = BarangRetur::with(['barang_unit', 'konsumen.kode_toko', 'karyawan' => function ($q) {
             $q->select('id', 'nama');
-        }]);
+        }])->select('barang_returs.*');
 
         // 2. Terapkan Filter dari request AJAX
         if ($request->filled('konsumen_id')) {
@@ -928,7 +928,7 @@ class BillingController extends Controller
         }
 
         if ($request->filled('sales')) {
-            $query->where('karyawan_id', $request->sales);
+            $query->where('barang_returs.karyawan_id', $request->sales);
         }
 
         // Jika filter status tidak diisi, tampilkan yg default (Diajukan & Diproses)

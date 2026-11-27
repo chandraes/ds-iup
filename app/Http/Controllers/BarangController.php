@@ -874,11 +874,12 @@ class BarangController extends Controller
         $data = BarangStokHarga::query()->with(['barang' => function ($query) {
             $query->with(['type', 'kategori', 'barang_nama', 'satuan', 'unit']);
         }])
+            ->select('barang_stok_hargas.*')
             ->where('hide', 0)
-            ->orderBy('barang_unit_id')
-            ->orderBy('barang_type_id')
-            ->orderBy('barang_kategori_id')
-            ->orderBy('barang_nama_id')
+            ->orderBy('barang_stok_hargas.barang_unit_id')
+            ->orderBy('barang_stok_hargas.barang_type_id')
+            ->orderBy('barang_stok_hargas.barang_kategori_id')
+            ->orderBy('barang_stok_hargas.barang_nama_id')
             ->orderBy('barang_id')
             ->orderBy('stok');
 
